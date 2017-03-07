@@ -1,0 +1,30 @@
+#!/bin/bash
+#
+#PBS -A %PROJECT%
+#PBS -N %JOBNAME%
+#PBS -o stdout
+#PBS -e stderr
+#PBS -m abe
+#PBS -M guillaumetauzin.ut@gmail.com
+#PBS -l walltime=23:00:00
+#PBS -l select=%NODES%:mpiprocs=%MPIPROCSPERNODE%:ncpus=%NCPUS%
+###PBS -l mem=%MEM%
+
+if [ -n "$BASH_VERSION" ]; then
+    # include .bashrc if it exists
+    if [ -f "$HOME/.bashrc" ]; then
+	. "/etc/bashrc"
+    fi
+fi
+
+module load autoload boost/1.58.0--openmpi--1.8.4--gnu--4.9.2
+
+#module load intel
+#module load intelmpi
+#source $INTEL_HOME/bin/compilervars.sh intel64
+
+#export MPICC=mpicc
+#export OMPI_CC=icc
+
+cd /gpfs/scratch/userexternal/gtauzin0/Workspace/lbm_solver/solver/bin
+mpirun -np %NPROCS% ./lbm

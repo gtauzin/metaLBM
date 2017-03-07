@@ -1,0 +1,42 @@
+{
+    "lengthX": 128,
+    "lengthY": 128,
+    "initDensity": {
+        "type": "homogeneous",
+        "value": 1.0
+    },
+    "initVelocity": {
+        "type": "homogeneous",
+        "valueX": 0.0,
+        "valueY": 0.0
+    },
+    "forcingMethod": "guo",
+    "solverMethod": "ForcedNR_ELBM",
+    "tau": 0.65,
+    "startIteration": 0,
+    "iterationMax": 1000,
+    "backupStep": 1,
+    "writeStep": 1,
+    "prefix": "test",
+    "simulationLabel": "Test",
+    "boundaries": [
+    ],
+    "forces": [
+	{
+            "type": "turbulent_time",
+            "amplitudeX": 0.00001,
+            "amplitudeY": 0.00001,
+	    "waveLengthX": 64.0,
+            "waveLengthY": 64.0,
+            "periodTime": 0.08
+        }
+    ],
+    "outputs": [
+        {
+            "type": "backup"
+        },
+        {
+            "type": "vtr"
+        }
+    ]
+}

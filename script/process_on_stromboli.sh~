@@ -1,0 +1,15 @@
+#!/bin/bash
+
+echo "--Path of the JSON input file: " $1
+
+
+prefix=$(python parse_json.py $1 prefix)
+
+scpt stromboli ../input/inputJSON/${prefix}.json /home/tauzin/Workspace/lbm_solver/input/inputJSON/
+
+./synchronize.sh stromboli
+
+sshp stromboli "screen -dm bash -c 'cd Workspace/lbm_solver/script && ./process.sh ../input/inputJSON/${prefix}.json > process.out'"
+
+
+echo "process.sh ends"

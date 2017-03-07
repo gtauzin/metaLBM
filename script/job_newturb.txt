@@ -1,0 +1,19 @@
+#!/bin/bash
+#
+#PBS -N %JOBNAME%
+#PBS -o stdout
+#PBS -e stderr
+#PBS -m abe
+#PBS -M guillaumetauzin.ut@gmail.com
+#PBS -l nodes=%NODES%:ppn=%NTASKSPERNODE%,walltime=23:00:00
+
+BOOSTDIR=/scratch/tauzin/software
+
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${BOOSTDIR}/lib
+
+export OMP_PROC_BIND=true
+export OMP_PLACES=cores
+
+cd /storage/tauzin/Workspace/lbm_solver/solver/bin
+
+time mpiexec -np %NPROCS% -mca btl openib,self ./lbm

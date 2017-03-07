@@ -1,0 +1,40 @@
+{
+    "lengthX": 32,
+    "lengthY": 32,
+    "initDensity": {
+        "type": "homogeneous",
+        "value": 1.0
+    },
+    "initVelocity": {
+        "type": "homogeneous",
+        "valueX": 0.0,
+        "valueY": 0.0
+    },
+    "solverMethod": "ELBM",
+    "forcingMethod": "EDM",
+    "tau": 0.65,
+    "startIteration": 0,
+    "iterationMax": 2000,
+    "backupStep": 10,
+    "writeStep": 10,
+    "prefix": "elbm-edm-kolmogorov",
+    "boundaries": [
+    ],
+    "forces":[
+        {
+            "type": "sinusoidal",
+            "amplitudeX": 0.0001,
+            "amplitudeY": 0.0,
+	    "waveLengthX": 64.0,
+            "waveLengthY": 64.0
+        }
+    ],
+    "outputs": [
+        {
+            "type": "vtr"
+        },
+        {
+            "type": "backup"
+        }
+    ]
+}
