@@ -1,4 +1,4 @@
-To compile:
+To compile:\n
 
 mkdir build
 cd build
