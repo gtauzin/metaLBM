@@ -1,10 +1,6 @@
 #ifndef HELPERS_H
 #define HELPERS_H
 
-#include "commons.h"
-#include "structure.h"
-#include "lattice.h"
-
 #include <memory>
 #include <vector>
 #include <array>
@@ -30,6 +26,10 @@ template<class T, std::size_t Alignment = 1>
 #else
 using vector = std::vector<T>;
 #endif
+
+#include "commons.h"
+#include "structure.h"
+#include "lattice.h"
 
 namespace boost {
   namespace log{

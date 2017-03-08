@@ -1,9 +1,6 @@
 #ifndef LATTICE_H
 #define LATTICE_H
 
-#include "input.h"
-#include "commons.h"
-
 #include <array>
 #include <numeric>
 #include <memory>
@@ -17,6 +14,9 @@ template<class T, std::size_t Alignment = 1>
 #else
   using vector = std::vector<T>;
 #endif
+
+#include "input.h"
+#include "commons.h"
 
 namespace lbm {
 

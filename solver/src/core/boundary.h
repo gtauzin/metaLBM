@@ -1,11 +1,6 @@
 #ifndef BOUNDARY_H
 #define BOUNDARY_H
 
-#include "input.h"
-#include "structure.h"
-#include "commons.h"
-#include "lattice.h"
-
 #include <iostream>
 #include <array>
 #include <vector>
@@ -16,6 +11,11 @@
 #include <boost/log/expressions.hpp>
 #include <boost/log/utility/setup/file.hpp>
 namespace logging = boost::log;
+
+#include "input.h"
+#include "structure.h"
+#include "commons.h"
+#include "lattice.h"
 
 namespace lbm {
 
@@ -74,7 +74,7 @@ namespace lbm {
                  const T pressure_in)
     : BoundaryCondition<T, L>(boundaryPosition_in, start_in, end_in)
       , pressure(pressure_in)
-      , density(pressure_in*inv_cs2)
+      , density(pressure_in*inv_cs2<T, L>())
       {}
 
     void apply(Lattice<T, L>& lattice)
@@ -89,7 +89,7 @@ namespace lbm {
   public:
   Velocity_ZouHe(const BoundaryPosition& boundaryPosition_in,
                  const int start_in, const int end_in,
-                 const MathVector<T, dimD<T, L>()> velocity)
+                 const MathVector<T, dimD<T, L>()>& velocity)
     : BoundaryCondition<T, L>(boundaryPosition_in, start_in, end_in)
       , velocity(velocity)
     {}
@@ -110,10 +110,10 @@ namespace lbm {
   Entropic(const BoundaryPosition& boundaryPosition_in,
            const int start_in, const int end_in,
            const T pressure_in,
-           const MathVector<T, dimD<T, L>()> velocity_in)
+           const MathVector<T, dimD<T, L>()>& velocity_in)
     : BoundaryCondition<T, L>(boundaryPosition_in, start_in, end_in)
       , pressure(pressure_in)
-      , density(pressure_in*inv_cs2)
+      , density(pressure_in*inv_cs2<T, L>())
       , velocity(velocity_in)
       , velocity2(velocity_in.norm2())
       {}
@@ -133,10 +133,10 @@ namespace lbm {
   public:
   Corner(const BoundaryPosition& boundaryPosition_in,
          const T pressure_in,
-         const MathVector<T, dimD<T, L>()> velocity_in)
+         const MathVector<T, dimD<T, L>()>& velocity_in)
     : BoundaryCondition<T, L>(boundaryPosition_in, -1, -1)
       , pressure(pressure_in)
-      , density(pressure_in*inv_cs2)
+      , density(pressure_in*inv_cs2<T, L>())
       , velocity(velocity_in)
     {}
 
@@ -149,7 +149,7 @@ namespace lbm {
                                               const BoundaryPosition& boundaryPosition,
                                               const int start, const int end,
                                               const T pressure,
-                                              const MathVector<T, dimD<T, L>()> velocity) {
+                                              const MathVector<T, dimD<T, L>()>& velocity) {
     switch(boundaryType){
     case BoundaryType::bounceBack_halfWay:{
       return std::shared_ptr<BoundaryCondition<T, L>>(new BounceBack_HalfWay<T, L>(boundaryPosition,

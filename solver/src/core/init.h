@@ -1,15 +1,6 @@
 #ifndef INIT_H
 #define INIT_H
 
-#include "input.h"
-#include "structure.h"
-#include "commons.h"
-#include "solver.h"
-#include "lattice.h"
-#include "boundary.h"
-#include "force.h"
-#include "output.h"
-
 #include <iostream>
 #include <string>
 #include <array>
@@ -31,6 +22,16 @@ template<class T, std::size_t Alignment = 1>
 #else
 using vector = std::vector<T>;
 #endif
+
+#include "input.h"
+#include "structure.h"
+#include "commons.h"
+#include "solver.h"
+#include "lattice.h"
+#include "boundary.h"
+#include "force.h"
+#include "output.h"
+
 
 namespace lbm {
 
@@ -139,9 +140,8 @@ namespace lbm {
   }
 
   template<class T, LatticeType L>
-    vector<T, CACHE_LINE> generate_initDistributionStart(vector<T, CACHE_LINE> density,
-                                                         vector<MathVector<T, dimD<T, L>()>,
-                                                         CACHE_LINE> velocity) {
+    vector<T, CACHE_LINE> generate_initDistributionStart(const vector<T, CACHE_LINE>& density,
+                                                         const vector<MathVector<T, dimD<T, L>()>, CACHE_LINE>& velocity) {
     vector<T, CACHE_LINE> initDistributionR(dimQ<T, L>()*s_g<T, L>(), 0.0);
 
     for(int iX = 0; iX < lX_g<T, L>(); ++iX) {
@@ -150,8 +150,8 @@ namespace lbm {
           int idx = idx_gF<T, L>(iX, iY, iZ);
           T velocity2 = velocity[idx].norm2();
           for(int iQ = 0; iQ < dimQ<T, L>(); ++iQ) {
-
-            initDistributionR[idxPop_gF<T, L>(iX, iY, iZ, iQ)] = computeEquilibrium<T, L>(iQ, density[idx], velocity, velocity2);
+            //T density = density[idx];
+            initDistributionR[idxPop_gF<T, L>(iX, iY, iZ, iQ)] = computeEquilibrium<T, L>(iQ, density[idx], velocity[idx], velocity2);
           }
         }
       }
@@ -182,12 +182,10 @@ namespace lbm {
   }
 
   template<class T, LatticeType L>
-    vector<T, CACHE_LINE> generate_initDistribution(vector<T, CACHE_LINE> density,
-                                                    vector<T, CACHE_LINE> velocityX,
-                                                    vector<T, CACHE_LINE> velocityY,
-                                                    vector<T, CACHE_LINE> velocityZ) {
+    vector<T, CACHE_LINE> generate_initDistribution(const vector<T, CACHE_LINE>& density,
+                                                    const vector<MathVector<T, dimD<T, L>()>, CACHE_LINE>& velocity) {
     if(!startIteration) {
-      return generate_initDistributionStart<T, L>(density, velocityX, velocityY, velocityZ);
+      return generate_initDistributionStart<T, L>(density, velocity);
     }
     else {
       return generate_initDistributionRestart<T, L>();
@@ -270,7 +268,7 @@ namespace lbm {
       , boundaryConditions(boundaryConditions_in)
       , forces(forces_in)
       , outputs(outputs_in)
-      {}
+    {}
   };
 
   template <class T, LatticeType L>
@@ -285,17 +283,17 @@ namespace lbm {
 
 
     vector<T, CACHE_LINE> initNextDistribution = generate_initDistribution<T, L>(initNextDensity,
-                                                                                           initNextVelocity);
+                                                                                 initNextVelocity);
 
     vector<T, CACHE_LINE> initPreviousDensity = initNextDensity;
     vector<MathVector<T, dimD<T, L>()>, CACHE_LINE> initPreviousVelocity = initNextVelocity;
 
     GlobalField<T, L> globalField = GlobalField<T, L>(initNextDensity,
-                                                                          initNextVelocity,
-                                                                          initNextAlpha,
-                                                                          initNextDistribution,
-                                                                          initPreviousDensity,
-                                                                          initPreviousVelocity);
+                                                      initNextVelocity,
+                                                      initNextAlpha,
+                                                      initNextDistribution,
+                                                      initPreviousDensity,
+                                                      initPreviousVelocity);
 
     std::shared_ptr<Solver<T, L>> solver = Create<T, L>(solverMethod);
 
@@ -309,13 +307,13 @@ namespace lbm {
     Outputs<T, L> outputs = Outputs<T, L>(convert_outputsArray<T, L>());
 
     return Init<T, L>(iterationStart,
-                                localField,
-                                globalField,
-                                solver,
-                                forcing,
-                                boundaryConditions,
-                                forces,
-                                outputs);
+                      localField,
+                      globalField,
+                      solver,
+                      forcing,
+                      boundaryConditions,
+                      forces,
+                      outputs);
   }
 }
 

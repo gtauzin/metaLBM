@@ -1,16 +1,17 @@
 #ifndef COMPUTE_SERIAL_H
 #define COMPUTE_SERIAL_H
 
+#include <array>
+#include <vector>
+#include <memory>
+#include <chrono>
+#include <omp.h>
+
 #include "init.h"
 #include "structure.h"
 #include "lattice.h"
 #include "force.h"
 #include "communication.h"
-
-#include <array>
-#include <vector>
-#include <memory>
-#include <chrono>
 
 namespace lbm {
 
@@ -215,8 +216,8 @@ namespace lbm {
       init.boundaryConditions.apply(*l1);
 
       auto t2 = std::chrono::high_resolution_clock::now();
-      std::chrono::duration<double> dTcomp0 = t1 - t0;
-      std::chrono::duration<double> dTtot0 = t2 - t0;
+      auto dTcomp0 = t1 - t0;
+      auto dTtot0 = t2 - t0;
       compTime += dTcomp0.count();
       totalTime += dTtot0.count();
 
@@ -265,7 +266,5 @@ namespace lbm {
 
   }
 }
-
-
 
 #endif // COMPUTE_SERIAL_H

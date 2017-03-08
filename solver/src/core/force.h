@@ -1,22 +1,23 @@
 #ifndef FORCE_H
 #define FORCE_H
 
-#include "input.h"
-#include "structure.h"
-#include "commons.h"
-#include "solver.h"
-
 #include <iostream>
 #include <array>
 #include <vector>
 #include <memory>
 #include <math.h>
+#include <omp.h>
 
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
 #include <boost/log/utility/setup/file.hpp>
 namespace logging = boost::log;
+
+#include "input.h"
+#include "structure.h"
+#include "commons.h"
+#include "solver.h"
 
 namespace lbm {
 
@@ -254,7 +255,7 @@ namespace lbm {
 
 #pragma omp declare simd
     inline MathVector<T, dimD<T, L>()>& force(const int iX, const int iY, const int iZ) {
-      MathVector<T, dimD<T, L>()> forceR = MathVector<T, dimD<T, L>()>();
+      MathVector<T, dimD<T, L>()> forceR = MathVector<T, dimD<T, L>()>{{0.0}};
 
       for(std::shared_ptr<Force<T, L>> bodyForce : forcesArray) {
         forceR += bodyForce->force(iX, iY, iZ);

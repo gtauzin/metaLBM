@@ -40,7 +40,7 @@ namespace lbm {
       return sumR;
     }
 
-    T norm2(){
+    T norm2() const {
       T norm2R = 0;
       UnrolledFor<0, size>::Do([&] (int i) {
           norm2R += mV[i] * mV[i];

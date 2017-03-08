@@ -1,13 +1,13 @@
 #ifndef COMMUNICATION_H
 #define COMMUNICATION_H
 
+#include <omp.h>
+#include <array>
+
 #include "input.h"
 #include "structure.h"
 #include "commons.h"
 #include "lattice.h"
-
-#include <omp.h>
-#include <array>
 
 namespace lbm {
 

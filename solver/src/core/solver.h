@@ -1,17 +1,13 @@
 #ifndef SOLVER_H
 #define SOLVER_H
 
-#include "input.h"
-#include "structure.h"
-#include "commons.h"
-#include "helpers.h"
-
 #include <iostream>
 #include <random>
 #include <array>
 #include <memory>
 #include <math.h>
 #include <iomanip>
+#include <omp.h>
 
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
@@ -19,6 +15,11 @@
 #include <boost/log/utility/setup/file.hpp>
 #include <boost/log/sources/severity_feature.hpp>
 namespace logging = boost::log;
+
+#include "input.h"
+#include "structure.h"
+#include "commons.h"
+#include "helpers.h"
 
 namespace lbm {
 
@@ -65,7 +66,7 @@ namespace lbm {
 
 #pragma omp declare simd
   template <class T, LatticeType L>
-    inline T computeEquilibrium(const int iQ, const T rho,
+    inline T computeEquilibrium(const int iQ, T rho,
                                 const MathVector<T, dimD<T, L>()>& u,
                                 const T u2) {
 

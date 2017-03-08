@@ -6,19 +6,18 @@
 #include <fstream>
 #include <sstream>
 
-#include "input.h"
-#include "init.h"
-#include "compute.h"
-#include "commons.h"
-
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
 #include <boost/log/utility/setup/file.hpp>
 namespace logging = boost::log;
 
-using namespace lbm;
+#include "input.h"
+#include "init.h"
+#include "compute.h"
+#include "commons.h"
 
+using namespace lbm;
 
 int main() {
   initLogging(0);
@@ -28,4 +27,6 @@ int main() {
   Init<double, latticeType> init = init_Simulation<double, latticeType>(0);
 
   compute<double, latticeType>(init);
-}
+
+  return 0;
+}}

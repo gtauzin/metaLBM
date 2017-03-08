@@ -7,6 +7,7 @@ output/*
 input/inputJSON*
 solver/*.bak
 solver/build*
+solver/build/*
 solver/*.gprof
 solver/*.out
 solver/log*

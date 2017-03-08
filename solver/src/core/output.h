@@ -1,11 +1,6 @@
 #ifndef OUTPUT_H
 #define OUTPUT_H
 
-#include "input.h"
-#include "structure.h"
-#include "commons.h"
-#include "lattice.h"
-
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -23,6 +18,11 @@ template<class T, std::size_t Alignment = 1>
 #else
 using vector = std::vector<T>;
 #endif
+
+#include "input.h"
+#include "structure.h"
+#include "commons.h"
+#include "lattice.h"
 
 namespace lbm {
 
