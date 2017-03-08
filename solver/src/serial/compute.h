@@ -130,6 +130,7 @@ namespace lbm {
           field.previousDensity[idx_field] = previousDensity;
           previousVelocity += forcing->getHydroVelocityForcing(previousDensity);
           field.previousVelocity[idx_field] = previousVelocity;
+          // field.nextForce[idx_field] = nextForce;
           //}
         }
       }

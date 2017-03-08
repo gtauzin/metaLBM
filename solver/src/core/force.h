@@ -254,7 +254,7 @@ namespace lbm {
 
 
 #pragma omp declare simd
-    inline MathVector<T, dimD<T, L>()>& force(const int iX, const int iY, const int iZ) {
+    inline MathVector<T, dimD<T, L>()> force(const int iX, const int iY, const int iZ) {
       MathVector<T, dimD<T, L>()> forceR = MathVector<T, dimD<T, L>()>{{0.0}};
 
       for(std::shared_ptr<Force<T, L>> bodyForce : forcesArray) {
