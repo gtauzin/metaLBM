@@ -1,8 +1,0 @@
-#ifndef EX1_CUH
-#define EX1_CUH
-
-//__global__ void hello(char *a, int *b);
-
-extern "C" void sayHi(int rank, int size);
-
-#endif
