@@ -58,7 +58,7 @@ namespace lbm {
   template <class T, LatticeType L>
     class Output_VTR : public Output<T, L> {
 
-    protected:
+  protected:
     void writeHeader(std::ofstream& fileVTR) {
       fileVTR << "<?xml version=\"1.0\"?>\n";
       fileVTR << "<VTKFile type=\"RectilinearGrid\" version=\"0.1\" byte_order=\"LittleEndian\">\n";

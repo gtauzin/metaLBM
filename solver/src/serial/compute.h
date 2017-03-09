@@ -9,8 +9,12 @@
 
 #include "init.h"
 #include "structure.h"
+#include "commons.h"
 #include "lattice.h"
+#include "solver.h"
 #include "force.h"
+#include "boundary.h"
+#include "output.h"
 #include "communication.h"
 
 namespace lbm {

@@ -29,4 +29,5 @@ int main() {
   compute<double, latticeType>(init);
 
   return 0;
-}}
+
+}

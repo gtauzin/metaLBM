@@ -99,7 +99,7 @@ namespace lbm {
   };
 
   template<class T, LatticeType L>
-  class Entropic : public BoundaryCondition<T, L> {
+    class Entropic : public BoundaryCondition<T, L> {
   private:
     const T pressure;
     const T density;
@@ -122,9 +122,9 @@ namespace lbm {
     {}
   };
 
-    template<class T, LatticeType L>
+  template<class T, LatticeType L>
 
-  class Corner : public BoundaryCondition<T, L> {
+    class Corner : public BoundaryCondition<T, L> {
   private:
     const T pressure;
     const T density;
@@ -146,10 +146,10 @@ namespace lbm {
 
   template<class T, LatticeType L>
     std::shared_ptr<BoundaryCondition<T, L>> Create(const BoundaryType& boundaryType,
-                                              const BoundaryPosition& boundaryPosition,
-                                              const int start, const int end,
-                                              const T pressure,
-                                              const MathVector<T, dimD<T, L>()>& velocity) {
+                                                    const BoundaryPosition& boundaryPosition,
+                                                    const int start, const int end,
+                                                    const T pressure,
+                                                    const MathVector<T, dimD<T, L>()>& velocity) {
     switch(boundaryType){
     case BoundaryType::bounceBack_halfWay:{
       return std::shared_ptr<BoundaryCondition<T, L>>(new BounceBack_HalfWay<T, L>(boundaryPosition,

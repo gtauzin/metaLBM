@@ -38,8 +38,8 @@ namespace lbm {
 #pragma omp declare simd
   template <class T, LatticeType L>
     inline MathVector<T, dimD<T, L>()> computeVelocity(const T * __restrict__ f,
-                                                        const int idx,
-                                                        const T density) {
+                                                       const int idx,
+                                                       const T density) {
     MathVector<T, dimD<T, L>()> velocityR(celerity<T, L>(0)* f[idxPop<T, L>(idx, 0)]);
 
     UnrolledFor<1, dimQ<T, L>()>::Do([&] (int iQ) {
@@ -52,7 +52,7 @@ namespace lbm {
 
 #pragma omp declare simd
   template <class T, LatticeType L>
-  inline T powerOfCelerity(const T arg, const int celerity) {
+    inline T powerOfCelerity(const T arg, const int celerity) {
     if(celerity == 0) {
       return 1.0;
     }

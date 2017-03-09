@@ -28,7 +28,7 @@ namespace lbm {
 
     Forcing<T, L>()
       : force()
-    {}
+      {}
 
     virtual MathVector<T, dimD<T, L>()> getEqVelocityForcing(const T density) const = 0;
 
