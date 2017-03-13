@@ -17,7 +17,7 @@ namespace logging = boost::log;
 #include "input.h"
 #include "structure.h"
 #include "commons.h"
-#include "solver.h"
+#include "calculate.h"
 
 namespace lbm {
 

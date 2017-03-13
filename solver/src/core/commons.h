@@ -28,7 +28,8 @@ namespace lbm {
    * @tparam T data type.
    * @tparam L lattice type of the form DdQq.
    */
-  template <class T, LatticeType L> struct Parameters;
+  template <class T, LatticeType L>
+    struct Parameters;
 
 
   template <class T>
@@ -51,10 +52,16 @@ namespace lbm {
 
       static constexpr T inv_cs2 = 3.0;
       static constexpr T cs2 = 1./inv_cs2;
-      static constexpr MathVector<MathVector<T, dimD>, dimQ> celerity = {{0.0}, {-1.0}, {1.0}
-      };
-      static constexpr MathVector<T, dimQ> weight = {2./3., 1./3., 1./3.
-      };
+      static constexpr MathVector<MathVector<T, dimD>, dimQ> celerity =
+        {
+          MathVector<T, dimD>{{0.0}},
+          MathVector<T, dimD>{{-1.0}},
+          MathVector<T, dimD>{{1.0}}
+        };
+      static constexpr MathVector<T, dimQ> weight =
+        {
+          2./3., 1./3., 1./3.
+        };
     };
 
 
@@ -77,22 +84,25 @@ namespace lbm {
 
       static constexpr T inv_cs2 = 3.0;
       static constexpr T cs2 = 1./inv_cs2;
-      static constexpr MathVector<MathVector<T, dimD>, dimQ> celerity{{
-          MathVector<T, dimD>({0.0, 0.0}),
-            MathVector<T, dimD>({-1.0, 1.0}),
-            MathVector<T, dimD>({-1.0, 0.0}),
-            MathVector<T, dimD>({-1.0, -1.0}),
-            MathVector<T, dimD>({0.0, -1.0}),
-            MathVector<T, dimD>({1.0, -1.0}),
-            MathVector<T, dimD>({1.0, 0.0}),
-            MathVector<T, dimD>({1.0, 1.0}),
-            MathVector<T, dimD>({0.0, 1.0})
-            }};
+      static constexpr MathVector<MathVector<T, dimD>, dimQ> celerity =
+        {
+          MathVector<T, dimD>{{0.0, 0.0}},
+          MathVector<T, dimD>{{-1.0, 1.0}},
+          MathVector<T, dimD>{{-1.0, 0.0}},
+          MathVector<T, dimD>{{-1.0, -1.0}},
+          MathVector<T, dimD>{{0.0, -1.0}},
+          MathVector<T, dimD>{{1.0, -1.0}},
+          MathVector<T, dimD>{{1.0, 0.0}},
+          MathVector<T, dimD>{{1.0, 1.0}},
+          MathVector<T, dimD>{{0.0, 1.0}}
+        };
 
-      static constexpr MathVector<T, dimQ> weight{{4./9., 1./36., 1./9.,
-            1./36., 1./9., 1./36.,
-            1./9., 1./36., 1./9.
-            }};
+      static constexpr MathVector<T, dimQ> weight =
+        {
+          4./9., 1./36., 1./9.,
+          1./36., 1./9., 1./36.,
+          1./9., 1./36., 1./9.
+        };
 
     };
 
@@ -115,116 +125,118 @@ namespace lbm {
 
       static constexpr T inv_cs2 = 3.0;
       static constexpr T cs2 = 1./inv_cs2;
-      static constexpr MathVector<MathVector<T, dimD>, dimQ> celerity = {{{0.0, 0.0, 0.0},
-                                                                          {-1.0, 0.0, 0.0},
-                                                                          {0.0, -1.0, 0.0},
-                                                                          {0.0, 0.0, -1.0},
-                                                                          {-1.0, -1.0, 0.0},
-                                                                          {-1.0, 1.0, 0.0},
-                                                                          {-1.0, 0.0, -1.0},
-                                                                          {-1.0, 0.0, 1.0},
-                                                                          {0.0, -1.0, -1.0},
-                                                                          {0.0, -1.0, 1.0},
-                                                                          {-1.0, -1.0, -1.0},
-                                                                          {-1.0, -1.0, 1.0},
-                                                                          {-1.0, 1.0, -1.0},
-                                                                          {-1.0, 1.0, 1.0},
-                                                                          {1.0, 0.0, 0.0},
-                                                                          {0.0, 1.0, 0.0},
-                                                                          {0.0, 0.0, 1.0},
-                                                                          {1.0, 1.0, 0.0},
-                                                                          {1.0, -1.0, 0.0},
-                                                                          {1.0, 0.0, 1.0},
-                                                                          {1.0, 0.0, -1.0},
-                                                                          {0.0, 1.0, 1.0},
-                                                                          {0.0, 1.0, -1.0},
-                                                                          {1.0, 1.0, 1.0},
-                                                                          {1.0, 1.0, -1.0},
-                                                                          {1.0, -1.0, 1.0},
-                                                                          {1.0, -1.0, -1.0}
-        }};
-      static constexpr MathVector<T, dimQ> weight = {{8./27., 2./27., 2./27.,
-                                                      2./27., 1./54., 1./54.,
-                                                      1./54., 1./54., 1./54.,
-                                                      1./54., 1./216., 1./216.,
-                                                      2./216., 1./216., 2./27.,
-                                                      2./27., 2./27., 1./54.,
-                                                      1./54., 1./54., 1./54.,
-                                                      1./54., 1./54., 1./216.,
-                                                      1./216., 1./216., 1./216.
-        }};
+      static constexpr MathVector<MathVector<T, dimD>, dimQ> celerity =
+        {
+          MathVector<T, dimD>{{0.0, 0.0, 0.0}},
+          MathVector<T, dimD>{{-1.0, 0.0, 0.0}},
+          MathVector<T, dimD>{{0.0, -1.0, 0.0}},
+          MathVector<T, dimD>{{0.0, 0.0, -1.0}},
+          MathVector<T, dimD>{{-1.0, -1.0, 0.0}},
+          MathVector<T, dimD>{{-1.0, 1.0, 0.0}},
+          MathVector<T, dimD>{{-1.0, 0.0, -1.0}},
+          MathVector<T, dimD>{{-1.0, 0.0, 1.0}},
+          MathVector<T, dimD>{{0.0, -1.0, -1.0}},
+          MathVector<T, dimD>{{0.0, -1.0, 1.0}},
+          MathVector<T, dimD>{{-1.0, -1.0, -1.0}},
+          MathVector<T, dimD>{{-1.0, -1.0, 1.0}},
+          MathVector<T, dimD>{{-1.0, 1.0, -1.0}},
+          MathVector<T, dimD>{{-1.0, 1.0, 1.0}},
+          MathVector<T, dimD>{{1.0, 0.0, 0.0}},
+          MathVector<T, dimD>{{0.0, 1.0, 0.0}},
+          MathVector<T, dimD>{{0.0, 0.0, 1.0}},
+          MathVector<T, dimD>{{1.0, 1.0, 0.0}},
+          MathVector<T, dimD>{{1.0, -1.0, 0.0}},
+          MathVector<T, dimD>{{1.0, 0.0, 1.0}},
+          MathVector<T, dimD>{{1.0, 0.0, -1.0}},
+          MathVector<T, dimD>{{0.0, 1.0, 1.0}},
+          MathVector<T, dimD>{{0.0, 1.0, -1.0}},
+          MathVector<T, dimD>{{1.0, 1.0, 1.0}},
+          MathVector<T, dimD>{{1.0, 1.0, -1.0}},
+          MathVector<T, dimD>{{1.0, -1.0, 1.0}},
+          MathVector<T, dimD>{{1.0, -1.0, -1.0}}
+        };
+      static constexpr MathVector<T, dimQ> weight =
+        {
+          8./27., 2./27., 2./27.,
+          2./27., 1./54., 1./54.,
+          1./54., 1./54., 1./54.,
+          1./54., 1./216., 1./216.,
+          2./216., 1./216., 2./27.,
+          2./27., 2./27., 1./54.,
+          1./54., 1./54., 1./54.,
+          1./54., 1./54., 1./216.,
+          1./216., 1./216., 1./216.
+        };
     };
 
 
   template <class T, LatticeType L>
-    inline constexpr int dimD() { return Parameters<T, L>::dimD; }
+    constexpr int dimD() { return Parameters<T, L>::dimD; }
 
   template <class T, LatticeType L>
-    inline constexpr int dimQ() { return Parameters<T, L>::dimQ; }
-
-
-  template <class T, LatticeType L>
-    inline constexpr int lX_g() { return Parameters<T, L>::lX_g; }
-
-  template <class T, LatticeType L>
-    inline constexpr int lY_g() { return Parameters<T, L>::lY_g; }
-
-  template <class T, LatticeType L>
-    inline constexpr int lZ_g() { return Parameters<T, L>::lZ_g; }
+    constexpr int dimQ() { return Parameters<T, L>::dimQ; }
 
 
   template <class T, LatticeType L>
-    inline constexpr int lX_l() { return Parameters<T, L>::lX_l; }
+    constexpr int lX_g() { return Parameters<T, L>::lX_g; }
 
   template <class T, LatticeType L>
-    inline constexpr int lY_l() { return Parameters<T, L>::lY_l; }
+    constexpr int lY_g() { return Parameters<T, L>::lY_g; }
 
   template <class T, LatticeType L>
-    inline constexpr int lZ_l() { return Parameters<T, L>::lZ_l; }
-
-
-  template <class T, LatticeType L>
-    inline constexpr int hX() { return Parameters<T, L>::hX; }
-
-  template <class T, LatticeType L>
-    inline constexpr int hY() { return Parameters<T, L>::hY; }
-
-  template <class T, LatticeType L>
-    inline constexpr int hZ() { return Parameters<T, L>::hZ; }
+    constexpr int lZ_g() { return Parameters<T, L>::lZ_g; }
 
 
   template <class T, LatticeType L>
-    inline constexpr int sizeX_l() { return 2*hX<T, L>() + lX_l<T, L>(); }
+    constexpr int lX_l() { return Parameters<T, L>::lX_l; }
 
   template <class T, LatticeType L>
-    inline constexpr int sizeY_l() { return 2*hY<T, L>() + lY_l<T, L>(); }
+    constexpr int lY_l() { return Parameters<T, L>::lY_l; }
 
   template <class T, LatticeType L>
-    inline constexpr int sizeZ_l() { return 2*hZ<T, L>() + lZ_l<T, L>(); }
-
-  template <class T, LatticeType L>
-    inline constexpr int s_l() { return lX_l<T, L>()*lY_l<T, L>()*lZ_l<T, L>(); }
-
-  template <class T, LatticeType L>
-    inline constexpr int s_g() { return lX_g<T, L>()*lY_g<T, L>()*lZ_g<T, L>(); }
+    constexpr int lZ_l() { return Parameters<T, L>::lZ_l; }
 
 
   template <class T, LatticeType L>
-    inline constexpr int inv_cs2() { return Parameters<T, L>::inv_cs2; }
+    constexpr int hX() { return Parameters<T, L>::hX; }
 
   template <class T, LatticeType L>
-    inline constexpr int cs2() { return 1.0/Parameters<T, L>::inv_cs2; }
+    constexpr int hY() { return Parameters<T, L>::hY; }
 
   template <class T, LatticeType L>
-    inline constexpr T celerity(int d, int iQ) { return Parameters<T, L>::celerity[iQ][d]; }
+    constexpr int hZ() { return Parameters<T, L>::hZ; }
+
 
   template <class T, LatticeType L>
-    inline constexpr MathVector<T, dimD<T, L>()> celerity(int iQ) { return Parameters<T, L>::celerity[iQ]; }
+    constexpr int sizeX_l() { return 2*hX<T, L>() + lX_l<T, L>(); }
 
   template <class T, LatticeType L>
-    inline constexpr T weight(int iQ) { return Parameters<T, L>::weight[iQ]; }
+    constexpr int sizeY_l() { return 2*hY<T, L>() + lY_l<T, L>(); }
+
+  template <class T, LatticeType L>
+    constexpr int sizeZ_l() { return 2*hZ<T, L>() + lZ_l<T, L>(); }
+
+  template <class T, LatticeType L>
+    constexpr int s_l() { return lX_l<T, L>()*lY_l<T, L>()*lZ_l<T, L>(); }
+
+  template <class T, LatticeType L>
+    constexpr int s_g() { return lX_g<T, L>()*lY_g<T, L>()*lZ_g<T, L>(); }
 
 
+  template <class T, LatticeType L>
+    constexpr T inv_cs2() { return Parameters<T, L>::inv_cs2; }
+
+  template <class T, LatticeType L>
+    constexpr T cs2() { return 1.0/Parameters<T, L>::inv_cs2; }
+
+  template <class T, LatticeType L>
+    constexpr T celerity(int d, int iQ) { return Parameters<T, L>::celerity[d][iQ]; }
+
+  template <class T, LatticeType L>
+    constexpr MathVector<T, dimD<T, L>()> celerity(int iQ) { return Parameters<T, L>::celerity[iQ]; }
+
+  template <class T, LatticeType L>
+    constexpr T weight(int iQ) { return Parameters<T, L>::weight[iQ]; }
 
 
   template<class T, LatticeType L>
@@ -271,7 +283,7 @@ namespace lbm {
   }
 
   template<class T, LatticeType L>
-    _HOST _DEVICE inline constexpr int idxPop_lF(const int idx, const int i) {
+    _HOST _DEVICE constexpr int idxPop_lF(const int idx, const int i) {
     return idx*dimQ<T, L>() + i;
   }
 

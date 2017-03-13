@@ -25,65 +25,6 @@ namespace lbm {
 
 #pragma omp declare simd
   template <class T, LatticeType L>
-    T computeDensity(const T * __restrict__ f, const int idx) {
-    T newDensity = f[idxPop<T, L>(idx, 0)];
-
-    UnrolledFor<1, dimQ<T, L>()>::Do([&] (int iQ) {
-        newDensity += f[idxPop<T, L>(idx, iQ)];
-      });
-    return newDensity;
-  }
-
-
-#pragma omp declare simd
-  template <class T, LatticeType L>
-    inline MathVector<T, dimD<T, L>()> computeVelocity(const T * __restrict__ f,
-                                                       const int idx,
-                                                       const T density) {
-    MathVector<T, dimD<T, L>()> velocityR(celerity<T, L>(0)* f[idxPop<T, L>(idx, 0)]);
-
-    UnrolledFor<1, dimQ<T, L>()>::Do([&] (int iQ) {
-        velocityR += celerity<T, L>(iQ)* f[idxPop<T, L>(idx, iQ)];
-      });
-
-    return velocityR/density;
-  }
-
-
-#pragma omp declare simd
-  template <class T, LatticeType L>
-    inline T powerOfCelerity(const T arg, const int celerity) {
-    if(celerity == 0) {
-      return 1.0;
-    }
-    else if(celerity == -1) {
-      return 1.0/arg;
-    }
-    else {
-      return arg;
-    }
-  }
-
-#pragma omp declare simd
-  template <class T, LatticeType L>
-    inline T computeEquilibrium(const int iQ, T rho,
-                                const MathVector<T, dimD<T, L>()>& u,
-                                const T u2) {
-
-    T fEq_iQ = 1.0;
-
-    UnrolledFor<0, dimD<T, L>()>::Do([&] (int d) {
-        fEq_iQ *= (2.0 - sqrt(1.0 + 3.0*u[d]*u[d]))
-          * powerOfCelerity<T, L>((2* u[d] + sqrt(1.0 + 3.0*u[d]*u[d]))/(1.0 - u[d]),
-                                  (int) celerity<T, L>(d, iQ));
-      });
-
-    return rho * weight<T, L>(iQ)*fEq_iQ;
-  }
-
-
-#pragma omp declare simd
-  template <class T, LatticeType L>
     struct EntropicStepFunctor : public RootFinderFunctor<T> {
   private:
     const MathVector<T, dimQ<T, L>()> f;
@@ -218,19 +159,21 @@ namespace lbm {
     inline bool isDeviationSmall(const MathVector<T, dimQ<T, L>()>& f,
                                  const MathVector<T, dimQ<T, L>()>& fNeq) {
 
+      bool isDeviationSmallR = true;
       T deviation;
 
       UnrolledFor<0, dimQ<T, L>()>::Do([&] (int iQ) {
           deviation = fabs(fNeq[iQ]/f[iQ]);
-          BOOST_LOG_TRIVIAL(debug) << "Calculation of deviation " << iQ << " : " << deviation;
+          BOOST_LOG_TRIVIAL(debug) << "Calculation of deviation " << iQ << " : "
+                                   << deviation;
 
           if(deviation > 1.0e-3) {
             BOOST_LOG_TRIVIAL(debug) << "Deviation > 1e-3: " << deviation;
-            return false;
+            isDeviationSmallR = false;
           }
         });
 
-      return true;
+      return isDeviationSmallR;
     }
 
 #pragma omp declare simd
@@ -326,20 +269,21 @@ namespace lbm {
     inline bool isRelativeDeviationSmall(const MathVector<T, dimQ<T, L>()>& f,
                                          const MathVector<T, dimQ<T, L>()>& fNeq) {
 
+      bool isDeviationSmallR = true;
       T deviation;
 
       UnrolledFor<0, dimQ<T, L>()>::Do([&] (int iQ) {
           deviation = fabs(fNeq[iQ]/f[iQ]);
-          BOOST_LOG_TRIVIAL(debug) << "Calculation of relative deviation " << iQ << " : "
+          BOOST_LOG_TRIVIAL(debug) << "Calculation of deviation " << iQ << " : "
                                    << deviation;
 
-          if(deviation > 1.0e-2) {
-            BOOST_LOG_TRIVIAL(debug) << "Relative deviation > 1e-2: " << deviation;
-            return false;
+          if(deviation > 1.0e-3) {
+            BOOST_LOG_TRIVIAL(debug) << "Deviation > 1e-3: " << deviation;
+            isDeviationSmallR = false;
           }
         });
 
-      return true;
+      return isDeviationSmallR;
     }
 
 
@@ -464,6 +408,7 @@ namespace lbm {
     inline bool isDeviationSmall(const MathVector<T, dimQ<T, L>()>& f,
                                  const MathVector<T, dimQ<T, L>()>& fNeq) {
 
+      bool isDeviationSmallR = true;
       T deviation;
 
       UnrolledFor<0, dimQ<T, L>()>::Do([&] (int iQ) {
@@ -473,11 +418,11 @@ namespace lbm {
 
           if(deviation > 1.0e-3) {
             BOOST_LOG_TRIVIAL(debug) << "Deviation > 1e-3: " << deviation;
-            return false;
+            isDeviationSmallR = false;
           }
         });
 
-      return true;
+      return isDeviationSmallR;
     }
 
 #pragma omp declare simd
@@ -569,6 +514,7 @@ namespace lbm {
     inline bool isDeviationSmall(const MathVector<T, dimQ<T, L>()>& f,
                                  const MathVector<T, dimQ<T, L>()>& fNeq) {
 
+      bool isDeviationSmallR = true;
       T deviation;
 
       UnrolledFor<0, dimQ<T, L>()>::Do([&] (int iQ) {
@@ -578,11 +524,11 @@ namespace lbm {
 
           if(deviation > 1.0e-3) {
             BOOST_LOG_TRIVIAL(debug) << "Deviation > 1e-3: " << deviation;
-            return false;
+            isDeviationSmallR = false;
           }
         });
 
-      return true;
+      return isDeviationSmallR;
     }
 
 #pragma omp declare simd

@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 # Compilers
 option(ICC "Use Intel compiler" OFF)
 
-project(LBM)
+project(metaLBM)
 set (CMAKE_CXX_STANDARD 11)
 
 # Include directories
@@ -30,9 +30,13 @@ option(MPI_CUDA "Enabling parallel MPI+CUDA implementation" OFF)
 link_libraries(-lpthread)
 
 # Definitions
+add_definitions(-DNTHREADS=1)
 add_definitions(-DNTHREADS=${NTHREADS})
+add_definitions(-DNPROCS=1)
 add_definitions(-DNPROCS=${NPROCS})
+add_definitions(-D_SOA)
 add_definitions(${DATA_STRUCT})
+add_definitions(-DLOG=)
 add_definitions(${LOG})
 message(STATUS "${NPROCS}")
 
@@ -101,9 +105,9 @@ elseif( ${HOST_NAME} MATCHES "newturb" )
   set(BOOST_LIBRARYDIR "/scratch/tauzin/software/lib")
   set(Boost_USE_STATIC_LIBS ON) # enable static linking
 elseif( ${HOST_NAME} MATCHES "node*" )
-#  set(BOOST_ROOT "/galileo/home/userexternal/gtauzin0/software/")
-#  set(BOOST_INCLUDEDIR "/galileo/home/userexternal/gtauzin0/software/include")
-#  set(BOOST_LIBRARYDIR "/galileo/home/userexternal/gtauzin0/software/lib")
+  #  set(BOOST_ROOT "/galileo/home/userexternal/gtauzin0/software/")
+  #  set(BOOST_INCLUDEDIR "/galileo/home/userexternal/gtauzin0/software/include")
+  #  set(BOOST_LIBRARYDIR "/galileo/home/userexternal/gtauzin0/software/lib")
   set(Boost_USE_STATIC_LIBS ON) # enable static linking
 elseif( ${HOST_NAME} MATCHES "hydra-08" )
   set(BOOST_ROOT "/home/tauzin/software/")
@@ -170,7 +174,25 @@ if(CUDA OR MPI_CUDA)
   find_package(CUDA QUIET REQUIRED)
   #set(CUDA_SEPARABLE_COMPILATION ON)
   #set(CUDA_PROPAGATE_HOST_FLAGS OFF)
-  list(APPEND CUDA_NVCC_FLAGS -std=c++11 -gencode arch=compute_20,code=sm_20) #-std=c++11 -O3 -Xcompiler "-funroll-loops"
+  # sm_60 is the new Pascal architecture.
+  # compute_50 specifies the virtual architecture and
+  # provides forward compatibility with future GPU architectures.
+  set(GENCODE_SM13 -gencode arch=compute_13,code=sm_13)
+  set(GENCODE_SM20 -gencode arch=compute_20,code=sm_20)
+  set(GENCODE_SM30 -gencode arch=compute_30,code=sm_30)
+  set(GENCODE_SM35 -gencode arch=compute_35,code=sm_35)
+  set(GENCODE_SM35 -gencode arch=compute_37,code=sm_37)
+  set(GENCODE_SM50 -gencode arch=compute_50,code=sm_50)
+  set(GENCODE_SM52 -gencode arch=compute_52,code=\"sm_52,compute_52\")
+  set(GENCODE_SM60 -gencode arch=compute_60,code=\"sm_60,compute_60\")
+  set(GENCODE_FLAGS ${GENCODE_SM20} ${GENCODE_SM30} ${GENCODE_SM35}
+    ${GENCODE_SM37} ${GENCODE_SM50} ${GENCODE_SM52}
+    ${GENCODE_SM60})
+  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};
+    ${GENCODE_FLAGS};
+    -O3;
+    -std=c++11)
+  include_directories("${CUDA_INCLUDE_DIRS}")
 endif()
 
 # Build Targets

@@ -12,52 +12,13 @@
 #include "commons.h"
 #include "lattice.h"
 #include "solver.h"
+#include "calculate.h"
 #include "force.h"
 #include "boundary.h"
 #include "output.h"
 #include "communication.h"
 
 namespace lbm {
-
-#pragma omp declare simd
-  template<class T, LatticeType L>
-    inline void calculateMoments(const T * __restrict__ f, const int idx_lattice,
-                                 T& density, MathVector<T, dimD<T, L>()>& velocity) {
-
-    BOOST_LOG_TRIVIAL(debug) << " - Computing density.";
-    density = computeDensity<T, L>(f, idx_lattice);
-
-    BOOST_LOG_TRIVIAL(debug) << " - Computing velocity.";
-    velocity = computeVelocity<T, L>(f, idx_lattice, density);
-  }
-
-
-  template<class T, LatticeType L>
-    void calculateMomentsField(Lattice<T, L>& l_previous,
-                               LocalField<T, L>& field) {
-#pragma omp parallel for schedule(static) num_threads(NTHREADS)
-    for(int iZ = hZ<T, L>(); iZ < hZ<T, L>()+lZ_l<T, L>(); ++iZ) {
-      for(int iY = hY<T, L>(); iY < hY<T, L>()+lY_l<T, L>(); ++iY) {
-#pragma omp simd
-        for(int iX = hX<T, L>(); iX < hX<T, L>()+lX_l<T, L>(); ++iX) {
-          BOOST_LOG_TRIVIAL(debug) << " - (x, y, z) = "
-                                   << "(" << iX
-                                   << ", " << iY
-                                   << ", " << iZ << ")";
-          int idx_lattice = idxL<T, L>(iX, iY, iZ);
-          int idx_field = idx_inF<T, L>(iX, iY, iZ);
-
-          T previousDensity;
-          MathVector<T, dimD<T, L>()> previousVelocity;
-          calculateMoments<T, L>(l_previous.f_distribution.data(), idx_lattice,
-                                 previousDensity, previousVelocity);
-
-          field.nextDensity[idx_field] = previousDensity;
-          field.nextVelocity[idx_field] = previousVelocity;
-        }
-      }
-    }
-  }
 
   template<class T, LatticeType L>
     void push_fusedCollideAndStream(Lattice<T, L>& l_previous, Lattice<T, L>& l_next,
@@ -87,7 +48,7 @@ namespace lbm {
 
           BOOST_LOG_TRIVIAL(debug) << " - Computing force.";
           forcing->force = forces.force(iX-hX<T, L>()+startX, iY-hY<T, L>(), iZ-hZ<T, L>());
-          MathVector<T, dimD<T, L>()> nextForce = forcing->force;
+          //MathVector<T, dimD<T, L>()> nextForce = forcing->force;
 
           T previousVelocity2 = previousVelocity.norm2();
 
