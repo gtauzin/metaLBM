@@ -195,6 +195,16 @@ namespace lbm {
       return mV_c;
     }
 
+  template<class T, unsigned int size>
+    bool operator==(MathVector<T, size> const &lhs,
+                    MathVector<T, size> const &rhs) {
+    for(unsigned int i = 0; i < size; ++i){
+      if (lhs[i] != rhs[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
 
 }
 #endif // STRUCTURE_H

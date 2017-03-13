@@ -103,6 +103,34 @@ BOOST_AUTO_TEST_CASE(doubleD2Q9) {
   const auto w8_ = weight<T, L>(8);
   BOOST_CHECK_EQUAL(w8_, (T)1.0/9.0);
 
+  const auto c0_ = celerity<T, L>(0);
+  const auto c0_r = MathVector<T, dimD_>{{0.0, 0.0}};
+  BOOST_CHECK_EQUAL(c0_, c0_r);
+  const auto c1_ = celerity<T, L>(1);
+  const auto c1_r = MathVector<T, dimD_>{{-1.0, 1.0}};
+  BOOST_CHECK_EQUAL(c1_, c1_r);
+  const auto c2_ = celerity<T, L>(2);
+  const auto c2_r = MathVector<T, dimD_>{{-1.0, 0.0}};
+  BOOST_CHECK_EQUAL(c2_, c2_r);
+  const auto c3_ = celerity<T, L>(3);
+  const auto c3_r = MathVector<T, dimD_>{{-1.0, -1.0}};
+  BOOST_CHECK_EQUAL(c3_, c3_r);
+  const auto c4_ = celerity<T, L>(4);
+  const auto c4_r = MathVector<T, dimD_>{{0.0, -1.0}};
+  BOOST_CHECK_EQUAL(c4_, c4_r);
+  const auto c5_ = celerity<T, L>(5);
+  const auto c5_r = MathVector<T, dimD_>{{1.0, -1.0}};
+  BOOST_CHECK_EQUAL(c5_, c5_r);
+  const auto c6_ = celerity<T, L>(6);
+  const auto c6_r = MathVector<T, dimD_>{{1.0, 0.0}};
+  BOOST_CHECK_EQUAL(c6_, c6_r);
+  const auto c7_ = celerity<T, L>(7);
+  const auto c7_r = MathVector<T, dimD_>{{1.0, 1.0}};
+  BOOST_CHECK_EQUAL(c7_, c7_r);
+  const auto c8_ = celerity<T, L>(8);
+  const auto c8_r = MathVector<T, dimD_>{{0.0, 1.0}};
+  BOOST_CHECK_EQUAL(c8_, c8_r);
+
   const auto c0_0_ = celerity<T, L>(0, 0);
   BOOST_CHECK_EQUAL(c0_0_, (T)0.0);
   const auto c0_1_ = celerity<T, L>(0, 1);
