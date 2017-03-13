@@ -47,6 +47,17 @@ BOOST_AUTO_TEST_CASE(doubleD1Q3) {
   const auto w2_ = weight<T, L>(2);
   BOOST_CHECK_EQUAL(w2_, 1.0/3.0);
 
+  const auto c0_ = celerity<T, L>(0);
+  const auto c0_r = MathVector<T, dimD_>{{0.0}};
+  BOOST_CHECK_EQUAL(c0_, c0_r);
+  const auto c1_ = celerity<T, L>(1);
+  const auto c1_r = MathVector<T, dimD_>{{-1.0}};
+  BOOST_CHECK_EQUAL(c1_, c1_r);
+  const auto c2_ = celerity<T, L>(2);
+  const auto c2_r = MathVector<T, dimD_>{{1.0}};
+  BOOST_CHECK_EQUAL(c2_, c2_r);
+
+
   const auto c0_0_ = celerity<T, L>(0, 0);
   BOOST_CHECK_EQUAL(c0_0_, (T)0.0);
   const auto c1_0_ = celerity<T, L>(1, 0);
