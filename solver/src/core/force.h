@@ -24,19 +24,19 @@ namespace lbm {
   template <class T, LatticeType L>
     class Forcing {
   public:
-    MathVector<T, dimD<T, L>()> force;
+    MathVector<T, P::dimD> force;
 
     Forcing<T, L>()
       : force()
       {}
 
-    virtual MathVector<T, dimD<T, L>()> getEqVelocityForcing(const T density) const = 0;
+    virtual MathVector<T, P::dimD> getEqVelocityForcing(const T density) const = 0;
 
     virtual T getCollisionForcing(const int i, const T density,
-                                  const MathVector<T, dimD<T, L>()>& velocity,
+                                  const MathVector<T, P::dimD>& velocity,
                                   const T velocity2) const = 0;
 
-    virtual MathVector<T, dimD<T, L>()> getHydroVelocityForcing(const T density) const = 0;
+    virtual MathVector<T, P::dimD> getHydroVelocityForcing(const T density) const = 0;
 
   };
 
@@ -50,26 +50,26 @@ namespace lbm {
       {}
 
 #pragma omp declare simd
-    inline MathVector<T, dimD<T, L>()> getEqVelocityForcing(const T density) const {
+    inline MathVector<T, P::dimD> getEqVelocityForcing(const T density) const {
       return 0.5/density * force;
     }
 
 
 #pragma omp declare simd
     inline T getCollisionForcing(const int iQ, const T density,
-                                 const MathVector<T, dimD<T, L>()>& velocity,
+                                 const MathVector<T, P::dimD>& velocity,
                                  const T velocity2) const {
-      T celerity_iQDotVelocity = celerity<T, L>(iQ).dot(velocity);
+      T celerity_iQDotVelocity = P::celerity()[iQ].dot(velocity);
 
-      T collisionForcingR = (celerity<T, L>(iQ) - velocity
-                             + inv_cs2<T, L>() * celerity_iQDotVelocity
-                             * celerity<T, L>(iQ)).dot(force);
+      T collisionForcingR = (P::celerity()[iQ] - velocity
+                             + P::inv_cs2 * celerity_iQDotVelocity
+                             * P::celerity()[iQ]).dot(force);
 
-      return (1.0 - beta) * weight<T, L>(iQ) * inv_cs2<T, L>() * collisionForcingR;
+      return (1.0 - beta) * P::weight()[iQ] * P::inv_cs2 * collisionForcingR;
     }
 
 #pragma omp declare simd
-    inline MathVector<T, dimD<T, L>()> getHydroVelocityForcing(const T density) const {
+    inline MathVector<T, P::dimD> getHydroVelocityForcing(const T density) const {
       return 0.5/density * force;
     }
 
@@ -86,21 +86,21 @@ namespace lbm {
       {}
 
 #pragma omp declare simd
-    inline MathVector<T, dimD<T, L>()> getEqVelocityForcing(const T density) const {
+    inline MathVector<T, P::dimD> getEqVelocityForcing(const T density) const {
       return tau/density * force;
     }
 
 
 #pragma omp declare simd
-    inline T getCollisionForcing(const int i, const T density,
-                                 const MathVector<T, dimD<T, L>()>& velocity,
+    inline T getCollisionForcing(const int iQ, const T density,
+                                 const MathVector<T, P::dimD>& velocity,
                                  const T velocity2) const {
 
       return 0.0;
     }
 
 #pragma omp declare simd
-    inline MathVector<T, dimD<T, L>()> getHydroVelocityForcing(const T density) const {
+    inline MathVector<T, P::dimD> getHydroVelocityForcing(const T density) const {
       return 0.5/density * force;
     }
 
@@ -116,13 +116,13 @@ namespace lbm {
       {}
 
 #pragma omp declare simd
-    inline MathVector<T, dimD<T, L>()> getEqVelocityForcing(const T density) const {
-      return MathVector<T, dimD<T, L>()>();
+    inline MathVector<T, P::dimD> getEqVelocityForcing(const T density) const {
+      return MathVector<T, P::dimD>();
     }
 
 #pragma omp declare simd
     inline T getCollisionForcing(const int i, const T density,
-                                 const MathVector<T, dimD<T, L>()>& velocity,
+                                 const MathVector<T, P::dimD>& velocity,
                                  const T velocity2) const {
 
       return computeEquilibrium<T, L>(i, density,
@@ -134,7 +134,7 @@ namespace lbm {
     }
 
 #pragma omp declare simd
-    inline MathVector<T, dimD<T, L>()> getHydroVelocityForcing(const T density) const {
+    inline MathVector<T, P::dimD> getHydroVelocityForcing(const T density) const {
       return 0.5/density * force;
     }
 
@@ -168,7 +168,7 @@ namespace lbm {
       {}
 
 #pragma omp declare simd
-    virtual MathVector<T, dimD<T, L>()> force(const int iX, const int iY, const int iZ) = 0;
+    virtual MathVector<T, P::dimD> force(const int iX, const int iY, const int iZ) = 0;
 
   };
 
@@ -176,17 +176,17 @@ namespace lbm {
   template<class T, LatticeType L>
     class ConstantForce : public Force<T, L> {
   private:
-    const MathVector<T, dimD<T, L>()> amplitude;
+    const MathVector<T, P::dimD> amplitude;
 
   public:
 
-  ConstantForce(const MathVector<T, dimD<T, L>()> amplitude_in)
+  ConstantForce(const MathVector<T, P::dimD> amplitude_in)
     : Force<T, L>()
       , amplitude(amplitude_in)
     {}
 
 #pragma omp declare simd
-    inline MathVector<T, dimD<T, L>()> force(const int iX, const int iY, const int iZ) {
+    inline MathVector<T, P::dimD> force(const int iX, const int iY, const int iZ) {
       return amplitude;
     }
   };
@@ -195,21 +195,21 @@ namespace lbm {
   template<class T, LatticeType L>
     class SinusoidalForce : public Force<T, L> {
   private:
-    const MathVector<T, dimD<T, L>()> amplitude;
-    const MathVector<T, dimD<T, L>()> waveLength;
+    const MathVector<T, P::dimD> amplitude;
+    const MathVector<T, P::dimD> waveLength;
 
   public:
 
-  SinusoidalForce(const MathVector<T, dimD<T, L>()>& amplitude_in,
-                  const MathVector<T, dimD<T, L>()>& waveLength_in)
+  SinusoidalForce(const MathVector<T, P::dimD>& amplitude_in,
+                  const MathVector<T, P::dimD>& waveLength_in)
     : Force<T, L>()
       , amplitude(amplitude_in)
       , waveLength(waveLength_in)
     {}
 
 #pragma omp declare simd
-    inline MathVector<T, dimD<T, L>()> force(const int iX, const int iY, const int iZ){
-      MathVector<T, dimD<T, L>()> forceR;
+    inline MathVector<T, P::dimD> force(const int iX, const int iY, const int iZ){
+      MathVector<T, P::dimD> forceR;
 
       forceR[0] = amplitude[0] * sin(iX*2*M_PI/waveLength[0]);
       forceR[1] = amplitude[1] * sin(iY*2*M_PI/waveLength[1]);
@@ -222,8 +222,8 @@ namespace lbm {
 
   template<class T, LatticeType L>
     std::shared_ptr<Force<T, L>> Create(const ForceType& forceType,
-                                        const MathVector<T, dimD<T, L>()>& amplitude,
-                                        const MathVector<T, dimD<T, L>()>& waveLength) {
+                                        const MathVector<T, P::dimD>& amplitude,
+                                        const MathVector<T, P::dimD>& waveLength) {
 
     switch(forceType){
     case ForceType::constant : {
@@ -254,8 +254,8 @@ namespace lbm {
 
 
 #pragma omp declare simd
-    inline MathVector<T, dimD<T, L>()> force(const int iX, const int iY, const int iZ) {
-      MathVector<T, dimD<T, L>()> forceR = MathVector<T, dimD<T, L>()>{{0.0}};
+    inline MathVector<T, P::dimD> force(const int iX, const int iY, const int iZ) {
+      MathVector<T, P::dimD> forceR = MathVector<T, P::dimD>{{0.0}};
 
       for(std::shared_ptr<Force<T, L>> bodyForce : forcesArray) {
         forceR += bodyForce->force(iX, iY, iZ);

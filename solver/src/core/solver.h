@@ -27,12 +27,12 @@ namespace lbm {
   template <class T, LatticeType L>
     struct EntropicStepFunctor : public RootFinderFunctor<T> {
   private:
-    const MathVector<T, dimQ<T, L>()> f;
-    const MathVector<T, dimQ<T, L>()> fNeq;
+    const MathVector<T, P::dimQ> f;
+    const MathVector<T, P::dimQ> fNeq;
 
   public:
-  EntropicStepFunctor(const MathVector<T, dimQ<T, L>()>& f_in,
-                      const MathVector<T, dimQ<T, L>()>& fNeq_in)
+  EntropicStepFunctor(const MathVector<T, P::dimQ>& f_in,
+                      const MathVector<T, P::dimQ>& fNeq_in)
     : RootFinderFunctor<T>()
       , f(f_in)
       , fNeq(fNeq_in)
@@ -45,15 +45,15 @@ namespace lbm {
 
       T entropicStepFunction = 0.0;
 
-      UnrolledFor<0, dimQ<T, L>()>::Do([&] (int iQ) {
+      UnrolledFor<0, P::dimQ>::Do([&] (int iQ) {
           BOOST_LOG_TRIVIAL(debug) << "f[" << iQ << "] = "
                                    << std::setprecision (17) << f[iQ] << ", "
                                    << "fNeq[" << iQ << "] = "
                                    << std::setprecision (17) << fNeq[iQ];
 
           T fmAlphafNeq_iQ = f[iQ] - alpha*fNeq[iQ];
-          entropicStepFunction += f[iQ]*log(f[iQ]/weight<T, L>(iQ))
-            - fmAlphafNeq_iQ*log(fmAlphafNeq_iQ/weight<T, L>(iQ));
+          entropicStepFunction += f[iQ]*log(f[iQ]/P::weight()[iQ])
+            - fmAlphafNeq_iQ*log(fmAlphafNeq_iQ/P::weight()[iQ]);
         });
 
       BOOST_LOG_TRIVIAL(debug) << "entropicStepFunction: "
@@ -69,7 +69,7 @@ namespace lbm {
 
       T entropicStepFunctionDerivative = 0.0;
 
-      UnrolledFor<0, dimQ<T, L>()>::Do([&] (int iQ) {
+      UnrolledFor<0, P::dimQ>::Do([&] (int iQ) {
           BOOST_LOG_TRIVIAL(debug) << "f[" << iQ << "] = "
                                    << std::setprecision (17) << f[iQ] << ", "
                                    << "fNeq[" << iQ << "] = "
@@ -77,7 +77,7 @@ namespace lbm {
 
           T fmAlphafNeq_iQ = f[iQ] - alpha*fNeq[iQ];
 
-          entropicStepFunctionDerivative += fNeq[iQ]*(1 + log(fmAlphafNeq_iQ/weight<T, L>(iQ)));
+          entropicStepFunctionDerivative += fNeq[iQ]*(1 + log(fmAlphafNeq_iQ/P::weight()[iQ]));
         });
 
       BOOST_LOG_TRIVIAL(debug) << "entropicStepFunctionDerivative: "
@@ -96,8 +96,8 @@ namespace lbm {
       {}
 
 #pragma omp declare simd
-    virtual T computeAlpha(const MathVector<T, dimQ<T, L>()>& f,
-                           const MathVector<T, dimQ<T, L>()>& fNeq,
+    virtual T computeAlpha(const MathVector<T, P::dimQ>& f,
+                           const MathVector<T, P::dimQ>& fNeq,
                            const T alphaGuess) = 0;
   };
 
@@ -111,8 +111,8 @@ namespace lbm {
       {}
 
 #pragma omp declare simd
-    inline T computeAlpha(const MathVector<T, dimQ<T, L>()>& f,
-                          const MathVector<T, dimQ<T, L>()>& fNeq,
+    inline T computeAlpha(const MathVector<T, P::dimQ>& f,
+                          const MathVector<T, P::dimQ>& fNeq,
                           const T alphaGuess) {
       return 2.0;
     }
@@ -129,8 +129,8 @@ namespace lbm {
       {}
 
 #pragma omp declare simd
-    inline T computeAlpha(const MathVector<T, dimQ<T, L>()>& f,
-                          const MathVector<T, dimQ<T, L>()>& fNeq,
+    inline T computeAlpha(const MathVector<T, P::dimQ>& f,
+                          const MathVector<T, P::dimQ>& fNeq,
                           const T alphaGuess) {
       if(isDeviationSmall(f, fNeq)) {
         BOOST_LOG_TRIVIAL(debug) << "Returning alpha: " << 2.0;
@@ -156,13 +156,13 @@ namespace lbm {
     }
 
 #pragma omp declare simd
-    inline bool isDeviationSmall(const MathVector<T, dimQ<T, L>()>& f,
-                                 const MathVector<T, dimQ<T, L>()>& fNeq) {
+    inline bool isDeviationSmall(const MathVector<T, P::dimQ>& f,
+                                 const MathVector<T, P::dimQ>& fNeq) {
 
       bool isDeviationSmallR = true;
       T deviation;
 
-      UnrolledFor<0, dimQ<T, L>()>::Do([&] (int iQ) {
+      UnrolledFor<0, P::dimQ>::Do([&] (int iQ) {
           deviation = fabs(fNeq[iQ]/f[iQ]);
           BOOST_LOG_TRIVIAL(debug) << "Calculation of deviation " << iQ << " : "
                                    << deviation;
@@ -177,13 +177,13 @@ namespace lbm {
     }
 
 #pragma omp declare simd
-    T calculateAlphaMax(const MathVector<T, dimQ<T, L>()>& f,
-                        const MathVector<T, dimQ<T, L>()>& fNeq) {
+    T calculateAlphaMax(const MathVector<T, P::dimQ>& f,
+                        const MathVector<T, P::dimQ>& fNeq) {
 
       T alphaMaxR = 2.5;
       T alphaMaxTemp;
 
-      UnrolledFor<0, dimQ<T, L>()>::Do([&] (int iQ) {
+      UnrolledFor<0, P::dimQ>::Do([&] (int iQ) {
           if(fNeq[iQ] > 0) {
             alphaMaxTemp = fabs(f[iQ]/fNeq[iQ]);
 
@@ -198,8 +198,8 @@ namespace lbm {
     }
 
 #pragma omp declare simd
-    inline T calculateAlpha(const MathVector<T, dimQ<T, L>()>& f,
-                            const MathVector<T, dimQ<T, L>()>& fNeq,
+    inline T calculateAlpha(const MathVector<T, P::dimQ>& f,
+                            const MathVector<T, P::dimQ>& fNeq,
                             const T alphaGuess,
                             const T alphaMin, const T alphaMax) {
 
@@ -240,8 +240,8 @@ namespace lbm {
       {}
 
 #pragma omp declare simd
-    inline T computeAlpha(const MathVector<T, dimQ<T, L>()>& f,
-                          const MathVector<T, dimQ<T, L>()>& fNeq,
+    inline T computeAlpha(const MathVector<T, P::dimQ>& f,
+                          const MathVector<T, P::dimQ>& fNeq,
                           const T alphaGuess) {
       if(isRelativeDeviationSmall(f, fNeq)) {
         BOOST_LOG_TRIVIAL(debug) << "Approximating alpha: " << 2.0;
@@ -266,13 +266,13 @@ namespace lbm {
     }
 
 #pragma omp declare simd
-    inline bool isRelativeDeviationSmall(const MathVector<T, dimQ<T, L>()>& f,
-                                         const MathVector<T, dimQ<T, L>()>& fNeq) {
+    inline bool isRelativeDeviationSmall(const MathVector<T, P::dimQ>& f,
+                                         const MathVector<T, P::dimQ>& fNeq) {
 
       bool isDeviationSmallR = true;
       T deviation;
 
-      UnrolledFor<0, dimQ<T, L>()>::Do([&] (int iQ) {
+      UnrolledFor<0, P::dimQ>::Do([&] (int iQ) {
           deviation = fabs(fNeq[iQ]/f[iQ]);
           BOOST_LOG_TRIVIAL(debug) << "Calculation of deviation " << iQ << " : "
                                    << deviation;
@@ -288,15 +288,15 @@ namespace lbm {
 
 
 #pragma omp declare simd
-    T approximateAlpha(const MathVector<T, dimQ<T, L>()>& f,
-                       const MathVector<T, dimQ<T, L>()>& fNeq) {
+    T approximateAlpha(const MathVector<T, P::dimQ>& f,
+                       const MathVector<T, P::dimQ>& fNeq) {
 
       T a1 = 0.0;
       T a2 = 0.0;
       T a3 = 0.0;
       T a4 = 0.0;
 
-      UnrolledFor<0, dimQ<T, L>()>::Do([&] (int iQ) {
+      UnrolledFor<0, P::dimQ>::Do([&] (int iQ) {
           T temp = fNeq[iQ]/f[iQ];
           a1 += fNeq[iQ]*temp;
           a2 += fNeq[iQ]*temp*temp;
@@ -317,13 +317,13 @@ namespace lbm {
     }
 
 #pragma omp declare simd
-    T calculateAlphaMax(const MathVector<T, dimQ<T, L>()>& f,
-                        const MathVector<T, dimQ<T, L>()>& fNeq) {
+    T calculateAlphaMax(const MathVector<T, P::dimQ>& f,
+                        const MathVector<T, P::dimQ>& fNeq) {
 
       T alphaMaxR = 2.5;
       T alphaMaxTemp;
 
-      UnrolledFor<0, dimQ<T, L>()>::Do([&] (int iQ) {
+      UnrolledFor<0, P::dimQ>::Do([&] (int iQ) {
           if(fNeq[iQ] > 0) {
             alphaMaxTemp = fabs(f[iQ]/fNeq[iQ]);
 
@@ -338,8 +338,8 @@ namespace lbm {
     }
 
 #pragma omp declare simd
-    inline T calculateAlpha(const MathVector<T, dimQ<T, L>()>& f,
-                            const MathVector<T, dimQ<T, L>()>& fNeq,
+    inline T calculateAlpha(const MathVector<T, P::dimQ>& f,
+                            const MathVector<T, P::dimQ>& fNeq,
                             const T alphaGuess,
                             const T alphaMin, const T alphaMax) {
 
@@ -381,8 +381,8 @@ namespace lbm {
       {}
 
 #pragma omp declare simd
-    inline T computeAlpha(const MathVector<T, dimQ<T, L>()>& f,
-                          const MathVector<T, dimQ<T, L>()>& fNeq,
+    inline T computeAlpha(const MathVector<T, P::dimQ>& f,
+                          const MathVector<T, P::dimQ>& fNeq,
                           const T alphaGuess) {
       if(isDeviationSmall(f, fNeq)) {
         BOOST_LOG_TRIVIAL(debug) << "Deviation is small, should return alpha: : " << 2.0;
@@ -405,13 +405,13 @@ namespace lbm {
     }
 
 #pragma omp declare simd
-    inline bool isDeviationSmall(const MathVector<T, dimQ<T, L>()>& f,
-                                 const MathVector<T, dimQ<T, L>()>& fNeq) {
+    inline bool isDeviationSmall(const MathVector<T, P::dimQ>& f,
+                                 const MathVector<T, P::dimQ>& fNeq) {
 
       bool isDeviationSmallR = true;
       T deviation;
 
-      UnrolledFor<0, dimQ<T, L>()>::Do([&] (int iQ) {
+      UnrolledFor<0, P::dimQ>::Do([&] (int iQ) {
           deviation = fabs(fNeq[iQ]/f[iQ]);
           BOOST_LOG_TRIVIAL(debug) << "Calculation of deviation " << iQ << " : "
                                    << deviation;
@@ -426,13 +426,13 @@ namespace lbm {
     }
 
 #pragma omp declare simd
-    T calculateAlphaMax(const MathVector<T, dimQ<T, L>()>& f,
-                        const MathVector<T, dimQ<T, L>()>& fNeq) {
+    T calculateAlphaMax(const MathVector<T, P::dimQ>& f,
+                        const MathVector<T, P::dimQ>& fNeq) {
 
       T alphaMaxR = 2.5;
       T alphaMaxTemp;
 
-      UnrolledFor<0, dimQ<T, L>()>::Do([&] (int iQ) {
+      UnrolledFor<0, P::dimQ>::Do([&] (int iQ) {
           if(fNeq[iQ] > 0) {
             alphaMaxTemp = fabs(f[iQ]/fNeq[iQ]);
 
@@ -446,8 +446,8 @@ namespace lbm {
       return alphaMaxR;
     }
 
-    inline T calculateAlpha(const MathVector<T, dimQ<T, L>()>& f,
-                            const MathVector<T, dimQ<T, L>()>& fNeq,
+    inline T calculateAlpha(const MathVector<T, P::dimQ>& f,
+                            const MathVector<T, P::dimQ>& fNeq,
                             const T alphaGuess,
                             const T alphaMin, const T alphaMax) {
 
@@ -487,8 +487,8 @@ namespace lbm {
       {}
 
 #pragma omp declare simd
-    inline T computeAlpha(const MathVector<T, dimQ<T, L>()>& f,
-                          const MathVector<T, dimQ<T, L>()>& fNeq,
+    inline T computeAlpha(const MathVector<T, P::dimQ>& f,
+                          const MathVector<T, P::dimQ>& fNeq,
                           const T alphaGuess) {
       if(isDeviationSmall(f, fNeq)) {
         BOOST_LOG_TRIVIAL(debug) << "Deviation is small, should return alpha: : " << 2.0;
@@ -511,13 +511,13 @@ namespace lbm {
     }
 
 #pragma omp declare simd
-    inline bool isDeviationSmall(const MathVector<T, dimQ<T, L>()>& f,
-                                 const MathVector<T, dimQ<T, L>()>& fNeq) {
+    inline bool isDeviationSmall(const MathVector<T, P::dimQ>& f,
+                                 const MathVector<T, P::dimQ>& fNeq) {
 
       bool isDeviationSmallR = true;
       T deviation;
 
-      UnrolledFor<0, dimQ<T, L>()>::Do([&] (int iQ) {
+      UnrolledFor<0, P::dimQ>::Do([&] (int iQ) {
           deviation = fabs(fNeq[iQ]/f[iQ]);
           BOOST_LOG_TRIVIAL(debug) << "Calculation of deviation " << iQ << " : "
                                    << deviation;
@@ -532,13 +532,13 @@ namespace lbm {
     }
 
 #pragma omp declare simd
-    T calculateAlphaMax(const MathVector<T, dimQ<T, L>()>& f,
-                        const MathVector<T, dimQ<T, L>()>& fNeq) {
+    T calculateAlphaMax(const MathVector<T, P::dimQ>& f,
+                        const MathVector<T, P::dimQ>& fNeq) {
 
       T alphaMaxR = 2.5;
       T alphaMaxTemp;
 
-      UnrolledFor<0, dimQ<T, L>()>::Do([&] (int iQ) {
+      UnrolledFor<0, P::dimQ>::Do([&] (int iQ) {
           if(fNeq[iQ] > 0) {
             alphaMaxTemp = fabs(f[iQ]/fNeq[iQ]);
 
@@ -552,8 +552,8 @@ namespace lbm {
       return alphaMaxR;
     }
 
-    inline T calculateAlpha(const MathVector<T, dimQ<T, L>()>& f,
-                            const MathVector<T, dimQ<T, L>()>& fNeq,
+    inline T calculateAlpha(const MathVector<T, P::dimQ>& f,
+                            const MathVector<T, P::dimQ>& fNeq,
                             const T alphaGuess,
                             const T alphaMin, const T alphaMax) {
 

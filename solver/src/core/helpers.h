@@ -65,7 +65,7 @@ namespace lbm {
     vector<T, CACHE_LINE> readVTK(const std::string& inputFilename,
                                   const std::string& dataArrayName) {
 
-    vector<T, CACHE_LINE> output(size_g * dimQ<T, L>());
+    vector<T, CACHE_LINE> output(size_g * P::dimQ);
 
     rapidxml::file<> xmlFile(inputFilename.c_str());
     rapidxml::xml_document<> doc;
@@ -78,18 +78,18 @@ namespace lbm {
     std::string line;
     std::getline(f, line);
 
-    for(int tuple = 0; tuple < s_g<T, L>(); ++tuple) {
+    for(int tuple = 0; tuple < s_g(); ++tuple) {
       std::getline(f,line);
       std::string::size_type offset, tmp_offset;
       T value = std::stod(line, &offset);
       tmp_offset = offset;
-      output[tuple*dimQ<T, L>()] = value;
+      output[tuple * P::dimQ] = value;
 
-      for(int iQ = 1; iQ < dimQ<T, L>(); ++iQ) {
+      for(int iQ = 1; iQ < P::dimQ; ++iQ) {
         value = std::stod(line.substr(offset), &offset);
         offset += tmp_offset;
         tmp_offset = offset;
-        output[tuple*dimQ<T, L>() + iQ] = value;
+        output[tuple * P::dimQ + iQ] = value;
       }
     }
 

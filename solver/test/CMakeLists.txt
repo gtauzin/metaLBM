@@ -36,3 +36,4 @@ function(metaLBM_add_mpi_test targetName targetFile numProcs)
 endfunction()
 
 metaLBM_add_test(test_commons test_commons.cpp)
+metaLBM_add_test(test_calculate test_calculate.cpp)

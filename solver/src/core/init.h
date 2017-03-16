@@ -65,17 +65,17 @@ namespace lbm {
       std::cout.precision(17);
       std::cout << "-------------------OPTIONS-------------------\n"
                 << "MPI #" << mpi_rank
-                << " Lattice: D" << dimD<T, L>() << "Q" << dimQ<T, L>()
-                << " Global length Y: " << lY_g<T, L>()
-                << " Global length X: " << lX_g<T, L>()
-                << " Global length Y: " << lY_g<T, L>()
-                << " Global length Z: " << lY_g<T, L>()
-                << " Global memory: " << (T)(s_g<T, L>()*sizeof(T)) / (1<<30) << "\n"
+                << " Lattice: D" << P::dimD << "Q" << P::dimQ
+                << " Global length Y: " << P::lY_g
+                << " Global length X: " << P::lX_g
+                << " Global length Y: " << P::lY_g
+                << " Global length Z: " << P::lY_g
+                /* << " Global memory: " << (int)(s_g*sizeof(valueType)) / (1<<30) << "\n" */
                 << "MPI #" << mpi_rank
-                << " Local length X : " << lX_l<T, L>()
-                << " Local length Y : " << lY_l<T, L>()
-                << " Local length Z : " << lZ_l<T, L>()
-                << " Local memory : " << (T)(s_l<T, L>()*sizeof(T)) / (1<<30) << "\n"
+                << " Local length X : " << P::lX_l
+                << " Local length Y : " << P::lY_l
+                << " Local length Z : " << P::lZ_l
+        //      << " Local memory : " << (int)(s_l*sizeof(valueType)) / (1<<30) << "\n"
                 << "---------------------------------------------\n\n"
         //   << "[#MPI%02d] ARCH:     CPUs           \n", mpi_rank)
                 << "NPROCS: " << NPROCS << "\n"
@@ -84,15 +84,15 @@ namespace lbm {
                 << "MAX ITERATION: " << iterationMax << "\n\n"
                 << "-------------------PARAMETERS----------------\n\n"
                 << "tau: " << tau
-                << ", correponding viscosity: " << cs2<T, L>() * (tau - 0.5) << "\n"
+                << ", correponding viscosity: " << P::cs2 * (tau - 0.5) << "\n"
                 << "beta:" << beta
-                << ", correponding viscosity: " << cs2<T, L>() * (1/(2 * beta) - 0.5) << "\n";
+                << ", correponding viscosity: " << P::cs2 * (1/(2 * beta) - 0.5) << "\n";
     }
   }
 
   template<class T, LatticeType L>
     vector<T, CACHE_LINE> generate_initDensity() {
-    vector<T, CACHE_LINE> initDensityR(s_g<T, L>(), initDensityValue);
+    vector<T, CACHE_LINE> initDensityR(s_g(), initDensityValue);
 
     switch(initDensityType){
     case InitDensityType::homogeneous:{
@@ -100,10 +100,10 @@ namespace lbm {
     }
     case InitDensityType::peak:{
       const T densityPeakValue = 3.0 * initDensityValue;
-      int centerX = static_cast<int>((lX_g<T, L>()-1)*0.4);
-      int centerY = static_cast<int>((lY_g<T, L>()-1)*0.3);
-      int centerZ = static_cast<int>((lZ_g<T, L>()-1)*0.2);
-      int idx = idx_gF<T, L>(centerX, centerY, centerZ);
+      int centerX = static_cast<int>((P::lX_g-1)*0.4);
+      int centerY = static_cast<int>((P::lY_g-1)*0.3);
+      int centerZ = static_cast<int>((P::lZ_g-1)*0.2);
+      int idx = idx_gF(centerX, centerY, centerZ);
       initDensityR[idx] = densityPeakValue;
       break;
     }
@@ -115,9 +115,9 @@ namespace lbm {
   }
 
   template<class T, LatticeType L>
-    vector<MathVector<T, dimD<T, L>()>, CACHE_LINE> generate_initVelocity() {
-    vector<MathVector<T, dimD<T, L>()>, CACHE_LINE> initVelocityXR(s_g<T, L>(),
-                                                                   MathVector<T, dimD<T, L>()>{{initVelocityXValue}});
+    vector<MathVector<T, P::dimD>, CACHE_LINE> generate_initVelocity() {
+    vector<MathVector<T, P::dimD>, CACHE_LINE> initVelocityXR(s_g(),
+                                                                   MathVector<T, P::dimD>{{initVelocityXValue}});
 
 
     switch(initVelocityType){
@@ -134,24 +134,24 @@ namespace lbm {
 
   template<class T, LatticeType L>
     vector<T, CACHE_LINE> generate_initAlpha() {
-    vector<T, CACHE_LINE> initAlphaR(s_g<T, L>(), 2.);
+    vector<T, CACHE_LINE> initAlphaR(s_g(), 2.);
 
     return initAlphaR;
   }
 
   template<class T, LatticeType L>
     vector<T, CACHE_LINE> generate_initDistributionStart(const vector<T, CACHE_LINE>& density,
-                                                         const vector<MathVector<T, dimD<T, L>()>, CACHE_LINE>& velocity) {
-    vector<T, CACHE_LINE> initDistributionR(dimQ<T, L>()*s_g<T, L>(), 0.0);
+                                                         const vector<MathVector<T, P::dimD>, CACHE_LINE>& velocity) {
+    vector<T, CACHE_LINE> initDistributionR(P::dimQ*s_g(), 0.0);
 
-    for(int iX = 0; iX < lX_g<T, L>(); ++iX) {
-      for(int iY = 0; iY < lY_g<T, L>(); ++iY) {
-        for(int iZ = 0; iZ < lZ_g<T, L>(); ++iZ) {
-          int idx = idx_gF<T, L>(iX, iY, iZ);
+    for(int iX = 0; iX < P::lX_g; ++iX) {
+      for(int iY = 0; iY < P::lY_g; ++iY) {
+        for(int iZ = 0; iZ < P::lZ_g; ++iZ) {
+          int idx = idx_gF(iX, iY, iZ);
           T velocity2 = velocity[idx].norm2();
-          for(int iQ = 0; iQ < dimQ<T, L>(); ++iQ) {
+          for(int iQ = 0; iQ < P::dimQ; ++iQ) {
             //T density = density[idx];
-            initDistributionR[idxPop_gF<T, L>(iX, iY, iZ, iQ)] = computeEquilibrium<T, L>(iQ, density[idx], velocity[idx], velocity2);
+            initDistributionR[idxPop_gF(iX, iY, iZ, iQ)] = computeEquilibrium<T, L>(iQ, density[idx], velocity[idx], velocity2);
           }
         }
       }
@@ -161,18 +161,18 @@ namespace lbm {
 
   template<class T, LatticeType L>
     vector<T, CACHE_LINE> generate_initDistributionRestart() {
-    vector<T, CACHE_LINE> initDistributionR(dimQ<T, L>()*s_g<T, L>(), 0.0);
+    vector<T, CACHE_LINE> initDistributionR(P::dimQ*s_g(), 0.0);
     std::ostringstream number;
     number << startIteration;
 
     std::string inputFilename = "../../output/outputBackup/" + std::string(prefix) + "-" + number.str() + ".vtr";
     vector<T, CACHE_LINE> distributionVTK = readVTK<T, L>(inputFilename, "Distribution");
 
-    for(int iX = 0; iX < lX_g<T, L>(); ++iX) {
-      for(int iY = 0; iY < lY_g<T, L>(); ++iY) {
-        for(int iZ = 0; iZ < lZ_g<T, L>(); ++iZ) {
-          for(int iQ = 0; iQ < dimQ<T, L>(); ++iQ) {
-            initDistributionR[idxPop_gF<T, L>(iX, iY, iZ, iQ)] = distributionVTK[dimQ<T, L>()*(lZ_g<T, L>()*(lY_g<T, L>()*iX + iY) + iZ)+ iQ];
+    for(int iX = 0; iX < P::lX_g; ++iX) {
+      for(int iY = 0; iY < P::lY_g; ++iY) {
+        for(int iZ = 0; iZ < P::lZ_g; ++iZ) {
+          for(int iQ = 0; iQ < P::dimQ; ++iQ) {
+            initDistributionR[idxPop_gF(iX, iY, iZ, iQ)] = distributionVTK[P::dimQ*(P::lZ_g*(P::lY_g*iX + iY) + iZ)+ iQ];
           }
         }
       }
@@ -183,7 +183,7 @@ namespace lbm {
 
   template<class T, LatticeType L>
     vector<T, CACHE_LINE> generate_initDistribution(const vector<T, CACHE_LINE>& density,
-                                                    const vector<MathVector<T, dimD<T, L>()>, CACHE_LINE>& velocity) {
+                                                    const vector<MathVector<T, P::dimD>, CACHE_LINE>& velocity) {
     if(!startIteration) {
       return generate_initDistributionStart<T, L>(density, velocity);
     }
@@ -198,9 +198,9 @@ namespace lbm {
     for(int k = 0; k < numberForces; ++k) {
       BOOST_LOG_TRIVIAL(info) << "Initializing Force";
       forcesVectorR[k] = Create<T, L>(forceTypeArray[k],
-                                      MathVector<T, dimD<T, L>()>({forceAmplitudeXArray[k],
+                                      MathVector<T, P::dimD>({forceAmplitudeXArray[k],
                                             forceAmplitudeYArray[k]}),
-                                      MathVector<T, dimD<T, L>()>({forceWaveLengthXArray[k],
+                                      MathVector<T, P::dimD>({forceWaveLengthXArray[k],
                                             forceWaveLengthYArray[k]}));
     }
     return forcesVectorR;
@@ -216,7 +216,7 @@ namespace lbm {
                                                        boundaryStartArray[k],
                                                        boundaryEndArray[k],
                                                        boundaryPressureArray[k],
-                                                       MathVector<T, dimD<T, L>()>{{boundaryVelocityXArray[k],
+                                                       MathVector<T, P::dimD>{{boundaryVelocityXArray[k],
                                                              boundaryVelocityYArray[k]}}));
     }
     return boundaryConditionsVectorR;
@@ -278,7 +278,7 @@ namespace lbm {
     LocalField<T, L> localField;
 
     vector<T, CACHE_LINE> initNextDensity = generate_initDensity<T, L>();
-    vector<MathVector<T, dimD<T, L>()>, CACHE_LINE> initNextVelocity = generate_initVelocity<T, L>();
+    vector<MathVector<T, P::dimD>, CACHE_LINE> initNextVelocity = generate_initVelocity<T, L>();
     vector<T, CACHE_LINE> initNextAlpha = generate_initAlpha<T, L>();
 
 
@@ -286,7 +286,7 @@ namespace lbm {
                                                                                  initNextVelocity);
 
     vector<T, CACHE_LINE> initPreviousDensity = initNextDensity;
-    vector<MathVector<T, dimD<T, L>()>, CACHE_LINE> initPreviousVelocity = initNextVelocity;
+    vector<MathVector<T, P::dimD>, CACHE_LINE> initPreviousVelocity = initNextVelocity;
 
     GlobalField<T, L> globalField = GlobalField<T, L>(initNextDensity,
                                                       initNextVelocity,
@@ -300,7 +300,7 @@ namespace lbm {
     std::shared_ptr<Forcing<T, L>> forcing = Create<T, L>(forcingMethod);
 
     std::vector<std::shared_ptr<BoundaryCondition<T, L>>> boundaryConditionsVector = convert_boundaryConditionsVector<T, L>();
-    BoundaryConditions<T, L> boundaryConditions = BoundaryConditions<T, L>(localize_BoundaryConditions<T, L>(boundaryConditionsVector, mpi_rank));
+    BoundaryConditions<T, L> boundaryConditions = BoundaryConditions<T, L>(boundaryConditionsVector);
 
     Forces<T, L> forces = Forces<T, L>(convert_forcesArray<T, L>());
 

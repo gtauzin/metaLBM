@@ -62,11 +62,14 @@ namespace lbm {
     void writeHeader(std::ofstream& fileVTR) {
       fileVTR << "<?xml version=\"1.0\"?>\n";
       fileVTR << "<VTKFile type=\"RectilinearGrid\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
-      fileVTR << "<RectilinearGrid WholeExtent=\"0 " << lX_g<T, L>()-1 << " 0 " << lY_g<T, L>()-1 << " 0 " << lZ_g<T, L>()-1 << " 0\">\n";
+      fileVTR << "<RectilinearGrid WholeExtent=\"0 "
+              << P::lX_g-1 << " 0 "
+              << P::lY_g-1 << " 0 "
+              << P::lZ_g-1 << " 0\">\n";
       fileVTR << "\t<Piece Extent=\"0 "
-              << lX_g<T, L>()-1 << " 0 "
-              << lY_g<T, L>()-1 << " 0 "
-              << lY_g<T, L>()-1 << " 0\">\n";
+              << P::lX_g-1 << " 0 "
+              << P::lY_g-1 << " 0 "
+              << P::lY_g-1 << " 0\">\n";
 
       // start writing point data
       fileVTR << "\t\t<PointData>\n";
@@ -83,10 +86,10 @@ namespace lbm {
                           const vector<T, CACHE_LINE>& scalarField,
                           std::true_type) {
       fileVTR << "\t\t\t<DataArray type=\"Float32\" Name=\"" << scalarFieldName << "\" format=\"ascii\">\n";
-      for(int iZ = 0; iZ < lZ_g<T, L>(); iZ++) {
-        for(int iY = 0; iY < lY_g<T, L>(); iY++) {
-          for(int iX = 0; iX < lX_g<T, L>(); iX++) {
-            int idx = idx_gF<T, L>(iX, iY, iZ);
+      for(int iZ = 0; iZ < P::lZ_g; iZ++) {
+        for(int iY = 0; iY < P::lY_g; iY++) {
+          for(int iX = 0; iX < P::lX_g; iX++) {
+            int idx = idx_gF(iX, iY, iZ);
             fileVTR << "\t\t\t\t" << scalarField[idx] << "\n";
           }
         }
@@ -105,13 +108,13 @@ namespace lbm {
 
     void writeVectorField(std::ofstream& fileVTR,
                           const std::string& vectorFieldName,
-                          const vector<MathVector<T, dimD<T, L>()>, CACHE_LINE>& vectorField,
+                          const vector<MathVector<T, P::dimD>, CACHE_LINE>& vectorField,
                           std::true_type) {
       fileVTR << "\t\t\t<DataArray type=\"Float32\" NumberOfComponents=\"3\" Name=\"" << vectorFieldName << "\" format=\"ascii\">\n";
-      for(int iZ = 0; iZ < lZ_g<T, L>(); iZ++) {
-        for(int iY = 0; iY < lY_g<T, L>(); iY++) {
-          for(int iX = 0; iX < lX_g<T, L>(); iX++) {
-            int idx = idx_gF<T, L>(iX, iY, iZ);
+      for(int iZ = 0; iZ < P::lZ_g; iZ++) {
+        for(int iY = 0; iY < P::lY_g; iY++) {
+          for(int iX = 0; iX < P::lX_g; iX++) {
+            int idx = idx_gF(iX, iY, iZ);
             fileVTR << "\t\t\t\t" << vectorField[idx][d::X]
                     << " " << vectorField[idx][d::Y] << " "
                     << " " << vectorField[idx][d::Z] << "\n";
@@ -123,18 +126,18 @@ namespace lbm {
 
     void writeDistribution(std::ofstream& fileVTR,
                            const vector<T, CACHE_LINE>& distribution) {
-      fileVTR << "\t\t\t<DataArray type=\"Float32\" NumberOfComponents=\"" << dimQ<T, L>()
+      fileVTR << "\t\t\t<DataArray type=\"Float32\" NumberOfComponents=\"" << P::dimQ
               << "\" Name=\"Distribution" << "\" format=\"ascii\">" << std::endl;
-      for(int iZ = 0; iZ < lZ_g<T, L>(); iZ++) {
-        for(int iY = 0; iY < lY_g<T, L>(); iY++) {
-          for(int iX = 0; iX < lX_g<T, L>(); iX++) {
-            fileVTR << "\t\t\t\t" << distribution[idxPop_gF<T, L>(iX, iY, iZ, 0)] << " ";
+      for(int iZ = 0; iZ < P::lZ_g; iZ++) {
+        for(int iY = 0; iY < P::lY_g; iY++) {
+          for(int iX = 0; iX < P::lX_g; iX++) {
+            fileVTR << "\t\t\t\t" << distribution[idxPop_gF(iX, iY, iZ, 0)] << " ";
 
-            UnrolledFor<1, dimQ<T, L>()-1>::Do([&] (int iQ) {
-                fileVTR << distribution[idxPop_gF<T, L>(iX, iY, iZ, iQ)] << " ";
+            UnrolledFor<1, P::dimQ-1>::Do([&] (int iQ) {
+                fileVTR << distribution[idxPop_gF(iX, iY, iZ, iQ)] << " ";
               });
 
-            fileVTR << distribution[idxPop_gF<T, L>(iX, iY, iZ, dimQ<T, L>()-1)] << std::endl;
+            fileVTR << distribution[idxPop_gF(iX, iY, iZ, P::dimQ-1)] << std::endl;
           }
         }
       }
@@ -148,17 +151,17 @@ namespace lbm {
 
       fileVTR << "\t\t<Coordinates>\n";
       fileVTR << "\t\t\t<DataArray type=\"Float32\" Name=\"X\" format=\"ascii\">\n";
-      for(int iX = 0; iX < lX_g<T, L>(); iX++){
+      for(int iX = 0; iX < P::lX_g; iX++){
         fileVTR << "\t\t\t\t" << iX+1 << "\n";
       }
       fileVTR << "\t\t\t</DataArray>\n";
       fileVTR << "\t\t\t<DataArray type=\"Float32\" Name=\"Y\" format=\"ascii\">\n";
-      for(int iY = 0; iY < lY_g<T,L>(); iY++){
+      for(int iY = 0; iY < P::lY_g; iY++){
         fileVTR << "\t\t\t\t" << iY+1 << "\n";
       }
       fileVTR << "\t\t\t</DataArray>\n";
       fileVTR << "\t\t\t<DataArray type=\"Float32\" Name=\"Y\" format=\"ascii\">\n";
-      for(int iZ = 0; iZ < lZ_g<T,L>(); iZ++){
+      for(int iZ = 0; iZ < P::lZ_g; iZ++){
         fileVTR << "\t\t\t\t" << iZ+1 << "\n";
       }
       fileVTR << "\t\t\t</DataArray>\n";

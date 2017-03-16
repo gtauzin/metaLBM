@@ -74,7 +74,7 @@ namespace lbm {
                  const T pressure_in)
     : BoundaryCondition<T, L>(boundaryPosition_in, start_in, end_in)
       , pressure(pressure_in)
-      , density(pressure_in*inv_cs2<T, L>())
+      , density(pressure_in*P::inv_cs2)
       {}
 
     void apply(Lattice<T, L>& lattice)
@@ -84,12 +84,12 @@ namespace lbm {
   template<class T, LatticeType L>
     class Velocity_ZouHe : public BoundaryCondition<T, L> {
   private:
-    const MathVector<T, dimD<T, L>()> velocity;
+    const MathVector<T, P::dimD> velocity;
 
   public:
   Velocity_ZouHe(const BoundaryPosition& boundaryPosition_in,
                  const int start_in, const int end_in,
-                 const MathVector<T, dimD<T, L>()>& velocity)
+                 const MathVector<T, P::dimD>& velocity)
     : BoundaryCondition<T, L>(boundaryPosition_in, start_in, end_in)
       , velocity(velocity)
     {}
@@ -103,17 +103,17 @@ namespace lbm {
   private:
     const T pressure;
     const T density;
-    const MathVector<T, dimD<T, L>()> velocity;
+    const MathVector<T, P::dimD> velocity;
     const T velocity2;
 
   public:
   Entropic(const BoundaryPosition& boundaryPosition_in,
            const int start_in, const int end_in,
            const T pressure_in,
-           const MathVector<T, dimD<T, L>()>& velocity_in)
+           const MathVector<T, P::dimD>& velocity_in)
     : BoundaryCondition<T, L>(boundaryPosition_in, start_in, end_in)
       , pressure(pressure_in)
-      , density(pressure_in*inv_cs2<T, L>())
+      , density(pressure_in*P::inv_cs2)
       , velocity(velocity_in)
       , velocity2(velocity_in.norm2())
       {}
@@ -128,15 +128,15 @@ namespace lbm {
   private:
     const T pressure;
     const T density;
-    const MathVector<T, dimD<T, L>()> velocity;
+    const MathVector<T, P::dimD> velocity;
 
   public:
   Corner(const BoundaryPosition& boundaryPosition_in,
          const T pressure_in,
-         const MathVector<T, dimD<T, L>()>& velocity_in)
+         const MathVector<T, P::dimD>& velocity_in)
     : BoundaryCondition<T, L>(boundaryPosition_in, -1, -1)
       , pressure(pressure_in)
-      , density(pressure_in*inv_cs2<T, L>())
+      , density(pressure_in*P::inv_cs2)
       , velocity(velocity_in)
     {}
 
@@ -149,7 +149,7 @@ namespace lbm {
                                                     const BoundaryPosition& boundaryPosition,
                                                     const int start, const int end,
                                                     const T pressure,
-                                                    const MathVector<T, dimD<T, L>()>& velocity) {
+                                                    const MathVector<T, P::dimD>& velocity) {
     switch(boundaryType){
     case BoundaryType::bounceBack_halfWay:{
       return std::shared_ptr<BoundaryCondition<T, L>>(new BounceBack_HalfWay<T, L>(boundaryPosition,
@@ -179,13 +179,15 @@ namespace lbm {
   }
 
   template<class T, LatticeType L>
-    class BoundaryConditions{
+    class BoundaryConditions {
   private:
     std::vector<std::shared_ptr<BoundaryCondition<T, L>> > boundaryConditionsVector;
 
   public:
     BoundaryConditions(const std::vector<std::shared_ptr<BoundaryCondition<T, L>>>&
-                       boundaryConditionsVector_in);
+                       boundaryConditionsVector_in)
+      : boundaryConditionsVector(boundaryConditionsVector_in)
+    {}
 
     inline void apply(Lattice<T, L>& l){
       for(auto boundaryCondition : boundaryConditionsVector){

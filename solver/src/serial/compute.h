@@ -29,44 +29,44 @@ namespace lbm {
                                     const int startX, const int iteration) {
 
 #pragma omp parallel for schedule(static) num_threads(NTHREADS)
-    for(int iZ = hZ<T, L>(); iZ < hZ<T, L>()+lZ_l<T, L>(); ++iZ) {
-      for(int iY = hY<T, L>(); iY < hY<T, L>()+lY_l<T, L>(); ++iY) {
+    for(int iZ = P::hZ; iZ < P::hZ + P::lZ_l; ++iZ) {
+      for(int iY = P::hY; iY < P::hY + P::lY_l; ++iY) {
 #pragma omp simd
-        for(int iX = hX<T, L>(); iX < hX<T, L>()+lX_l<T, L>(); ++iX) {
+        for(int iX = P::hX; iX < P::hX + P::lX_l; ++iX) {
           BOOST_LOG_TRIVIAL(debug) << " - (x, y, z) = "
                                    << "(" << iX
                                    << ", " << iY
                                    << ", " << iZ << ")";
-          int idx_lattice = idxL<T, L>(iX, iY, iZ);
-          int idx_field = idx_inF<T, L>(iX, iY, iZ);
+          int idx_lattice = idxL(iX, iY, iZ);
+          int idx_field = idx_inF(iX, iY, iZ);
 
           T previousDensity;
-          MathVector<T, dimD<T, L>()> previousVelocity;
+          MathVector<T, P::dimD> previousVelocity;
           calculateMoments<T, L>(l_previous.f_distribution.data(), idx_lattice,
                                  previousDensity, previousVelocity);
 
 
           BOOST_LOG_TRIVIAL(debug) << " - Computing force.";
-          forcing->force = forces.force(iX-hX<T, L>()+startX, iY-hY<T, L>(), iZ-hZ<T, L>());
-          //MathVector<T, dimD<T, L>()> nextForce = forcing->force;
+          forcing->force = forces.force(iX-P::hX+startX, iY-P::hY, iZ-P::hZ);
+          //MathVector<T, P::dimD> nextForce = forcing->force;
 
           T previousVelocity2 = previousVelocity.norm2();
 
-          MathVector<T, dimD<T, L>()> previousEqVelocity = previousVelocity
+          MathVector<T, P::dimD> previousEqVelocity = previousVelocity
             + forcing->getEqVelocityForcing(previousDensity);
 
           T previousEqVelocity2 = previousEqVelocity.norm2();
 
-          MathVector<T, dimQ<T, L>()> fNeq;
-          MathVector<T, dimQ<T, L>()> fForced;
+          MathVector<T, P::dimQ> fNeq;
+          MathVector<T, P::dimQ> fForced;
 
-          UnrolledFor<0, dimQ<T, L>()>::Do([&] (int iQ) {
-              fForced[iQ] = l_previous.f_distribution[idxPop<T, L>(idx_lattice, iQ)]
+          UnrolledFor<0, P::dimQ>::Do([&] (int iQ) {
+              fForced[iQ] = l_previous.f_distribution[idxPop(idx_lattice, iQ)]
                 + forcing->getCollisionForcing(iQ, previousDensity,
                                                previousVelocity,
                                                previousVelocity2);
 
-              fNeq[iQ] = l_previous.f_distribution[idxPop<T, L>(idx_lattice, iQ)]
+              fNeq[iQ] = l_previous.f_distribution[idxPop(idx_lattice, iQ)]
                 - computeEquilibrium<T, L>(iQ, previousDensity,
                                            previousEqVelocity,
                                            previousEqVelocity2);
@@ -75,12 +75,12 @@ namespace lbm {
           T nextAlpha = solver->computeAlpha(fForced, fNeq, 2.0);
 
           BOOST_LOG_TRIVIAL(debug) << " - Colliding and Streaming.";
-          UnrolledFor<0, dimQ<T, L>()>::Do([&] (int iQ) {
+          UnrolledFor<0, P::dimQ>::Do([&] (int iQ) {
 
-              int idx_lattice_next = idxL<T, L>(iX + celerity<T, L>(d::X, iQ),
-                                                iY + celerity<T, L>(d::Y, iQ),
-                                                iZ + celerity<T, L>(d::Z, iQ));
-              l_next.f_distribution[idxPop<T, L>(idx_lattice_next, iQ)] = fForced[iQ]
+              int idx_lattice_next = idxL(iX + P::celerity()[iQ][d::X],
+                                          iY + P::celerity()[iQ][d::Y],
+                                          iZ + P::celerity()[iQ][d::Z]);
+              l_next.f_distribution[idxPop(idx_lattice_next, iQ)] = fForced[iQ]
                 - nextAlpha*beta*fNeq[iQ];
             });
 
@@ -110,21 +110,21 @@ namespace lbm {
                         const int iteration) {
 
 #pragma omp parallel for schedule(static) num_threads(NTHREADS)
-    for(int iZ = hZ<T, L>(); iZ < hZ<T, L>()+lZ_l<T, L>(); ++iZ) {
-      for(int iY = hY<T, L>(); iY < hY<T, L>()+lY_l<T, L>(); ++iY) {
+    for(int iZ = P::hZ; iZ < P::hZ + P::lZ_l; ++iZ) {
+      for(int iY = P::hY; iY < P::hY + P::lY_l; ++iY) {
 #pragma omp simd
-        for(int iX = hX<T, L>(); iX < hX<T, L>()+lX_l<T, L>(); ++iX) {
+        for(int iX = P::hX; iX < P::hX + P::lX_l; ++iX) {
 
-          int idx_lattice = idxL<T, L>(iX, iY, iZ);
-          int idx_field = idx_inF<T, L>(iX, iY, iZ);
+          int idx_lattice = idxL(iX, iY, iZ);
+          int idx_field = idx_inF(iX, iY, iZ);
 
           T nextDensity;
-          MathVector<T, dimD<T, L>()> nextVelocity;
+          MathVector<T, P::dimD> nextVelocity;
           calculateMoments<T, L>(f_next.data(), idx_lattice,
                                  nextDensity, nextVelocity);
 
           BOOST_LOG_TRIVIAL(debug) << " - Computing force.";
-          forcing->force = forces.force(iX-hX<T, L>()+startX, iY-hY<T, L>(), iZ-hZ<T, L>());
+          forcing->force = forces.force(iX-P::hX+startX, iY-P::hY, iZ-P::hZ);
 
           field.nextDensity[idx_field] = nextDensity;
           nextVelocity += forcing->getHydroVelocityForcing(nextDensity);

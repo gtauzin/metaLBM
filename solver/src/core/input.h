@@ -13,6 +13,8 @@
 /* Some example here */
 //#pragma message(VAR_NAME_VALUE(NPROCS))
 
+
+
 namespace lbm {
   enum class LatticeType {D1Q3, D2Q9, D3Q27};
 
@@ -29,6 +31,8 @@ namespace lbm {
   enum class CornerPosition {top_left, top_right, bottom_right, bottom_left, error};
 
   enum class OutputType {vtr, backup, error};
+
+  typedef DATA_TYPE valueType;
 
   constexpr LatticeType latticeType = LatticeType::D2Q9;
   constexpr int lengthX_g = 16;

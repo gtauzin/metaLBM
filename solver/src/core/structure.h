@@ -25,14 +25,14 @@ namespace lbm {
   };
 
 
-  template<class T, unsigned int size>
+  template<class U, unsigned int size>
     class MathVector {
   public:
-    T mV[size];
+    U mV[size];
 
 
-    T sum() {
-      T sumR = 0;
+    U sum() {
+      U sumR = 0;
       UnrolledFor<0, size>::Do([&] (int i) {
           sumR += mV[i];
         });
@@ -40,8 +40,8 @@ namespace lbm {
       return sumR;
     }
 
-    T norm2() const {
-      T norm2R = 0;
+    U norm2() const {
+      U norm2R = 0;
       UnrolledFor<0, size>::Do([&] (int i) {
           norm2R += mV[i] * mV[i];
         });
@@ -49,8 +49,8 @@ namespace lbm {
       return norm2R;
     }
 
-    T dot(MathVector<T, size> other){
-      T dotR = 0;
+    U dot(MathVector<U, size> other){
+      U dotR = 0;
 
       UnrolledFor<0, size>::Do([&] (int i) {
           dotR += mV[i]*other[i];
@@ -59,11 +59,11 @@ namespace lbm {
       return dotR;
     }
 
-    T magnitude(){
+    U magnitude(){
       return sqrt(this->norm2());
     }
 
-    MathVector<T, size>& operator=(const MathVector<T, size>& other){
+    MathVector<U, size>& operator=(const MathVector<U, size>& other){
       UnrolledFor<0, size>::Do([&] (int i) {
           mV[i] = other[i];
         });
@@ -71,7 +71,7 @@ namespace lbm {
       return *this;
     }
 
-    MathVector<T, size>& operator=(const T other[size]){
+    MathVector<U, size>& operator=(const U other[size]){
       UnrolledFor<0, size>::Do([&] (int i) {
           mV[i] = other[i];
         });
@@ -79,19 +79,19 @@ namespace lbm {
       return *this;
     }
 
-    T& operator[] (int i) {
+    U& operator[] (int i) {
       return mV[i];
     }
 
-    const T& operator[] (int i) const {
+    const U& operator[] (int i) const {
       return mV[i];
     }
 
   };
 
 
-  template<class T, unsigned int size>
-    std::ostream& operator<<(std::ostream& os, const MathVector<T, size>& mV){
+  template<class U, unsigned int size>
+    std::ostream& operator<<(std::ostream& os, const MathVector<U, size>& mV){
     os << "[ ";
     UnrolledFor<0, size>::Do([&] (int i) {
         os << mV[i] << " ";
@@ -100,8 +100,8 @@ namespace lbm {
     return os;
   }
 
-  template<class T, unsigned int size>
-    MathVector<T, size>& operator+=(MathVector<T, size>& mV_a, const MathVector<T, size>& mV_b)
+  template<class U, unsigned int size>
+    MathVector<U, size>& operator+=(MathVector<U, size>& mV_a, const MathVector<U, size>& mV_b)
     {
       UnrolledFor<0, size>::Do([&] (int i) {
           mV_a[i] += mV_b[i];
@@ -110,18 +110,18 @@ namespace lbm {
       return mV_a;
     }
 
-  template<class T, unsigned int size>
-    MathVector<T, size> operator+(const MathVector<T, size>& mV_a, const MathVector<T, size>& mV_b)
+  template<class U, unsigned int size>
+    MathVector<U, size> operator+(const MathVector<U, size>& mV_a, const MathVector<U, size>& mV_b)
     {
-      MathVector<T, size> mV_c;
+      MathVector<U, size> mV_c;
       UnrolledFor<0, size>::Do([&] (int i) {
           mV_c[i] = mV_a[i] + mV_b[i];
         });
       return mV_c;
     }
 
-  template<class T, unsigned int size>
-    MathVector<T, size>& operator*=(MathVector<T, size>& mV, const T factor)
+  template<class U, unsigned int size>
+    MathVector<U, size>& operator*=(MathVector<U, size>& mV, const U factor)
     {
       UnrolledFor<0, size>::Do([&] (int i) {
           mV[i] *= factor;
@@ -130,10 +130,10 @@ namespace lbm {
       return mV;
     }
 
-  template<class T, unsigned int size>
-    MathVector<T, size> operator*(const MathVector<T, size>& mV_in, const T factor)
+  template<class U, unsigned int size>
+    MathVector<U, size> operator*(const MathVector<U, size>& mV_in, const U factor)
     {
-      MathVector<T, size> mV;
+      MathVector<U, size> mV;
       UnrolledFor<0, size>::Do([&] (int i) {
           mV[i] = mV_in[i] * factor;
         });
@@ -141,10 +141,10 @@ namespace lbm {
       return mV;
     }
 
-  template<class T, unsigned int size>
-    MathVector<T, size> operator*(const T factor, const MathVector<T, size>& mV_in)
+  template<class U, unsigned int size>
+    MathVector<U, size> operator*(const U factor, const MathVector<U, size>& mV_in)
     {
-      MathVector<T, size> mV;
+      MathVector<U, size> mV;
       UnrolledFor<0, size>::Do([&] (int i) {
           mV[i] = factor * mV_in[i];
         });
@@ -153,8 +153,8 @@ namespace lbm {
     }
 
 
-  template<class T, unsigned int size>
-    MathVector<T, size>& operator/=(MathVector<T, size>& mV, const T factor)
+  template<class U, unsigned int size>
+    MathVector<U, size>& operator/=(MathVector<U, size>& mV, const U factor)
     {
       UnrolledFor<0, size>::Do([&] (int i) {
           mV[i] /= factor;
@@ -163,10 +163,10 @@ namespace lbm {
       return mV;
     }
 
-  template<class T, unsigned int size>
-    MathVector<T, size> operator/(const MathVector<T, size>& mV_in, const T factor)
+  template<class U, unsigned int size>
+    MathVector<U, size> operator/(const MathVector<U, size>& mV_in, const U factor)
     {
-      MathVector<T, size> mV;
+      MathVector<U, size> mV;
       UnrolledFor<0, size>::Do([&] (int i) {
           mV[i] = mV_in[i] / factor;
         });
@@ -174,8 +174,8 @@ namespace lbm {
       return mV;
     }
 
-  template<class T, unsigned int size>
-    MathVector<T, size>& operator-=(MathVector<T, size>& mV_a, const MathVector<T, size>& mV_b)
+  template<class U, unsigned int size>
+    MathVector<U, size>& operator-=(MathVector<U, size>& mV_a, const MathVector<U, size>& mV_b)
     {
       UnrolledFor<0, size>::Do([&] (int i) {
           mV_a[i] -= mV_b[i];
@@ -184,10 +184,10 @@ namespace lbm {
       return mV_a;
     }
 
-  template<class T, unsigned int size>
-    MathVector<T, size> operator-(const MathVector<T, size>& mV_a, const MathVector<T, size>& mV_b)
+  template<class U, unsigned int size>
+    MathVector<U, size> operator-(const MathVector<U, size>& mV_a, const MathVector<U, size>& mV_b)
     {
-      MathVector<T, size> mV_c;
+      MathVector<U, size> mV_c;
       UnrolledFor<0, size>::Do([&] (int i) {
           mV_c[i] = mV_a[i] - mV_b[i];
         });
@@ -195,11 +195,11 @@ namespace lbm {
       return mV_c;
     }
 
-  template<class T, unsigned int size>
-    bool operator==(MathVector<T, size> const &lhs,
-                    MathVector<T, size> const &rhs) {
+  template<class U, unsigned int size>
+    bool operator==(MathVector<U, size> const &lhs,
+                    MathVector<U, size> const &rhs) {
     for(unsigned int i = 0; i < size; ++i){
-      if (lhs[i] != rhs[i]) {
+      if (!(lhs[i] == rhs[i])) {
         return false;
       }
     }

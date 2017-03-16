@@ -2,8 +2,6 @@
 #define CALCULATE_H
 
 #include <iostream>
-#include <random>
-#include <array>
 #include <math.h>
 #include <omp.h>
 
@@ -17,39 +15,40 @@ namespace logging = boost::log;
 #include "input.h"
 #include "structure.h"
 #include "commons.h"
+#include "lattice.h"
 
 namespace lbm {
 
 #pragma omp declare simd
   template <class T, LatticeType L>
     T computeDensity(const T * __restrict__ f, const int idx) {
-    T newDensity = f[idxPop<T, L>(idx, 0)];
+    T newDensity = f[idxPop(idx, 0)];
 
-    UnrolledFor<1, dimQ<T, L>()>::Do([&] (int iQ) {
-        newDensity += f[idxPop<T, L>(idx, iQ)];
+    UnrolledFor<1, P::dimQ>::Do([&] (int iQ) {
+        newDensity += f[idxPop(idx, iQ)];
       });
+
     return newDensity;
   }
 
-
 #pragma omp declare simd
   template <class T, LatticeType L>
-    inline MathVector<T, dimD<T, L>()> computeVelocity(const T * __restrict__ f,
-                                                       const int idx,
-                                                       const T density) {
-    MathVector<T, dimD<T, L>()> velocityR(celerity<T, L>(0)* f[idxPop<T, L>(idx, 0)]);
+    inline MathVector<T, P::dimD> computeVelocity(const T * __restrict__ f,
+                                                  const int idx,
+                                                  const T density) {
+    MathVector<T, P::dimD> velocityR(P::celerity()[0]* f[idxPop(idx, 0)]);
 
-    UnrolledFor<1, dimQ<T, L>()>::Do([&] (int iQ) {
-        velocityR += celerity<T, L>(iQ)* f[idxPop<T, L>(idx, iQ)];
+    UnrolledFor<1, P::dimQ>::Do([&] (int iQ) {
+        velocityR += P::celerity()[iQ]* f[idxPop(idx, iQ)];
       });
 
     return velocityR/density;
   }
 
-  #pragma omp declare simd
+#pragma omp declare simd
   template<class T, LatticeType L>
     inline void calculateMoments(const T * __restrict__ f, const int idx_lattice,
-                                 T& density, MathVector<T, dimD<T, L>()>& velocity) {
+                                 T& density, MathVector<T, P::dimD>& velocity) {
 
     BOOST_LOG_TRIVIAL(debug) << " - Computing density.";
     density = computeDensity<T, L>(f, idx_lattice);
@@ -63,19 +62,19 @@ namespace lbm {
     void calculateMomentsField(Lattice<T, L>& l_previous,
                                LocalField<T, L>& field) {
 #pragma omp parallel for schedule(static) num_threads(NTHREADS)
-    for(int iZ = hZ<T, L>(); iZ < hZ<T, L>()+lZ_l<T, L>(); ++iZ) {
-      for(int iY = hY<T, L>(); iY < hY<T, L>()+lY_l<T, L>(); ++iY) {
+    for(int iZ = P::hZ; iZ < P::hZ + P::lZ_l; ++iZ) {
+      for(int iY = P::hY; iY < P::hY + P::lY_l; ++iY) {
 #pragma omp simd
-        for(int iX = hX<T, L>(); iX < hX<T, L>()+lX_l<T, L>(); ++iX) {
+        for(int iX = P::hX; iX < P::hX + P::lX_l; ++iX) {
           BOOST_LOG_TRIVIAL(debug) << " - (x, y, z) = "
                                    << "(" << iX
                                    << ", " << iY
                                    << ", " << iZ << ")";
-          int idx_lattice = idxL<T, L>(iX, iY, iZ);
-          int idx_field = idx_inF<T, L>(iX, iY, iZ);
+          int idx_lattice = idxL(iX, iY, iZ);
+          int idx_field = idx_inF(iX, iY, iZ);
 
           T previousDensity;
-          MathVector<T, dimD<T, L>()> previousVelocity;
+          MathVector<T, P::dimD> previousVelocity;
           calculateMoments<T, L>(l_previous.f_distribution.data(), idx_lattice,
                                  previousDensity, previousVelocity);
 
@@ -104,18 +103,18 @@ namespace lbm {
 #pragma omp declare simd
   template <class T, LatticeType L>
     inline T computeEquilibrium(const int iQ, T rho,
-                                const MathVector<T, dimD<T, L>()>& u,
+                                const MathVector<T, P::dimD>& u,
                                 const T u2) {
 
     T fEq_iQ = 1.0;
 
-    UnrolledFor<0, dimD<T, L>()>::Do([&] (int d) {
+    UnrolledFor<0, P::dimD>::Do([&] (int d) {
         fEq_iQ *= (2.0 - sqrt(1.0 + 3.0*u[d]*u[d]))
           * powerOfCelerity<T, L>((2* u[d] + sqrt(1.0 + 3.0*u[d]*u[d]))/(1.0 - u[d]),
-                                  (int) celerity<T, L>(d, iQ));
+                                  (int) P::celerity()[iQ][d]);
       });
 
-    return rho * weight<T, L>(iQ)*fEq_iQ;
+    return rho * P::weight()[iQ]*fEq_iQ;
   }
 
 }
