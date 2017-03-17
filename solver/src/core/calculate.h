@@ -36,10 +36,10 @@ namespace lbm {
     inline MathVector<T, P::dimD> computeVelocity(const T * __restrict__ f,
                                                   const int idx,
                                                   const T density) {
-    MathVector<T, P::dimD> velocityR(P::celerity()[0]* f[idxPop(idx, 0)]);
+    MathVector<T, P::dimD> velocityR = P::celerity()[0] * f[idxPop(idx, 0)];
 
     UnrolledFor<1, P::dimQ>::Do([&] (int iQ) {
-        velocityR += P::celerity()[iQ]* f[idxPop(idx, iQ)];
+        velocityR += P::celerity()[iQ] * f[idxPop(idx, iQ)];
       });
 
     return velocityR/density;

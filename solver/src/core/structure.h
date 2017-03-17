@@ -30,7 +30,6 @@ namespace lbm {
   public:
     U mV[size];
 
-
     U sum() {
       U sumR = 0;
       UnrolledFor<0, size>::Do([&] (int i) {
@@ -119,6 +118,51 @@ namespace lbm {
         });
       return mV_c;
     }
+
+    template<class U, unsigned int size>
+    MathVector<int, 3> operator+(const MathVector<int, 3>& mV_lhs,
+                                 const MathVector<U, size>& mV_rhs)
+    {
+      MathVector<int, 3> mV_result{{0}};
+      UnrolledFor<0, size>::Do([&] (int i) {
+          mV_result[i] = mV_lhs[i] + (int) mV_rhs[i];
+        });
+      return mV_result;
+    }
+
+    template<class U, unsigned int size>
+    MathVector<int, 3> operator+(const MathVector<U, size>& mV_lhs,
+                                 const MathVector<int, 3>& mV_rhs)
+    {
+      MathVector<int, 3> mV_result{{0}};
+      UnrolledFor<0, size>::Do([&] (int i) {
+          mV_result[i] = (int) mV_lhs[i] + mV_rhs[i];
+        });
+      return mV_result;
+    }
+
+        template<class U, unsigned int size>
+    MathVector<int, 3> operator-(const MathVector<int, 3>& mV_lhs,
+                                 const MathVector<U, size>& mV_rhs)
+    {
+      MathVector<int, 3> mV_result{{0}};
+      UnrolledFor<0, size>::Do([&] (int i) {
+          mV_result[i] = mV_lhs[i] - (int) mV_rhs[i];
+        });
+      return mV_result;
+    }
+
+    template<class U, unsigned int size>
+    MathVector<int, 3> operator-(const MathVector<U, size>& mV_lhs,
+                                 const MathVector<int, 3>& mV_rhs)
+    {
+      MathVector<int, 3> mV_result{{0}};
+      UnrolledFor<0, size>::Do([&] (int i) {
+          mV_result[i] = (int) mV_lhs[i] - mV_rhs[i];
+        });
+      return mV_result;
+    }
+
 
   template<class U, unsigned int size>
     MathVector<U, size>& operator*=(MathVector<U, size>& mV, const U factor)

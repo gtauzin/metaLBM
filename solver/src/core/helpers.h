@@ -65,7 +65,7 @@ namespace lbm {
     vector<T, CACHE_LINE> readVTK(const std::string& inputFilename,
                                   const std::string& dataArrayName) {
 
-    vector<T, CACHE_LINE> output(size_g * P::dimQ);
+    vector<T, CACHE_LINE> output(s_g() * P::dimQ);
 
     rapidxml::file<> xmlFile(inputFilename.c_str());
     rapidxml::xml_document<> doc;

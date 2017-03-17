@@ -168,7 +168,7 @@ namespace lbm {
       {}
 
 #pragma omp declare simd
-    virtual MathVector<T, P::dimD> force(const int iX, const int iY, const int iZ) = 0;
+    virtual MathVector<T, P::dimD> force(const MathVector<int, 3>& iP) = 0;
 
   };
 
@@ -176,17 +176,21 @@ namespace lbm {
   template<class T, LatticeType L>
     class ConstantForce : public Force<T, L> {
   private:
-    const MathVector<T, P::dimD> amplitude;
+    MathVector<T, P::dimD> amplitude;
 
   public:
 
-  ConstantForce(const MathVector<T, P::dimD> amplitude_in)
+  ConstantForce(const MathVector<double, 3>& amplitude_in)
     : Force<T, L>()
-      , amplitude(amplitude_in)
-    {}
+    , amplitude{(T) 0}
+    {
+      UnrolledFor<0, P::dimD>::Do([&] (int d) {
+          amplitude[d] = (T) amplitude_in[d];
+      });
+    }
 
 #pragma omp declare simd
-    inline MathVector<T, P::dimD> force(const int iX, const int iY, const int iZ) {
+    inline MathVector<T, P::dimD> force(const MathVector<int, 3>& iP) {
       return amplitude;
     }
   };
@@ -195,25 +199,30 @@ namespace lbm {
   template<class T, LatticeType L>
     class SinusoidalForce : public Force<T, L> {
   private:
-    const MathVector<T, P::dimD> amplitude;
-    const MathVector<T, P::dimD> waveLength;
+    MathVector<T, P::dimD> amplitude;
+    MathVector<T, P::dimD> waveLength;
 
   public:
 
-  SinusoidalForce(const MathVector<T, P::dimD>& amplitude_in,
-                  const MathVector<T, P::dimD>& waveLength_in)
+  SinusoidalForce(const MathVector<double, 3>& amplitude_in,
+                  const MathVector<double, 3>& waveLength_in)
     : Force<T, L>()
-      , amplitude(amplitude_in)
-      , waveLength(waveLength_in)
-    {}
+    , amplitude{(T) 0}
+    , waveLength{(T) 0}
+    {
+      UnrolledFor<0, P::dimD>::Do([&] (int d) {
+          amplitude[d] = (T) amplitude_in[d];
+          waveLength[d] = (T) waveLength_in[d];
+      });
+    }
 
 #pragma omp declare simd
-    inline MathVector<T, P::dimD> force(const int iX, const int iY, const int iZ){
-      MathVector<T, P::dimD> forceR;
+    inline MathVector<T, P::dimD> force(const MathVector<int, 3>& iP){
+      MathVector<T, P::dimD> forceR{{(T)(0)}};
 
-      forceR[0] = amplitude[0] * sin(iX*2*M_PI/waveLength[0]);
-      forceR[1] = amplitude[1] * sin(iY*2*M_PI/waveLength[1]);
-      forceR[2] = amplitude[2] * sin(iZ*2*M_PI/waveLength[2]);
+      UnrolledFor<0, P::dimD>::Do([&] (int d) {
+          forceR[d] = amplitude[d] * sin(iP[d]*2*M_PI/waveLength[d]);
+      });
 
       return forceR;
     }
@@ -221,9 +230,41 @@ namespace lbm {
   };
 
   template<class T, LatticeType L>
+  class KolmogorovForce : public Force<T, L> {
+  private:
+    MathVector<T, P::dimD> amplitude;
+    MathVector<T, P::dimD> waveLength;
+
+  public:
+
+  KolmogorovForce(const MathVector<double, 3>& amplitude_in,
+                  const MathVector<double, 3>& waveLength_in)
+    : Force<T, L>()
+    , amplitude{(T) 0}
+    , waveLength{(T) 0}
+    {
+      UnrolledFor<0, P::dimD>::Do([&] (int d) {
+          amplitude[d] = (T) amplitude_in[d];
+          waveLength[d] = (T) waveLength_in[d];
+      });
+    }
+
+#pragma omp declare simd
+    inline MathVector<T, P::dimD> force(const MathVector<int, 3>& iP){
+      MathVector<T, P::dimD> forceR{{(T)(0)}};
+
+      forceR[d::X] = amplitude[d::X] * sin(iP[d::Y]*2*M_PI/waveLength[d::X]);
+
+      return forceR;
+    }
+
+  };
+
+
+  template<class T, LatticeType L>
     std::shared_ptr<Force<T, L>> Create(const ForceType& forceType,
-                                        const MathVector<T, P::dimD>& amplitude,
-                                        const MathVector<T, P::dimD>& waveLength) {
+                                        const MathVector<double, 3>& amplitude,
+                                        const MathVector<double, 3>& waveLength) {
 
     switch(forceType){
     case ForceType::constant : {
@@ -231,6 +272,10 @@ namespace lbm {
     }
     case ForceType::sinusoidal : {
       return std::shared_ptr<Force<T, L>>(new SinusoidalForce<T, L>(amplitude,
+                                                                    waveLength));
+    }
+    case ForceType::kolmogorov : {
+      return std::shared_ptr<Force<T, L>>(new KolmogorovForce<T, L>(amplitude,
                                                                     waveLength));
     }
 
@@ -254,11 +299,11 @@ namespace lbm {
 
 
 #pragma omp declare simd
-    inline MathVector<T, P::dimD> force(const int iX, const int iY, const int iZ) {
-      MathVector<T, P::dimD> forceR = MathVector<T, P::dimD>{{0.0}};
+    inline MathVector<T, P::dimD> force(const MathVector<int, 3>& iP) {
+      MathVector<T, P::dimD> forceR = MathVector<T, P::dimD>{{(T) 0}};
 
       for(std::shared_ptr<Force<T, L>> bodyForce : forcesArray) {
-        forceR += bodyForce->force(iX, iY, iZ);
+        forceR += bodyForce->force(iP);
       }
       return forceR;
     }

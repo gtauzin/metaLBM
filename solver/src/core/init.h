@@ -198,10 +198,12 @@ namespace lbm {
     for(int k = 0; k < numberForces; ++k) {
       BOOST_LOG_TRIVIAL(info) << "Initializing Force";
       forcesVectorR[k] = Create<T, L>(forceTypeArray[k],
-                                      MathVector<T, P::dimD>({forceAmplitudeXArray[k],
-                                            forceAmplitudeYArray[k]}),
-                                      MathVector<T, P::dimD>({forceWaveLengthXArray[k],
-                                            forceWaveLengthYArray[k]}));
+                                      MathVector<T, 3>({forceAmplitudeXArray[k],
+                                            forceAmplitudeYArray[k],
+                                            forceAmplitudeZArray[k]}),
+                                      MathVector<T, 3>({forceWaveLengthXArray[k],
+                                            forceWaveLengthYArray[k],
+                                            forceWaveLengthZArray[k]}));
     }
     return forcesVectorR;
   }
@@ -275,8 +277,6 @@ namespace lbm {
     Init<T, L> init_Simulation(const int mpi_rank) {
     constexpr int iterationStart = 1;
 
-    LocalField<T, L> localField;
-
     vector<T, CACHE_LINE> initNextDensity = generate_initDensity<T, L>();
     vector<MathVector<T, P::dimD>, CACHE_LINE> initNextVelocity = generate_initVelocity<T, L>();
     vector<T, CACHE_LINE> initNextAlpha = generate_initAlpha<T, L>();
@@ -287,6 +287,14 @@ namespace lbm {
 
     vector<T, CACHE_LINE> initPreviousDensity = initNextDensity;
     vector<MathVector<T, P::dimD>, CACHE_LINE> initPreviousVelocity = initNextVelocity;
+
+    LocalField<T, L> localField = LocalField<T, L>(initNextDensity,
+                                                    initNextVelocity,
+                                                    initNextAlpha,
+                                                    initNextDistribution,
+                                                    initPreviousDensity,
+                                                    initPreviousVelocity);
+
 
     GlobalField<T, L> globalField = GlobalField<T, L>(initNextDensity,
                                                       initNextVelocity,

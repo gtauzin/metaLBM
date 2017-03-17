@@ -5,18 +5,9 @@
 #include <vector>
 #include <string>
 
-/* definition to expand macro then apply to pragma message */
-#define VALUE_TO_STRING(x) #x
-#define VALUE(x) VALUE_TO_STRING(x)
-#define VAR_NAME_VALUE(var) #var "="  VALUE(var)
-
-/* Some example here */
-//#pragma message(VAR_NAME_VALUE(NPROCS))
-
-
 
 namespace lbm {
-  enum class LatticeType {D1Q3, D2Q9, D3Q27};
+  enum class LatticeType {D1Q3, D2Q5, D2Q9, D3Q15, D3Q19, D3Q27};
 
   enum class SolverMethod {BGK, ELBM, Approached_ELBM, ForcedNR_ELBM, ForcedBNR_ELBM, error};
 
@@ -24,7 +15,7 @@ namespace lbm {
   enum class InitVelocityType{homogeneous, perturbated, wave, decay, error};
 
   enum class ForcingMethod {guo, SC, EDM, error};
-  enum class ForceType {constant, sinusoidal, turbulent, turbulent_time, wavenumbers_time, error};
+  enum class ForceType {constant, sinusoidal, kolmogorov, turbulent, turbulent_time, wavenumbers_time, error};
 
   enum class BoundaryType {bounceBack_halfWay, pressure_ZouHe, velocity_ZouHe, entropic, corner, error};
   enum class BoundaryPosition {top, bottom, left, right, top_left, top_right, bottom_right, bottom_left, error};
@@ -33,21 +24,13 @@ namespace lbm {
   enum class OutputType {vtr, backup, error};
 
   typedef DATA_TYPE valueType;
-
-  constexpr LatticeType latticeType = LatticeType::D2Q9;
+  constexpr LatticeType latticeType = LatticeType::D3Q15;
   constexpr int lengthX_g = 16;
   constexpr int lengthY_g = 16;
-  constexpr int lengthZ_g = 1;
-  constexpr int length_g = lengthX_g;
-  constexpr int size_g = lengthX_g * lengthY_g * lengthZ_g;
-
-  constexpr int lengthX_l = lengthX_g/NPROCS;
-  constexpr int lengthY_l = lengthY_g;
-  constexpr int lengthZ_l = lengthZ_g;
-  constexpr int size_l = lengthX_l * lengthY_l * lengthZ_l;
+  constexpr int lengthZ_g = 16;
 
   constexpr int startIteration = 0;
-  constexpr int iterationMax = 1000;
+  constexpr int iterationMax = 10;
   constexpr int writeStep = 1;
   constexpr int backupStep = 1;
   constexpr auto prefix = "test";
@@ -65,11 +48,15 @@ namespace lbm {
 
   constexpr int numberForces = 1;
   constexpr ForcingMethod forcingMethod = ForcingMethod::EDM;
-  constexpr std::array<ForceType, numberForces> forceTypeArray = { ForceType::constant };
-  constexpr std::array<double, numberForces> forceAmplitudeXArray = { 1e-05 };
-  constexpr std::array<double, numberForces> forceAmplitudeYArray = { 1e-05 };
-  constexpr std::array<double, numberForces> forceWaveLengthXArray = { 64.0 };
-  constexpr std::array<double, numberForces> forceWaveLengthYArray = { 64.0 };
+  constexpr std::array<ForceType, numberForces> forceTypeArray = { ForceType::kolmogorov };
+  constexpr std::array<double, numberForces> forceAmplitudeXArray = { 1e-5 };
+  constexpr std::array<double, numberForces> forceAmplitudeYArray = { 1e-5 };
+  constexpr std::array<double, numberForces> forceAmplitudeZArray = { 1e-5 };
+
+  constexpr std::array<double, numberForces> forceWaveLengthXArray = { 4.0 };
+  constexpr std::array<double, numberForces> forceWaveLengthYArray = { 4.0 };
+  constexpr std::array<double, numberForces> forceWaveLengthZArray = { 4.0 };
+
   constexpr int numberWavenumberPairs = 1;
   constexpr std::array<std::array<int, numberWavenumberPairs>, numberForces> forcekXArray = { {0} };
   constexpr std::array<std::array<int, numberWavenumberPairs>, numberForces> forcekYArray = { {0} };

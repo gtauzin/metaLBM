@@ -114,17 +114,18 @@ namespace lbm {
       vector<T, CACHE_LINE> f_distributionR(P::dimQ
                                             *(P::lX_l+2*P::hX)
                                             *(P::lY_l+2*P::hY)
-                                            *(P::lZ_l+2*P::hZ));
+                                            *(P::lZ_l+2*P::hZ), (T)(-10));
       for(int iZ = P::hZ; iZ < P::hZ + P::lZ_l; ++iZ) {
         for(int iY = P::hY; iY < P::hY + P::lY_l; ++iY) {
           for(int iX = P::hX; iX < P::hX + P::lX_l; ++iX) {
 
-            int idx_F = idx_lF(iX, iY, iZ);
-            int idx_L = idx_outL(iX, iY, iZ);
+            int idx_F = idx_inF(iX, iY, iZ);
+            int idx_L = idxL(iX, iY, iZ);
             UnrolledFor<0, P::dimQ>::Do([&] (int iQ) {
                 f_distributionR[idxPop(idx_L, iQ)] = this->nextDistribution[idxPop_lF(idx_F, iQ)];
               });
-              }
+
+          }
         }
       }
       return f_distributionR;

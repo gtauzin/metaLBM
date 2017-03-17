@@ -21,7 +21,7 @@
 namespace lbm {
 
   template<class T, LatticeType L>
-    void push_fusedCollideAndStream(Lattice<T, L>& l_previous, Lattice<T, L>& l_next,
+    void pull_fusedCollideAndStream(Lattice<T, L>& l_previous, Lattice<T, L>& l_next,
                                     std::shared_ptr<Solver<T, L>> solver,
                                     std::shared_ptr<Forcing<T, L>> forcing,
                                     Forces<T, L>& forces,
@@ -37,17 +37,18 @@ namespace lbm {
                                    << "(" << iX
                                    << ", " << iY
                                    << ", " << iZ << ")";
-          int idx_lattice = idxL(iX, iY, iZ);
-          int idx_field = idx_inF(iX, iY, iZ);
+            MathVector<int, 3> iP{{iX, iY, iZ}};
+            int idx_lattice = idxL(iX, iY, iZ);
+            int idx_field = idx_inF(iX, iY, iZ);
 
           T previousDensity;
           MathVector<T, P::dimD> previousVelocity;
           calculateMoments<T, L>(l_previous.f_distribution.data(), idx_lattice,
                                  previousDensity, previousVelocity);
 
-
+          MathVector<int, 3> iP_lF{iX-P::hX+startX, iY-P::hY, iZ-P::hZ};
           BOOST_LOG_TRIVIAL(debug) << " - Computing force.";
-          forcing->force = forces.force(iX-P::hX+startX, iY-P::hY, iZ-P::hZ);
+          forcing->force = forces.force(iP_lF);
           //MathVector<T, P::dimD> nextForce = forcing->force;
 
           T previousVelocity2 = previousVelocity.norm2();
@@ -61,12 +62,13 @@ namespace lbm {
           MathVector<T, P::dimQ> fForced;
 
           UnrolledFor<0, P::dimQ>::Do([&] (int iQ) {
-              fForced[iQ] = l_previous.f_distribution[idxPop(idx_lattice, iQ)]
+              int idx_lattice_previous = idxL(iP - P::celerity()[iQ]);
+              fForced[iQ] = l_previous.f_distribution[idxPop(idx_lattice_previous, iQ)]
                 + forcing->getCollisionForcing(iQ, previousDensity,
                                                previousVelocity,
                                                previousVelocity2);
 
-              fNeq[iQ] = l_previous.f_distribution[idxPop(idx_lattice, iQ)]
+              fNeq[iQ] = l_previous.f_distribution[idxPop(idx_lattice_previous, iQ)]
                 - computeEquilibrium<T, L>(iQ, previousDensity,
                                            previousEqVelocity,
                                            previousEqVelocity2);
@@ -77,10 +79,7 @@ namespace lbm {
           BOOST_LOG_TRIVIAL(debug) << " - Colliding and Streaming.";
           UnrolledFor<0, P::dimQ>::Do([&] (int iQ) {
 
-              int idx_lattice_next = idxL(iX + P::celerity()[iQ][d::X],
-                                          iY + P::celerity()[iQ][d::Y],
-                                          iZ + P::celerity()[iQ][d::Z]);
-              l_next.f_distribution[idxPop(idx_lattice_next, iQ)] = fForced[iQ]
+              l_next.f_distribution[idxPop(idx_lattice, iQ)] = fForced[iQ]
                 - nextAlpha*beta*fNeq[iQ];
             });
 
@@ -123,8 +122,9 @@ namespace lbm {
           calculateMoments<T, L>(f_next.data(), idx_lattice,
                                  nextDensity, nextVelocity);
 
+          MathVector<int, 3> iP_lF{iX-P::hX+startX, iY-P::hY, iZ-P::hZ};
           BOOST_LOG_TRIVIAL(debug) << " - Computing force.";
-          forcing->force = forces.force(iX-P::hX+startX, iY-P::hY, iZ-P::hZ);
+          forcing->force = forces.force(iP_lF);
 
           field.nextDensity[idx_field] = nextDensity;
           nextVelocity += forcing->getHydroVelocityForcing(nextDensity);
@@ -169,12 +169,10 @@ namespace lbm {
       auto t0 = std::chrono::high_resolution_clock::now();
       std::swap(l0, l1);
 
-      init.localField.previousVelocity = init.globalField.previousVelocity;
+      pull_handleHalos<T, L>(*l0);
 
-      push_fusedCollideAndStream<T, L>(*l0, *l1, init.solver, init.forcing, init.forces,
+      pull_fusedCollideAndStream<T, L>(*l0, *l1, init.solver, init.forcing, init.forces,
                                        init.localField, startX, iteration);
-      push_handleHalos<T, L>(*l1);
-
       auto t1 = std::chrono::high_resolution_clock::now();
 
       BOOST_LOG_TRIVIAL(debug) << "Iteration: " << iteration
@@ -193,11 +191,12 @@ namespace lbm {
 
         BOOST_LOG_TRIVIAL(info) << "Iteration: " << iteration
                                 << " - Writing outputs.";
-        init.localField.nextDensity = init.globalField.nextDensity;
-        init.localField.nextVelocity = init.globalField.nextVelocity;
-        init.localField.nextAlpha = init.globalField.nextAlpha;
-        init.localField.previousDensity = init.globalField.previousDensity;
-        init.localField.previousVelocity = init.globalField.previousVelocity;
+        init.globalField.nextDensity = init.localField.nextDensity;
+        init.globalField.nextVelocity = init.localField.nextVelocity;
+        init.globalField.nextAlpha = init.localField.nextAlpha;
+        init.globalField.nextDistribution = init.localField.nextDistribution;
+        init.globalField.previousDensity = init.localField.previousDensity;
+        init.globalField.previousVelocity = init.localField.previousVelocity;
 
         if(iteration%backupStep == 0) {
           BOOST_LOG_TRIVIAL(info) << "Iteration: " << iteration
@@ -216,7 +215,7 @@ namespace lbm {
 
     const double commTime = totalTime - compTime;
 
-    const long nCells = size_g;
+    const long nCells = s_g();
     const double mlups = (1e-6*nCells) / (totalTime / iterationMax);
 
     const double relative_MassDiff = fabs(global_endMass-global_startMass)/global_startMass;
