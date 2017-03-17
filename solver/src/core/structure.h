@@ -163,7 +163,6 @@ namespace lbm {
       return mV_result;
     }
 
-
   template<class U, unsigned int size>
     MathVector<U, size>& operator*=(MathVector<U, size>& mV, const U factor)
     {

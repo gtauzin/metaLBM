@@ -35,5 +35,13 @@ function(metaLBM_add_mpi_test targetName targetFile numProcs)
     add_dependencies(tests ${targetName})
 endfunction()
 
+# Core headers tests
 metaLBM_add_test(test_commons test_commons.cpp)
 metaLBM_add_test(test_calculate test_calculate.cpp)
+metaLBM_add_test(test_solver test_solver.cpp)
+metaLBM_add_test(test_force test_force.cpp)
+metaLBM_add_test(test_init test_init.cpp)
+metaLBM_add_test(test_output test_output.cpp)
+metaLBM_add_test(test_helpers test_helpers.cpp)
+metaLBM_add_test(test_structure test_structure.cpp)
+metaLBM_add_test(test_lattice test_lattice.cpp)

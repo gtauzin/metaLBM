@@ -7,10 +7,9 @@
 
 #include <math.h>
 
-
 using namespace lbm;
 
-BOOST_AUTO_TEST_SUITE(LatticeType)
+BOOST_AUTO_TEST_SUITE(Commons)
 
 BOOST_AUTO_TEST_CASE(doubleD1Q3) {
   constexpr ::lbm::LatticeType latticeType = ::lbm::LatticeType::D1Q3;

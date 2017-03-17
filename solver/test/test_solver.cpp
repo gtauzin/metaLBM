@@ -3,15 +3,14 @@
 #include <boost/test/unit_test.hpp>
 
 #include <math.h>
-#include <array>
 
-#include "calculate.h"
+#include "solver.h"
 
 using namespace lbm;
 
-BOOST_AUTO_TEST_SUITE(Calculate)
+BOOST_AUTO_TEST_SUITE(Solver)
 
-BOOST_AUTO_TEST_CASE(doubleD1Q3_Density) {
+BOOST_AUTO_TEST_CASE(ELBM) {
   constexpr ::lbm::LatticeType latticeType = ::lbm::LatticeType::D1Q3;
 
   typedef Parameters<T, L> Param;

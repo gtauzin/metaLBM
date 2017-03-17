@@ -1,19 +1,13 @@
 #include <boost/test/unit_test.hpp>
 #define BOOST_MATH_INSTRUMENT
 
-#include "force.h"
-#include "input.h"
-#include "commons.h"
-
-#include <array>
-#include <vector>
-#include <memory>
 #include <math.h>
 
+#include "force.h"
 
 using namespace lbm;
 
-BOOST_AUTO_TEST_SUITE(Guo)
+BOOST_AUTO_TEST_SUITE(Force)
 
 BOOST_AUTO_TEST_CASE(VelocityForcings) {
   ForcingGuo forcing;
