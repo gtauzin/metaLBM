@@ -33,6 +33,7 @@ As of April 2017, metaLBM support the following features:
 - D3Q15
 - D3Q19
 - D3Q27
+- ... potentially any rectangular-shaped lattice
 
 **Supported collision operators**
 - BGK
@@ -46,8 +47,6 @@ As of April 2017, metaLBM support the following features:
 **Supported I/O**
 - VTK (serial)
 - HDF5 (upcoming)
-
-TODO: put references
 
 ## Project Organisation
 
@@ -65,12 +64,17 @@ is passed to CMake.
 
 - The [solver/src/core](solver/src/core) directory contains core source code describing the framework
 and the physics.
-- The [solver/src/omp](solver/src/omp) directory contains .
-- The [solver/src/mpi](solver/src/mpi) directory contains all source files.
-- The [solver/src/cuda](solver/src/cuda) directory contains documentation generating code
-with doxygen.
-- The [solver/src/mpi_cuda](solver/src/cuda) directory contains documentation generating code
-with doxygen.
+- The [solver/src/omp](solver/src/omp) directory contains a serial or shared memory
+parallelisation version of the LBM algorithm. Activate it by passing the flags `-D_SERIAL=ON`
+or `-D_OMP=ON` to cmake.
+- The [solver/src/mpi](solver/src/mpi) directory a distributed memory or an hybrid
+parallelisation version of the LBM algorithm. Activate it by passing the flags `-D_MPI=ON`
+or `-D_MPI_OMP` to cmake.
+- The [solver/src/cuda](solver/src/cuda) directory contains a GPU parallelisation version
+of the LBM algorithm. Activate it by passing the flag `-D_CUDA=ON` to cmake.
+- The [solver/src/mpi_cuda](solver/src/cuda) directory contains a multi-GPU
+parallelisation version of the LBM algorithm. Activate it by passing the flag
+`-D_CUDA_MPI=ON` to cmake.
 
 Input parameters files are read from the [input](input) directory.
 - The [input/inputJSON](input/inputJSON) directory contains the json files with
