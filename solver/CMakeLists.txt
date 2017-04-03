@@ -1,20 +1,15 @@
 # Project Properties
-cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
+
+project(metaLBM LANGUAGES CXX)
+set (CMAKE_CXX_STANDARD 11)
 
 # Compilers
 option(ICC "Use Intel compiler" OFF)
 
-project(metaLBM)
-set (CMAKE_CXX_STANDARD 11)
-
 # Include directories
 include_directories("${PROJECT_SOURCE_DIR}/include/rapidxml-1.13")
 include_directories("${PROJECT_SOURCE_DIR}/src/core")
-file(GLOB_RECURSE sources src/core/*.cpp)
-file(GLOB_RECURSE headers ${PROJECT_SOURCE_DIR}/src/core/*.h)
-
-file(GLOB_RECURSE test_sources test/*.cpp)
-set(test_sources ${test_sources} ${sources})
 
 # Project Output
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/bin")
