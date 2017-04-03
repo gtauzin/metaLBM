@@ -1,160 +1,370 @@
 #ifndef LATTICE_H
 #define LATTICE_H
 
-#include <array>
-#include <numeric>
-#include <memory>
-
-#include <boost/align/aligned_allocator.hpp>
-#include <vector>
-template<class T, std::size_t Alignment = 1>
-#ifdef ALIGN_MEMORY
-  using vector = std::vector<T,
-  boost::alignment::aligned_allocator<T, Alignment> >;
-#else
-  using vector = std::vector<T>;
-#endif
+#include <iostream>
+#include <string>
+#include <stdlib.h>
 
 #include "input.h"
-#include "commons.h"
+#include "structure.h"
+
+#define CACHE_LINE 64
 
 namespace lbm {
 
-  template <class T, LatticeType L>
-  class Lattice {
-  public:
-    vector<T, CACHE_LINE> f_distribution;
+  /**
+   * Lattice required to define a lattice for a parallel code.
+   *
+   * @tparam T data type.
+   * @tparam LatticeT lattice type of the form DdQq.
+   */
 
-    Lattice(const vector<T, CACHE_LINE>& f_distribution_in)
-      : f_distribution(f_distribution_in)
-    {}
+  template <class T, LatticeType LatticeT>
+    struct Lattice
+    {
+      static constexpr int dimD = 1;
+      static constexpr int dimQ = 1;
+      static constexpr int lX_g = 1;
+      static constexpr int lY_g = 1;
+      static constexpr int lZ_g = 1;
 
-  };
+      static constexpr int lX_l = 1;
+      static constexpr int lY_l = 1;
+      static constexpr int lZ_l = 1;
 
-  template <class T, LatticeType L>
-  class Field {
-  public:
-    vector<T, CACHE_LINE> nextDensity;
-    vector<MathVector<T, P::dimD>, CACHE_LINE> nextVelocity;
-    vector<T, CACHE_LINE> nextAlpha;
-    vector<T, CACHE_LINE> nextDistribution;
-    vector<T, CACHE_LINE> previousDensity;
-    vector<MathVector<T, P::dimD>, CACHE_LINE> previousVelocity;
+      static constexpr int hX = 0;
+      static constexpr int hY = 0;
+      static constexpr int hZ = 0;
 
-    Field(const unsigned int size_in)
-      : nextDensity(size_in)
-      , nextVelocity{size_in, MathVector<T, P::dimD>()}
-      , nextAlpha(size_in)
-      , nextDistribution(P::dimQ*size_in)
-      , previousDensity(size_in)
-      , previousVelocity{size_in, MathVector<T, P::dimD>()}
-      {}
-
-    Field(const vector<T, CACHE_LINE>& nextDensity_in,
-          const vector<MathVector<T, P::dimD>, CACHE_LINE> nextVelocity_in,
-          const vector<T, CACHE_LINE>& nextAlpha_in,
-          const vector<T, CACHE_LINE>& nextDistribution_in,
-          const vector<T, CACHE_LINE>& previousDensity_in,
-          const vector<MathVector<T, P::dimD>, CACHE_LINE> previousVelocity_in)
-      : nextDensity(nextDensity_in)
-      , nextVelocity(nextVelocity_in)
-      , nextAlpha(nextAlpha_in)
-      , nextDistribution(nextDistribution_in)
-      , previousDensity(previousDensity_in)
-      , previousVelocity(previousVelocity_in)
-    {}
-
-    virtual int idxF(const int iX, const int iY, const int iZ) = 0;
-
-  };
-
-  template <class T, LatticeType L>
-    class LocalField : public Field<T, L> {
-  public:
-  LocalField()
-    : Field<T, L>(s_l())
-      {}
-
-  LocalField(const vector<T, CACHE_LINE>& nextDensity_in,
-             const vector<MathVector<T, P::dimD>, CACHE_LINE> nextVelocity_in,
-             const vector<T, CACHE_LINE>& nextAlpha_in,
-             const vector<T, CACHE_LINE>& nextDistribution_in,
-             const vector<T, CACHE_LINE>& previousDensity_in,
-             const vector<MathVector<T, P::dimD>, CACHE_LINE> previousVelocity_in)
-    : Field<T, L>(nextDensity_in, nextVelocity_in,
-                  nextAlpha_in, nextDistribution_in,
-                  previousDensity_in, previousVelocity_in)
-      {}
-
-    inline int idxF(const int iX, const int iY, const int iZ) {
-      return idx_lF(iX, iY, iZ);
-    }
-
-    inline T getMass() {
-      return std::accumulate(this->nextDistribution.cbegin(),
-                             this->nextDistribution.cend(), 0.);
-    }
-
-    inline void packDistribution(const Lattice<T, L>& l) {
-      for(int iZ = P::hZ; iZ < P::hZ + P::lZ_l; ++iZ) {
-        for(int iY = P::hY; iY < P::hY + P::lY_l; ++iY) {
-          for(int iX = P::hX; iX < P::hX + P::lX_l; ++iX) {
-
-            int idx_L = idxL(iX, iY, iZ);
-            int idx_F = idx_inF(iX, iY, iZ);
-            UnrolledFor<0, P::dimQ>::Do([&] (int iQ) {
-                this->nextDistribution[idxPop_lF(idx_F, iQ)] = l.f_distribution[idxPop(idx_L, iQ)];
-              });
-              }
-        }
+      static constexpr T inv_cs2 = (T)1;
+      static constexpr T cs2 = (T)1/inv_cs2;
+      static inline constexpr MathVector<MathVector<T, dimD>, dimQ> celerity()
+        {
+          return
+            {
+              MathVector<T, dimD>{{(T)0}}
+            };
+        };
+      static inline constexpr MathVector<T, dimQ> weight()
+      {
+        return
+          {
+            (T)1
+          };
       }
-    }
+    };
 
-    inline vector<T, CACHE_LINE> unpackDistribution() {
-      vector<T, CACHE_LINE> f_distributionR(P::dimQ
-                                            *(P::lX_l+2*P::hX)
-                                            *(P::lY_l+2*P::hY)
-                                            *(P::lZ_l+2*P::hZ), (T)(-10));
-      for(int iZ = P::hZ; iZ < P::hZ + P::lZ_l; ++iZ) {
-        for(int iY = P::hY; iY < P::hY + P::lY_l; ++iY) {
-          for(int iX = P::hX; iX < P::hX + P::lX_l; ++iX) {
 
-            int idx_F = idx_inF(iX, iY, iZ);
-            int idx_L = idxL(iX, iY, iZ);
-            UnrolledFor<0, P::dimQ>::Do([&] (int iQ) {
-                f_distributionR[idxPop(idx_L, iQ)] = this->nextDistribution[idxPop_lF(idx_F, iQ)];
-              });
+  template <class T>
+    struct Lattice<T, LatticeType::D1Q3>
+    {
+      static constexpr int dimD = 1;
+      static constexpr int dimQ = 3;
+      static constexpr int lX_g = lengthX_g;
+      static constexpr int lY_g = 1;
+      static constexpr int lZ_g = 1;
 
-          }
+      static constexpr int lX_l = lX_g/NPROCS;
+      static constexpr int lY_l = lY_g;
+      static constexpr int lZ_l = lZ_g;
+
+      static constexpr int hX = 1;
+      static constexpr int hY = 0;
+      static constexpr int hZ = 0;
+
+      static constexpr T inv_cs2 = (T)3;
+      static constexpr T cs2 = (T)1/inv_cs2;
+      static inline constexpr MathVector<MathVector<T, dimD>, dimQ> celerity()
+        {
+          return
+            {
+              MathVector<T, dimD>{{(T)0}},
+              MathVector<T, dimD>{{(T)-1}},
+              MathVector<T, dimD>{{(T)1}}
+            };
         }
-      }
-      return f_distributionR;
-    }
+      static inline constexpr MathVector<T, dimQ> weight()
+        {
+          return
+            {
+              (T)2/(T)3, (T)1/(T)6, (T)1/(T)6
+            };
+        }
+    };
 
-  };
 
-  template <class T, LatticeType L>
-    class GlobalField : public Field<T, L> {
-  public:
-    GlobalField()
-      : Field<T, L>(s_g())
-      {}
+    template <class T>
+    struct Lattice<T, LatticeType::D2Q5>
+    {
+      static constexpr int dimD = 2;
+      static constexpr int dimQ = 5;
+      static constexpr int lX_g = lengthX_g;
+      static constexpr int lY_g = lengthY_g;
+      static constexpr int lZ_g = 1;
 
-    GlobalField(const vector<T, CACHE_LINE>& nextDensity_in,
-                const vector<MathVector<T, P::dimD>, CACHE_LINE> nextVelocity_in,
-                const vector<T, CACHE_LINE>& nextAlpha_in,
-                const vector<T, CACHE_LINE>& nextDistribution_in,
-                const vector<T, CACHE_LINE>& previousDensity_in,
-                const vector<MathVector<T, P::dimD>, CACHE_LINE> previousVelocity_in)
-      : Field<T, L>(nextDensity_in, nextVelocity_in,
-                    nextAlpha_in, nextDistribution_in,
-                    previousDensity_in, previousVelocity_in)
-      {}
+      static constexpr int lX_l = lX_g/NPROCS;
+      static constexpr int lY_l = lY_g;
+      static constexpr int lZ_l = lZ_g;
 
-    inline int idxF(const int iX, const int iY, int iZ) {
-      return idx_gF(iX, iY, iZ);
-    }
-  };
+      static constexpr int hX = 1;
+      static constexpr int hY = 1;
+      static constexpr int hZ = 0;
+
+      static constexpr T inv_cs2 = (T)3;
+      static constexpr T cs2 = (T)1/inv_cs2;
+      static inline constexpr MathVector<MathVector<T, dimD>, dimQ> celerity()
+        {
+          return
+            {
+              MathVector<T, dimD>{{(T)0, (T)0}},
+              MathVector<T, dimD>{{(T)-1, (T)0}},
+              MathVector<T, dimD>{{(T)0, (T)-1}},
+              MathVector<T, dimD>{{(T)1, (T)0}},
+              MathVector<T, dimD>{{(T)0, (T)1}}
+            };
+        }
+      static inline constexpr MathVector<T, dimQ> weight()
+        {
+          return
+            {
+              (T)4/(T)6,
+              (T)1/(T)12, (T)1/(T)12,
+              (T)1/(T)12, (T)1/(T)12
+            };
+        }
+
+    };
+
+  template <class T>
+    struct Lattice<T, LatticeType::D2Q9>
+    {
+      static constexpr int dimD = 2;
+      static constexpr int dimQ = 9;
+      static constexpr int lX_g = lengthX_g;
+      static constexpr int lY_g = lengthY_g;
+      static constexpr int lZ_g = 1;
+
+      static constexpr int lX_l = lX_g/NPROCS;
+      static constexpr int lY_l = lY_g;
+      static constexpr int lZ_l = lZ_g;
+
+      static constexpr int hX = 1;
+      static constexpr int hY = 1;
+      static constexpr int hZ = 0;
+
+      static constexpr T inv_cs2 = (T)3;
+      static constexpr T cs2 = (T)1/inv_cs2;
+      static inline constexpr MathVector<MathVector<T, dimD>, dimQ> celerity()
+        {
+          return
+            {
+              MathVector<T, dimD>{{(T)0, (T)0}},
+              MathVector<T, dimD>{{(T)-1, (T)1}},
+              MathVector<T, dimD>{{(T)-1, (T)0}},
+              MathVector<T, dimD>{{(T)-1, (T)-1}},
+              MathVector<T, dimD>{{(T)0, (T)-1}},
+              MathVector<T, dimD>{{(T)1, (T)-1}},
+              MathVector<T, dimD>{{(T)1, (T)0}},
+              MathVector<T, dimD>{{(T)1, (T)1}},
+              MathVector<T, dimD>{{(T)0, (T)1}}
+            };
+        }
+      static inline constexpr MathVector<T, dimQ> weight()
+        {
+          return
+            {
+              (T)4/(T)9, (T)1/(T)36, (T)1/(T)9,
+              (T)1/(T)36, (T)1/(T)9, (T)1/(T)36,
+              (T)1/(T)9, (T)1/(T)36, (T)1/(T)9
+            };
+        }
+
+    };
+
+  template <class T>
+    struct Lattice<T, LatticeType::D3Q15>
+    {
+      static constexpr int dimD = 3;
+      static constexpr int dimQ = 15;
+      static constexpr int lX_g = lengthX_g;
+      static constexpr int lY_g = lengthY_g;
+      static constexpr int lZ_g = lengthZ_g;
+
+      static constexpr int lX_l = lX_g/NPROCS;
+      static constexpr int lY_l = lY_g;
+      static constexpr int lZ_l = lZ_g;
+
+      static constexpr int hX = 1;
+      static constexpr int hY = 1;
+      static constexpr int hZ = 1;
+
+      static constexpr T inv_cs2 = (T)3;
+      static constexpr T cs2 = (T)1/inv_cs2;
+      static inline constexpr MathVector<MathVector<T, dimD>, dimQ> celerity()
+        {
+          return
+            {
+              MathVector<T, dimD>{{(T)0, (T)0, (T)0}},
+              MathVector<T, dimD>{{(T)-1, (T)0, (T)0}},
+              MathVector<T, dimD>{{(T)0, (T)-1, (T)0}},
+              MathVector<T, dimD>{{(T)0, (T)0, (T)-1}},
+              MathVector<T, dimD>{{(T)-1, (T)-1, (T)-1}},
+              MathVector<T, dimD>{{(T)-1, (T)-1, (T)1}},
+              MathVector<T, dimD>{{(T)-1, (T)1, (T)-1}},
+              MathVector<T, dimD>{{(T)-1, (T)1, (T)1}},
+              MathVector<T, dimD>{{(T)1, (T)0,(T)0}},
+              MathVector<T, dimD>{{(T)0, (T)1, (T)0}},
+              MathVector<T, dimD>{{(T)0, (T)0, (T)1}},
+              MathVector<T, dimD>{{(T)1, (T)1, (T)1}},
+              MathVector<T, dimD>{{(T)1, (T)1, (T)-1}},
+              MathVector<T, dimD>{{(T)1, (T)-1, (T)1}},
+              MathVector<T, dimD>{{(T)1, (T)-1, (T)-1}}
+            };
+        }
+      static inline constexpr MathVector<T, dimQ> weight()
+        {
+          return
+            {
+              (T)2/(T)9,
+              (T)1/(T)9, (T)1/(T)9, (T)1/(T)9,
+              (T)1/(T)72, (T)1/(T)72, (T)1/(T)72, (T)1/(T)72,
+              (T)1/(T)9, (T)1/(T)9, (T)1/(T)9,
+              (T)1/(T)72, (T)1/(T)72, (T)1/(T)72, (T)1/(T)72
+            };
+        }
+    };
+
+
+  template <class T>
+    struct Lattice<T, LatticeType::D3Q19>
+    {
+      static constexpr int dimD = 3;
+      static constexpr int dimQ = 19;
+      static constexpr int lX_g = lengthX_g;
+      static constexpr int lY_g = lengthY_g;
+      static constexpr int lZ_g = lengthZ_g;
+
+      static constexpr int lX_l = lX_g/NPROCS;
+      static constexpr int lY_l = lY_g;
+      static constexpr int lZ_l = lZ_g;
+
+      static constexpr int hX = 1;
+      static constexpr int hY = 1;
+      static constexpr int hZ = 1;
+
+      static constexpr T inv_cs2 = (T)3;
+      static constexpr T cs2 = (T)1/inv_cs2;
+      static inline constexpr MathVector<MathVector<T, dimD>, dimQ> celerity()
+        {
+          return
+            {
+              MathVector<T, dimD>{{(T)0, (T)0, (T)0}},
+              MathVector<T, dimD>{{(T)-1, (T)0, (T)0}},
+              MathVector<T, dimD>{{(T)0, (T)-1, (T)0}},
+              MathVector<T, dimD>{{(T)0, (T)0, (T)-1}},
+              MathVector<T, dimD>{{(T)-1, (T)-1, (T)0}},
+              MathVector<T, dimD>{{(T)-1, (T)1, (T)0}},
+              MathVector<T, dimD>{{(T)-1, (T)0, (T)-1}},
+              MathVector<T, dimD>{{(T)-1, (T)0, (T)1}},
+              MathVector<T, dimD>{{(T)0, (T)-1,(T)-1}},
+              MathVector<T, dimD>{{(T)0, (T)-1, (T)1}},
+              MathVector<T, dimD>{{(T)1, (T)0, (T)0}},
+              MathVector<T, dimD>{{(T)0, (T)1, (T)0}},
+              MathVector<T, dimD>{{(T)0, (T)0, (T)1}},
+              MathVector<T, dimD>{{(T)1, (T)1, (T)0}},
+              MathVector<T, dimD>{{(T)1, (T)-1, (T)0}},
+              MathVector<T, dimD>{{(T)1, (T)0, (T)1}},
+              MathVector<T, dimD>{{(T)1, (T)0, (T)-1}},
+              MathVector<T, dimD>{{(T)0, (T)1, (T)1}},
+              MathVector<T, dimD>{{(T)0, (T)1, (T)-1}}
+
+            };
+        }
+      static inline constexpr MathVector<T, dimQ> weight()
+        {
+          return
+            {
+              (T)1/(T)3,
+              (T)1/(T)18, (T)1/(T)18, (T)1/(T)18,
+              (T)1/(T)36, (T)1/(T)36, (T)1/(T)36,
+              (T)1/(T)36, (T)1/(T)36, (T)1/(T)36,
+              (T)1/(T)18, (T)1/(T)18, (T)1/(T)18,
+              (T)1/(T)36, (T)1/(T)36, (T)1/(T)36,
+              (T)1/(T)36, (T)1/(T)36, (T)1/(T)36
+            };
+        }
+    };
+
+
+   template <class T>
+    struct Lattice<T, LatticeType::D3Q27>
+    {
+      static constexpr int dimD = 3;
+      static constexpr int dimQ = 27;
+      static constexpr int lX_g = lengthX_g;
+      static constexpr int lY_g = lengthY_g;
+      static constexpr int lZ_g = lengthZ_g;
+
+      static constexpr int lX_l = lX_g/NPROCS;
+      static constexpr int lY_l = lY_g;
+      static constexpr int lZ_l = lZ_g;
+
+      static constexpr int hX = 1;
+      static constexpr int hY = 1;
+      static constexpr int hZ = 1;
+
+      static constexpr T inv_cs2 = (T)3;
+      static constexpr T cs2 = (T)1/inv_cs2;
+      static inline constexpr MathVector<MathVector<T, dimD>, dimQ> celerity()
+        {
+          return
+            {
+              MathVector<T, dimD>{{(T)0, (T)0, (T)0}},
+              MathVector<T, dimD>{{(T)-1, (T)0, (T)0}},
+              MathVector<T, dimD>{{(T)0, (T)-1, (T)0}},
+              MathVector<T, dimD>{{(T)0, (T)0, (T)-1}},
+              MathVector<T, dimD>{{(T)-1, (T)-1, (T)0}},
+              MathVector<T, dimD>{{(T)-1, (T)1, (T)0}},
+              MathVector<T, dimD>{{(T)-1, (T)0, (T)-1}},
+              MathVector<T, dimD>{{(T)-1, (T)0, (T)1}},
+              MathVector<T, dimD>{{(T)0, (T)-1, (T)-1}},
+              MathVector<T, dimD>{{(T)0, (T)-1, (T)1}},
+              MathVector<T, dimD>{{(T)-1, (T)-1, (T)-1}},
+              MathVector<T, dimD>{{(T)-1, (T)-1, (T)1}},
+              MathVector<T, dimD>{{(T)-1, (T)1, (T)-1}},
+              MathVector<T, dimD>{{(T)-1, (T)1, (T)1}},
+              MathVector<T, dimD>{{(T)1, (T)0, (T)0}},
+              MathVector<T, dimD>{{(T)0, (T)1, (T)0}},
+              MathVector<T, dimD>{{(T)0, (T)0, (T)1}},
+              MathVector<T, dimD>{{(T)1, (T)1, (T)0}},
+              MathVector<T, dimD>{{(T)1, (T)-1, (T)0}},
+              MathVector<T, dimD>{{(T)1, (T)0, (T)1}},
+              MathVector<T, dimD>{{(T)1, (T)0, (T)-1}},
+              MathVector<T, dimD>{{(T)0, (T)1, (T)1}},
+              MathVector<T, dimD>{{(T)0, (T)1, (T)-1}},
+              MathVector<T, dimD>{{(T)1, (T)1, (T)1}},
+              MathVector<T, dimD>{{(T)1, (T)1, (T)-1}},
+              MathVector<T, dimD>{{(T)1, (T)-1, (T)1}},
+              MathVector<T, dimD>{{(T)1, (T)-1, (T)-1}}
+            };
+        }
+      static inline constexpr MathVector<T, dimQ> weight()
+        {
+          return
+            {
+              (T)8/(T)27, (T)2/(T)27, (T)2/(T)27,
+              (T)2/(T)27, (T)1/(T)54, (T)1/(T)54,
+              (T)1/(T)54, (T)1/(T)54, (T)1/(T)54,
+              (T)1/(T)54, (T)1/(T)216, (T)1/(T)216,
+              (T)1/(T)216, (T)1/(T)216, (T)2/(T)27,
+              (T)2/(T)27, (T)2/(T)27, (T)1/(T)54,
+              (T)1/(T)54, (T)1/(T)54, (T)1/(T)54,
+              (T)1/(T)54, (T)1/(T)54, (T)1/(T)216,
+              (T)1/(T)216, (T)1/(T)216, (T)1/(T)216
+            };
+        }
+    };
 
 }
+
 #endif // LATTICE_H
