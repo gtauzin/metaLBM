@@ -5,15 +5,15 @@
 namespace tt = boost::test_tools;
 
 #define NPROCS 1
-#include "input.h"
 #include "commons.h"
+#include "field.h"
 
 #include <math.h>
 #include <iostream>
 
 using namespace lbm;
 
-BOOST_AUTO_TEST_SUITE(Commons)
+BOOST_AUTO_TEST_SUITE(Field)
 
 
 BOOST_AUTO_TEST_SUITE_END()

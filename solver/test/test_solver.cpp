@@ -19,7 +19,7 @@ BOOST_AUTO_TEST_CASE(ELBM) {
 
   const int idx = Param::lX_g * Param::lY_g * Param::lZ_g - 1;
 
-  const auto density_ = computeDensity<T, L>(fEq.data(), idx);
+  const auto density_ = computeDensity<T>(fEq.data(), idx);
   BOOST_CHECK_EQUAL(density_, (T)0);
 
 }

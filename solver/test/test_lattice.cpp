@@ -12,7 +12,7 @@ namespace tt = boost::test_tools;
 
 using namespace lbm;
 
-BOOST_AUTO_TEST_SUITE(Commons)
+BOOST_AUTO_TEST_SUITE(Lattice)
 
 BOOST_AUTO_TEST_CASE(isotropyD1Q3) {
   constexpr ::lbm::LatticeType latticeType = ::lbm::LatticeType::D1Q3;

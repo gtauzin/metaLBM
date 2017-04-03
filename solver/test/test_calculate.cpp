@@ -3,8 +3,10 @@
 #include <boost/test/unit_test.hpp>
 
 #include <math.h>
-#include <array>
 
+#define NPROCS 1
+#include "input.h"
+#include "commons.h"
 #include "calculate.h"
 
 using namespace lbm;
@@ -13,15 +15,15 @@ BOOST_AUTO_TEST_SUITE(Calculate)
 
 BOOST_AUTO_TEST_CASE(doubleD1Q3_Density) {
   constexpr ::lbm::LatticeType latticeType = ::lbm::LatticeType::D1Q3;
+  typedef double valueType;
+  typedef Parameters<valueType, latticeType> Param;
 
-  typedef Parameters<T, L> Param;
-
-  std::vector<T> fEq(Param::dimQ * Param::lX_g * Param::lY_g * Param::lZ_g, (T)0);
+  std::vector<valueType> fEq(Param::dimQ * Param::lX_g * Param::lY_g * Param::lZ_g, (valueType)0);
 
   const int idx = Param::lX_g * Param::lY_g * Param::lZ_g - 1;
 
-  const auto density_ = computeDensity<T, L>(fEq.data(), idx);
-  BOOST_CHECK_EQUAL(density_, (T)0);
+  const auto density_ = computeDensity<valueType>(fEq.data(), idx);
+  BOOST_CHECK_EQUAL(density_, (valueType)0);
 
 }
 
