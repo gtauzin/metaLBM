@@ -13,6 +13,9 @@
 namespace logging = boost::log;
 
 #include "input.h"
+#include "lattice.h"
+typedef lbm::Lattice<lbm::valueType, lbm::latticeType> L;
+
 #include "init.h"
 #include "compute.h"
 #include "commons.h"
@@ -22,11 +25,9 @@ using namespace lbm;
 int main() {
   initLogging(0);
 
-  BOOST_LOG_TRIVIAL(debug) << "Logging for debug starts.";
+  Init<valueType> init = init_Simulation<double>(0);
 
-  Init<double, latticeType> init = init_Simulation<double, latticeType>(0);
-
-  compute<double, latticeType>(init);
+  compute<valueType>(init);
 
   return 0;
 
