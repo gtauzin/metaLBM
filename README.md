@@ -1,4 +1,4 @@
-## Description
+# Description #
 
 metaLBM is a C++11 header-only template Computational Fluid Dynamic software
 based on the Lattice Boltzmann Method (LBM). metaLBM is meant to support multiple lattices
@@ -65,16 +65,16 @@ is passed to CMake.
 - The [solver/src/core](solver/src/core) directory contains core source code describing the framework
 and the physics.
 - The [solver/src/omp](solver/src/omp) directory contains a serial or shared memory
-parallelisation version of the LBM algorithm. Activate it by passing the flags `-D_SERIAL=ON`
-or `-D_OMP=ON` to cmake.
+parallelisation version of the LBM algorithm. Activate it by passing the flags `-D=ON`
+or `-DOMP=ON` to cmake.
 - The [solver/src/mpi](solver/src/mpi) directory a distributed memory or an hybrid
-parallelisation version of the LBM algorithm. Activate it by passing the flags `-D_MPI=ON`
-or `-D_MPI_OMP` to cmake.
+parallelisation version of the LBM algorithm. Activate it by passing the flags `-DMPI=ON`
+or `-DMPI_OMP` to cmake.
 - The [solver/src/cuda](solver/src/cuda) directory contains a GPU parallelisation version
-of the LBM algorithm. Activate it by passing the flag `-D_CUDA=ON` to cmake.
+of the LBM algorithm. Activate it by passing the flag `-DCUDA=ON` to cmake.
 - The [solver/src/mpi_cuda](solver/src/cuda) directory contains a multi-GPU
 parallelisation version of the LBM algorithm. Activate it by passing the flag
-`-D_CUDA_MPI=ON` to cmake.
+`-DCUDA_MPI=ON` to cmake.
 
 Input parameters files are read from the [input](input) directory.
 - The [input/inputJSON](input/inputJSON) directory contains the json files with
@@ -137,10 +137,10 @@ unit tests. To build all tests do:
 make tests
 ```
 
-If you want to add unit tests, just add a source file in `solver/test/`, edit the
-correspondng `CMakeLists.txt` files to include your new targets and rebuild the
-project `cmake ..` from your `solver/build` directory. There are predeclared functions
-which make it easy to add new targets.
+If you want to add unit tests, just add a source file in [solver/test/](solver/test/),
+edit the correspondng `CMakeLists.txt` files to include your new targets and rebuild the
+project `cmake ..` from your [solver/build](solver/build) directory. There are
+predeclared functions which make it easy to add new targets.
 
 metaLBM supports scale-dependent forces, which are based on [FFTW](http://www.fftw.org)
 library and therefore you will need a working installation. You may have to set the
@@ -153,14 +153,14 @@ export FFTW_LIBRARY_DIR="path/to/fftw/lib"
 ```
 
 To generate documentation for the project, you need a working `doxygen`
-installation. Run from your `solverbuild` directory:
+installation. Run from your [solver/build](solver/build) directory:
 
 ```shell
 make doc
 ```
 
-Documentation will be generated in a subfolder `solver/doc` and the webpage can be
-found in `solver/doc/html/index.html`.
+Documentation will be generated in a subfolder [solver/doc](solver/doc) and the webpage
+can be found in [solver/doc/html/index.html](solver/doc/html/index.html).
 
 Check the [Wiki](https://gitlab.com/rooknrowl/metaLBM/wikis/home) for
 additional tips on how to run a simulation.
