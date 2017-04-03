@@ -22,11 +22,11 @@ using vector = std::vector<T>;
 #include "input.h"
 #include "structure.h"
 #include "commons.h"
-#include "lattice.h"
+#include "field.h"
 
 namespace lbm {
 
-  template <class T, LatticeType L>
+  template <class T>
     class Output {
   protected:
     const std::string outputFolder;
@@ -52,24 +52,24 @@ namespace lbm {
       , fileExtension(fileExtension_in)
     {}
 
-    virtual void write(Field<T, L>& field, const int fileNumber) = 0;
+    virtual void write(Field<T>& field, const int fileNumber) = 0;
   };
 
-  template <class T, LatticeType L>
-    class Output_VTR : public Output<T, L> {
+  template <class T>
+    class Output_VTR : public Output<T> {
 
   protected:
     void writeHeader(std::ofstream& fileVTR) {
       fileVTR << "<?xml version=\"1.0\"?>\n";
       fileVTR << "<VTKFile type=\"RectilinearGrid\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
       fileVTR << "<RectilinearGrid WholeExtent=\"0 "
-              << P::lX_g-1 << " 0 "
-              << P::lY_g-1 << " 0 "
-              << P::lZ_g-1 << " 0\">\n";
+              << L::lX_g-1 << " 0 "
+              << L::lY_g-1 << " 0 "
+              << L::lZ_g-1 << " 0\">\n";
       fileVTR << "\t<Piece Extent=\"0 "
-              << P::lX_g-1 << " 0 "
-              << P::lY_g-1 << " 0 "
-              << P::lY_g-1 << " 0\">\n";
+              << L::lX_g-1 << " 0 "
+              << L::lY_g-1 << " 0 "
+              << L::lY_g-1 << " 0\">\n";
 
       // start writing point data
       fileVTR << "\t\t<PointData>\n";
@@ -86,9 +86,9 @@ namespace lbm {
                           const vector<T, CACHE_LINE>& scalarField,
                           std::true_type) {
       fileVTR << "\t\t\t<DataArray type=\"Float32\" Name=\"" << scalarFieldName << "\" format=\"ascii\">\n";
-      for(int iZ = 0; iZ < P::lZ_g; iZ++) {
-        for(int iY = 0; iY < P::lY_g; iY++) {
-          for(int iX = 0; iX < P::lX_g; iX++) {
+      for(int iZ = 0; iZ < L::lZ_g; iZ++) {
+        for(int iY = 0; iY < L::lY_g; iY++) {
+          for(int iX = 0; iX < L::lX_g; iX++) {
             int idx = idx_gF(iX, iY, iZ);
             fileVTR << "\t\t\t\t" << scalarField[idx] << "\n";
           }
@@ -108,12 +108,12 @@ namespace lbm {
 
     void writeVectorField(std::ofstream& fileVTR,
                           const std::string& vectorFieldName,
-                          const vector<MathVector<T, P::dimD>, CACHE_LINE>& vectorField,
+                          const vector<MathVector<T, L::dimD>, CACHE_LINE>& vectorField,
                           std::true_type) {
       fileVTR << "\t\t\t<DataArray type=\"Float32\" NumberOfComponents=\"3\" Name=\"" << vectorFieldName << "\" format=\"ascii\">\n";
-      for(int iZ = 0; iZ < P::lZ_g; iZ++) {
-        for(int iY = 0; iY < P::lY_g; iY++) {
-          for(int iX = 0; iX < P::lX_g; iX++) {
+      for(int iZ = 0; iZ < L::lZ_g; iZ++) {
+        for(int iY = 0; iY < L::lY_g; iY++) {
+          for(int iX = 0; iX < L::lX_g; iX++) {
             int idx = idx_gF(iX, iY, iZ);
             fileVTR << "\t\t\t\t" << vectorField[idx][d::X]
                     << " " << vectorField[idx][d::Y] << " "
@@ -126,18 +126,18 @@ namespace lbm {
 
     void writeDistribution(std::ofstream& fileVTR,
                            const vector<T, CACHE_LINE>& distribution) {
-      fileVTR << "\t\t\t<DataArray type=\"Float32\" NumberOfComponents=\"" << P::dimQ
+      fileVTR << "\t\t\t<DataArray type=\"Float32\" NumberOfComponents=\"" << L::dimQ
               << "\" Name=\"Distribution" << "\" format=\"ascii\">" << std::endl;
-      for(int iZ = 0; iZ < P::lZ_g; iZ++) {
-        for(int iY = 0; iY < P::lY_g; iY++) {
-          for(int iX = 0; iX < P::lX_g; iX++) {
+      for(int iZ = 0; iZ < L::lZ_g; iZ++) {
+        for(int iY = 0; iY < L::lY_g; iY++) {
+          for(int iX = 0; iX < L::lX_g; iX++) {
             fileVTR << "\t\t\t\t" << distribution[idxPop_gF(iX, iY, iZ, 0)] << " ";
 
-            UnrolledFor<1, P::dimQ-1>::Do([&] (int iQ) {
+            UnrolledFor<1, L::dimQ-1>::Do([&] (int iQ) {
                 fileVTR << distribution[idxPop_gF(iX, iY, iZ, iQ)] << " ";
               });
 
-            fileVTR << distribution[idxPop_gF(iX, iY, iZ, P::dimQ-1)] << std::endl;
+            fileVTR << distribution[idxPop_gF(iX, iY, iZ, L::dimQ-1)] << std::endl;
           }
         }
       }
@@ -151,17 +151,17 @@ namespace lbm {
 
       fileVTR << "\t\t<Coordinates>\n";
       fileVTR << "\t\t\t<DataArray type=\"Float32\" Name=\"X\" format=\"ascii\">\n";
-      for(int iX = 0; iX < P::lX_g; iX++){
+      for(int iX = 0; iX < L::lX_g; iX++){
         fileVTR << "\t\t\t\t" << iX+1 << "\n";
       }
       fileVTR << "\t\t\t</DataArray>\n";
       fileVTR << "\t\t\t<DataArray type=\"Float32\" Name=\"Y\" format=\"ascii\">\n";
-      for(int iY = 0; iY < P::lY_g; iY++){
+      for(int iY = 0; iY < L::lY_g; iY++){
         fileVTR << "\t\t\t\t" << iY+1 << "\n";
       }
       fileVTR << "\t\t\t</DataArray>\n";
       fileVTR << "\t\t\t<DataArray type=\"Float32\" Name=\"Y\" format=\"ascii\">\n";
-      for(int iZ = 0; iZ < P::lZ_g; iZ++){
+      for(int iZ = 0; iZ < L::lZ_g; iZ++){
         fileVTR << "\t\t\t\t" << iZ+1 << "\n";
       }
       fileVTR << "\t\t\t</DataArray>\n";
@@ -174,15 +174,15 @@ namespace lbm {
 
   public:
   Output_VTR(const std::string& filesPrefix)
-    : Output<T, L>("outputVTR/", filesPrefix+"-", ".vtr")
+    : Output<T>("outputVTR/", filesPrefix+"-", ".vtr")
       {}
 
   Output_VTR(const std::string& outputFolder_in,
              const std::string& filesPrefix)
-    : Output<T, L>(outputFolder_in, filesPrefix, ".vtr")
+    : Output<T>(outputFolder_in, filesPrefix, ".vtr")
       {}
 
-    void write(Field<T, L>& field, const int fileNumber) {
+    void write(Field<T>& field, const int fileNumber) {
       std::ofstream fileVTR;
       std::string fileName = this->getFileName(fileNumber);
       fileVTR.open(fileName);
@@ -209,14 +209,14 @@ namespace lbm {
 
   };
 
-  template <class T, LatticeType L>
-    class Output_BackupVTR : public Output_VTR<T, L> {
+  template <class T>
+    class Output_BackupVTR : public Output_VTR<T> {
   public:
   Output_BackupVTR(const std::string& filesPrefix)
-    : Output_VTR<T, L>("outputBackup/", filesPrefix+"-")
+    : Output_VTR<T>("outputBackup/", filesPrefix+"-")
       {}
 
-    void write(Field<T, L>& field, const int fileNumber) {
+    void write(Field<T>& field, const int fileNumber) {
       int iteration = fileNumber*writeStep;
 
       if(iteration%backupStep != 0) {
@@ -239,15 +239,15 @@ namespace lbm {
     }
   };
 
-  template<class T, LatticeType L>
-    std::shared_ptr<Output<T, L>> Create(const std::string& filesPrefix,
+  template<class T>
+    std::shared_ptr<Output<T>> Create(const std::string& filesPrefix,
                                          const OutputType outputType){
     switch(outputType) {
     case OutputType::vtr: {
-      return std::shared_ptr<Output<T, L>>(new Output_VTR<T, L>(filesPrefix));
+      return std::shared_ptr<Output<T>>(new Output_VTR<T>(filesPrefix));
     }
     case OutputType::backup: {
-      return std::shared_ptr<Output<T, L>>(new Output_BackupVTR<T, L>(filesPrefix));
+      return std::shared_ptr<Output<T>>(new Output_BackupVTR<T>(filesPrefix));
     }
     default:{
       BOOST_LOG_TRIVIAL(error) << "Unknown type of output.";
@@ -257,18 +257,18 @@ namespace lbm {
   }
 
 
-  template <class T, LatticeType L>
+  template <class T>
     class Outputs{
   private:
-    std::array<std::shared_ptr<Output<T, L>>, numberOutputs> outputsArray;
+    std::array<std::shared_ptr<Output<T>>, numberOutputs> outputsArray;
 
   public:
-  Outputs(const std::array<std::shared_ptr<Output<T, L>>, numberOutputs>& outputsArray_in)
+  Outputs(const std::array<std::shared_ptr<Output<T>>, numberOutputs>& outputsArray_in)
     : outputsArray(outputsArray_in)
     {}
 
 
-    inline void write(Field<T, L>& field, const int fileNumber){
+    inline void write(Field<T>& field, const int fileNumber){
       for(auto output : outputsArray){
         output->write(field, fileNumber);
       }

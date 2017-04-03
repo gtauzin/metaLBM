@@ -14,7 +14,7 @@ namespace lbm {
   enum class InitDensityType{homogeneous, peak, error};
   enum class InitVelocityType{homogeneous, perturbated, wave, decay, error};
 
-  enum class ForcingMethod {guo, SC, EDM, error};
+  enum class ForcingSchemeMethod {guo, SC, EDM, error};
   enum class ForceType {constant, sinusoidal, kolmogorov, turbulent, turbulent_time, wavenumbers_time, error};
 
   enum class BoundaryType {bounceBack_halfWay, pressure_ZouHe, velocity_ZouHe, entropic, corner, error};
@@ -47,7 +47,7 @@ namespace lbm {
   constexpr double initVelocityZValue = 0.0;
 
   constexpr int numberForces = 1;
-  constexpr ForcingMethod forcingMethod = ForcingMethod::EDM;
+  constexpr ForcingSchemeMethod forcingSchemeMethod = ForcingSchemeMethod::EDM;
   constexpr std::array<ForceType, numberForces> forceTypeArray = { ForceType::kolmogorov };
   constexpr std::array<double, numberForces> forceAmplitudeXArray = { 1e-5 };
   constexpr std::array<double, numberForces> forceAmplitudeYArray = { 1e-5 };

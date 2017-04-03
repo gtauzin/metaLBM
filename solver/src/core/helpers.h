@@ -61,11 +61,11 @@ namespace boost {
 
 namespace lbm {
 
-  template <class T, LatticeType L>
+  template <class T>
     vector<T, CACHE_LINE> readVTK(const std::string& inputFilename,
                                   const std::string& dataArrayName) {
 
-    vector<T, CACHE_LINE> output(s_g() * P::dimQ);
+    vector<T, CACHE_LINE> output(s_g() * L::dimQ);
 
     rapidxml::file<> xmlFile(inputFilename.c_str());
     rapidxml::xml_document<> doc;
@@ -83,13 +83,13 @@ namespace lbm {
       std::string::size_type offset, tmp_offset;
       T value = std::stod(line, &offset);
       tmp_offset = offset;
-      output[tuple * P::dimQ] = value;
+      output[tuple * L::dimQ] = value;
 
-      for(int iQ = 1; iQ < P::dimQ; ++iQ) {
+      for(int iQ = 1; iQ < L::dimQ; ++iQ) {
         value = std::stod(line.substr(offset), &offset);
         offset += tmp_offset;
         tmp_offset = offset;
-        output[tuple * P::dimQ + iQ] = value;
+        output[tuple * L::dimQ + iQ] = value;
       }
     }
 

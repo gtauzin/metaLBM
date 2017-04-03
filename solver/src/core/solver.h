@@ -24,15 +24,15 @@ namespace logging = boost::log;
 namespace lbm {
 
 #pragma omp declare simd
-  template <class T, LatticeType L>
+  template <class T>
     struct EntropicStepFunctor : public RootFinderFunctor<T> {
   private:
-    const MathVector<T, P::dimQ> f;
-    const MathVector<T, P::dimQ> fNeq;
+    const MathVector<T, L::dimQ> f;
+    const MathVector<T, L::dimQ> fNeq;
 
   public:
-  EntropicStepFunctor(const MathVector<T, P::dimQ>& f_in,
-                      const MathVector<T, P::dimQ>& fNeq_in)
+  EntropicStepFunctor(const MathVector<T, L::dimQ>& f_in,
+                      const MathVector<T, L::dimQ>& fNeq_in)
     : RootFinderFunctor<T>()
       , f(f_in)
       , fNeq(fNeq_in)
@@ -45,15 +45,15 @@ namespace lbm {
 
       T entropicStepFunction = 0.0;
 
-      UnrolledFor<0, P::dimQ>::Do([&] (int iQ) {
+      UnrolledFor<0, L::dimQ>::Do([&] (int iQ) {
           BOOST_LOG_TRIVIAL(debug) << "f[" << iQ << "] = "
                                    << std::setprecision (17) << f[iQ] << ", "
                                    << "fNeq[" << iQ << "] = "
                                    << std::setprecision (17) << fNeq[iQ];
 
           T fmAlphafNeq_iQ = f[iQ] - alpha*fNeq[iQ];
-          entropicStepFunction += f[iQ]*log(f[iQ]/P::weight()[iQ])
-            - fmAlphafNeq_iQ*log(fmAlphafNeq_iQ/P::weight()[iQ]);
+          entropicStepFunction += f[iQ]*log(f[iQ]/L::weight()[iQ])
+            - fmAlphafNeq_iQ*log(fmAlphafNeq_iQ/L::weight()[iQ]);
         });
 
       BOOST_LOG_TRIVIAL(debug) << "entropicStepFunction: "
@@ -69,7 +69,7 @@ namespace lbm {
 
       T entropicStepFunctionDerivative = 0.0;
 
-      UnrolledFor<0, P::dimQ>::Do([&] (int iQ) {
+      UnrolledFor<0, L::dimQ>::Do([&] (int iQ) {
           BOOST_LOG_TRIVIAL(debug) << "f[" << iQ << "] = "
                                    << std::setprecision (17) << f[iQ] << ", "
                                    << "fNeq[" << iQ << "] = "
@@ -77,7 +77,7 @@ namespace lbm {
 
           T fmAlphafNeq_iQ = f[iQ] - alpha*fNeq[iQ];
 
-          entropicStepFunctionDerivative += fNeq[iQ]*(1 + log(fmAlphafNeq_iQ/P::weight()[iQ]));
+          entropicStepFunctionDerivative += fNeq[iQ]*(1 + log(fmAlphafNeq_iQ/L::weight()[iQ]));
         });
 
       BOOST_LOG_TRIVIAL(debug) << "entropicStepFunctionDerivative: "
@@ -88,7 +88,7 @@ namespace lbm {
   };
 
 
-  template <class T, LatticeType L>
+  template <class T>
     class Solver {
   public:
 
@@ -96,23 +96,23 @@ namespace lbm {
       {}
 
 #pragma omp declare simd
-    virtual T computeAlpha(const MathVector<T, P::dimQ>& f,
-                           const MathVector<T, P::dimQ>& fNeq,
+    virtual T computeAlpha(const MathVector<T, L::dimQ>& f,
+                           const MathVector<T, L::dimQ>& fNeq,
                            const T alphaGuess) = 0;
   };
 
 
-  template <class T, LatticeType L>
-    class BGKSolver : public Solver<T, L> {
+  template <class T>
+    class BGKSolver : public Solver<T> {
   public:
 
   BGKSolver()
-    : Solver<T, L>()
+    : Solver<T>()
       {}
 
 #pragma omp declare simd
-    inline T computeAlpha(const MathVector<T, P::dimQ>& f,
-                          const MathVector<T, P::dimQ>& fNeq,
+    inline T computeAlpha(const MathVector<T, L::dimQ>& f,
+                          const MathVector<T, L::dimQ>& fNeq,
                           const T alphaGuess) {
       return 2.0;
     }
@@ -120,17 +120,17 @@ namespace lbm {
   };
 
 
-  template <class T, LatticeType L>
-    class ELBMSolver : public Solver<T, L> {
+  template <class T>
+    class ELBMSolver : public Solver<T> {
   public:
 
   ELBMSolver()
-    : Solver<T, L>()
+    : Solver<T>()
       {}
 
 #pragma omp declare simd
-    inline T computeAlpha(const MathVector<T, P::dimQ>& f,
-                          const MathVector<T, P::dimQ>& fNeq,
+    inline T computeAlpha(const MathVector<T, L::dimQ>& f,
+                          const MathVector<T, L::dimQ>& fNeq,
                           const T alphaGuess) {
       if(isDeviationSmall(f, fNeq)) {
         BOOST_LOG_TRIVIAL(debug) << "Returning alpha: " << 2.0;
@@ -156,13 +156,13 @@ namespace lbm {
     }
 
 #pragma omp declare simd
-    inline bool isDeviationSmall(const MathVector<T, P::dimQ>& f,
-                                 const MathVector<T, P::dimQ>& fNeq) {
+    inline bool isDeviationSmall(const MathVector<T, L::dimQ>& f,
+                                 const MathVector<T, L::dimQ>& fNeq) {
 
       bool isDeviationSmallR = true;
       T deviation;
 
-      UnrolledFor<0, P::dimQ>::Do([&] (int iQ) {
+      UnrolledFor<0, L::dimQ>::Do([&] (int iQ) {
           deviation = fabs(fNeq[iQ]/f[iQ]);
           BOOST_LOG_TRIVIAL(debug) << "Calculation of deviation " << iQ << " : "
                                    << deviation;
@@ -177,13 +177,13 @@ namespace lbm {
     }
 
 #pragma omp declare simd
-    T calculateAlphaMax(const MathVector<T, P::dimQ>& f,
-                        const MathVector<T, P::dimQ>& fNeq) {
+    T calculateAlphaMax(const MathVector<T, L::dimQ>& f,
+                        const MathVector<T, L::dimQ>& fNeq) {
 
       T alphaMaxR = 2.5;
       T alphaMaxTemp;
 
-      UnrolledFor<0, P::dimQ>::Do([&] (int iQ) {
+      UnrolledFor<0, L::dimQ>::Do([&] (int iQ) {
           if(fNeq[iQ] > 0) {
             alphaMaxTemp = fabs(f[iQ]/fNeq[iQ]);
 
@@ -198,8 +198,8 @@ namespace lbm {
     }
 
 #pragma omp declare simd
-    inline T calculateAlpha(const MathVector<T, P::dimQ>& f,
-                            const MathVector<T, P::dimQ>& fNeq,
+    inline T calculateAlpha(const MathVector<T, L::dimQ>& f,
+                            const MathVector<T, L::dimQ>& fNeq,
                             const T alphaGuess,
                             const T alphaMin, const T alphaMax) {
 
@@ -209,7 +209,7 @@ namespace lbm {
 
 
       std::shared_ptr<RootFinderFunctor<T>> entropicStepFunctor =
-        std::shared_ptr<RootFinderFunctor<T>>(new EntropicStepFunctor<T, L>(f, fNeq));
+        std::shared_ptr<RootFinderFunctor<T>>(new EntropicStepFunctor<T>(f, fNeq));
       const T tolerance = 1e-5;
       const int iterationMax = 20;
       T alphaR = alphaGuess;
@@ -231,17 +231,17 @@ namespace lbm {
 
   };
 
-  template <class T, LatticeType L>
-    class Approached_ELBMSolver : public Solver<T, L> {
+  template <class T>
+    class Approached_ELBMSolver : public Solver<T> {
   public:
 
   Approached_ELBMSolver()
-    : Solver<T, L>()
+    : Solver<T>()
       {}
 
 #pragma omp declare simd
-    inline T computeAlpha(const MathVector<T, P::dimQ>& f,
-                          const MathVector<T, P::dimQ>& fNeq,
+    inline T computeAlpha(const MathVector<T, L::dimQ>& f,
+                          const MathVector<T, L::dimQ>& fNeq,
                           const T alphaGuess) {
       if(isRelativeDeviationSmall(f, fNeq)) {
         BOOST_LOG_TRIVIAL(debug) << "Approximating alpha: " << 2.0;
@@ -266,13 +266,13 @@ namespace lbm {
     }
 
 #pragma omp declare simd
-    inline bool isRelativeDeviationSmall(const MathVector<T, P::dimQ>& f,
-                                         const MathVector<T, P::dimQ>& fNeq) {
+    inline bool isRelativeDeviationSmall(const MathVector<T, L::dimQ>& f,
+                                         const MathVector<T, L::dimQ>& fNeq) {
 
       bool isDeviationSmallR = true;
       T deviation;
 
-      UnrolledFor<0, P::dimQ>::Do([&] (int iQ) {
+      UnrolledFor<0, L::dimQ>::Do([&] (int iQ) {
           deviation = fabs(fNeq[iQ]/f[iQ]);
           BOOST_LOG_TRIVIAL(debug) << "Calculation of deviation " << iQ << " : "
                                    << deviation;
@@ -288,15 +288,15 @@ namespace lbm {
 
 
 #pragma omp declare simd
-    T approximateAlpha(const MathVector<T, P::dimQ>& f,
-                       const MathVector<T, P::dimQ>& fNeq) {
+    T approximateAlpha(const MathVector<T, L::dimQ>& f,
+                       const MathVector<T, L::dimQ>& fNeq) {
 
       T a1 = 0.0;
       T a2 = 0.0;
       T a3 = 0.0;
       T a4 = 0.0;
 
-      UnrolledFor<0, P::dimQ>::Do([&] (int iQ) {
+      UnrolledFor<0, L::dimQ>::Do([&] (int iQ) {
           T temp = fNeq[iQ]/f[iQ];
           a1 += fNeq[iQ]*temp;
           a2 += fNeq[iQ]*temp*temp;
@@ -317,13 +317,13 @@ namespace lbm {
     }
 
 #pragma omp declare simd
-    T calculateAlphaMax(const MathVector<T, P::dimQ>& f,
-                        const MathVector<T, P::dimQ>& fNeq) {
+    T calculateAlphaMax(const MathVector<T, L::dimQ>& f,
+                        const MathVector<T, L::dimQ>& fNeq) {
 
       T alphaMaxR = 2.5;
       T alphaMaxTemp;
 
-      UnrolledFor<0, P::dimQ>::Do([&] (int iQ) {
+      UnrolledFor<0, L::dimQ>::Do([&] (int iQ) {
           if(fNeq[iQ] > 0) {
             alphaMaxTemp = fabs(f[iQ]/fNeq[iQ]);
 
@@ -338,8 +338,8 @@ namespace lbm {
     }
 
 #pragma omp declare simd
-    inline T calculateAlpha(const MathVector<T, P::dimQ>& f,
-                            const MathVector<T, P::dimQ>& fNeq,
+    inline T calculateAlpha(const MathVector<T, L::dimQ>& f,
+                            const MathVector<T, L::dimQ>& fNeq,
                             const T alphaGuess,
                             const T alphaMin, const T alphaMax) {
 
@@ -349,7 +349,7 @@ namespace lbm {
 
 
       std::shared_ptr<RootFinderFunctor<T>> entropicStepFunctor =
-        std::shared_ptr<RootFinderFunctor<T>>(new EntropicStepFunctor<T, L>(f, fNeq));
+        std::shared_ptr<RootFinderFunctor<T>>(new EntropicStepFunctor<T>(f, fNeq));
       const T tolerance = 1e-5;
       const int iterationMax = 20;
       T alphaR = alphaGuess;
@@ -372,17 +372,17 @@ namespace lbm {
   };
 
 
-  template<class T, LatticeType L>
-    class ForcedBNR_ELBMSolver : public Solver<T, L> {
+  template<class T>
+    class ForcedBNR_ELBMSolver : public Solver<T> {
   public:
 
   ForcedBNR_ELBMSolver()
-    : Solver<T, L>()
+    : Solver<T>()
       {}
 
 #pragma omp declare simd
-    inline T computeAlpha(const MathVector<T, P::dimQ>& f,
-                          const MathVector<T, P::dimQ>& fNeq,
+    inline T computeAlpha(const MathVector<T, L::dimQ>& f,
+                          const MathVector<T, L::dimQ>& fNeq,
                           const T alphaGuess) {
       if(isDeviationSmall(f, fNeq)) {
         BOOST_LOG_TRIVIAL(debug) << "Deviation is small, should return alpha: : " << 2.0;
@@ -405,13 +405,13 @@ namespace lbm {
     }
 
 #pragma omp declare simd
-    inline bool isDeviationSmall(const MathVector<T, P::dimQ>& f,
-                                 const MathVector<T, P::dimQ>& fNeq) {
+    inline bool isDeviationSmall(const MathVector<T, L::dimQ>& f,
+                                 const MathVector<T, L::dimQ>& fNeq) {
 
       bool isDeviationSmallR = true;
       T deviation;
 
-      UnrolledFor<0, P::dimQ>::Do([&] (int iQ) {
+      UnrolledFor<0, L::dimQ>::Do([&] (int iQ) {
           deviation = fabs(fNeq[iQ]/f[iQ]);
           BOOST_LOG_TRIVIAL(debug) << "Calculation of deviation " << iQ << " : "
                                    << deviation;
@@ -426,13 +426,13 @@ namespace lbm {
     }
 
 #pragma omp declare simd
-    T calculateAlphaMax(const MathVector<T, P::dimQ>& f,
-                        const MathVector<T, P::dimQ>& fNeq) {
+    T calculateAlphaMax(const MathVector<T, L::dimQ>& f,
+                        const MathVector<T, L::dimQ>& fNeq) {
 
       T alphaMaxR = 2.5;
       T alphaMaxTemp;
 
-      UnrolledFor<0, P::dimQ>::Do([&] (int iQ) {
+      UnrolledFor<0, L::dimQ>::Do([&] (int iQ) {
           if(fNeq[iQ] > 0) {
             alphaMaxTemp = fabs(f[iQ]/fNeq[iQ]);
 
@@ -446,8 +446,8 @@ namespace lbm {
       return alphaMaxR;
     }
 
-    inline T calculateAlpha(const MathVector<T, P::dimQ>& f,
-                            const MathVector<T, P::dimQ>& fNeq,
+    inline T calculateAlpha(const MathVector<T, L::dimQ>& f,
+                            const MathVector<T, L::dimQ>& fNeq,
                             const T alphaGuess,
                             const T alphaMin, const T alphaMax) {
 
@@ -457,7 +457,7 @@ namespace lbm {
 
 
       std::shared_ptr<RootFinderFunctor<T>> entropicStepFunctor =
-        std::shared_ptr<RootFinderFunctor<T>>(new EntropicStepFunctor<T, L>(f, fNeq));
+        std::shared_ptr<RootFinderFunctor<T>>(new EntropicStepFunctor<T>(f, fNeq));
       const T tolerance = 1e-5;
       const int iterationMax = 20;
       T alphaR = alphaGuess;
@@ -478,17 +478,17 @@ namespace lbm {
     }
   };
 
-  template<class T, LatticeType L>
-    class ForcedNR_ELBMSolver : public Solver<T, L> {
+  template<class T>
+    class ForcedNR_ELBMSolver : public Solver<T> {
   public:
 
   ForcedNR_ELBMSolver()
-    : Solver<T, L>()
+    : Solver<T>()
       {}
 
 #pragma omp declare simd
-    inline T computeAlpha(const MathVector<T, P::dimQ>& f,
-                          const MathVector<T, P::dimQ>& fNeq,
+    inline T computeAlpha(const MathVector<T, L::dimQ>& f,
+                          const MathVector<T, L::dimQ>& fNeq,
                           const T alphaGuess) {
       if(isDeviationSmall(f, fNeq)) {
         BOOST_LOG_TRIVIAL(debug) << "Deviation is small, should return alpha: : " << 2.0;
@@ -511,13 +511,13 @@ namespace lbm {
     }
 
 #pragma omp declare simd
-    inline bool isDeviationSmall(const MathVector<T, P::dimQ>& f,
-                                 const MathVector<T, P::dimQ>& fNeq) {
+    inline bool isDeviationSmall(const MathVector<T, L::dimQ>& f,
+                                 const MathVector<T, L::dimQ>& fNeq) {
 
       bool isDeviationSmallR = true;
       T deviation;
 
-      UnrolledFor<0, P::dimQ>::Do([&] (int iQ) {
+      UnrolledFor<0, L::dimQ>::Do([&] (int iQ) {
           deviation = fabs(fNeq[iQ]/f[iQ]);
           BOOST_LOG_TRIVIAL(debug) << "Calculation of deviation " << iQ << " : "
                                    << deviation;
@@ -532,13 +532,13 @@ namespace lbm {
     }
 
 #pragma omp declare simd
-    T calculateAlphaMax(const MathVector<T, P::dimQ>& f,
-                        const MathVector<T, P::dimQ>& fNeq) {
+    T calculateAlphaMax(const MathVector<T, L::dimQ>& f,
+                        const MathVector<T, L::dimQ>& fNeq) {
 
       T alphaMaxR = 2.5;
       T alphaMaxTemp;
 
-      UnrolledFor<0, P::dimQ>::Do([&] (int iQ) {
+      UnrolledFor<0, L::dimQ>::Do([&] (int iQ) {
           if(fNeq[iQ] > 0) {
             alphaMaxTemp = fabs(f[iQ]/fNeq[iQ]);
 
@@ -552,8 +552,8 @@ namespace lbm {
       return alphaMaxR;
     }
 
-    inline T calculateAlpha(const MathVector<T, P::dimQ>& f,
-                            const MathVector<T, P::dimQ>& fNeq,
+    inline T calculateAlpha(const MathVector<T, L::dimQ>& f,
+                            const MathVector<T, L::dimQ>& fNeq,
                             const T alphaGuess,
                             const T alphaMin, const T alphaMax) {
 
@@ -563,7 +563,7 @@ namespace lbm {
 
 
       std::shared_ptr<RootFinderFunctor<T>> entropicStepFunctor =
-        std::shared_ptr<RootFinderFunctor<T>>(new EntropicStepFunctor<T, L>(f, fNeq));
+        std::shared_ptr<RootFinderFunctor<T>>(new EntropicStepFunctor<T>(f, fNeq));
       const T tolerance = 1e-5;
       const int iterationMax = 20;
       T alphaR = alphaGuess;
@@ -584,23 +584,23 @@ namespace lbm {
   };
 
 
-  template<class T, LatticeType L>
-    std::shared_ptr<Solver<T, L>> Create(const SolverMethod& solverMethod) {
+  template<class T>
+    std::shared_ptr<Solver<T>> Create(const SolverMethod& solverMethod) {
     switch(solverMethod){
     case SolverMethod::BGK : {
-      return std::shared_ptr<Solver<T, L>>(new BGKSolver<T, L>());
+      return std::shared_ptr<Solver<T>>(new BGKSolver<T>());
     }
     case SolverMethod::ELBM : {
-      return std::shared_ptr<Solver<T, L>>(new ELBMSolver<T, L>());
+      return std::shared_ptr<Solver<T>>(new ELBMSolver<T>());
     }
     case SolverMethod::Approached_ELBM : {
-      return std::shared_ptr<Solver<T, L>>(new Approached_ELBMSolver<T, L>());
+      return std::shared_ptr<Solver<T>>(new Approached_ELBMSolver<T>());
     }
     case SolverMethod::ForcedNR_ELBM : {
-      return std::shared_ptr<Solver<T, L>>(new ForcedNR_ELBMSolver<T, L>());
+      return std::shared_ptr<Solver<T>>(new ForcedNR_ELBMSolver<T>());
     }
     case SolverMethod::ForcedBNR_ELBM : {
-      return std::shared_ptr<Solver<T, L>>(new ForcedBNR_ELBMSolver<T, L>());
+      return std::shared_ptr<Solver<T>>(new ForcedBNR_ELBMSolver<T>());
     }
 
     default:{

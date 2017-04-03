@@ -23,9 +23,6 @@ namespace lbm {
 
   enum d {X, Y, Z};
 
-  typedef Lattice<valueType, latticeType> L;
-
-
   constexpr int sizeX_l() { return 2*L::hX + L::lX_l; }
 
   constexpr int sizeY_l() { return 2*L::hY + L::lY_l; }
