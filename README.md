@@ -1,4 +1,4 @@
-# Description #
+###### Description ######
 
 metaLBM is a C++11 header-only template Computational Fluid Dynamic software
 based on the Lattice Boltzmann Method (LBM). metaLBM is meant to support multiple lattices
@@ -20,7 +20,8 @@ The project provides a general framework for experimentation with simulations
 of turbulent flows. It has an easy mechanism allowing to use various forcing schemes,
 forces, and boundary conditions. The code currently runs on several medium size clusters
 Stromboli at Bergische Universitaet Wuppertal (BUW) and Newturb at Università degli Studi
-di Roma "Tor Vergata" and on larger supercomputers such as Galileo at CINECA in Bologna. It is expected to run soon on JURECA and JURON at the Juelich Supercomputing Center (JSC).
+di Roma "Tor Vergata" and on larger supercomputers such as Galileo at CINECA in Bologna.
+It is expected to run soon on JURECA and JURON at the Juelich Supercomputing Center (JSC).
 
 ## Overview
 
@@ -55,6 +56,8 @@ The project structure follows a common C++ layout within the [solver](solver) di
 - The [solver/test](solver/test) directory contains source code for unit tests.
 - The [solver/include](include) directory contains headers-only library dependencies.
 - The [solver/src](solver/src) directory contains all source files.
+- The [solver/log](solver/log) directory contains log files generated when ENABLE_LOG
+is defined.
 - The [solver/doc](solver/doc) directory contains documentation generating code
 with doxygen.
 
@@ -65,7 +68,7 @@ is passed to CMake.
 - The [solver/src/core](solver/src/core) directory contains core source code describing the framework
 and the physics.
 - The [solver/src/omp](solver/src/omp) directory contains a serial or shared memory
-parallelisation version of the LBM algorithm. Activate it by passing the flags `-D=ON`
+parallelisation version of the LBM algorithm. Activate it by passing the flags `-DSERIAL=ON`
 or `-DOMP=ON` to cmake.
 - The [solver/src/mpi](solver/src/mpi) directory a distributed memory or an hybrid
 parallelisation version of the LBM algorithm. Activate it by passing the flags `-DMPI=ON`
