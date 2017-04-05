@@ -58,7 +58,6 @@ namespace lbm {
     velocity = computeVelocity<T>(f, idx_lattice, density);
   }
 
-
   template <class T>
     void calculateMomentsField(Distribution<T>& l_previous,
                                LocalField<T>& field) {

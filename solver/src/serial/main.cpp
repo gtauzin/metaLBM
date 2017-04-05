@@ -14,8 +14,6 @@ namespace logging = boost::log;
 
 #include "input.h"
 #include "lattice.h"
-typedef lbm::Lattice<lbm::valueType, lbm::latticeType> L;
-
 #include "init.h"
 #include "compute.h"
 #include "commons.h"

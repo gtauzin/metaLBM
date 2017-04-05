@@ -103,7 +103,7 @@ namespace lbm {
       vector<T, CACHE_LINE> f_distributionR(L::dimQ
                                             *(L::lX_l+2*L::hX)
                                             *(L::lY_l+2*L::hY)
-                                            *(L::lZ_l+2*L::hZ), (T)(-10));
+                                            *(L::lZ_l+2*L::hZ), (T)(0));
       for(int iZ = L::hZ; iZ < L::hZ + L::lZ_l; ++iZ) {
         for(int iY = L::hY; iY < L::hY + L::lY_l; ++iY) {
           for(int iX = L::hX; iX < L::hX + L::lX_l; ++iX) {

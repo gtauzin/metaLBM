@@ -365,6 +365,8 @@ namespace lbm {
         }
     };
 
+   typedef lbm::Lattice<lbm::valueType, lbm::latticeType> L;
+
 }
 
 #endif // LATTICE_H

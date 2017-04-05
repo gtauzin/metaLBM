@@ -15,9 +15,9 @@ using namespace lbm;
 BOOST_AUTO_TEST_SUITE(Lattice)
 
 BOOST_AUTO_TEST_CASE(isotropyD1Q3) {
-  constexpr ::lbm::LatticeType latticeType = ::lbm::LatticeType::D1Q3;
+  constexpr LatticeType latticeType = ::lbm::LatticeType::D1Q3;
   typedef double valueType;
-  typedef Lattice<valueType, latticeType> L;
+  typedef ::lbm::Lattice<valueType, latticeType> L;
 
   valueType sumWeight = 0.0;
   valueType sumWeight_r = 1.0;
@@ -112,7 +112,7 @@ BOOST_AUTO_TEST_CASE(isotropyD1Q3) {
 BOOST_AUTO_TEST_CASE(doubleD1Q3) {
   constexpr ::lbm::LatticeType latticeType = ::lbm::LatticeType::D1Q3;
   typedef double valueType;
-  typedef Lattice<valueType, latticeType> L;
+  typedef ::lbm::Lattice<valueType, latticeType> L;
 
   const auto dimD_ = L::dimD;
   BOOST_CHECK_EQUAL(dimD_, 1);
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE(doubleD1Q3) {
 BOOST_AUTO_TEST_CASE(floatD1Q3) {
   constexpr ::lbm::LatticeType latticeType = ::lbm::LatticeType::D1Q3;
   typedef float valueType;
-  typedef Lattice<valueType, latticeType> L;
+  typedef ::lbm::Lattice<valueType, latticeType> L;
 
   const auto dimD_ = L::dimD;
   BOOST_CHECK_EQUAL(dimD_, 1);
@@ -246,7 +246,7 @@ BOOST_AUTO_TEST_CASE(floatD1Q3) {
 BOOST_AUTO_TEST_CASE(isotropyD2Q5) {
   constexpr ::lbm::LatticeType latticeType = ::lbm::LatticeType::D2Q5;
   typedef double valueType;
-  typedef Lattice<valueType, latticeType> L;
+  typedef ::lbm::Lattice<valueType, latticeType> L;
 
   valueType sumWeight = 0.0;
   valueType sumWeight_r = 1.0;
@@ -273,7 +273,7 @@ BOOST_AUTO_TEST_CASE(doubleD2Q5) {
   constexpr ::lbm::LatticeType latticeType = ::lbm::LatticeType::D2Q5;
   typedef double valueType;
 
-  typedef Lattice<valueType, latticeType> L;
+  typedef ::lbm::Lattice<valueType, latticeType> L;
 
   const auto dimD_ = L::dimD;
   BOOST_CHECK_EQUAL(dimD_, 2);
@@ -356,7 +356,7 @@ BOOST_AUTO_TEST_CASE(floatD2Q5) {
   constexpr ::lbm::LatticeType latticeType = ::lbm::LatticeType::D2Q5;
   typedef float valueType;
 
-  typedef Lattice<valueType, latticeType> L;
+  typedef ::lbm::Lattice<valueType, latticeType> L;
 
   const auto dimD_ = L::dimD;
   BOOST_CHECK_EQUAL(dimD_, 2);
@@ -438,7 +438,7 @@ BOOST_AUTO_TEST_CASE(floatD2Q5) {
 BOOST_AUTO_TEST_CASE(isotropyD2Q9) {
   constexpr ::lbm::LatticeType latticeType = ::lbm::LatticeType::D2Q9;
   typedef double valueType;
-  typedef Lattice<valueType, latticeType> L;
+  typedef ::lbm::Lattice<valueType, latticeType> L;
 
   valueType sumWeight = 0.0;
   valueType sumWeight_r = 1.0;
@@ -534,7 +534,7 @@ BOOST_AUTO_TEST_CASE(doubleD2Q9) {
   constexpr ::lbm::LatticeType latticeType = ::lbm::LatticeType::D2Q9;
   typedef double valueType;
 
-  typedef Lattice<valueType, latticeType> L;
+  typedef ::lbm::Lattice<valueType, latticeType> L;
 
   const auto dimD_ = L::dimD;
   BOOST_CHECK_EQUAL(dimD_, 2);
@@ -657,7 +657,7 @@ BOOST_AUTO_TEST_CASE(floatD2Q9) {
   constexpr ::lbm::LatticeType latticeType = ::lbm::LatticeType::D2Q9;
   typedef float valueType;
 
-  typedef Lattice<valueType, latticeType> L;
+  typedef ::lbm::Lattice<valueType, latticeType> L;
 
   const auto dimD_ = L::dimD;
   BOOST_CHECK_EQUAL(dimD_, 2);
@@ -779,7 +779,7 @@ BOOST_AUTO_TEST_CASE(floatD2Q9) {
 BOOST_AUTO_TEST_CASE(isotropyD3Q15) {
   constexpr ::lbm::LatticeType latticeType = ::lbm::LatticeType::D3Q15;
   typedef double valueType;
-  typedef Lattice<valueType, latticeType> L;
+  typedef ::lbm::Lattice<valueType, latticeType> L;
 
   valueType sumWeight = 0.0;
   valueType sumWeight_r = 1.0;
@@ -876,7 +876,7 @@ BOOST_AUTO_TEST_CASE(doubleD3Q15) {
   constexpr ::lbm::LatticeType latticeType = ::lbm::LatticeType::D3Q15;
   typedef double valueType;
 
-  typedef Lattice<valueType, latticeType> L;
+  typedef ::lbm::Lattice<valueType, latticeType> L;
 
   const auto dimD_ = L::dimD;
   BOOST_CHECK_EQUAL(dimD_, 3);
@@ -1089,7 +1089,7 @@ BOOST_AUTO_TEST_CASE(floatD3Q15) {
   constexpr ::lbm::LatticeType latticeType = ::lbm::LatticeType::D3Q15;
   typedef float valueType;
 
-  typedef Lattice<valueType, latticeType> L;
+  typedef ::lbm::Lattice<valueType, latticeType> L;
 
   const auto dimD_ = L::dimD;
   BOOST_CHECK_EQUAL(dimD_, 3);
@@ -1301,7 +1301,7 @@ BOOST_AUTO_TEST_CASE(floatD3Q15) {
 BOOST_AUTO_TEST_CASE(isotropyD3Q19) {
   constexpr ::lbm::LatticeType latticeType = ::lbm::LatticeType::D3Q19;
   typedef double valueType;
-  typedef Lattice<valueType, latticeType> L;
+  typedef ::lbm::Lattice<valueType, latticeType> L;
 
   valueType sumWeight = 0.0;
   valueType sumWeight_r = 1.0;
@@ -1398,7 +1398,7 @@ BOOST_AUTO_TEST_CASE(doubleD3Q19) {
   constexpr ::lbm::LatticeType latticeType = ::lbm::LatticeType::D3Q19;
   typedef double valueType;
 
-  typedef Lattice<valueType, latticeType> L;
+  typedef ::lbm::Lattice<valueType, latticeType> L;
 
   const auto dimD_ = L::dimD;
   BOOST_CHECK_EQUAL(dimD_, 3);
@@ -1660,7 +1660,7 @@ BOOST_AUTO_TEST_CASE(floatD3Q19) {
   constexpr ::lbm::LatticeType latticeType = ::lbm::LatticeType::D3Q19;
   typedef float valueType;
 
-  typedef Lattice<valueType, latticeType> L;
+  typedef ::lbm::Lattice<valueType, latticeType> L;
 
   const auto dimD_ = L::dimD;
   BOOST_CHECK_EQUAL(dimD_, 3);
@@ -1920,7 +1920,7 @@ BOOST_AUTO_TEST_CASE(floatD3Q19) {
 BOOST_AUTO_TEST_CASE(isotropyD3Q27) {
   constexpr ::lbm::LatticeType latticeType = ::lbm::LatticeType::D3Q27;
   typedef double valueType;
-  typedef Lattice<valueType, latticeType> L;
+  typedef ::lbm::Lattice<valueType, latticeType> L;
 
   valueType sumWeight = 0.0;
   valueType sumWeight_r = 1.0;
