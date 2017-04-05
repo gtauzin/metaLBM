@@ -103,10 +103,10 @@ namespace lbm {
 
 
   template <class T>
-    class BGKSolver : public Solver<T> {
+    class BGK : public Solver<T> {
   public:
 
-  BGKSolver()
+  BGK()
     : Solver<T>()
       {}
 
@@ -121,10 +121,10 @@ namespace lbm {
 
 
   template <class T>
-    class ELBMSolver : public Solver<T> {
+    class ELBM : public Solver<T> {
   public:
 
-  ELBMSolver()
+  ELBM()
     : Solver<T>()
       {}
 
@@ -232,10 +232,10 @@ namespace lbm {
   };
 
   template <class T>
-    class Approached_ELBMSolver : public Solver<T> {
+    class Approached_ELBM : public Solver<T> {
   public:
 
-  Approached_ELBMSolver()
+  Approached_ELBM()
     : Solver<T>()
       {}
 
@@ -373,10 +373,10 @@ namespace lbm {
 
 
   template<class T>
-    class ForcedBNR_ELBMSolver : public Solver<T> {
+    class ForcedBNR_ELBM : public Solver<T> {
   public:
 
-  ForcedBNR_ELBMSolver()
+  ForcedBNR_ELBM()
     : Solver<T>()
       {}
 
@@ -479,10 +479,10 @@ namespace lbm {
   };
 
   template<class T>
-    class ForcedNR_ELBMSolver : public Solver<T> {
+    class ForcedNR_ELBM : public Solver<T> {
   public:
 
-  ForcedNR_ELBMSolver()
+  ForcedNR_ELBM()
     : Solver<T>()
       {}
 
@@ -588,19 +588,19 @@ namespace lbm {
     std::shared_ptr<Solver<T>> Create(const SolverMethod& solverMethod) {
     switch(solverMethod){
     case SolverMethod::BGK : {
-      return std::shared_ptr<Solver<T>>(new BGKSolver<T>());
+      return std::shared_ptr<Solver<T>>(new BGK<T>());
     }
     case SolverMethod::ELBM : {
-      return std::shared_ptr<Solver<T>>(new ELBMSolver<T>());
+      return std::shared_ptr<Solver<T>>(new ELBM<T>());
     }
     case SolverMethod::Approached_ELBM : {
-      return std::shared_ptr<Solver<T>>(new Approached_ELBMSolver<T>());
+      return std::shared_ptr<Solver<T>>(new Approached_ELBM<T>());
     }
     case SolverMethod::ForcedNR_ELBM : {
-      return std::shared_ptr<Solver<T>>(new ForcedNR_ELBMSolver<T>());
+      return std::shared_ptr<Solver<T>>(new ForcedNR_ELBM<T>());
     }
     case SolverMethod::ForcedBNR_ELBM : {
-      return std::shared_ptr<Solver<T>>(new ForcedBNR_ELBMSolver<T>());
+      return std::shared_ptr<Solver<T>>(new ForcedBNR_ELBM<T>());
     }
 
     default:{
