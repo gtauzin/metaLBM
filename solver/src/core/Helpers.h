@@ -1,15 +1,7 @@
 #ifndef HELPERS_H
 #define HELPERS_H
 
-#include <memory>
-#include <vector>
-#include <array>
-#include <string>
 #include <cmath>
-#include<iostream>
-
-#include <rapidxml.hpp>
-#include <rapidxml_utils.hpp>
 
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
@@ -17,104 +9,108 @@
 #include <boost/log/utility/setup/file.hpp>
 namespace logging = boost::log;
 
-#include <boost/align/aligned_allocator.hpp>
-#include <vector>
-template<class T, std::size_t Alignment = 1>
-#ifdef ALIGN_MEMORY
-  using vector = std::vector<T,
-  boost::alignment::aligned_allocator<T, Alignment> >;
-#else
-using vector = std::vector<T>;
-#endif
-
-#include "commons.h"
-#include "structure.h"
-#include "lattice.h"
-
-namespace boost {
-  namespace log{
-
-    template <class T>
-      inline logging::formatting_ostream& operator<<(log::formatting_ostream& ostream,
-                                                     std::vector<T>& vector) {
-      ostream << "[ ";
-      for(auto i : vector){
-        ostream << " " << i << " ,";
-      }
-      ostream << "]";
-      return ostream;
-    }
-
-    template <class T, unsigned int size>
-      inline logging::formatting_ostream& operator<<(log::formatting_ostream& ostream,
-                                                     std::array<T, size>& array) {
-      ostream << "[ ";
-      lbm::UnrolledFor<0, size>::Do([&] (int i) {
-          ostream << " " << i << " ,";
-        });
-      ostream << "]";
-      return ostream;
-    }
-
-  }
-}
-
 namespace lbm {
 
-  template <class T>
-    vector<T, CACHE_LINE> readVTK(const std::string& inputFilename,
-                                  const std::string& dataArrayName) {
-
-    vector<T, CACHE_LINE> output(s_g() * L::dimQ);
-
-    rapidxml::file<> xmlFile(inputFilename.c_str());
-    rapidxml::xml_document<> doc;
-    doc.parse<0>(xmlFile.data());
-
-    rapidxml::xml_node<>* distribution_node = doc.first_node("VTKFile")->first_node("RectilinearGrid")->first_node("Piece")->first_node("PointData")->first_node("DataArray");
-    std::string content = distribution_node->value();
-    std::istringstream f(content);
-
-    std::string line;
-    std::getline(f, line);
-
-    for(int tuple = 0; tuple < s_g(); ++tuple) {
-      std::getline(f,line);
-      std::string::size_type offset, tmp_offset;
-      T value = std::stod(line, &offset);
-      tmp_offset = offset;
-      output[tuple * L::dimQ] = value;
-
-      for(int iQ = 1; iQ < L::dimQ; ++iQ) {
-        value = std::stod(line.substr(offset), &offset);
-        offset += tmp_offset;
-        tmp_offset = offset;
-        output[tuple * L::dimQ + iQ] = value;
-      }
+  template<int Begin, int End, int Step = 1>
+  struct UnrolledFor {
+    template<typename F>
+    static void Do (F f) {
+      f(Begin);
+      UnrolledFor<Begin+Step, End, Step>::Do(f);
     }
+  };
+
+  template<int End>
+  struct UnrolledFor<End, End> {
+    template<typename F>
+    static void Do (F f) {
+    }
+  };
 
 
-    return output;
-  }
+#pragma omp declare simd
+  template <class T, int power>
+  class Power {
+  public:
+    inline T operator()(const T arg) {
+      return (T) pow(arg, power);
+    }
+  };
+
+#pragma omp declare simd
+  template <class T>
+  class Power<T, 0> {
+  public:
+    inline T operator()(const T arg) {
+      return (T) 1;
+    }
+  };
+
+#pragma omp declare simd
+  template <class T>
+  class Power<T, 1> {
+  public:
+    inline T operator()(const T arg) {
+
+      return (T) arg;
+    }
+  };
+
+#pragma omp declare simd
+  template <class T>
+  class Power<T, 2> {
+  public:
+    inline T operator()(const T arg) {
+      return (T) arg*arg;
+    }
+  };
+
+#pragma omp declare simd
+  template <class T>
+  class Power<T, 3> {
+  public:
+    inline T operator()(const T arg) {
+      return (T) arg*arg*arg;
+    }
+  };
+
+#pragma omp declare simd
+  template <class T>
+  class Power<T, 4> {
+  public:
+    inline T operator()(const T arg) {
+      return (T) arg*arg*arg*arg;
+    }
+  };
+
+#pragma omp declare simd
+  template <class T>
+  class Power<T, -1> {
+  public:
+    inline T operator()(const T arg) {
+      return (T) 1.0/arg;
+    }
+  };
+
 
 
   template <class T>
-    struct RootFinderFunctor {
-    public:
-      RootFinderFunctor(){};
+  struct RootFinderFunctor {
+  public:
+    RootFinderFunctor(){};
 
 #pragma omp declare simd
-      virtual T evaluateFunction(T const& x) = 0;
+    virtual T evaluateFunction(T const& x) = 0;
 
-      virtual T evaluateDerivative(T const& x) = 0;
+    virtual T evaluateDerivative(T const& x) = 0;
 
-    };
+  };
 
 #pragma omp declare simd
   template <class T>
-    inline bool NewtonRaphsonSolver(std::shared_ptr<RootFinderFunctor<T>> functor,
-                                    const T tolerance, const int iterationMax,
-                                    T& xR, const T xMin, const T xMax) {
+  inline bool NewtonRaphsonSolver(std::shared_ptr<RootFinderFunctor<T>> functor,
+                                  const T tolerance, const int iterationMax,
+                                  T& xR, const T xMin, const T xMax) {
 
     BOOST_LOG_TRIVIAL(debug) << "xR: " << xR
                              << ", xMin: " << xMin
@@ -156,9 +152,9 @@ namespace lbm {
 
 #pragma omp declare simd
   template <class T>
-    inline bool Bisection_NewtonRaphsonSolver(std::shared_ptr<RootFinderFunctor<T>> functor,
-                                              const T tolerance, const int iterationMax,
-                                              T& xR, const T xMin, const T xMax) {
+  inline bool Bisection_NewtonRaphsonSolver(std::shared_ptr<RootFinderFunctor<T>> functor,
+                                            const T tolerance, const int iterationMax,
+                                            T& xR, const T xMin, const T xMax) {
 
     BOOST_LOG_TRIVIAL(debug) << "xR: " << xR
                              << ", xMin: " << xMin
@@ -254,6 +250,5 @@ namespace lbm {
   }
 
 }
-
 
 #endif // HELPERS_H

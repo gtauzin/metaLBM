@@ -38,9 +38,9 @@ namespace lbm {
                                    << "(" << iX
                                    << ", " << iY
                                    << ", " << iZ << ")";
-            MathVector<int, 3> iP{{iX, iY, iZ}};
-            int idx_lattice = idxL(iX, iY, iZ);
-            int idx_field = idx_inF(iX, iY, iZ);
+          MathVector<int, 3> iP{{iX, iY, iZ}};
+          int idx_lattice = idxL(iX, iY, iZ);
+          int idx_field = idx_inF(iX, iY, iZ);
 
           T previousDensity;
           MathVector<T, L::dimD> previousVelocity;
