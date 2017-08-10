@@ -12,25 +12,27 @@ namespace lbm {
 
   enum class DomainType {Generic, Local, Halo, Global};
 
-  enum class AlgorithmType {Generic, FusedPull, Pull, FusedPush, Push};
+  // enum class AlgorithmType {Generic, FusedPull, Pull, FusedPush, Push};
 
   enum class InitDensityType{Homogeneous, Peak};
   enum class InitVelocityType{Homogeneous, Perturbated, Wave, Decay};
 
   enum class FieldType {Generic, Density, Velocity, Force, Alpha, Entropy};
 
-  enum class EquilibriumType {Basic};
+  enum class EquilibriumType {Generic, Incompressible};
 
   enum class CollisionType {GenericSRT, BGK, ELBM, Approached_ELBM, ForcedNR_ELBM,
       ForcedBNR_ELBM, GenericMRT};
 
-  enum class ForcingSchemeType {Guo, ShanChen, ExactDifferenceMethod};
+  enum class ForcingSchemeType {Generic, Guo, ShanChen, ExactDifferenceMethod};
   enum class ForceType {Generic, Constant, Sinusoidal, Kolmogorov,
       Turbulent, TurbulentTime, WavenumbersTime};
 
-  enum class BoundaryType {BounceBack_Halfway, Entropic};
+  enum class BoundaryType {Generic, Periodic, BounceBack_Halfway, Entropic};
 
-  enum class WriterType {VTR, HDF5, Backup};
+  enum class ReaderType {Generic, VTR, HDF5};
+  enum class WriterType {Generic, VTR, HDF5};
+
 }
 
 #endif // OPTIONS_H

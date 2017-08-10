@@ -4,12 +4,7 @@
 #include <cmath>
 #include <omp.h>
 
-#include <boost/log/core.hpp>
-#include <boost/log/trivial.hpp>
-#include <boost/log/expressions.hpp>
-#include <boost/log/utility/setup/file.hpp>
-namespace logging = boost::log;
-
+#include "Input.h"
 #include "Options.h"
 #include "MathVector.h"
 #include "StaticArray.h"
@@ -24,7 +19,8 @@ namespace lbm {
   template<class T>
   class Force<T, ForceType::Generic> {
   protected:
-    MathVector<unsigned int, 3> offset;
+    MathVector<T, L::dimD> force;
+
     MathVector<T, L::dimD> amplitude;
 
     Force(const MathVector<T, 3>& amplitude_in)
@@ -36,33 +32,43 @@ namespace lbm {
 
   public:
     #pragma omp declare simd
-    inline MathVector<T, L::dimD> force(const MathVector<int, 3>& iP) {
+    inline void setForce(const MathVector<unsigned int, 3>& iP) {
       // ABORT EXCEPTIONS
-      return MathVector<T, L::dimD>{{(T)(0)}};
+      force = MathVector<T, L::dimD>{{(T)(0)}};
     }
-  };
 
+    #pragma omp declare simd
+    inline const MathVector<T, L::dimD>& getForce(){
+      return force;
+    }
+
+  };
 
   template<class T>
   class Force<T, ForceType::Constant> : public Force<T, ForceType::Generic> {
   private:
+    using Force<T, ForceType::Generic>::force;
     using Force<T, ForceType::Generic>::amplitude;
 
   public:
-  Force(const MathVector<unsigned int, 3> offset_in = MathVector<unsigned int, 3>{{0}},
-        const MathVector<T, 3>& amplitude_in)
+  Force(const MathVector<T, 3>& amplitude_in,
+        const MathVector<T, 3>& waveLength_in)
       : Force<T, ForceType::Generic>(amplitude_in)
     {}
 
     #pragma omp declare simd
-    inline MathVector<T, L::dimD> force(const MathVector<int, 3>& iP) {
-      return amplitude;
+    inline void setForce(const MathVector<unsigned int, 3>& iP) {
+      force = amplitude;
     }
+
+    using Force<T, ForceType::Generic>::getForce;
+
   };
 
   template<class T>
   class Force<T, ForceType::Sinusoidal> : public Force<T, ForceType::Generic> {
   private:
+    using Force<T, ForceType::Generic>::force;
     using Force<T, ForceType::Generic>::amplitude;
     MathVector<T, L::dimD> waveLength;
 
@@ -78,73 +84,76 @@ namespace lbm {
     }
 
     #pragma omp declare simd
-    inline MathVector<T, L::dimD> force(const MathVector<int, 3>& iP){
-      MathVector<T, L::dimD> forceR{{ (T) 0}};
-
+    inline void setForce(const MathVector<unsigned int, 3>& iP){
       UnrolledFor<0, L::dimD>::Do([&] (int iD) {
-          forceR[iD] = amplitude[iD] * sin(iP[iD]*2*M_PI/waveLength[iD]);
+          force[iD] = amplitude[iD] * sin(iP[iD]*2*M_PI/waveLength[iD]);
       });
-
-      return forceR;
     }
+
+    using Force<T, ForceType::Generic>::getForce;
+
   };
 
   template<class T>
   class Force<T, ForceType::Kolmogorov> : public Force<T, ForceType::Sinusoidal> {
   private:
+    using Force<T, ForceType::Sinusoidal>::force;
+
     using Force<T, ForceType::Sinusoidal>::amplitude;
     using Force<T, ForceType::Sinusoidal>::waveLength;
 
   public:
-
     Force(const MathVector<T, 3>& amplitude_in,
           const MathVector<T, 3>& waveLength_in)
       : Force<T, ForceType::Sinusoidal>(amplitude_in, waveLength_in)
     {}
 
     #pragma omp declare simd
-    inline MathVector<T, L::dimD> force(const MathVector<int, 3>& iP){
-      MathVector<T, L::dimD> forceR{{ (T) 0}};
-
-      forceR[d::X] = amplitude[d::X] * sin(iP[d::Y]*2*M_PI/waveLength[d::X]);
-
-      return forceR;
+    inline void setForce(const MathVector<unsigned int, 3>& iP){
+      force[d::X] = amplitude[d::X] * sin(iP[d::Y]*2*M_PI/waveLength[d::X]);
     }
+
+    using Force<T, ForceType::Generic>::getForce;
+
 
   };
 
-  template<class T>
-  class Forces {
-  private:
-    MathVector<T, L::dimD> force = MathVector<T, L::dimD>{{(T) 0}};
-    const StaticArray<Force<T, ForceType::Generic>, numberForces> forcesArray;
-    const MathVector<unsigned int, 3> offset;
+  /* template<class T, unsigned int NumberForces> */
+  /* class Forces { */
+  /* private: */
+  /*   MathVector<T, L::dimD> force; */
+  /*   const StaticArray<Force<T, ForceType::Generic>, NumberForces> forceArray; */
 
-  public:
-  Forces(const StaticArray<Force<T, ForceType::Generic>, numberForces>& forcesArray_in,
-         const MathVector<unsigned int, 3>& offset_in = MathVector<unsigned int, 3>{{0}})
-      : forcesArray(forcesArray_in)
-      , offset(offset_in)
-    {}
+  /* public: */
+  /* Forces(const StaticArray<Force<T, ForceType::Generic>, NumberForces>& forceArray_in) */
+  /*   : force{(T) 0} */
+  /*   , forceArray(forceArray_in) */
+  /*   {} */
 
+  /*   #pragma omp declare simd */
+  /*   inline void update() { */
 
-    #pragma omp declare simd
-    inline MathVector<T, L::dimD> force(const MathVector<int, 3>& iP) {
-      BOOST_LOG_TRIVIAL(debug) << " - Computing force.";
-       force = MathVector<T, L::dimD>{{(T) 0}};
+  /*   } */
 
-      for(Force<T, ForceType::Generic> force : forcesArray) {
-        force += force.force(offset + iP);
-      }
+  /*   #pragma omp declare simd */
+  /*   inline MathVector<T, L::dimD> getForce(const MathVector<int, 3>& iP) { */
+  /*      force = MathVector<T, L::dimD>{{(T) 0}}; */
 
-      return force;
-    }
+  /*     for(Force<T, ForceType::Generic> force : forceArray) { */
+  /*       force += force.force(iP); */
+  /*     } */
 
-    inline MathVector<T, L::dimD> getForce() {
-      return force;
-    }
+  /*     return force; */
+  /*   } */
 
-  };
+  /*   #pragma omp declare simd */
+  /*   inline MathVector<T, L::dimD>& getForce() { */
+  /*     return force; */
+  /*   } */
+
+  /* }; */
+
+  typedef Force<dataT, forceT> Force_;
 
 }
 

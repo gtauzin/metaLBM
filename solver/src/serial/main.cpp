@@ -3,30 +3,26 @@
 
 #include <iostream>
 #include <string>
+#include <string>
 #include <fstream>
 #include <sstream>
+#include <unistd.h>
 
-#include <boost/log/core.hpp>
-#include <boost/log/trivial.hpp>
-#include <boost/log/expressions.hpp>
-#include <boost/log/utility/setup/file.hpp>
-namespace logging = boost::log;
+#include "Algorithm.h"
 
-#include "input.h"
-#include "lattice.h"
-#include "init.h"
-#include "compute.h"
-#include "commons.h"
 
 using namespace lbm;
 
-int main() {
-  initLogging(0);
+int main(int argc, char* argv[]) {
 
-  Init<valueType> init = init_Simulation<double>(0);
+  char hostname[1024];
+  gethostname(hostname, sizeof(hostname)-1);
 
-  compute<valueType>(init);
+  Algorithm_ algorithm(MathVector<unsigned int, 3>{{ 0 }},
+                       MathVector<unsigned int, 3>{{ 0 }},
+                       std::string(hostname));
+
+  algorithm.computeLBM();
 
   return 0;
-
 }

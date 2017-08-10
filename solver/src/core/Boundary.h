@@ -1,12 +1,7 @@
 #ifndef BOUNDARY_H
 #define BOUNDARY_H
 
-#include <boost/log/core.hpp>
-#include <boost/log/trivial.hpp>
-#include <boost/log/expressions.hpp>
-#include <boost/log/utility/setup/file.hpp>
-namespace logging = boost::log;
-
+#include "Input.h"
 #include "Options.h"
 #include "Domain.h"
 #include "MathVector.h"
@@ -17,89 +12,101 @@ namespace lbm {
   template<class T, BoundaryType boundaryType>
   class Boundary{};
 
-  template<class T, BoundaryType::Periodic>
-  class Boundary {
+  template<class T>
+  class Boundary<T, BoundaryType::Periodic> {
   private:
-    Domain<DomainType::Local> D;
-    int origin;
-    int destination;
+    MathVector<unsigned int, 3> iP_Origin;
+    MathVector<unsigned int, 3> iP_Destination;
 
   protected:
-
-    template<unsigned int direction>
-    inline void apply(T * __restrict__ f,
-                      const MathVector<unsigned int, 3>& iP)  {
-      // ABORT
-    }
-
-    template<>
-    inline void apply<d::X>(T * __restrict__ f,
-                            const MathVector<unsigned int, 3>& iP)  {
-
-      origin = calculateIndex({D::start()[d::X], iP[d::Y], iP[d::Z]});
-      destination = calculateIndex({D::end()[d::X], iP[d::Y], iP[d::Z]});
-
-      srcBtoT  = idxL(L::hX, iY, iZ);
-      destBtoT = idxL(L::hX + L::lX_l, iY, iZ);
+    inline void applyX(T * __restrict__ f,
+                       const MathVector<unsigned int, 3>& iP) {
+      iP_Origin = {L::halo()[d::X], iP[d::Y], iP[d::Z]};
+      iP_Destination = {L::halo()[d::X] + lD::length()[d::X], iP[d::Y], iP[d::Z]};
 
       UnrolledFor<0, L::dimQ>::Do([&] (int iQ) {
-                f[idxPop(destBtoT, iQ)] = f[idxPop(srcBtoT, iQ)];
-        });
+          f[hD::getIndex(iP_Destination, iQ)] = f[hD::getIndex(iP_Origin, iQ)];
+      });
 
-      srcBtoT  = idxL(L::hX + L::lX_l-1, iY, iZ);
-      destBtoT = idxL(0, iY, iZ);
+      iP_Origin = {L::halo()[d::X]+ lD::length()[d::X] -1, iP[d::Y], iP[d::Z]};
+      iP_Destination = {0, iP[d::Y], iP[d::Z]};
 
       UnrolledFor<0, L::dimQ>::Do([&] (int iQ) {
-              f[idxPop(destBtoT, iQ)] = f[idxPop(srcBtoT, iQ)];
-        });
+          f[hD::getIndex(iP_Destination, iQ)] = f[hD::getIndex(iP_Origin, iQ)];
+      });
 
     }
 
-  public:
+    inline void applyY(T * __restrict__ f,
+                       const MathVector<unsigned int, 3>& iP) {
+      iP_Origin = {iP[d::X], L::halo()[d::Y], iP[d::Z]};
+      iP_Destination = {iP[d::X], L::halo()[d::Y] + lD::length()[d::Y], iP[d::Z]};
+
+      UnrolledFor<0, L::dimQ>::Do([&] (int iQ) {
+          f[hD::getIndex(iP_Destination, iQ)] = f[hD::getIndex(iP_Origin, iQ)];
+        });
+
+      iP_Origin = {iP[d::X], L::halo()[d::Y]+ lD::length()[d::Y] -1, iP[d::Z]};
+      iP_Destination = {iP[d::X], 0, iP[d::Z]};
+
+      UnrolledFor<0, L::dimQ>::Do([&] (int iQ) {
+          f[hD::getIndex(iP_Destination, iQ)] = f[hD::getIndex(iP_Origin, iQ)];
+        });
+    }
+
+    inline void applyZ(T * __restrict__ f,
+                       const MathVector<unsigned int, 3>& iP) {
+      iP_Origin = {iP[d::X], iP[d::Y], L::halo()[d::Z]};
+      iP_Destination = {iP[d::X], iP[d::Y], L::halo()[d::Z] + lD::length()[d::Z]};
+
+      std::cout << "Copy from: " << iP_Origin << " to: " << iP_Destination << std::endl;
+
+      UnrolledFor<0, L::dimQ>::Do([&] (int iQ) {
+          f[hD::getIndex(iP_Destination, iQ)] = f[hD::getIndex(iP_Origin, iQ)];
+      });
+
+      iP_Origin = {iP[d::X], iP[d::Y], L::halo()[d::Z] + lD::length()[d::Z] - 1};
+      iP_Destination = {iP[d::X], iP[d::Y], 0};
+
+      std::cout << "Copy from: " << iP_Origin << " to: " << iP_Destination << std::endl;
+
+      UnrolledFor<0, L::dimQ>::Do([&] (int iQ) {
+          f[hD::getIndex(iP_Destination, iQ)] = f[hD::getIndex(iP_Origin, iQ)];
+      });
+
+    }
 
   };
-
-  template<class T, BoundaryType boundaryType::Generic>
-  class Boundary{
-
-  public:
-
-  };
-
-  template<class T, BoundaryType::BounceBounceBack_Halfway>
-  class Boundary : public Boundary<T, BoundaryType::Generic> {
-  protected:
-
-  public:
-
-  };
-
-  template<class T, BoundaryType::Entropic>
-  class Boundary : public Boundary<T, BoundaryType::Generic> {
-  protected:
-
-  public:
-
-  };
-
 
   template<class T>
-  class Boundaries {
-  private:
-    StaticArray<Boundary<T, BoundaryType::Generic>, numberBoundaries> boundariesArray;
+  class Boundary<T, BoundaryType::Generic> {
 
   public:
-    Boundaries(const StaticArray<Boundary<T, BoundaryType::Generic>, numberBoundaries>&
-               boundariesArray_in)
-      : boundariesArray(boundariesArray_in)
-    {}
-
-    inline void apply(T * __restrict__ f){
-      for(auto boundary : boundariesArray){
-        boundary.apply(f);
-      }
-    }
+    void apply() {}
   };
+
+  template<class T>
+  class Boundary<T, BoundaryType::BounceBack_Halfway>
+    : public Boundary<T, BoundaryType::Generic> {
+  protected:
+
+  public:
+    void apply() {}
+
+  };
+
+  template<class T>
+  class Boundary<T, BoundaryType::Entropic>
+    : public Boundary<T, BoundaryType::Generic> {
+  protected:
+
+  public:
+    void apply() {}
+
+  };
+
+
+  typedef Boundary<dataT, boundaryT> Boundary_;
 
 }
 

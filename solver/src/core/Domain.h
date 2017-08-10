@@ -11,194 +11,232 @@ namespace lbm {
 
 
   /**
-   * Index required to provide Distributions with multi-dimensional index.
+   * Domain defining space where LocalizedField lives and providing them
+   * with a multi-dimensional index.
    *
+   * @tparam latticeType type of lattice used.
+   * @tparam domainType type of domain locality used.
+   * @tparam partitionningType type of domain partitionning used.
    * @tparam memoryLayout type of memory layout used.
    */
 
-
-  template <Lattice lattice, DomainType domainType,
-            PartionningType partitionningType,
+  template <LatticeType latticeType, DomainType domainType,
+            PartitionningType partitionningType,
             MemoryLayout memoryLayout>
-  struct Domain {);
+  struct Domain {};
 
-  template <Lattice lattice, PartitionningType partitionningType,
-            MemoryLayout memoryLayout = MemoryLayout::Generic>
-  struct Domain<lattice, DomainType::Generic, partionningType, memoryLayout> {
+  template <LatticeType latticeType, PartitionningType partitionningType,
+            MemoryLayout memoryLayout>
+  struct Domain<latticeType, DomainType::Local, partitionningType, memoryLayout>  {
+  private:
+      typedef Lattice<int, latticeType> lattice;
+
+  public:
     static inline constexpr MathVector<unsigned int, 3> start() {
-      \\ ABORT
-      return MathVector<unsigned int, 3> endR{{0}};
+      return MathVector<unsigned int, 3>{{0}};
     }
 
     static inline constexpr MathVector<unsigned int, 3> end() {
-      \\ ABORT
-      return MathVector<unsigned int, 3> endR{{0}};
+      return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l);
     }
 
     static inline constexpr MathVector<unsigned int, 3> length() {
-      \\ ABORT
-        return end() - start();
+      return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l);
     }
 
-    static constexpr unsigned int volume = length()[d::X]*length()[d::Y]*length()[d::Z];
-
-    static unsigned int index;
-
-    static inline unsigned int updateIndex(const MathVector<unsigned int, 3>& iP) {
-      index = length()[d::Z] * (length()[d::Z] * iP[d::X] + iP[d::Y]) + iP[d::Z];
+    static inline constexpr unsigned int volume() {
+      return length()[d::X]*length()[d::Y]*length()[d::Z];
     }
 
-    inline unsigned int getIndex(const unsigned int iC) {
-      return iC * volume + index;
+    static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP) {
+      return length()[d::Z] * (length()[d::Y] * iP[d::X] + iP[d::Y]) + iP[d::Z];
     }
 
-  };
-
-  template <Lattice lattice, PartitionningType partitionningType,
-            MemoryLayout memoryLayout = MemoryLayout::Generic>
-  struct Domain<lattice, DomainType::Local, partionningType, memoryLayout>
-    : public Domain<lattice, DomainType::Generic, partionningType, memoryLayout> {
-    static inline constexpr MathVector<unsigned int, 3> start() {
-      return MathVector<unsigned int, 3> endR{{0}};
-    }
-
-    static inline constexpr MathVector<unsigned int, 3> end() {
-      constexpr MathVector<unsigned int, 3> endR{{1}};
-      UnrolledFor<0, lattice::dimD>::Do([&] (int iD) {
-          endR[iD] = length_g()[iD]/process()[iD];
-        });
-
-      return endR;
-    }
-
-    using Domain<lattice, DomainType::Generic, partionningType, memoryLayout>::length;
-    using Domain<lattice, DomainType::Generic, partionningType, memoryLayout>::volume;
-
-    using Domain<lattice, DomainType::Generic, partionningType, memoryLayout>::index;
-
-    static inline unsigned int updateIndex(const MathVector<unsigned int, 3>& iP) {
-      const int iPLocal = {iP[d::X] - iP[d::X]/length()[d::X] * length()[d::X],
-                           iP[d::Y], iP[d::Z]};
-      return iP[d::X]/length()[d::X]
-        * Domain<lattice, DomainType::Local, partitionningType>::volume
-        + Domain<lattice, DomainType::Local, partitionningType>::updateIndex(iPLocal);
-
-      index = length()[d::Z] * (length()[d::Z] * iP[d::X] + iP[d::Y]) + iP[d::Z];
+    static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP,
+                                        const unsigned int iC) {
+      return iC * volume() + getIndex(iP);
     }
 
   };
 
-  template <Lattice lattice,
-            PartitionningType partitionningType = ParitionningType::Generic,
-            MemoryLayout memoryLayout = MemoryLayout::Generic>
-  struct Domain<lattice, DomainType::Global, partionningType, memoryLayout>
-    : public Domain<lattice, DomainType::Local, partionningType, memoryLayout> {
+  template <LatticeType latticeType,
+            PartitionningType partitionningType,
+            MemoryLayout memoryLayout>
+  struct Domain<latticeType, DomainType::Global, partitionningType, memoryLayout>
+    : public Domain<latticeType, DomainType::Local, partitionningType, memoryLayout> {
+  private:
+    typedef Lattice<int, latticeType> lattice;
+
+  public:
     static inline constexpr MathVector<unsigned int, 3> start() {
-      return MathVector<unsigned int, 3> endR{{0}};
+      return MathVector<unsigned int, 3>{{0}};
     }
 
     static inline constexpr MathVector<unsigned int, 3> end() {
-      constexpr MathVector<unsigned int, 3> endR{{1}};
-      UnrolledFor<0, lattice::dimD>::Do([&] (int iD) {
-          endR[iD] = length_g()[iD];
-        });
+      return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_g);
+    }
 
-      return endR;
+    static inline constexpr MathVector<unsigned int, 3> length() {
+      return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_g);
+    }
+
+    static inline constexpr unsigned int volume() {
+      return length()[d::X]*length()[d::Y]*length()[d::Z];
     }
 
     static inline MathVector<unsigned int, 3> offset
-    (const MathVector<unsigned int, 3> rankMPI = MathVector<unsigned int, 3>{{0}}) {
-      constexpr MathVector<unsigned int, 3> offsetR{{0}};
+    (const MathVector<unsigned int, 3>& rankMPI = MathVector<unsigned int, 3>{{0}}) {
+      MathVector<unsigned int, 3> offsetR{{0}};
       UnrolledFor<0, lattice::dimD>::Do([&] (int iD) {
-          offsetR[iD] = length_g()[iD]*rankMPI[iD];
+          offsetR[iD] = length_g[iD]*rankMPI[iD];
         });
 
       return offsetR;
   }
 
+    static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP) {
+      const int indexLocal = Domain<latticeType, DomainType::Local,
+                                    partitionningType, memoryLayout>::getIndex({iP[d::X] - iP[d::X]/length()[d::X] * length()[d::X], iP[d::Y], iP[d::Z]});
+      return iP[d::X]/length()[d::X]
+        * Domain<latticeType, DomainType::Local,
+                 partitionningType, memoryLayout>::volume()
+        + indexLocal;
+    }
 
-    using Domain<lattice, DomainType::Local, partionningType, memoryLayout>::length;
-    using Domain<lattice, DomainType::Local, partionningType, memoryLayout>::volume;
+    static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP,
+                                        const unsigned int iC) {
+      return iC * volume() + getIndex(iP);
+    }
 
-    using Domain<lattice, DomainType::Local, partionningType, memoryLayout>::index;
-    using Domain<lattice, DomainType::Local, partionningType, memoryLayout>::updateIndex;
+    static inline unsigned int getIndex(const unsigned int index,
+                                        const unsigned int iC) {
+      return iC * volume() + index;
+    }
 
   };
 
-  template <Lattice lattice, PartitionningType partitionningType>
-  struct Domain<lattice, DomainType::Halo, partionningType, MemoryLayout::Generic>
-    : public Domain<lattice, DomainType::Generic, partionningType, memoryLayout> {
+
+  template <LatticeType latticeType, PartitionningType partitionningType>
+  struct Domain<latticeType, DomainType::Halo,
+                partitionningType, MemoryLayout::Generic>
+    : public Domain<latticeType, DomainType::Local,
+                    partitionningType, MemoryLayout::Generic> {
+  private:
+    typedef Lattice<int, latticeType> lattice;
+
+  public:
     static inline constexpr MathVector<unsigned int, 3> start() {
-      return L::halo();
+      return MathVector<unsigned int, 3>{{0}};
     }
 
     static inline constexpr MathVector<unsigned int, 3> end() {
-      constexpr MathVector<unsigned int, 3> endR{{1}};
-      UnrolledFor<0, lattice::dimD>::Do([&] (int iD) {
-          endR[iD] = length_g()[iD]/process()[iD] + 2* L::halo();
-        });
-
-      return endR;
+      return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l) + 2 * lattice::halo();
     }
 
-    using Domain<lattice, DomainType::Generic, partionningType, memoryLayout>::length;
-    using Domain<lattice, DomainType::Generic, partionningType, memoryLayout>::volume;
+    static inline constexpr MathVector<unsigned int, 3> length() {
+      return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l) + 2 * lattice::halo();
+    }
 
-    using Domain<lattice, DomainType::Generic, partionningType, memoryLayout>::index;
-    using Domain<lattice, DomainType::Generic, partionningType, memoryLayout>::updateIndex;
+    static inline constexpr unsigned int volume() {
+      return length()[d::X]*length()[d::Y]*length()[d::Z]+0;
+    }
+
+    static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP) {
+      return length()[d::Z] * (length()[d::Y] * iP[d::X] + iP[d::Y]) + iP[d::Z];
+    }
+
+    static inline unsigned int getIndexLocal(const MathVector<unsigned int, 3>& iP,
+                                             const unsigned int iC) {
+      return Domain<latticeType, DomainType::Local,
+                    partitionningType,
+                    MemoryLayout::Generic>::getIndex(iP - lattice::halo(), iC);
+    }
+
+    static inline unsigned int getIndexLocal(const MathVector<unsigned int, 3>& iP) {
+      return Domain<latticeType, DomainType::Local,
+                    partitionningType,
+                    MemoryLayout::Generic>::getIndex(iP - lattice::halo());
+    }
 
   };
 
 
-  template <Lattice lattice, PartitionningType partitionningType>
-  struct Domain<lattice, DomainType::Halo, partionningType, MemoryLayout::AoS>
-    : public Domain<lattice, DomainType::Halo, partionningType, MemoryLayout::Generic> {
+  template <LatticeType latticeType, PartitionningType partitionningType>
+  struct Domain<latticeType, DomainType::Halo,
+                partitionningType, MemoryLayout::AoS>
+    : public Domain<latticeType, DomainType::Halo,
+                    partitionningType, MemoryLayout::Generic> {
+  private:
+    typedef Lattice<int, latticeType> lattice;
 
-    using Domain<lattice, DomainType::Halo, partionningType, MemoryLayout::Generic>::start;
-    using Domain<lattice, DomainType::Halo, partionningType, MemoryLayout::Generic>::end;
+  public:
+    using Domain<latticeType, DomainType::Halo,
+                 partitionningType, MemoryLayout::Generic>::start;
+    using Domain<latticeType, DomainType::Halo,
+                 partitionningType, MemoryLayout::Generic>::end;
 
-    using Domain<lattice, DomainType::Halo, partionningType, MemoryLayout::Generic>::length;
-    using Domain<lattice, DomainType::Halo, partionningType, MemoryLayout::Generic>::volume;
+    using Domain<latticeType, DomainType::Halo,
+                 partitionningType, MemoryLayout::Generic>::length;
+    using Domain<latticeType, DomainType::Halo,
+                 partitionningType, MemoryLayout::Generic>::volume;
 
-    using Domain<lattice, DomainType::Halo, partionningType, memoryLayout>::index;
+    using Domain<latticeType, DomainType::Halo,
+                 partitionningType, MemoryLayout::Generic>::getIndex;
+    using Domain<latticeType, DomainType::Halo,
+                 partitionningType, MemoryLayout::Generic>::getIndexLocal;
 
-    static inline unsigned int updateIndex(const MathVector<unsigned int, 3>& iP) {
-      index = length()[d::Z] * (length()[d::Z] * iP[d::X] + iP[d::Y]) + iP[d::Z];
+
+    static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP,
+                                        const unsigned int iC) {
+      return getIndex(iP) * lattice::dimQ + iC;
     }
 
-    inline unsigned int getIndex(const unsigned int iC) {
+    static inline unsigned int getIndex(const unsigned int index,
+                                        const unsigned int iC) {
       return index * lattice::dimQ + iC;
     }
 
+  };
 
-    };
+  template <LatticeType latticeType, PartitionningType partitionningType>
+  struct Domain<latticeType, DomainType::Halo, partitionningType, MemoryLayout::SoA>
+    : public Domain<latticeType, DomainType::Halo, partitionningType, MemoryLayout::Generic> {
+  private:
+    typedef Lattice<int, latticeType> lattice;
 
-  template <Lattice lattice, PartitionningType partitionningType>
-  struct Domain<lattice, DomainType::Halo, partionningType, MemoryLayout::SoA>
-    : public Domain<lattice, DomainType::Halo, partionningType, MemoryLayout::Generic> {
+  public:
+    using Domain<latticeType, DomainType::Halo,
+                 partitionningType, MemoryLayout::Generic>::start;
+    using Domain<latticeType, DomainType::Halo,
+                 partitionningType, MemoryLayout::Generic>::end;
 
-    using Domain<lattice, DomainType::Halo,
-                 partionningType, MemoryLayout::Generic>::start;
-    using Domain<lattice, DomainType::Halo,
-                 partionningType, MemoryLayout::Generic>::end;
+    using Domain<latticeType, DomainType::Halo,
+                 partitionningType, MemoryLayout::Generic>::length;
+    using Domain<latticeType, DomainType::Halo,
+                 partitionningType, MemoryLayout::Generic>::volume;
 
-    using Domain<lattice, DomainType::Halo,
-                 partionningType, MemoryLayout::Generic>::length;
-    using Domain<lattice, DomainType::Halo,
-                 partionningType, MemoryLayout::Generic>::volume;
+    using Domain<latticeType, DomainType::Halo,
+                 partitionningType, MemoryLayout::Generic>::getIndex;
+    using Domain<latticeType, DomainType::Halo,
+                 partitionningType, MemoryLayout::Generic>::getIndexLocal;
 
-    using Domain<lattice, DomainType::Halo,
-                 partionningType, MemoryLayout::Generic>::index;
 
-    static inline unsigned int updateIndex(const MathVector<unsigned int, 3>& iP) {
-      index = length()[d::Z] * (length()[d::Z] * iP[d::X] + iP[d::Y]) + iP[d::Z];
+    static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP,
+                                        const unsigned int iC) {
+      return iC * volume() + getIndex(iP);
     }
 
-    inline unsigned int getIndex(const unsigned int iC) {
-      return iC * domainVolume + index;
+    static inline unsigned int getIndex(const unsigned int index,
+                                        const unsigned int iC) {
+      return iC * volume() + index;
     }
 
-    };
+  };
+
+  typedef Domain<latticeT, DomainType::Global, partitionningT, memoryL> gD;
+  typedef Domain<latticeT, DomainType::Local, partitionningT, memoryL> lD;
+  typedef Domain<latticeT, DomainType::Halo, partitionningT, memoryL> hD;
+
 
 }
 

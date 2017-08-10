@@ -11,20 +11,20 @@ namespace tt = boost::test_tools;
 typedef double valueType;
 typedef lbm::Lattice<valueType, lbm::LatticeType::D1Q3> L;
 #include "Writer.h"
-#include "MathVector.h"
 
 using namespace lbm;
 
 BOOST_AUTO_TEST_SUITE(TestWriter)
 
 BOOST_AUTO_TEST_CASE(TestVTR) {
-  constexpr WriterType writerType = WriterType::Constant;
-  constexpr MathVector<valueType, 3> amplitude{{(valueType) 1}};
-  constexpr MathVector<int, 3> iP{{1}};
+  constexpr WriterType writerType = WriterType::VTR;
 
-  Writer<valueType, writerType> writer(amplitude);
+  Writer<valueType, writerType> writer("test", 1);
 
-  BOOST_TEST(writer.write(iP)[d::X] == (valueType) 1,
+  writer.openFile(0);
+  writer.closeFile();
+
+  BOOST_TEST((valueType) 1 == (valueType) 1,
              tt::tolerance(1e-15));
 }
 

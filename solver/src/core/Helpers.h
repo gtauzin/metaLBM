@@ -1,13 +1,8 @@
 #ifndef HELPERS_H
 #define HELPERS_H
 
+#include <memory>
 #include <cmath>
-
-#include <boost/log/core.hpp>
-#include <boost/log/trivial.hpp>
-#include <boost/log/expressions.hpp>
-#include <boost/log/utility/setup/file.hpp>
-namespace logging = boost::log;
 
 namespace lbm {
 
@@ -27,12 +22,27 @@ namespace lbm {
     }
   };
 
+  #pragma omp declare simd
+  template <class T>
+  inline T PowerBase(T arg, int power) {
+    if(power == 1) {
+      return arg;
+    }
+    else if(power == 0) {
+      return (T) 1;
+      }
+    else if (power == -1) {
+      return (T) 1.0/arg;
+    }
+    return (T) pow(arg, power);
+  }
+
 
 #pragma omp declare simd
   template <class T, int power>
   class Power {
   public:
-    inline T operator()(const T arg) {
+    static inline T Do(const T arg) {
       return (T) pow(arg, power);
     }
   };
@@ -41,7 +51,7 @@ namespace lbm {
   template <class T>
   class Power<T, 0> {
   public:
-    inline T operator()(const T arg) {
+    static inline T Do(const T arg) {
       return (T) 1;
     }
   };
@@ -50,8 +60,7 @@ namespace lbm {
   template <class T>
   class Power<T, 1> {
   public:
-    inline T operator()(const T arg) {
-
+    static inline T Do(const T arg) {
       return (T) arg;
     }
   };
@@ -60,7 +69,7 @@ namespace lbm {
   template <class T>
   class Power<T, 2> {
   public:
-    inline T operator()(const T arg) {
+    static inline T Do(const T arg) {
       return (T) arg*arg;
     }
   };
@@ -69,7 +78,7 @@ namespace lbm {
   template <class T>
   class Power<T, 3> {
   public:
-    inline T operator()(const T arg) {
+    static inline T Do(const T arg) {
       return (T) arg*arg*arg;
     }
   };
@@ -78,7 +87,7 @@ namespace lbm {
   template <class T>
   class Power<T, 4> {
   public:
-    inline T operator()(const T arg) {
+    static inline T Do(const T arg) {
       return (T) arg*arg*arg*arg;
     }
   };
@@ -87,11 +96,10 @@ namespace lbm {
   template <class T>
   class Power<T, -1> {
   public:
-    inline T operator()(const T arg) {
+    static inline T Do(const T arg) {
       return (T) 1.0/arg;
     }
   };
-
 
 
   template <class T>
@@ -111,14 +119,6 @@ namespace lbm {
   inline bool NewtonRaphsonSolver(std::shared_ptr<RootFinderFunctor<T>> functor,
                                   const T tolerance, const int iterationMax,
                                   T& xR, const T xMin, const T xMax) {
-
-    BOOST_LOG_TRIVIAL(debug) << "xR: " << xR
-                             << ", xMin: " << xMin
-                             << ", xMax: " << xMax
-                             << ", tolerance: " << tolerance
-                             << ", iterationMax: " << iterationMax;
-
-
     T error = 1 + tolerance;
     T xStep = 0.0;
 
@@ -130,10 +130,6 @@ namespace lbm {
       xStep = functionEvaluation/derivativeEvaluation;
 
       error = fabs(xStep);
-
-      BOOST_LOG_TRIVIAL(debug) << "iteration: " << iteration
-                               << ", error: " << error
-                               << ", xR: " << xR;
 
       if(error <= tolerance) {
         if(xR > xMin && xR < xMax) {
@@ -156,19 +152,12 @@ namespace lbm {
                                             const T tolerance, const int iterationMax,
                                             T& xR, const T xMin, const T xMax) {
 
-    BOOST_LOG_TRIVIAL(debug) << "xR: " << xR
-                             << ", xMin: " << xMin
-                             << ", xMax: " << xMax
-                             << ", tolerance: " << tolerance
-                             << ", iterationMax: " << iterationMax;
-
     T xLow, xHigh;
     T function_xLow = functor->evaluateFunction(xMin);
     T function_xHigh = functor->evaluateFunction(xMax);
 
     if ((function_xLow > 0.0 && function_xHigh > 0.0)
         || (function_xLow < 0.0 && function_xHigh < 0.0)) {
-      BOOST_LOG_TRIVIAL(debug) << "Root must be in [xMin, xMax]";
       return false;
     }
 
@@ -225,10 +214,6 @@ namespace lbm {
         }
       }
 
-      BOOST_LOG_TRIVIAL(debug) << "iteration: " << iteration
-                               << ", error: " << fabs(xStep)
-                               << ", xR: " << xR;
-
       if(fabs(xStep) <= tolerance) {
         return true;
       }
@@ -244,7 +229,6 @@ namespace lbm {
       }
     }
 
-    BOOST_LOG_TRIVIAL(debug) << "Maximum number of iterations exceeded";
     return false;
 
   }

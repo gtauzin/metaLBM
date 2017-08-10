@@ -1,35 +1,53 @@
 #ifndef DYNAMICARRAY_H
 #define DYNAMICARRAY_H
 
+#define RESTRICT __restrict__
+
+#include <cstring>
+#include <stdlib.h>
+
 namespace lbm {
 
   template<class U>
   class DynamicArray {
-  protected:
-    U* dArray;
-    const unsigned int size;
+  private:
+    U * RESTRICT dArray;
+    unsigned int numberElements;
 
   public:
     enum exception {MEMFAIL, INVALIDSIZE};
 
     DynamicArray()
-      : size(0)
+      : numberElements(0)
     {
-      dArray = (U*)malloc(size*sizeof(U));
+      dArray = (U*)malloc(numberElements*sizeof(U));
 
       if (dArray == NULL)
         throw MEMFAIL;
     }
 
-    DynamicArray(const DynamicArray<U>& dynamicArray_in)
+    DynamicArray(const unsigned int numberElements_in,
+                 const U& value_in = (U) 0)
+      : numberElements(numberElements_in)
     {
-      dArray = (U*)malloc(dynamicArray_in.size()*sizeof(U));
+      dArray = (U*)malloc(numberElements*sizeof(U));
 
       if (dArray == NULL)
         throw MEMFAIL;
 
-      memcpy(dArray, dynamicArray.data(), dynamicArray_in.size()*sizeof(U));
-      size = dynamicArray.size();
+      for(unsigned int i = 0; i < numberElements; ++i) dArray[i] = value_in;
+    }
+
+
+  DynamicArray(const DynamicArray& dArray_in)
+      : numberElements(dArray_in.size())
+    {
+      dArray = (U*)malloc(dArray_in.size()*sizeof(U));
+
+      if (dArray == NULL)
+        throw MEMFAIL;
+
+      memcpy(dArray, dArray_in.data(), dArray_in.size()*sizeof(U));
     }
 
     ~DynamicArray(){
@@ -47,7 +65,7 @@ namespace lbm {
       return dArray[i];
     }
 
-    DynamicArray<U>& operator=(const DynamicArray<U>& other) {
+    DynamicArray<U>& operator=(const DynamicArray& other) {
       if (this == &other)
         return *this;
 
@@ -59,25 +77,29 @@ namespace lbm {
       return *this;
     }
 
-    U* data() {
-      return this.dArray;
+    U * RESTRICT data() {
+      return dArray;
     }
 
-    const U* data() const {
-      return this.dArray;
+    const U * RESTRICT data() const {
+      return dArray;
     }
 
 
-    unsigned int size() {
-      return size;
+    const unsigned int size() {
+      return numberElements;
     }
 
-    void resize(unsigned int size_in) {
-      size = size_in;
+    const unsigned int size() const {
+      return numberElements;
+    }
 
-      if (size != 0)
+    void resize(unsigned int numberElements_in) {
+      numberElements = numberElements_in;
+
+      if (numberElements != 0)
         {
-          dArray = (U*)realloc(dArray, size*sizeof(U));
+          dArray = (U*)realloc(dArray, numberElements*sizeof(U));
 
           if (dArray == NULL)
             throw MEMFAIL;
@@ -87,23 +109,38 @@ namespace lbm {
       }
     }
 
+    void swap(DynamicArray<U>& other) {
+      std::swap(*this, other);
+      /* U * RESTRICT temporary = other.data(); */
+      /* other.data() = data(); */
+      /* dArray = temporary; */
+    }
+
+    void copy(DynamicArray other) {
+      memcpy(dArray, other.data(), other.size()*sizeof(U));
+    }
+
     void clear() {
-      size = 0;
-      dArray = (U*)realloc(dArray, size*sizeof(U));
+      numberElements = 0;
+      dArray = (U*)realloc(dArray, numberElements*sizeof(U));
     }
   };
 
   template<class U>
   bool operator==(DynamicArray<U> const &lhs,
                   DynamicArray<U> const &rhs) {
-    for(unsigned int i = 0; i < Size; ++i){
-      if (!(lhs[i] == rhs[i])) {
-        return false;
+    if(lhs.size() == rhs.size) {
+      for(unsigned int i = 0; i < lhs.size(); ++i){
+        if (!(lhs[i] == rhs[i])) {
+          return false;
+        }
       }
+      return true;
     }
-    return true;
+    else {
+      return false;
+    }
   }
-
 }
 
 #endif // DYNAMICARRAY_H

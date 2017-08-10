@@ -19,6 +19,7 @@ namespace lbm {
 
     const U& operator[] (int i) const {
       return sArray[i];
+
     }
 
     MathVector<U, NumberComponents>& operator=(const MathVector<U, NumberComponents> other){
@@ -67,7 +68,7 @@ namespace lbm {
 
   template<class U, unsigned int NumberComponents>
   std::ostream& operator<<(std::ostream& os,
-                           const MathVector<U, NumberComponents>& mV){
+                           const MathVector<U, NumberComponents>& mV) {
     os << mV.sArray;
     return os;
   }
@@ -81,7 +82,7 @@ namespace lbm {
         file << mV[i] << " ";
     });
 
-    file << mV[NumberComponents-1] << "\n";
+    file << mV[NumberComponents-1];
 
     return file;
   }
@@ -116,49 +117,6 @@ namespace lbm {
     return mV_result;
   }
 
-  template<class U, unsigned int NumberComponents>
-  MathVector<int, 3> operator+(const MathVector<int, 3>& mV_a,
-                               const MathVector<U, NumberComponents>& mV_b)
-  {
-    MathVector<int, 3> mV_result{{0}};
-    UnrolledFor<0, NumberComponents>::Do([&] (int i) {
-        mV_result[i] = mV_a[i] + (int) mV_b[i];
-      });
-    return mV_result;
-  }
-
-  template<class U, unsigned int NumberComponents>
-  MathVector<int, 3> operator+(const MathVector<U, NumberComponents>& mV_a,
-                               const MathVector<int, 3>& mV_b)
-  {
-    MathVector<int, 3> mV_result{{0}};
-    UnrolledFor<0, NumberComponents>::Do([&] (int i) {
-        mV_result[i] = (int) mV_a[i] + mV_b[i];
-      });
-    return mV_result;
-  }
-
-  template<class U, unsigned int NumberComponents>
-  MathVector<int, 3> operator-(const MathVector<int, 3>& mV_a,
-                               const MathVector<U, NumberComponents>& mV_b)
-  {
-    MathVector<int, 3> mV_result{{0}};
-    UnrolledFor<0, NumberComponents>::Do([&] (int i) {
-        mV_result[i] = mV_a[i] - (int) mV_b[i];
-      });
-    return mV_result;
-  }
-
-  template<class U, unsigned int NumberComponents>
-  MathVector<int, 3> operator-(const MathVector<U, NumberComponents>& mV_a,
-                               const MathVector<int, 3>& mV_b)
-  {
-    MathVector<int, 3> mV_result{{0}};
-    UnrolledFor<0, NumberComponents>::Do([&] (int i) {
-        mV_result[i] = (int) mV_a[i] - mV_b[i];
-      });
-    return mV_result;
-  }
 
   template<class U, unsigned int NumberComponents>
   MathVector<U, NumberComponents>& operator*=(MathVector<U, NumberComponents>& mV,
@@ -171,25 +129,25 @@ namespace lbm {
     return mV;
   }
 
-  template<class U, unsigned int NumberComponents>
+  template<class U, class V, unsigned int NumberComponents>
   MathVector<U, NumberComponents> operator*(const MathVector<U, NumberComponents>& mV,
-                                            const U factor)
+                                            const V factor)
   {
     MathVector<U, NumberComponents> mV_result;
     UnrolledFor<0, NumberComponents>::Do([&] (int i) {
-        mV_result[i] = mV[i] * factor;
+        mV_result[i] = mV[i] * (U) factor;
       });
 
     return mV_result;
   }
 
-  template<class U, unsigned int NumberComponents>
-  MathVector<U, NumberComponents> operator*(const U factor,
+  template<class U, class V, unsigned int NumberComponents>
+  MathVector<U, NumberComponents> operator*(const V factor,
                                             const MathVector<U, NumberComponents>& mV)
   {
     MathVector<U, NumberComponents> mV_result;
     UnrolledFor<0, NumberComponents>::Do([&] (int i) {
-        mV_result[i] = factor * mV[i];
+        mV_result[i] = mV[i] * (U) factor;
       });
 
     return mV_result;
@@ -241,6 +199,91 @@ namespace lbm {
 
     return mV_result;
   }
+
+  template<unsigned int NumberComponents>
+  MathVector<unsigned int, NumberComponents> operator-(const MathVector<unsigned int, NumberComponents>& mV_a,
+                                                       const MathVector<unsigned int, NumberComponents>& mV_b)
+  {
+    MathVector<unsigned int, NumberComponents> mV_result;
+    UnrolledFor<0, NumberComponents>::Do([&] (int i) {
+        mV_result[i] = mV_a[i] - mV_b[i];
+      });
+
+    return mV_result;
+  }
+
+  template<class U, unsigned int NumberComponents>
+  MathVector<unsigned int, NumberComponents> operator-(const MathVector<unsigned int, NumberComponents>& mV_a,
+                                                       const MathVector<U, NumberComponents>& mV_b)
+  {
+    MathVector<unsigned int, NumberComponents> mV_result;
+    UnrolledFor<0, NumberComponents>::Do([&] (int i) {
+        mV_result[i] = mV_a[i] - (unsigned int) mV_b[i];
+      });
+
+    return mV_result;
+  }
+
+    template<class U, unsigned int NumberComponents>
+  MathVector<unsigned int, NumberComponents> operator-(const MathVector<U, NumberComponents>& mV_a,
+                                                       const MathVector<unsigned int, NumberComponents>& mV_b)
+  {
+    MathVector<unsigned int, NumberComponents> mV_result;
+    UnrolledFor<0, NumberComponents>::Do([&] (int i) {
+        mV_result[i] = (unsigned int) mV_a[i] - mV_b[i];
+      });
+
+    return mV_result;
+  }
+
+  template<class U, unsigned int NumberComponents>
+  MathVector<unsigned int, 3> projectionUI(const MathVector<U, NumberComponents>& mV)
+    {
+    MathVector<unsigned int, 3> mV_result{{0}};
+    UnrolledFor<0, NumberComponents>::Do([&] (unsigned int iC) {
+        mV_result[iC] = (unsigned int) mV[iC];
+      });
+    return mV_result;
+  }
+
+  template<class U, unsigned int NumberComponents>
+  MathVector<int, 3> projectionI(const MathVector<U, NumberComponents>& mV)
+    {
+    MathVector<int, 3> mV_result{{0}};
+    UnrolledFor<0, NumberComponents>::Do([&] (unsigned int iC) {
+        mV_result[iC] = (int) mV[iC];
+      });
+    return mV_result;
+  }
+
+  template<class T, unsigned int dimension>
+  struct Project {
+    static inline MathVector<T, dimension> Do(const MathVector<T, 3>& mV) {
+
+      MathVector<T, dimension> mVProjected{{ (T) 0 }};
+
+    UnrolledFor<0, dimension>::Do([&] (unsigned int iD) {
+      mVProjected[iD] = mV[iD];
+     });
+
+    return mVProjected;
+    }
+  };
+
+  template<class T, unsigned int dimension>
+  struct ProjectAndLeave1 {
+    static inline MathVector<T, 3> Do(const MathVector<T, 3>& mV) {
+
+      MathVector<T, 3> mVProjected = { (T) 1, (T) 1, (T) 1};
+
+      UnrolledFor<0, dimension>::Do([&] (unsigned int iD) {
+          mVProjected[iD] = mV[iD];
+      });
+
+    return mVProjected;
+    }
+  };
+
 
 }
 

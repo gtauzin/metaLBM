@@ -2,26 +2,31 @@
 #include <boost/test/included/unit_test.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include <math.h>
-
-#include "init.h"
+#define NPROCS 1
+#include "Lattice.h"
+typedef double dataType;
+typedef lbm::Lattice<dataType, lbm::LatticeType::D1Q3> L;
+#include "Domain.h"
+#include "Field.h"
+#include "Initialize.h"
 
 using namespace lbm;
 
-BOOST_AUTO_TEST_SUITE(Init)
+BOOST_AUTO_TEST_SUITE(TestInitializeT)
 
-BOOST_AUTO_TEST_CASE(initAlpha) {
-  constexpr ::lbm::LatticeType latticeType = ::lbm::LatticeType::D1Q3;
+BOOST_AUTO_TEST_CASE(initGlobalAlphaT) {
+  ::lbm::Field<dataType, 1, true> alphaField("alpha");
 
-  typedef Parameters<T, L> Param;
+  auto alphaGlobalField = ::lbm::initGlobalAlpha<dataType>();
 
-  std::vector<T> fEq(Param::dimQ * Param::lX_g * Param::lY_g * Param::lZ_g, (T)0);
+  alphaField.setGlobalField(alphaGlobalField);
 
-  const int idx = Param::lX_g * Param::lY_g * Param::lZ_g - 1;
 
-  const auto density_ = computeDensity<T, L>(fEq.data(), idx);
-  BOOST_CHECK_EQUAL(density_, (T)0);
+  for(unsigned int i = 0; i < gD::volume(); ++i) {
+  const auto alpha_ = alphaField.getGlobalField(i, 0);
+    BOOST_CHECK_EQUAL(alpha_, (dataType) 2);
+  }
 
-}
+  }
 
 BOOST_AUTO_TEST_SUITE_END()

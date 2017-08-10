@@ -30,19 +30,30 @@ namespace lbm {
       return sArray[i];
     }
 
+    //constexpr??
     const U& operator[] (int i) const {
       return sArray[i];
     }
+
+    /* constexpr U* data() const { */
+    /*   return this.sArray; */
+    /* } */
+
+
+    constexpr unsigned int size() {
+      return Size;
+    }
+
 
   };
 
   template<class U, unsigned int Size>
   std::ostream& operator<<(std::ostream& os, const StaticArray<U, Size>& sArray){
-    os << "[ ";
-    UnrolledFor<0, Size>::Do([&] (int i) {
+    os << "[";
+    UnrolledFor<0, Size-1>::Do([&] (int i) {
         os << sArray[i] << " ";
       });
-    os << "]\n";
+    os << sArray[Size-1] << "]";
     return os;
   }
 

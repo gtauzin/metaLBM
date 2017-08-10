@@ -1,170 +1,118 @@
 #ifndef INITIALIZE_H
 #define INITIALIZE_H
 
-#include <boost/log/core.hpp>
-#include <boost/log/trivial.hpp>
-#include <boost/log/expressions.hpp>
-#include <boost/log/utility/setup/file.hpp>
-namespace logging = boost::log;
+#include <iostream>
+#include <string>
 
 #include "Input.h"
 #include "Options.h"
 #include "Lattice.h"
+#include "Domain.h"
 #include "MathVector.h"
-#include "Helpers.h"
+#include "Field.h"
+#include "Equilibrium.h"
+#include "Reader.h"
+#include "Force.h"
+#include "Boundary.h"
+#include "Writer.h"
 
 namespace lbm {
 
   template<class T>
-  vector<T, CACHE_LINE> generate_initDensity() {
-    vector<T, CACHE_LINE> initDensityR(s_g(), initDensityValue);
+  LocalizedField<T, 1> initGlobalDensity() {
+    LocalizedField<T, 1> densityR("density", gD::volume(), initDensityValue);
 
-    switch(initDensityType){
-    case InitDensityType::homogeneous:{
+    switch(initDensityT){
+    case InitDensityType::Homogeneous: {
       break;
     }
-    case InitDensityType::peak:{
+    case InitDensityType::Peak: {
       const T densityPeakValue = 3.0 * initDensityValue;
-      int centerX = static_cast<int>((L::lX_g-1)*0.4);
-      int centerY = static_cast<int>((L::lY_g-1)*0.3);
-      int centerZ = static_cast<int>((L::lZ_g-1)*0.2);
-      int idx = idx_gF(centerX, centerY, centerZ);
-      initDensityR[idx] = densityPeakValue;
+      MathVector<unsigned int, 3> center;
+
+      center[d::X] = static_cast<unsigned int>((gD::length()[d::X]-1)* (T) 0.4);
+      center[d::Y] = static_cast<unsigned int>((gD::length()[d::Y]-1)* (T) 0.3);
+      center[d::Z] = static_cast<unsigned int>((gD::length()[d::Z]-1)* (T) 0.2);
+      densityR[gD::getIndex(center)] = densityPeakValue;
       break;
     }
-    default:{
-      BOOST_LOG_TRIVIAL(error) << "Wrong type of density initialization.";
+    default: {
+      std::cout << "Wrong type of density initialization.";
     }
     }
-    return initDensityR;
+    return densityR;
   }
 
   template<class T>
-  vector<MathVector<T, L::dimD>, CACHE_LINE> generate_initVelocity() {
-    vector<MathVector<T, L::dimD>, CACHE_LINE> initVelocityXR(s_g(),
-                                                              MathVector<T, L::dimD>{{initVelocityXValue}});
+  LocalizedField<T, L::dimD> initGlobalVelocity() {
+    MathVector<T, L::dimD> initVelocityValueProjected{{ (T) 0 }};
+
+    initVelocityValueProjected = Project<T, L::dimD>::Do(initVelocityValue);
+
+    LocalizedField<T, L::dimD> velocityR("velocity", gD::volume(),
+                                         initVelocityValueProjected);
 
 
-    switch(initVelocityType){
-    case InitVelocityType::homogeneous:{
+    switch(initVelocityT){
+    case InitVelocityType::Homogeneous: {
       break;
     }
 
     default:{
-      BOOST_LOG_TRIVIAL(error) << "Wrong type of velocity initialization.";
+      std::cout << "Wrong type of velocity initialization.";
     }
     }
-    return initVelocityXR;
+    return velocityR;
   }
 
   template<class T>
-  vector<T, CACHE_LINE> generate_initAlpha() {
-    vector<T, CACHE_LINE> initAlphaR(s_g(), 2.);
-
-    return initAlphaR;
+  LocalizedField<T, 1> initGlobalAlpha() {
+    LocalizedField<T, 1> alphaR("alpha", gD::volume(), (T) 2);
+    return alphaR;
   }
 
   template<class T>
-  vector<T, CACHE_LINE> generate_initDistributionStart(const vector<T, CACHE_LINE>& density,
-                                                       const vector<MathVector<T, L::dimD>, CACHE_LINE>& velocity) {
-    vector<T, CACHE_LINE> initDistributionR(L::dimQ*s_g(), 0.0);
+  LocalizedField<T, L::dimQ> initGlobalDistributionStart(const LocalizedField<T, 1>& globalDensity,
+                                                         const LocalizedField<T, L::dimD>& globalVelocity) {
+    LocalizedField<T, L::dimQ> distributionR("distribution", gD::volume());
 
-    for(int iX = 0; iX < L::lX_g; ++iX) {
-      for(int iY = 0; iY < L::lY_g; ++iY) {
-        for(int iZ = 0; iZ < L::lZ_g; ++iZ) {
-          int idx = idx_gF(iX, iY, iZ);
-          T velocity2 = velocity[idx].norm2();
-          for(int iQ = 0; iQ < L::dimQ; ++iQ) {
-            //T density = density[idx];
-            initDistributionR[idxPop_gF(iX, iY, iZ, iQ)] = computeEquilibrium<T>(iQ, density[idx], velocity[idx], velocity2);
-          }
+    Equilibrium_ equilibrium;
+
+    for(unsigned int iZ = gD::start()[d::Z]; iZ < gD::end()[d::Z]; iZ++) {
+      for(unsigned int iY = gD::start()[d::Y]; iY < gD::end()[d::Y]; iY++) {
+        for(unsigned int iX = gD::start()[d::X]; iX < gD::end()[d::X]; iX++) {
+          unsigned int indexGlobal = gD::getIndex({iX, iY, iZ});
+
+          equilibrium.setVariables(globalDensity.getField(indexGlobal),
+                                   globalVelocity.getVector(indexGlobal));
+
+          UnrolledFor<0, L::dimQ>::Do([&] (unsigned int iQ) {
+              distributionR[gD::getIndex({iX, iY, iZ}, iQ)]
+                = equilibrium.compute(iQ);
+          });
         }
       }
     }
-    return initDistributionR;
+    return distributionR;
   }
 
   template<class T>
-  vector<T, CACHE_LINE> generate_initDistributionRestart() {
-    vector<T, CACHE_LINE> initDistributionR(L::dimQ*s_g(), 0.0);
-    std::ostringstream number;
-    number << startIteration;
-
-    std::string inputFilename = "../../output/outputBackup/" + std::string(prefix) + "-" + number.str() + ".vtr";
-    vector<T, CACHE_LINE> distributionVTK = readVTK<T>(inputFilename, "Distribution");
-
-    for(int iX = 0; iX < L::lX_g; ++iX) {
-      for(int iY = 0; iY < L::lY_g; ++iY) {
-        for(int iZ = 0; iZ < L::lZ_g; ++iZ) {
-          for(int iQ = 0; iQ < L::dimQ; ++iQ) {
-            initDistributionR[idxPop_gF(iX, iY, iZ, iQ)] = distributionVTK[L::dimQ*(L::lZ_g*(L::lY_g*iX + iY) + iZ)+ iQ];
-          }
-        }
-      }
-    }
-
-    return initDistributionR;
+  LocalizedField<T, L::dimQ> initGlobalDistributionRestart() {
+    Reader<T, L::dimQ, ReaderType::VTR> reader(prefix);
+    return reader.readField("distribution", startIteration);
   }
 
+  //initialized un Localized field vide avec un nom et le lire ensuite...
+
   template<class T>
-  vector<T, CACHE_LINE> generate_initDistribution(const vector<T, CACHE_LINE>& density,
-                                                  const vector<MathVector<T, L::dimD>, CACHE_LINE>& velocity) {
+  LocalizedField<T, L::dimQ> initGlobalDistribution(const LocalizedField<T, 1>& globalDensity,
+                                                    const LocalizedField<T, L::dimD>& globalVelocity) {
     if(!startIteration) {
-      return generate_initDistributionStart<T>(density, velocity);
+      return initGlobalDistributionStart<T>(globalDensity, globalVelocity);
     }
     else {
-      return generate_initDistributionRestart<T>();
+      return initGlobalDistributionRestart<T>();
     }
-  }
-
-  template<class T>
-  std::array<std::shared_ptr<Force<T>>, numberForces> convert_forcesArray() {
-    std::array<std::shared_ptr<Force<T>>, numberForces> forcesVectorR;
-    for(int k = 0; k < numberForces; ++k) {
-      BOOST_LOG_TRIVIAL(info) << "Initializing Force";
-      forcesVectorR[k] = Create<T>(forceTypeArray[k],
-                                   MathVector<T, 3>({forceAmplitudeXArray[k],
-                                         forceAmplitudeYArray[k],
-                                         forceAmplitudeZArray[k]}),
-                                   MathVector<T, 3>({forceWaveLengthXArray[k],
-                                         forceWaveLengthYArray[k],
-                                         forceWaveLengthZArray[k]}));
-    }
-    return forcesVectorR;
-  }
-
-  template<class T>
-  std::vector<std::shared_ptr<BoundaryCondition<T>> > convert_boundaryConditionsVector() {
-    std::vector<std::shared_ptr<BoundaryCondition<T>> > boundaryConditionsVectorR;
-    for(int k = 0; k < numberBCs; ++k) {
-      BOOST_LOG_TRIVIAL(info) << "Initializing Boundary condition";
-      boundaryConditionsVectorR.push_back(Create<T>(boundaryTypeArray[k],
-                                                    boundaryPositionArray[k],
-                                                    boundaryStartArray[k],
-                                                    boundaryEndArray[k],
-                                                    boundaryPressureArray[k],
-                                                    MathVector<T, L::dimD>{{boundaryVelocityXArray[k],
-                                                          boundaryVelocityYArray[k]}}));
-    }
-    return boundaryConditionsVectorR;
-  }
-
-  template<class T>
-  std::vector<std::shared_ptr<BoundaryCondition<T>> > localize_BoundaryConditions(const std::vector<std::shared_ptr<BoundaryCondition<T>> >& boundaryConditionsArray_g,
-                                                                                  const int  mpi_rank) {
-    std::vector<std::shared_ptr<BoundaryCondition<T>> > boundaryConditionsVectorR;
-
-    return boundaryConditionsVectorR;
-  }
-
-  template<class T>
-  std::array<std::shared_ptr<Output<T> > , numberOutputs> convert_outputsArray() {
-    std::array<std::shared_ptr<Output<T> > , numberOutputs> outputsArrayR;
-    for(int k = 0; k < numberOutputs; ++k) {
-      BOOST_LOG_TRIVIAL(info) << "Initializing Output";
-      outputsArrayR[k] = Create<T>(prefix, outputTypeArray[k]);
-    }
-    return outputsArrayR;
   }
 
 }

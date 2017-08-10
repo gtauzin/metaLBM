@@ -4,237 +4,304 @@
 #include <chrono>
 #include <omp.h>
 
-#include "Init.h"
+#include "Input.h"
 #include "Options.h"
-#include "Parameters.h"
+#include "Initialize.h"
+#include "Domain.h"
 #include "Field.h"
 #include "Distribution.h"
-#include "Collider.h"
-#include "Moments.h"
-#include "ForcindScheme.h"
+#include "Moment.h"
+#include "Collision.h"
+#include "Force.h"
 #include "Boundary.h"
-#include "Write.h"
+#include "Reader.h"
+#include "Writer.h"
 #include "Communication.h"
 #include "Computation.h"
 
 namespace lbm {
 
-  template<class T, AlgorithmType algorithmType,
-           PartitionningType partitionningType, MemoryLayout memoryLayout>
-  class Algorithm {};
+  template<class T>
+  class Algorithm {
+  private:
+    const MathVector<unsigned int, 3> rankMPI;
+    const MathVector<unsigned int, 3> sizeMPI;
+    const std::string processorName;
 
-  template<>
-  class Algorithm<class T, AlgorithmType::Generic> {
-  protected:
-    // L::latticeType ou P::latticeType?????
-    Domain<L::latticeType, DomainType::Local, partionningType, memoryLayout> D;
+    Communication_ communication;
+
+    Field<T, 1, writeDensity> densityField;
+    Field<T, L::dimD, writeVelocity> velocityField;
+    Field<T, L::dimD, writeDensity> forceField;
+    Field<T, 1, writeDensity> alphaField;
+    // Field<T, 1, writeDensity> entropyField;
+
+    Distribution<T> f_Previous;
+    Distribution<T> f_Next;
+
+    Moment<T> moment;
+    Collision_ collision;
+    Boundary_ boundary;
+    Writer_ writer;
+
     double mass;
 
-    std::chrono::duration<double> dTcomputation;
-    std::chrono::duration<double> dTcommunication;
-    std::chrono::duration<double> dTtotal;
+    std::chrono::duration<double> dtComputation;
+    std::chrono::duration<double> dtCommunication;
+    std::chrono::duration<double> dtTotal;
 
-    double computeTime;
+    double computationTime;
     double communicationTime;
     double writeTime;
     double totalTime;
 
-  Algorithm(const Parameters& parameters_in,
-            const unsigned int rankMPI_in)
-    : rankMPI(rankMPI_in);
-    , mass(communicateMass())
-    , computeTime(0.0)
-    , communicationTime(0.0)
-    , writeTime(0.0)
-    , totalTime(0.0)
-    {
-      // Probably when field is initialized...
-      communicateFromGlobalToLocal();
+  public:
+    Algorithm(const MathVector<unsigned int, 3>& rankMPI_in,
+              const MathVector<unsigned int, 3>& sizeMPI_in,
+              const std::string& processorName_in)
+      : rankMPI(rankMPI_in)
+      , sizeMPI(sizeMPI_in)
+      , processorName(processorName_in)
+      , communication(rankMPI_in, sizeMPI_in, processorName_in)
+      , densityField("density")
+      , velocityField("velocity")
+      , forceField("force")
+      , alphaField("alpha")
+      , f_Previous("previousDistribution")
+      , f_Next("nextDistribution")
+      , collision(relaxationTime, forceAmplitude, forceWaveLength)
+      , boundary()
+      , writer(prefix, rankMPI_in)
+      , mass(0.0)
+      , computationTime(0.0)
+      , communicationTime(0.0)
+      , writeTime(0.0)
+      , totalTime(0.0)
+    {}
 
-      if(rankMPI == 0 && startIteration == 0) {
-        init.outputs.write(init.globalField, startIteration/writeStep);
-      }
-    }
-
+    Algorithm(const Algorithm<T>& algorithm_in)
+      : rankMPI(algorithm_in.rankMPI)
+      , sizeMPI(algorithm_in.sizeMPI)
+      , processorName(algorithm_in.processorName)
+      , communication(algorithm_in.communication)
+      , densityField(algorithm_in.densityField)
+      , velocityField(algorithm_in.velocityField)
+      , forceField(algorithm_in.forceField)
+      , alphaField(algorithm_in.alphaField)
+      , f_Previous(algorithm_in.f_Previous)
+      , f_Next(algorithm_in.f_Next)
+      , collision(algorithm_in.collision)
+      , boundary(algorithm_in.boundary)
+      , writer(algorithm_in.writer)
+      , mass(algorithm_in.mass)
+      , computationTime(algorithm_in.computationTime)
+      , communicationTime(algorithm_in.communicationTime)
+      , writeTime(algorithm_in.writeTime)
+      , totalTime(algorithm_in.totalTime)
+    {}
 
     void computeLBM() {
       printInputs();
 
-      BOOST_LOG_TRIVIAL(info) << "Simulation starts!\n\n";
+      initializeFields();
+
+      writeFields(startIteration);
+
+      mass = communication.reduceLocal(densityField.localData());
+
       for(int iteration = startIteration+1; iteration <= endIteration; ++iteration) {
 
-        iterateLBM();
+        iterateLBM(iteration);
 
         writeFields(iteration);
 
-        computeTime += dTcomp0.count();
-        totalTime += dTtot0.count();
-
-        communicationTime = totalTime - computeTime;
-
+        communicationTime += dtCommunication.count();
+        computationTime += dtComputation.count();
+        totalTime += dtTotal.count();
       }
 
-      mass = fabs(mass-communicateMass())/mass;
+      mass = fabs(mass-communication.reduceLocal(densityField.localData()))/mass;
       printOutputs();
     }
 
   private:
-    void writeFields(const int iteration) {
-      if(iteration%writeStep == writeStep-1) {
-        communicateLocalPreviousFieldsToGlobalPrevious2Fields();
-      }
+    void printInputs() {
 
-      if(iteration%writeStep == 0) {
-        storeNextField(l1->f_distribution, init.localField, startX,
-                       init.forcing, init.forces, iteration);
+      communication.printInputs();
 
-        communicateLocalFieldsToGlobalFieldsExceptPrevious2();
-
-        if(iteration%backupStep == 0) {
-          communicateDistribution();
-        }
-
-          if(rankMPI == 0) {
-            init.outputs.write(init.globalField, iteration/writeStep);
-          }
-      }
-    }
-
-
-
-    void printInputs(const unsigned int sizeMPI,
-                         std::string processorName) {
-
-      std::cout << "MPI #" << rankMPI << " of " << sizeMPI
-                << " processes running on host " << processorName << "\n";
-
-      if (rankMPI == 0) {
-        std::cout.precision(17);
+      if (rankMPI == MathVector<unsigned int, 3>{{ 0 }}) {
+        std::cout.precision(15);
         std::cout << "-------------------OPTIONS-------------------" << std::endl;
-        std::cout << " Lattice: D" << L::dimD std::cout << "Q" << L::dimQ << std::endl;
-        std::cout << " Global length Y: " << L::lY_g << std::endl;
-        std::cout << " Global length X: " << L::lX_g << std::endl;
-        std::cout << " Global length Y: " << L::lY_g << std::endl;
-        std::cout << " Global length Z: " << L::lZ_g << std::endl;
-        std::cout << " Global memory: " << (int)(L::lX_g*L::lY_g*L::lZ_g
-                                                 *sizeof(dataType))/(1<<30) << std::endl;
-        std::cout << "MPI #" << mpi_rank << std::endl;
-        std::cout << " Local length X : " << L::lX_l << std::endl;
-        std::cout << " Local length Y : " << L::lY_l << std::endl;
-        std::cout << " Local length Z : " << L::lZ_l << std::endl;
-        std::cout << " Local memory : " << (int)(L::lZ_l*L::lY_l*L::lZ_l
-                                                 *sizeof(dataType))/(1<<30) << std::endl;
-        std::cout << "---------------------------------------------\n" << std::endl;
-        std::cout << "NPROCS: " << NPROCS << "" << std::endl;
-        std::cout << "NTHREADS: " << NTHREADS << "" << std::endl;
-        std::cout << "STRUCTURE:   SOA " << std::endl;
-        std::cout << "MAX ITERATION: " << iterationMax << "\n" << std::endl;
+        std::cout << "Lattice         : D" << L::dimD << "Q" << L::dimQ << std::endl;
+        std::cout << "Global lengths  : " << gD::length() << std::endl;
+        std::cout << "Global memory   : " << (int)(gD::volume()
+                                                 *sizeof(dataT))/(1<<30) << std::endl;
+        std::cout << "----------------------------------------------" << std::endl;
+        std::cout << "Rank MPI        : " << rankMPI << std::endl;
+        std::cout << "Local lengths   : " << lD::length() << std::endl;
+        std::cout << "Local memory    : " << (int)(lD::volume()
+                                                 *sizeof(dataT))/(1<<30) << std::endl;
+        std::cout << "----------------------------------------------" << std::endl;
+        std::cout << "NPROCS          : " << NPROCS << "" << std::endl;
+        std::cout << "NTHREADS        : " << NTHREADS << "" << std::endl;
+        std::cout << "STRUCTURE       : SOA " << std::endl;
         std::cout << "-------------------PARAMETERS-----------------" << std::endl;
-        std::cout << "tau: " << tau << std::endl;
-        std::cout << ", correponding viscosity: " << L::cs2 * (tau - 0.5) << std::endl;
-        std::cout << "beta:" << beta << std::endl;
-        std::cout << ", correponding viscosity: " << L::cs2 * (1/(2 * beta) - 0.5)
-                  << std::endl;
+        std::cout << "Relaxation time : " << relaxationTime << std::endl;
+        std::cout << "Viscosity       : " << L::cs2 * (relaxationTime - 0.5) << std::endl;
+        std::cout << "Start iteration : " << startIteration << std::endl;
+        std::cout << "End iteration   : " << endIteration << std::endl;
+
       }
     }
 
     void printOutputs() {
-      if (rankMPI == 0) {
+      if (rankMPI == MathVector<unsigned int, 3> {{ 0 }}) {
         std::cout << "--------------------OUTPUTS------------------" << std::endl;
-        std::cout << "Total time : " << totalTime << " s" << std::endl;
-        std::cout << "Comp time  : " << compTime << " s" << std::endl;
-        std::cout << "Comm time  : " << commTime << " s" << std::endl;
+        std::cout << "Total time      : " << totalTime << " s" << std::endl;
+        std::cout << "Comp time       : " << computationTime << " s" << std::endl;
+        std::cout << "Comm time       : " << communicationTime << " s" << std::endl;
 
-        const double mlups = (L::lX_g*L::lY_g*L::lZ_g*1e-6*)/(totalTime/iterationMax);
+        const double mlups = (gD::volume() * 1e-6)/(totalTime / (endIteration-startIteration+1));
 
-        std::cout << "MLUPS      : " << mlups << std::endl;
-        std::cout << "Mass diff  : " << mass << std::endl;
+        std::cout << "MLUPS           : " << mlups << std::endl;
+        std::cout << "% mass diff.    : " << mass << std::endl;
         std::cout << "---------------------------------------------\n" << std::endl;
       }
     }
 
-  };
+    void initializeFields() {
+      densityField.setGlobalField(initGlobalDensity<T>());
+      communication.sendGlobalToLocal(densityField.globalData(),
+                                      densityField.localData(),
+                                      densityField.numberComponents);
 
-  template<>
-  class Algorithm<class T, AlgorithmType::FusedPull>:
-    public Algorithm<T, AlgorithmType::Generic> {
-  public:
-    using Algorithm<T, AlgorithmType::Generic>::Algorithm;
+      velocityField.setGlobalField(initGlobalVelocity<T>());
+      communication.sendGlobalToLocal(velocityField.globalData(),
+                                      velocityField.localData(),
+                                      velocityField.numberComponents);
 
-  private:
-    using Algorithm<T, AlgorithmType::Generic>::Domain;
+      alphaField.setGlobalField(initGlobalAlpha<T>());
+      communication.sendGlobalToLocal(alphaField.globalData(),
+                                      alphaField.localData(),
+                                      alphaField.numberComponents);
 
-    Distribution f_Previous;
-    Distribution f_Next;
+      f_Previous.setGlobalField(initGlobalDistribution<T>(densityField.getGlobalField(),
+                                                          velocityField.getGlobalField()));
+      communication.sendGlobalToLocal(f_Previous.globalData(),
+                                      f_Previous.localData(),
+                                      f_Previous.numberComponents);
+      f_Previous.unpackLocal();
 
-    void iterateLBM() {
-      f_Previous.swap(f_Next);
+      f_Next.setGlobalField(initGlobalDistribution<T>(densityField.getGlobalField(),
+                                                      velocityField.getGlobalField()));
+      communication.sendGlobalToLocal(f_Next.globalData(),
+                                      f_Next.localData(),
+                                      f_Next.numberComponents);
+      f_Next.unpackLocal();
 
-      force.updateTime(iteration);
+    }
 
-      BOOST_LOG_TRIVIAL(debug) << "Iteration: " << iteration
-                               << " - Communicating halos to neighboring processes.";
-      auto t1 = std::chrono::high_resolution_clock::now();
-      communicateHalos(*l1);
+    void storeLocalFields(const MathVector<unsigned int, 3>& iP,
+                          const unsigned int iteration) {
+      if(iteration%writeStep == 0) {
+        unsigned int indexLocal = hD::getIndexLocal(iP);
 
-      BOOST_LOG_TRIVIAL(debug) << "Iteration: " << iteration
-                               << " - Computing post-collision distribution and streaming.";
+        densityField.setLocalField(indexLocal, moment.getDensity());
+        velocityField.setLocalField(indexLocal, collision.getHydrodynamicVelocity());
+        alphaField.setLocalField(indexLocal, collision.getAlpha());
+        forceField.setLocalField(indexLocal, collision.getForce());
+      }
+    }
+
+    void writeFields(const int iteration) {
+      if(iteration%writeStep == 0) {
+        writer.openFile(iteration);
+
+        if(writer.isSerial) {
+          communication.sendLocalToGlobal(densityField.localData(),
+                                          densityField.globalData(),
+                                          densityField.numberComponents);
+          communication.sendLocalToGlobal(velocityField.localData(),
+                                          velocityField.globalData(),
+                                          velocityField.numberComponents);
+          communication.sendLocalToGlobal(alphaField.localData(),
+                                          alphaField.globalData(),
+                                          alphaField.numberComponents);
+          communication.sendLocalToGlobal(forceField.localData(),
+                                          forceField.globalData(),
+                                          forceField.numberComponents);
+        }
+
+        writer.writeField(densityField.fieldName, densityField.numberComponents,
+                          densityField.globalData());
+        writer.writeField(velocityField.fieldName, velocityField.numberComponents,
+                          velocityField.globalData());
+        writer.writeField(alphaField.fieldName, alphaField.numberComponents,
+                          alphaField.globalData());
+        writer.writeField(forceField.fieldName, forceField.numberComponents,
+                          forceField.globalData());
+
+        if(iteration%backupStep == 0) {
+          f_Previous.packLocal();
+
+          if(writer.isSerial) {
+            communication.sendLocalToGlobal(f_Previous.localData(),
+                                            f_Previous.globalData(),
+                                            f_Previous.numberComponents);
+          }
+
+          writer.writeField(f_Previous.fieldName, f_Previous.numberComponents,
+                            f_Previous.globalData());
+        }
+
+        writer.closeFile();
+      }
+    }
+
+    void iterateLBM(const unsigned int iteration) {
+      f_Previous.swapHalo(f_Next);
+
+      //force.update(iteration);
+
       auto t0 = std::chrono::high_resolution_clock::now();
-      collideAndStream(f_Previous, F_B, init.solver, init.forcing, init.forces,
-                       init.localField, iteration);
+      communication.periodic(f_Previous.haloData());
 
-      BOOST_LOG_TRIVIAL(debug) << "Iteration: " << iteration
-                               << " - Applying boundary conditions over the whole lattice.";
-      init.boundaryConditions.apply(*f_Next);
+      //boundary.apply(f_Previous.haloData());
+
+      auto t1 = std::chrono::high_resolution_clock::now();
+
+
+      Computation::Do([&] (MathVector<unsigned int, 3>& iP) {
+          moment.computeMoments(f_Previous.haloData(), iP);
+
+          collision.setForce(iP+gD::offset(rankMPI));
+          collision.setVariables(f_Previous.haloData(), iP,
+                                 moment.getDensity(), moment.getVelocity());
+
+          UnrolledFor<0, L::dimQ>::Do([&] (unsigned int iQ) {
+              f_Next.setHaloField(hD::getIndex(iP, iQ),
+                                  collision.postDistribution(f_Previous.haloData(),
+                                                             iP-projectionI(L::celerity()[iQ]), iQ));
+          });
+
+          storeLocalFields(iP, iteration);
+        });
 
       auto t2 = std::chrono::high_resolution_clock::now();
-    }
 
-    // Wrong! getIndex for Local Domain!!!!!!
-    // Halo Domain and Local domain together... How?
-
-    void stream(const MathVector<int, 3>& iP) {
-      D::updatePullIndex(iP);
-
-      BOOST_LOG_TRIVIAL(debug) << " - Streaming.";
-      UnrolledFor<0, L::dimQ>::Do([&] (unsigned int iQ) {
-          f_Next[D::getPullIndex(iQ)] = f_Previous[D::getIndex(iQ)];
-      });
-    }
-
-    void collideAndStream(const MathVector<int, 3>& iP,
-                          const unsigned int iteration) {
-
-      D::updateIndex(iP);
-
-      moments.computeMoments()
-      T density = computeDensity(f_Previous.data(), D::index);
-      MathVector<T, L::dimD> velocity = computeVelocity<T>(f_Previous.data(),
-                                                           D::index, density);
-
-      // TODO: Make sure that no variables are set if there are no forces or no forcingScheme!
-      P::forcingScheme.setVariables(forces.force(iP), density, velocity);
-      P::equilibrium.setVariables(density,
-                                  P::forcingScheme.getEqVelocityForcing(velocity,
-                                                                        density));
-
-      P::collisionOperator.collide(f_Previous, f_Next, D::index);
-
-      stream();
-
-      BOOST_LOG_TRIVIAL(debug) << " - Storing data.";
-      density.store(density, D::index, iteration);
-      velocity.store(velocity, D::index, iteration);
-      alpha.store(collisionOperator.getAlpha(), D::index, iteration);
-      force.store(forcingScheme.getForce(), D::index, iteration);
-      force.store(moments.calculateEntopy(f_), D::index, iteration); // ?
-      //Store everything here including previous and previous2 fields!!!!!
-      // Or find a way for it to be done automatically with a TimeField?
+      dtCommunication = t1 - t0;
+      dtComputation = t2 - t1;
+      dtTotal = t1 - t0;
     }
 
   };
 
+
+  typedef Algorithm<dataT> Algorithm_;
+
 }
+
+
 
 
 #endif // ALGORITHM_H

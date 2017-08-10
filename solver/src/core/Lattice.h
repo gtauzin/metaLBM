@@ -23,22 +23,21 @@ namespace lbm {
   template <class T, LatticeType LatticeT>
   struct Lattice{};
 
-
   template <class T>
   struct Lattice<T, LatticeType::D1Q3>
   {
+    static constexpr LatticeType Type = LatticeType::D1Q3;
     static constexpr int dimD = 1;
     static constexpr int dimQ = 3;
 
-    static inline constexpr MathVector<int, 3> halo() {
+    static inline constexpr MathVector<unsigned int, 3> halo() {
       return {1, 0, 0};
     }
 
     static constexpr T inv_cs2 = (T)3;
     static constexpr T cs2 = (T)1/inv_cs2;
 
-    static inline constexpr MathVector<MathVector<T, dimD>, dimQ> celerity()
-    {
+    static inline constexpr MathVector<MathVector<T, dimD>, dimQ> celerity() {
       return
         {
           MathVector<T, dimD>{{(T)0}},
@@ -46,8 +45,7 @@ namespace lbm {
               MathVector<T, dimD>{{(T)1}}
         };
     }
-    static inline constexpr MathVector<T, dimQ> weight()
-    {
+    static inline constexpr MathVector<T, dimQ> weight() {
       return
         {
           (T)2/(T)3, (T)1/(T)6, (T)1/(T)6
@@ -59,10 +57,11 @@ namespace lbm {
   template <class T>
   struct Lattice<T, LatticeType::D2Q5>
   {
+    static constexpr LatticeType Type = LatticeType::D2Q5;
     static constexpr int dimD = 2;
     static constexpr int dimQ = 5;
 
-    static inline constexpr MathVector<int, 3> halo() {
+    static inline constexpr MathVector<unsigned int, 3> halo() {
       return {1, 1, 0};
     }
 
@@ -94,10 +93,12 @@ namespace lbm {
   template <class T>
   struct Lattice<T, LatticeType::D2Q9>
   {
+    static constexpr LatticeType Type = LatticeType::D2Q9;
+
     static constexpr int dimD = 2;
     static constexpr int dimQ = 9;
 
-    static inline constexpr MathVector<int, 3> halo() {
+    static inline constexpr MathVector<unsigned int, 3> halo() {
       return {1, 1, 0};
     }
 
@@ -133,10 +134,12 @@ namespace lbm {
   template <class T>
   struct Lattice<T, LatticeType::D3Q15>
   {
+    static constexpr LatticeType Type = LatticeType::D3Q15;
+
     static constexpr int dimD = 3;
     static constexpr int dimQ = 15;
 
-    static inline constexpr MathVector<int, 3> halo() {
+    static inline constexpr MathVector<unsigned int, 3> halo() {
       return {1, 1, 1};
     }
 
@@ -180,10 +183,12 @@ namespace lbm {
   template <class T>
   struct Lattice<T, LatticeType::D3Q19>
   {
+    static constexpr LatticeType Type = LatticeType::D3Q19;
+
     static constexpr int dimD = 3;
     static constexpr int dimQ = 19;
 
-    static inline constexpr MathVector<int, 3> halo() {
+    static inline constexpr MathVector<unsigned int, 3> halo() {
       return {1, 1, 1};
     }
 
@@ -234,10 +239,12 @@ namespace lbm {
   template <class T>
   struct Lattice<T, LatticeType::D3Q27>
   {
+    static constexpr LatticeType Type = LatticeType::D3Q27;
+
     static constexpr int dimD = 3;
     static constexpr int dimQ = 27;
 
-    static inline constexpr MathVector<int, 3> halo() {
+    static inline constexpr MathVector<unsigned int, 3> halo() {
       return {1, 1, 1};
     }
 
@@ -292,6 +299,9 @@ namespace lbm {
             };
     }
   };
+
+
+    typedef Lattice<dataT, latticeT> L;
 
 }
 

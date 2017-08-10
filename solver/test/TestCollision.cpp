@@ -18,13 +18,11 @@ BOOST_AUTO_TEST_SUITE(TestCollision)
 
 BOOST_AUTO_TEST_CASE(TestBGK) {
   constexpr CollisionType collisionType = CollisionType::BGK;
-  MathVector<valueType, L::dimQ> f;
-  MathVector<valueType, L::dimQ> fNeq;
-
-  Collision<valueType, collisionType> collision;
+  valueType f[100]
+    Collision<valueType, collisionType> collision(0.6, f);
 
 
-  BOOST_TEST(collision.computeAlpha(f, fNeq, -42) == (valueType) 2,
+  BOOST_TEST(collision.getAlpha() == (valueType) 2,
              tt::tolerance(1e-15));
 }
 
