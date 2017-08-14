@@ -59,16 +59,12 @@ namespace lbm {
       iP_Origin = {iP[d::X], iP[d::Y], L::halo()[d::Z]};
       iP_Destination = {iP[d::X], iP[d::Y], L::halo()[d::Z] + lD::length()[d::Z]};
 
-      std::cout << "Copy from: " << iP_Origin << " to: " << iP_Destination << std::endl;
-
       UnrolledFor<0, L::dimQ>::Do([&] (int iQ) {
           f[hD::getIndex(iP_Destination, iQ)] = f[hD::getIndex(iP_Origin, iQ)];
       });
 
       iP_Origin = {iP[d::X], iP[d::Y], L::halo()[d::Z] + lD::length()[d::Z] - 1};
       iP_Destination = {iP[d::X], iP[d::Y], 0};
-
-      std::cout << "Copy from: " << iP_Origin << " to: " << iP_Destination << std::endl;
 
       UnrolledFor<0, L::dimQ>::Do([&] (int iQ) {
           f[hD::getIndex(iP_Destination, iQ)] = f[hD::getIndex(iP_Origin, iQ)];

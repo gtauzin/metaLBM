@@ -10,7 +10,7 @@ namespace lbm {
 
   enum class PartitionningType {Generic, OneD, TwoD, ThreeD};
 
-  enum class DomainType {Generic, Local, Halo, Global};
+  enum class DomainType {Generic, Global, Local, Halo, BufferX};
 
   // enum class AlgorithmType {Generic, FusedPull, Pull, FusedPush, Push};
 
@@ -24,11 +24,11 @@ namespace lbm {
   enum class CollisionType {GenericSRT, BGK, ELBM, Approached_ELBM, ForcedNR_ELBM,
       ForcedBNR_ELBM, GenericMRT};
 
-  enum class ForcingSchemeType {Generic, Guo, ShanChen, ExactDifferenceMethod};
-  enum class ForceType {Generic, Constant, Sinusoidal, Kolmogorov,
+  enum class ForcingSchemeType {Generic, None, Guo, ShanChen, ExactDifferenceMethod};
+  enum class ForceType {Generic, None, Constant, Sinusoidal, Kolmogorov,
       Turbulent, TurbulentTime, WavenumbersTime};
 
-  enum class BoundaryType {Generic, Periodic, BounceBack_Halfway, Entropic};
+  enum class BoundaryType {Generic, None, Periodic, BounceBack_Halfway, Entropic};
 
   enum class ReaderType {Generic, VTR, HDF5};
   enum class WriterType {Generic, VTR, HDF5};

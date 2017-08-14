@@ -27,21 +27,6 @@ namespace lbm {
       {}
 
     void swapHalo(Distribution<T>& distribution_in) {
-      /* MathVector<unsigned int, 3> iP; */
-      /* for (unsigned int iY = L::halo()[d::Y]+lD::start()[d::Y]; iY < L::halo()[d::Y]+lD::end()[d::Y]; ++iY) { */
-      /*   for (unsigned int iX = L::halo()[d::X]+lD::start()[d::X]; iX < L::halo()[d::X]+lD::end()[d::X]; ++iX) { */
-      /*     iP = {iX, iY, 0}; */
-      /*     std::cout << "iP: " << iP << std::endl; */
-      /*     for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) { */
-      /*       std::cout << "iQ: " << iQ */
-      /*                 << ", " << distribution_in.fieldName << ": " */
-      /*                 << distribution_in.haloData()[hD::getIndex(iP, iQ)] */
-      /*                 << ",  " <<  haloField.fieldName << ": " */
-      /*                 << haloField[hD::getIndex(iP, iQ)] << std::endl; */
-      /*     } */
-      /*   } */
-      /* } */
-
       haloField.swap(distribution_in.getHaloField());
     }
 

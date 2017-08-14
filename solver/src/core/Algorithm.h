@@ -24,8 +24,8 @@ namespace lbm {
   template<class T>
   class Algorithm {
   private:
-    const MathVector<unsigned int, 3> rankMPI;
-    const MathVector<unsigned int, 3> sizeMPI;
+    const MathVector<int, 3> rankMPI;
+    const MathVector<int, 3> sizeMPI;
     const std::string processorName;
 
     Communication_ communication;
@@ -34,7 +34,6 @@ namespace lbm {
     Field<T, L::dimD, writeVelocity> velocityField;
     Field<T, L::dimD, writeDensity> forceField;
     Field<T, 1, writeDensity> alphaField;
-    // Field<T, 1, writeDensity> entropyField;
 
     Distribution<T> f_Previous;
     Distribution<T> f_Next;
@@ -56,8 +55,8 @@ namespace lbm {
     double totalTime;
 
   public:
-    Algorithm(const MathVector<unsigned int, 3>& rankMPI_in,
-              const MathVector<unsigned int, 3>& sizeMPI_in,
+    Algorithm(const MathVector<int, 3>& rankMPI_in,
+              const MathVector<int, 3>& sizeMPI_in,
               const std::string& processorName_in)
       : rankMPI(rankMPI_in)
       , sizeMPI(sizeMPI_in)
@@ -79,27 +78,6 @@ namespace lbm {
       , totalTime(0.0)
     {}
 
-    Algorithm(const Algorithm<T>& algorithm_in)
-      : rankMPI(algorithm_in.rankMPI)
-      , sizeMPI(algorithm_in.sizeMPI)
-      , processorName(algorithm_in.processorName)
-      , communication(algorithm_in.communication)
-      , densityField(algorithm_in.densityField)
-      , velocityField(algorithm_in.velocityField)
-      , forceField(algorithm_in.forceField)
-      , alphaField(algorithm_in.alphaField)
-      , f_Previous(algorithm_in.f_Previous)
-      , f_Next(algorithm_in.f_Next)
-      , collision(algorithm_in.collision)
-      , boundary(algorithm_in.boundary)
-      , writer(algorithm_in.writer)
-      , mass(algorithm_in.mass)
-      , computationTime(algorithm_in.computationTime)
-      , communicationTime(algorithm_in.communicationTime)
-      , writeTime(algorithm_in.writeTime)
-      , totalTime(algorithm_in.totalTime)
-    {}
-
     void computeLBM() {
       printInputs();
 
@@ -107,7 +85,7 @@ namespace lbm {
 
       writeFields(startIteration);
 
-      mass = communication.reduceLocal(densityField.localData());
+      mass = communication.reduce(densityField.localData());
 
       for(int iteration = startIteration+1; iteration <= endIteration; ++iteration) {
 
@@ -120,7 +98,7 @@ namespace lbm {
         totalTime += dtTotal.count();
       }
 
-      mass = fabs(mass-communication.reduceLocal(densityField.localData()))/mass;
+      mass = fabs(mass-communication.reduce(densityField.localData()))/mass;
       printOutputs();
     }
 
@@ -129,7 +107,7 @@ namespace lbm {
 
       communication.printInputs();
 
-      if (rankMPI == MathVector<unsigned int, 3>{{ 0 }}) {
+      if (rankMPI == MathVector<int, 3>{0, 0, 0}) {
         std::cout.precision(15);
         std::cout << "-------------------OPTIONS-------------------" << std::endl;
         std::cout << "Lattice         : D" << L::dimD << "Q" << L::dimQ << std::endl;
@@ -155,7 +133,7 @@ namespace lbm {
     }
 
     void printOutputs() {
-      if (rankMPI == MathVector<unsigned int, 3> {{ 0 }}) {
+      if (rankMPI == MathVector<int, 3>{0, 0, 0}) {
         std::cout << "--------------------OUTPUTS------------------" << std::endl;
         std::cout << "Total time      : " << totalTime << " s" << std::endl;
         std::cout << "Comp time       : " << computationTime << " s" << std::endl;
@@ -270,7 +248,6 @@ namespace lbm {
 
       auto t1 = std::chrono::high_resolution_clock::now();
 
-
       Computation::Do([&] (MathVector<unsigned int, 3>& iP) {
           moment.computeMoments(f_Previous.haloData(), iP);
 
@@ -285,7 +262,7 @@ namespace lbm {
           });
 
           storeLocalFields(iP, iteration);
-        });
+      });
 
       auto t2 = std::chrono::high_resolution_clock::now();
 

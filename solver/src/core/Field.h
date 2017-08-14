@@ -184,7 +184,6 @@ namespace lbm {
       globalField.setField(index, value);
     }
 
-
   };
 
 

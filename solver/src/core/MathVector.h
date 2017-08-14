@@ -239,7 +239,7 @@ namespace lbm {
   template<class U, unsigned int NumberComponents>
   MathVector<unsigned int, 3> projectionUI(const MathVector<U, NumberComponents>& mV)
     {
-    MathVector<unsigned int, 3> mV_result{{0}};
+      MathVector<unsigned int, 3> mV_result{0, 0, 0};
     UnrolledFor<0, NumberComponents>::Do([&] (unsigned int iC) {
         mV_result[iC] = (unsigned int) mV[iC];
       });
@@ -249,7 +249,7 @@ namespace lbm {
   template<class U, unsigned int NumberComponents>
   MathVector<int, 3> projectionI(const MathVector<U, NumberComponents>& mV)
     {
-    MathVector<int, 3> mV_result{{0}};
+      MathVector<int, 3> mV_result{0, 0, 0};
     UnrolledFor<0, NumberComponents>::Do([&] (unsigned int iC) {
         mV_result[iC] = (int) mV[iC];
       });

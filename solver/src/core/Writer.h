@@ -28,7 +28,7 @@ namespace lbm {
     const std::string filePrefix;
     const std::string fileFormat;
 
-    const MathVector<unsigned int, 3> rankMPI;
+    const MathVector<int, 3> rankMPI;
 
     std::ofstream file;
 
@@ -36,7 +36,7 @@ namespace lbm {
            const std::string& filePrefix_in,
            const std::string& fileExtension_in,
            const std::string& fileFormat_in,
-           const MathVector<unsigned int, 3> rankMPI_in,
+           const MathVector<int, 3> rankMPI_in,
            const bool isSerial_in)
       : writeFolder("../../output/")
       , writerFolder(writerFolder_in)
@@ -89,7 +89,7 @@ namespace lbm {
     : public Writer<T, WriterType::Generic> {
   public:
     Writer(const std::string& filePrefix_in,
-           const MathVector<unsigned int, 3> rankMPI_in)
+           const MathVector<int, 3> rankMPI_in)
       : Writer<T, WriterType::Generic>("outputVTR/", filePrefix_in,
                                        ".vtr", "ascii", rankMPI_in, true)
     {}
@@ -196,7 +196,7 @@ namespace lbm {
     : public Writer<T, WriterType::Generic> {
   public:
     Writer(const std::string& filePrefix_in,
-           const unsigned int rankMPI_in)
+           const MathVector<int, 3> rankMPI_in)
       : Writer<T, WriterType::Generic>("outputHDF5/", filePrefix_in,
                                        ".h5", "ascii", false, rankMPI_in)
     {}

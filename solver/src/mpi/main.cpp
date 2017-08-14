@@ -1,49 +1,34 @@
+#define NTHREADS 1
+#define NPROCS 1
+
 #include <mpi.h>
 #include <iostream>
 #include <string>
 #include <fstream>
 #include <sstream>
 
-#include "input.h"
-#include "init.h"
-#include "compute.h"
-#include "commons.h"
-
-#include <boost/log/core.hpp>
-#include <boost/log/trivial.hpp>
-#include <boost/log/expressions.hpp>
-#include <boost/log/utility/setup/file.hpp>
-namespace logging = boost::log;
+#include "Algorithm.h"
+#include "MathVector.h"
 
 using namespace lbm;
 
-int main() {
-  static_assert(lengthX_g%NPROCS == 0, "lengthX_g must be a multiple of NPROCS");
+int main(int argc, char* argv[]) {
+  MPI_Init(&argc, &argv);
 
-  MPI_Init(NULL, NULL);
+  MathVector<int, 3> sizeMPI = {1, 1, 1};
+  MPI_Comm_size(MPI_COMM_WORLD, &sizeMPI[d::X]);
 
-  int mpi_size;
-  MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+  MathVector<int, 3> rankMPI{0, 0, 0};
+  MPI_Comm_rank(MPI_COMM_WORLD, &rankMPI[d::X]);
 
-  int mpi_rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+  int  hostnameLength;
+  char hostname[MPI_MAX_PROCESSOR_NAME];
+  MPI_Get_processor_name(hostname, &hostnameLength);
 
-  int  namelen;
-  char processor_name[MPI_MAX_PROCESSOR_NAME];
-  MPI_Get_processor_name(processor_name, &namelen);
-  std::string processorName(processor_name);
+  Algorithm_ algorithm(rankMPI, sizeMPI,
+                       std::string(hostname));
 
-  initPrint(mpi_rank, mpi_size, processorName);
-
-  initLogging(mpi_rank);
-
-  BOOST_LOG_TRIVIAL(debug) << "Logging for debug starts.";
-
-  MPI_Barrier(MPI_COMM_WORLD);
-
-  Init init = init_Simulation(mpi_rank);
-
-  compute(init, mpi_rank);
+  algorithm.computeLBM();
 
   MPI_Finalize();
 

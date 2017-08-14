@@ -1,8 +1,4 @@
-#define NPROCS 1
-#define NTHREADS 1
-
 #include <iostream>
-#include <string>
 #include <string>
 #include <fstream>
 #include <sstream>

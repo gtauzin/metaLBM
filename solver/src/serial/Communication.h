@@ -17,8 +17,8 @@ namespace lbm {
   class Communication : public Boundary<T, BoundaryType::Periodic>
   {
   protected:
-    const MathVector<unsigned int, 3> rankMPI;
-    const MathVector<unsigned int, 3> sizeMPI;
+    const MathVector<int, 3> rankMPI;
+    const MathVector<int, 3> sizeMPI;
     const std::string processorName;
 
     using Boundary<T, BoundaryType::Periodic>::applyX;
@@ -26,8 +26,8 @@ namespace lbm {
     using Boundary<T, BoundaryType::Periodic>::applyZ;
 
   public:
-    Communication(const MathVector<unsigned int, 3>& rankMPI_in,
-                  const MathVector<unsigned int, 3>& sizeMPI_in,
+    Communication(const MathVector<int, 3>& rankMPI_in,
+                  const MathVector<int, 3>& sizeMPI_in,
                   const std::string& processorName_in)
       : rankMPI(rankMPI_in)
       , sizeMPI(sizeMPI_in)
@@ -51,7 +51,7 @@ namespace lbm {
       memcpy(globalFieldArray, localFieldArray, numberComponents*gD::volume()*sizeof(T));
     }
 
-    T reduceLocal(T * __restrict__ localFieldArray) {
+    T reduce(T * __restrict__ localFieldArray) {
       T sum = (T) 0;
       for(unsigned int iZ = lD::start()[d::Z]; iZ < lD::end()[d::Z]; ++iZ) {
         for(unsigned int iY = lD::start()[d::Y]; iY < lD::end()[d::Y]; ++iY) {
@@ -193,7 +193,6 @@ namespace lbm {
 #pragma omp simd
         for (unsigned int iX = hD::start()[d::X]; iX < hD::end()[d::X]; ++iX) {
           iP = MathVector<unsigned int, 3>({iX, iY, 0});
-          std::cout << "iP in periodic Z: " << iP << std::endl;
           applyZ(f, iP);
         }
       }

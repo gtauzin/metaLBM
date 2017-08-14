@@ -33,7 +33,7 @@ namespace lbm {
 
   public:
     static inline constexpr MathVector<unsigned int, 3> start() {
-      return MathVector<unsigned int, 3>{{0}};
+      return MathVector<unsigned int, 3>{0, 0, 0};
     }
 
     static inline constexpr MathVector<unsigned int, 3> end() {
@@ -59,8 +59,9 @@ namespace lbm {
 
   };
 
-  template <LatticeType latticeType,
-            PartitionningType partitionningType,
+
+
+  template <LatticeType latticeType, PartitionningType partitionningType,
             MemoryLayout memoryLayout>
   struct Domain<latticeType, DomainType::Global, partitionningType, memoryLayout>
     : public Domain<latticeType, DomainType::Local, partitionningType, memoryLayout> {
@@ -69,7 +70,7 @@ namespace lbm {
 
   public:
     static inline constexpr MathVector<unsigned int, 3> start() {
-      return MathVector<unsigned int, 3>{{0}};
+      return MathVector<unsigned int, 3>{0, 0, 0};
     }
 
     static inline constexpr MathVector<unsigned int, 3> end() {
@@ -85,10 +86,10 @@ namespace lbm {
     }
 
     static inline MathVector<unsigned int, 3> offset
-    (const MathVector<unsigned int, 3>& rankMPI = MathVector<unsigned int, 3>{{0}}) {
+      (const MathVector<int, 3>& rankMPI = MathVector<int, 3>{0, 0, 0}) {
       MathVector<unsigned int, 3> offsetR{{0}};
-      UnrolledFor<0, lattice::dimD>::Do([&] (int iD) {
-          offsetR[iD] = length_g[iD]*rankMPI[iD];
+      UnrolledFor<0, lattice::dimD>::Do([&] (unsigned int iD) {
+          offsetR[iD] = (unsigned int) length_g[iD]*rankMPI[iD];
         });
 
       return offsetR;
@@ -126,7 +127,7 @@ namespace lbm {
 
   public:
     static inline constexpr MathVector<unsigned int, 3> start() {
-      return MathVector<unsigned int, 3>{{0}};
+      return MathVector<unsigned int, 3>{0, 0, 0};
     }
 
     static inline constexpr MathVector<unsigned int, 3> end() {
@@ -138,7 +139,7 @@ namespace lbm {
     }
 
     static inline constexpr unsigned int volume() {
-      return length()[d::X]*length()[d::Y]*length()[d::Z]+0;
+      return length()[d::X]*length()[d::Y]*length()[d::Z];
     }
 
     static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP) {
@@ -233,10 +234,52 @@ namespace lbm {
 
   };
 
+  template <LatticeType latticeType, PartitionningType partitionningType,
+            MemoryLayout memoryLayout>
+  struct Domain<latticeType, DomainType::BufferX,
+                partitionningType, memoryLayout>
+    : public Domain<latticeType, DomainType::Halo,
+                    partitionningType, MemoryLayout::Generic> {
+  private:
+    typedef Lattice<int, latticeType> lattice;
+
+  public:
+    static inline constexpr MathVector<unsigned int, 3> start() {
+      return MathVector<unsigned int, 3>{0, 0, 0};
+    }
+
+    static inline constexpr MathVector<unsigned int, 3> end() {
+      return {L::halo()[d::X],
+              ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l)[d::Y]+2*L::halo()[d::Y],
+              ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l)[d::Z]+2*L::halo()[d::Z]};
+    }
+
+    static inline constexpr MathVector<unsigned int, 3> length() {
+      return {L::halo()[d::X],
+          ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l)[d::Y]+2*L::halo()[d::Y],
+              ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l)[d::Z]+2*L::halo()[d::Z]};
+    }
+
+    static inline constexpr unsigned int volume() {
+      return length()[d::X]*length()[d::Y]*length()[d::Z];
+    }
+
+    static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP) {
+      return length()[d::Z] * (length()[d::Y] * iP[d::X] + iP[d::Y]) + iP[d::Z];
+    }
+
+    static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP,
+                                        const unsigned int iC) {
+      return iC * volume() + getIndex(iP);
+    }
+
+  };
+
+
   typedef Domain<latticeT, DomainType::Global, partitionningT, memoryL> gD;
   typedef Domain<latticeT, DomainType::Local, partitionningT, memoryL> lD;
   typedef Domain<latticeT, DomainType::Halo, partitionningT, memoryL> hD;
-
+  typedef Domain<latticeT, DomainType::BufferX, partitionningT, memoryL> bXD;
 
 }
 
