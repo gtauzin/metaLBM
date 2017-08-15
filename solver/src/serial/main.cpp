@@ -1,32 +1,25 @@
-#define NPROCS 1
-#define NTHREADS 1
-
 #include <iostream>
 #include <string>
-#include <fstream>
-#include <sstream>
+#include <unistd.h>
 
-#include <boost/log/core.hpp>
-#include <boost/log/trivial.hpp>
-#include <boost/log/expressions.hpp>
-#include <boost/log/utility/setup/file.hpp>
-namespace logging = boost::log;
-
-#include "input.h"
-#include "lattice.h"
-#include "init.h"
-#include "compute.h"
-#include "commons.h"
+#include "Routine.h"
+#include "MathVector.h"
 
 using namespace lbm;
 
-int main() {
-  initLogging(0);
+int main(int argc, char* argv[]) {
 
-  Init<valueType> init = init_Simulation<double>(0);
+  char hostname[1024];
+  gethostname(hostname, sizeof(hostname)-1);
 
-  compute<valueType>(init);
+  MathVector<int, 3> sizeMPI = {1, 1, 1};
+
+  MathVector<int, 3> rankMPI{0, 0, 0};
+
+  Routine_ routine(rankMPI, sizeMPI,
+                   std::string(hostname));
+
+  routine.computeLBM();
 
   return 0;
-
 }

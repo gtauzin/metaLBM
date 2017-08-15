@@ -1,4 +1,4 @@
-###### Description ######
+## Description
 
 metaLBM is a C++11 header-only template Computational Fluid Dynamic software
 based on the Lattice Boltzmann Method (LBM). metaLBM is meant to support multiple lattices
@@ -36,17 +36,43 @@ As of April 2017, metaLBM support the following features:
 - D3Q27
 - ... potentially any rectangular-shaped lattice
 
+**Supported LBM algorithm**
+- Fused collide and stream pull
+- Fused collide and stream push (upcoming for selected lattices)
+
+**Single-node performance optimization**
+- SoA and AoS memory layout
+- Automatic OpenMP vectorization (upcoming)
+- OpenMP multi-threading
+
+**Multi-node performance optimization**
+- 1D domain partionning
+- 2D and 3D domain partitionning (upcoming)
+
 **Supported collision operators**
-- BGK
-- Entropic BGK
+- SRT BGK
+- SRT Entropic
+- MRT Entropic (upcoming)
 
 **Supported forcing schemes**
 - Shan-Chen
 - Guo
 - Exact-Difference Method
 
+**Supported forces**
+- Constant
+- Sinusoidal
+- Kolmogorov
+- Turbulent forcing on a shell of wavenumbers with time-independent phase (upcoming)
+- Turbulent forcing on a shell of wavenumbers with time-dependent phase (upcoming)
+
+**Supported boundary conditions**
+- Periodic BC
+- Half-way bounceback (upcoming)
+- Entropic bounceback (upcoming)
+
 **Supported I/O**
-- VTK (serial)
+- serial VTK (ascii, binary upcoming)
 - HDF5 (upcoming)
 
 ## Project Organisation

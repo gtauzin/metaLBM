@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
 
 project(metaLBM LANGUAGES CXX)
 set (CMAKE_CXX_STANDARD 11)
+add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
 
 # Compilers
 option(ICC "Use Intel compiler" OFF)
