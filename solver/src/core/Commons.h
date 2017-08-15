@@ -1,6 +1,8 @@
 #ifndef COMMONS_H
 #define COMMONS_H
 
+#define RESTRICT __restrict__
+
 #ifdef __CUDACC__
 #define _HOST_ __host__
 #define _DEVICE_ __device__

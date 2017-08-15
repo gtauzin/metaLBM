@@ -9,21 +9,22 @@
 
 namespace lbm {
   typedef DATA_TYPE dataT;
-  constexpr LatticeType latticeT = LatticeType::D2Q9;
-  constexpr int lengthX_g = 16;
+  constexpr LatticeType latticeT = LatticeType::D3Q27;
+  constexpr int lengthX_g = 8;
   constexpr int lengthY_g = 8;
-  constexpr int lengthZ_g = 32;
+  constexpr int lengthZ_g = 8;
 
   constexpr MathVector<unsigned int, 3> length_g = {lengthX_g, lengthY_g, lengthZ_g};
   constexpr MathVector<unsigned int, 3> length_l = {lengthX_g/NPROCS, lengthY_g, lengthZ_g};
 
   constexpr MathVector<unsigned int, 3> process = {NPROCS, 1, 1};
 
+  constexpr AlgorithmType algorithmT = AlgorithmType::Pull;
   constexpr PartitionningType partitionningT = PartitionningType::OneD;
   constexpr MemoryLayout memoryL = MemoryLayout::SoA;
 
   constexpr int startIteration = 0;
-  constexpr int endIteration = 100;
+  constexpr int endIteration = 10;
   constexpr int writeStep = 1;
   constexpr int backupStep = 1;
 
@@ -34,20 +35,20 @@ namespace lbm {
   constexpr InitDensityType initDensityT = InitDensityType::Peak;
   constexpr dataT initDensityValue = 1.0;
   constexpr InitVelocityType initVelocityT = InitVelocityType::Homogeneous;
-  constexpr MathVector<dataT, 3> initVelocityValue = { {0.0, 0.0, 0.0} };
+  constexpr MathVector<dataT, 3> initVelocityVector = { {0.0, 0.0, 0.0} };
 
   constexpr ForcingSchemeType forcingSchemeT = ForcingSchemeType::ExactDifferenceMethod;
   constexpr ForceType forceT = ForceType::Constant;
 
   constexpr MathVector<dataT, 3> forceAmplitude = { {0.0, 0.0, 0.0} };
-  constexpr MathVector<dataT, 3> forceWaveLength = { {8.0, 0.0, 0.0} };
+  constexpr MathVector<dataT, 3> forceWaveLength = { {0.0, 0.0, 0.0} };
   constexpr int minWavenumber = 0;
   constexpr int maxWavenumber = 0;
 
   constexpr BoundaryType boundaryT = BoundaryType::Generic;
 
   constexpr WriterType writerT= WriterType::VTR;
-  constexpr auto prefix = "test";
+  constexpr auto prefix = "test-push";
 
   constexpr bool writeDensity = 1;
   constexpr bool writeVelocity = 1;

@@ -6,9 +6,10 @@
 #include <ostream>
 
 #include "Options.h"
+#include "Commons.h"
+#include "Domain.h"
 #include "DynamicArray.h"
 #include "MathVector.h"
-#include "Domain.h"
 
 namespace lbm {
 
@@ -37,28 +38,30 @@ namespace lbm {
 
     LocalizedField(const std::string& fieldName_in,
                    const unsigned int volume_in,
-                   const MathVector<T, NumberComponents>& value_in)
-      : field(NumberComponents*volume_in)
-      , volume(volume_in)
-      , fieldName(fieldName_in)
-    {
-      for(unsigned int i = 0; i < volume_in; ++i) setField(i, value_in);
-    }
-
-    LocalizedField(const std::string& fieldName_in,
-                   const unsigned int volume_in,
                    const T& value_in = (T) 0)
       : field(NumberComponents*volume_in, value_in)
       , volume(volume_in)
       , fieldName(fieldName_in)
     {}
 
-    T * __restrict__ data(const unsigned int iC = 0) {
+    LocalizedField(const std::string& fieldName_in,
+                   const LocalizedField<T, NumberComponents>& localizedField_in)
+      : field(localizedField_in.getArray())
+      , volume(localizedField_in.getVolume())
+      , fieldName(fieldName_in)
+    {}
+
+
+    T * RESTRICT data(const unsigned int iC = 0) {
       return field.data() + volume * iC;
     }
 
-    unsigned int getVolume() {
+    unsigned int getVolume() const {
       return volume;
+    }
+
+    const DynamicArray<T>& getArray() const {
+      return field;
     }
 
     DynamicArray<T>& getArray() {
@@ -69,32 +72,9 @@ namespace lbm {
       field.swap(field_in.getArray());
     }
 
-    T getField(const unsigned int index, const unsigned int iC = 0) const {
-      return field[iC * volume + index];
-    }
-
-    MathVector<T, NumberComponents> getVector(const unsigned int index) const {
-      MathVector<T, NumberComponents> vectorR;
-      UnrolledFor<0, NumberComponents>::Do([&] (unsigned int iC) {
-          vectorR[iC] = getField(index, iC);
-      });
-
-      return vectorR;
-    }
-
-    void setField(const unsigned int index, const T value, const unsigned int iC = 0) {
-      field[iC * volume + index] = value;
-    }
-
     void setField(LocalizedField<T, NumberComponents> field_in) {
       field.copy(field_in.getArray());
       volume = field_in.getVolume();
-    }
-
-    void setField(const unsigned int index, const MathVector<T, NumberComponents>& value) {
-      UnrolledFor<0, NumberComponents>::Do([&] (unsigned int iC) {
-          setField(index, value[iC], iC);
-      });
     }
 
     T& operator[] (int i) {
@@ -109,7 +89,7 @@ namespace lbm {
 
 
     /**
-   * Field containing data sets to be communicated and dumped.
+   * Field containing data sets to be stored, communicated, and dumped.
    *
    * @tparam T datatype.
    * @tparam unsigned int NumberComponents of the field.
@@ -122,6 +102,12 @@ namespace lbm {
 
   template <class T, unsigned int NumberComponents>
   class Field<T, NumberComponents, true> {
+  private:
+    typedef Domain<DomainType::Global, partitionningT,
+                   MemoryLayout::Generic, NumberComponents> gNCD;
+    typedef Domain<DomainType::Local, PartitionningType::Generic,
+                   MemoryLayout::Generic, NumberComponents> lNCD;
+
   protected:
     LocalizedField<T, NumberComponents> globalField;
     LocalizedField<T, NumberComponents> localField;
@@ -132,60 +118,112 @@ namespace lbm {
 
     const std::string fieldName;
 
-    Field(const std::string& fieldName_in)
+    Field(const std::string& fieldName_in,
+          const MathVector<T, NumberComponents>& vector_in)
       : globalField(fieldName_in, gD::volume())
+      , localField(fieldName_in, lD::volume())
+      , fieldName(fieldName_in)
+    {
+      MathVector<unsigned int, 3> iP;
+      for(unsigned int iZ = gD::start()[d::Z]; iZ < gD::end()[d::Z]; iZ++) {
+        for(unsigned int iY = gD::start()[d::Y]; iY < gD::end()[d::Y]; iY++) {
+          for(unsigned int iX = gD::start()[d::X]; iX < gD::end()[d::X]; iX++) {
+            iP = {iX, iY, iZ};
+            setGlobalVector(iP, vector_in);
+          }
+        }
+      }
+    }
+
+    Field(const std::string& fieldName_in,
+          const T& value_in = (T) 0)
+      : globalField(fieldName_in, gD::volume())
+      , localField(fieldName_in, lD::volume())
+      , fieldName(fieldName_in)
+    {
+      for(unsigned int i = 0; i < gD::volume(); ++i) {
+        setGlobalValue(i, value_in);
+      }
+    }
+
+    Field(const std::string& fieldName_in,
+          const LocalizedField<T, NumberComponents>& globalField_in)
+      : globalField(fieldName_in, globalField_in)
       , localField(fieldName_in, lD::volume())
       , fieldName(fieldName_in)
     {}
 
-
-    T * __restrict__ localData(const unsigned int iC = 0) {
-      return localField.data(iC);
+    T * RESTRICT localData() {
+      return localField.data();
     }
 
-    T * __restrict__ globalData(const unsigned int iC = 0) {
-      return globalField.data(iC);
+    void setLocalValue(const unsigned int index, const T value, unsigned int iC = 0) {
+      localField[lNCD::getIndex(index, iC)] = value;
+    }
+
+    void setLocalVector(const unsigned int index,
+                       const MathVector<T, NumberComponents> vector) {
+      UnrolledFor<0, NumberComponents>::Do([&] (unsigned int iC) {
+          setLocalValue(index, vector[iC], iC);
+      });
+    }
+
+    T getLocalValue(const unsigned int index, const unsigned int iC = 0) {
+      return localField[lD::getIndex(index, iC)];
+    }
+
+    MathVector<T, NumberComponents> getLocalVector(const unsigned int index) {
+      MathVector<T, NumberComponents> vectorR;
+      UnrolledFor<0, NumberComponents>::Do([&] (unsigned int iC) {
+          vectorR[iC] = getLocalValue(index, iC);
+      });
+
+      return vectorR;
+    }
+
+    T * RESTRICT globalData() {
+      return globalField.data();
     }
 
     LocalizedField<T, NumberComponents> getGlobalField() {
       return globalField;
     }
 
-    T getLocalField(const unsigned int index, const unsigned int iC = 0) {
-      return localField.getField(index, iC);
-    }
-
-    MathVector<T, NumberComponents> getLocalVector(const unsigned int index) {
-      return localField.getVector(index);
-    }
-
     void setGlobalField(LocalizedField<T, NumberComponents> globalField_in) {
       globalField.setField(globalField_in);
     }
 
-    void setLocalField(const unsigned int index, const T value) {
-      localField.setField(index, value);
+    void setGlobalValue(const unsigned int index, const T value) {
+      globalField[index] = value;
     }
 
-
-    void setLocalField(const unsigned int index, const MathVector<T, NumberComponents> value) {
-      localField.setField(index, value);
+    void setGlobalValue(const MathVector<unsigned int, 3>& iP,
+                        const T value,
+                        const unsigned int iC) {
+      globalField[gNCD::getIndex(iP, iC)] = value;
     }
 
-    T getGlobalField(const unsigned int index, const unsigned int iC = 0) {
-      return globalField.getField(index, iC);
+    void setGlobalVector(const MathVector<unsigned int, 3>& iP,
+                         const MathVector<T, NumberComponents> vector) {
+      UnrolledFor<0, NumberComponents>::Do([&] (unsigned int iC) {
+          setGlobalValue(iP, vector[iC], iC);
+      });
     }
 
-    MathVector<T, NumberComponents> getGlobalVector(const unsigned int index) {
-      return globalField.getVector(index);
+    T getGlobalValue(const MathVector<unsigned int, 3>& iP, const unsigned int iC = 0) const {
+      return globalField[gNCD::getIndex(iP, iC)];
     }
 
-    void setGlobalField(const unsigned int index, const MathVector<T, NumberComponents> value) {
-      globalField.setField(index, value);
+    MathVector<T, NumberComponents> getGlobalVector(const MathVector<unsigned int, 3>& iP) const {
+      MathVector<T, NumberComponents> vectorR;
+      UnrolledFor<0, NumberComponents>::Do([&] (unsigned int iC) {
+          vectorR[iC] = getGlobalValue(iP, iC);
+      });
+
+      return vectorR;
     }
 
   };
-
 
   template <class T, unsigned int NumberComponents>
   class Field<T, NumberComponents, false>  {
@@ -195,19 +233,33 @@ namespace lbm {
 
     const std::string fieldName;
 
-    Field(const std::string& fieldName_in)
+    Field(const std::string& fieldName_in,
+          const MathVector<T, NumberComponents>& vector_in)
+      : fieldName(fieldName_in)
     {}
 
-    T * __restrict__ localData(const unsigned int iC = 0) {
+    Field(const std::string& fieldName_in,
+          const T& value_in = (T) 0)
+      : fieldName(fieldName_in)
+    {}
+
+    Field(const std::string& fieldName_in,
+          const LocalizedField<T, NumberComponents>& globalField_in)
+      : fieldName(fieldName_in)
+    {}
+
+    T * RESTRICT localData() {
       return NULL;
     }
 
-    T * __restrict__ globalData(const unsigned int iC = 0) {
-      return NULL;
+    void setLocalValue(const unsigned int index, const T value, unsigned int iC = 0) {
     }
 
+    void setLocalVector(const unsigned int index,
+                       const MathVector<T, NumberComponents> vector) {
+    }
 
-    T getLocalField(const unsigned int index, const unsigned int iC = 0) {
+    T getLocalValue(const unsigned int index, const unsigned int iC = 0) {
       return (T) -1;
     }
 
@@ -215,25 +267,39 @@ namespace lbm {
       return MathVector<T, NumberComponents>{{(T) -1}};
     }
 
-    void setLocalField(const unsigned int index, const MathVector<T, NumberComponents> value) {
+    T * RESTRICT globalData() {
+      return NULL;
     }
 
-    T getGlobalField(const unsigned int index, const unsigned int iC = 0) {
+    void setGlobalField(LocalizedField<T, NumberComponents> globalField_in) {
+    }
+
+    void setGlobalValue(const unsigned int index, const T value) {
+    }
+
+    void setGlobalValue(const MathVector<unsigned int, 3>& iP,
+                        const T value,
+                        const unsigned int iC) {
+    }
+
+    void setGlobalVector(const MathVector<unsigned int, 3>& iP,
+                         const MathVector<T, NumberComponents> vector) {
+    }
+
+    LocalizedField<T, NumberComponents> getGlobalField() {
+      return LocalizedField<T, NumberComponents>("empty");
+    }
+
+    T getGlobalValue(const MathVector<unsigned int, 3>& iP, const unsigned int iC = 0) const {
       return (T) -1;
     }
 
-    MathVector<T, NumberComponents> getGlobalVector(const unsigned int index) {
+    MathVector<T, NumberComponents> getGlobalVector(const MathVector<unsigned int, 3>& iP) const {
       return MathVector<T, NumberComponents>{{(T) -1}};
     }
 
-    void setGlobalField(const unsigned int index,
-                        const MathVector<T, NumberComponents> value) {
-    }
 
   };
-
-  template<class T>
-  class Fields {};
 
 }
 

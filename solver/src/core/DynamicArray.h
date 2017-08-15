@@ -1,10 +1,10 @@
 #ifndef DYNAMICARRAY_H
 #define DYNAMICARRAY_H
 
-#define RESTRICT __restrict__
-
 #include <cstring>
 #include <stdlib.h>
+
+#include "Commons.h"
 
 namespace lbm {
 

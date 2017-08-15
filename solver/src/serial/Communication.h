@@ -13,30 +13,37 @@
 namespace lbm {
   // TODO: 2D loop defined in Computation.h ? Maybe -- not for now???
 
-  template<class T, PartitionningType partitionningType, unsigned int dimension>
-  class Communication : public Boundary<T, BoundaryType::Periodic>
-  {
+  template<class T, AlgorithmType algorithmType,
+           PartitionningType partitionningType, unsigned int Dimension>
+  class Communication
+  {};
+
+  template<class T, PartitionningType partitionningType>
+  class Communication<T, AlgorithmType::Pull, partitionningType, 0>
+    : public Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull> {
   protected:
     const MathVector<int, 3> rankMPI;
     const MathVector<int, 3> sizeMPI;
     const std::string processorName;
 
-    using Boundary<T, BoundaryType::Periodic>::applyX;
-    using Boundary<T, BoundaryType::Periodic>::applyY;
-    using Boundary<T, BoundaryType::Periodic>::applyZ;
-
-  public:
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
                   const std::string& processorName_in)
-      : rankMPI(rankMPI_in)
+      : Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull>()
+      , rankMPI(rankMPI_in)
       , sizeMPI(sizeMPI_in)
       , processorName(processorName_in)
     {}
 
+    using Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull>::applyX;
+    using Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull>::applyY;
+    using Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull>::applyZ;
+
+  public:
+
     void printInputs() {
       std::cout << "MPI #" << rankMPI << " of " << sizeMPI
-                << " processes running on host " << processorName << "\n";
+                << " processes running on host " << processorName << std::endl;;
     }
 
     void sendGlobalToLocal(T * __restrict__ globalFieldArray,
@@ -63,28 +70,27 @@ namespace lbm {
       return sum;
     }
 
-
   };
 
   template<class T, PartitionningType partitionningType>
-  class Communication<T, partitionningType, 1>
-    : public Communication<T, partitionningType, 0> {
+  class Communication<T, AlgorithmType::Pull, partitionningType, 1>
+    : public Communication<T, AlgorithmType::Pull, partitionningType, 0> {
   private:
-    using Communication<T, partitionningType, 0>::rankMPI;
-    using Communication<T, partitionningType, 0>::sizeMPI;
-    using Communication<T, partitionningType, 0>::processorName;
-
-    using Communication<T, partitionningType, 0>::applyX;
-    using Communication<T, partitionningType, 0>::applyY;
-    using Communication<T, partitionningType, 0>::applyZ;
+    using Communication<T, AlgorithmType::Pull, partitionningType, 0>::applyX;
 
   public:
-    using Communication<T, partitionningType, 0>::Communication;
+    Communication(const MathVector<int, 3>& rankMPI_in,
+                  const MathVector<int, 3>& sizeMPI_in,
+                  const std::string& processorName_in)
+      : Communication<T, AlgorithmType::Pull,
+                      partitionningType, 0>(rankMPI_in, sizeMPI_in,
+                                            processorName_in)
+    {}
 
-    using Communication<T, partitionningType, 0>::printInputs;
-    using Communication<T, partitionningType, 0>::sendGlobalToLocal;
-    using Communication<T, partitionningType, 0>::sendLocalToGlobal;
-    using Communication<T, partitionningType, 0>::reduceLocal;
+    using Communication<T, AlgorithmType::Pull, partitionningType, 0>::printInputs;
+    using Communication<T, AlgorithmType::Pull, partitionningType, 0>::sendGlobalToLocal;
+    using Communication<T, AlgorithmType::Pull, partitionningType, 0>::sendLocalToGlobal;
+    using Communication<T, AlgorithmType::Pull, partitionningType, 0>::reduce;
 
     inline void periodic(T * __restrict__ f) {
       MathVector<unsigned int, 3> iP;
@@ -103,24 +109,25 @@ namespace lbm {
   };
 
   template<class T, PartitionningType partitionningType>
-  class Communication<T, partitionningType, 2>
-    : public Communication<T, partitionningType, 0> {
+  class Communication<T, AlgorithmType::Pull, partitionningType, 2>
+    : public Communication<T, AlgorithmType::Pull, partitionningType, 0> {
   private:
-    using Communication<T, partitionningType, 0>::rankMPI;
-    using Communication<T, partitionningType, 0>::sizeMPI;
-    using Communication<T, partitionningType, 0>::processorName;
-
-    using Communication<T, partitionningType, 0>::applyX;
-    using Communication<T, partitionningType, 0>::applyY;
-    using Communication<T, partitionningType, 0>::applyZ;
+    using Communication<T, AlgorithmType::Pull, partitionningType, 0>::applyX;
+    using Communication<T, AlgorithmType::Pull, partitionningType, 0>::applyY;
 
   public:
-    using Communication<T, partitionningType, 0>::Communication;
+    Communication(const MathVector<int, 3>& rankMPI_in,
+                  const MathVector<int, 3>& sizeMPI_in,
+                  const std::string& processorName_in)
+      : Communication<T, AlgorithmType::Pull,
+                      partitionningType, 0>(rankMPI_in, sizeMPI_in,
+                                            processorName_in)
+    {}
 
-    using Communication<T, partitionningType, 0>::printInputs;
-    using Communication<T, partitionningType, 0>::sendGlobalToLocal;
-    using Communication<T, partitionningType, 0>::sendLocalToGlobal;
-    using Communication<T, partitionningType, 0>::reduceLocal;
+    using Communication<T, AlgorithmType::Pull, partitionningType, 0>::printInputs;
+    using Communication<T, AlgorithmType::Pull, partitionningType, 0>::sendGlobalToLocal;
+    using Communication<T, AlgorithmType::Pull, partitionningType, 0>::sendLocalToGlobal;
+    using Communication<T, AlgorithmType::Pull, partitionningType, 0>::reduce;
 
     inline void periodic(T * __restrict__ f) {
       MathVector<unsigned int, 3> iP;
@@ -148,24 +155,26 @@ namespace lbm {
   };
 
   template<class T, PartitionningType partitionningType>
-  class Communication<T, partitionningType, 3>
-    : public Communication<T, partitionningType, 0> {
+  class Communication<T, AlgorithmType::Pull, partitionningType, 3>
+    : public Communication<T, AlgorithmType::Pull, partitionningType, 0> {
   private:
-    using Communication<T, partitionningType, 0>::rankMPI;
-    using Communication<T, partitionningType, 0>::sizeMPI;
-    using Communication<T, partitionningType, 0>::processorName;
-
-    using Communication<T, partitionningType, 0>::applyX;
-    using Communication<T, partitionningType, 0>::applyY;
-    using Communication<T, partitionningType, 0>::applyZ;
+    using Communication<T, AlgorithmType::Pull, partitionningType, 0>::applyX;
+    using Communication<T, AlgorithmType::Pull, partitionningType, 0>::applyY;
+    using Communication<T, AlgorithmType::Pull, partitionningType, 0>::applyZ;
 
   public:
-    using Communication<T, partitionningType, 0>::Communication;
+    Communication(const MathVector<int, 3>& rankMPI_in,
+                  const MathVector<int, 3>& sizeMPI_in,
+                  const std::string& processorName_in)
+      : Communication<T, AlgorithmType::Pull,
+                      partitionningType, 0>(rankMPI_in, sizeMPI_in,
+                                            processorName_in)
+    {}
 
-    using Communication<T, partitionningType, 0>::printInputs;
-    using Communication<T, partitionningType, 0>::sendGlobalToLocal;
-    using Communication<T, partitionningType, 0>::sendLocalToGlobal;
-    using Communication<T, partitionningType, 0>::reduceLocal;
+    using Communication<T, AlgorithmType::Pull, partitionningType, 0>::printInputs;
+    using Communication<T, AlgorithmType::Pull, partitionningType, 0>::sendGlobalToLocal;
+    using Communication<T, AlgorithmType::Pull, partitionningType, 0>::sendLocalToGlobal;
+    using Communication<T, AlgorithmType::Pull, partitionningType, 0>::reduce;
 
     inline void periodic(T * __restrict__ f) {
       MathVector<unsigned int, 3> iP;
@@ -202,7 +211,7 @@ namespace lbm {
   };
 
 
-  typedef Communication<dataT, partitionningT, L::dimD> Communication_;
+  typedef Communication<dataT, algorithmT, partitionningT, L::dimD> Communication_;
 }
 
 #endif // COMMUNICATION_H

@@ -45,7 +45,7 @@ do
 
             echo "-- Relocating to the build folder to rebuild and compile"
             cd ../solver/build/
-            cmake -DCMAKE_BUILD_TYPE:STRING=${BUILD_TYPE} -DMPI=ON -DNPROCS:INT=${NPROCS} -DNTHREADS:INT=${NTHREADS} -DDATA_STRUCT:STRING=${DATA_STRUCT} -DLOG:STRING=${LOG} .. &&
+            cmake -DCMAKE_BUILD_TYPE:STRING=${BUILD_TYPE} -DMPI=ON -DNPROCS:INT=${NPROCS} -DNTHREADS:INT=${NTHREADS} -DDATA_STRUCT:STRING=${DATA_STRUCT} .. &&
                 make lbm -j 4
 
             echo "-- Relocating to the bin folder and running the job"

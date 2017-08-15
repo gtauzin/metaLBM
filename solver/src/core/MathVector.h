@@ -2,6 +2,8 @@
 #define MATHVECTOR_H
 
 #include <cmath>
+#include <fstream>
+#include <sstream>
 
 #include "StaticArray.h"
 #include "Helpers.h"
@@ -236,25 +238,41 @@ namespace lbm {
     return mV_result;
   }
 
-  template<class U, unsigned int NumberComponents>
-  MathVector<unsigned int, 3> projectionUI(const MathVector<U, NumberComponents>& mV)
-    {
-      MathVector<unsigned int, 3> mV_result{0, 0, 0};
-    UnrolledFor<0, NumberComponents>::Do([&] (unsigned int iC) {
-        mV_result[iC] = (unsigned int) mV[iC];
+  MathVector<unsigned int, 3> operator-(const MathVector<unsigned int, 3>& mV_a,
+                                        const MathVector<unsigned int, 3>& mV_b)
+  {
+    MathVector<unsigned int, 3> mV_result = mV_a;
+    UnrolledFor<0, 3>::Do([&] (int i) {
+        mV_result[i] = mV_a[i] - mV_b[i];
       });
+
     return mV_result;
   }
 
-  template<class U, unsigned int NumberComponents>
-  MathVector<int, 3> projectionI(const MathVector<U, NumberComponents>& mV)
-    {
-      MathVector<int, 3> mV_result{0, 0, 0};
-    UnrolledFor<0, NumberComponents>::Do([&] (unsigned int iC) {
-        mV_result[iC] = (int) mV[iC];
+  template<unsigned int NumberComponents>
+  MathVector<unsigned int, 3> operator-(const MathVector<unsigned int, 3>& mV_a,
+                                        const MathVector<unsigned int, NumberComponents>& mV_b)
+  {
+    MathVector<unsigned int, 3> mV_result = mV_a;
+    UnrolledFor<0, NumberComponents>::Do([&] (int i) {
+        mV_result[i] = mV_a[i] - mV_b[i];
       });
+
     return mV_result;
   }
+
+  template<unsigned int NumberComponents>
+  MathVector<unsigned int, 3> operator-(const MathVector<unsigned int, NumberComponents>& mV_a,
+                                        const MathVector<unsigned int, 3>& mV_b)
+  {
+    MathVector<unsigned int, 3> mV_result = -1* mV_b;
+    UnrolledFor<0, NumberComponents>::Do([&] (int i) {
+        mV_result[i] = mV_a[i] - mV_b[i];
+      });
+
+    return mV_result;
+  }
+
 
   template<class T, unsigned int dimension>
   struct Project {

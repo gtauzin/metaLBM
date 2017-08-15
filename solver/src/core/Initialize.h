@@ -10,17 +10,15 @@
 #include "Domain.h"
 #include "MathVector.h"
 #include "Field.h"
+#include "Distribution.h"
 #include "Equilibrium.h"
 #include "Reader.h"
-#include "Force.h"
-#include "Boundary.h"
-#include "Writer.h"
 
 namespace lbm {
 
   template<class T>
   LocalizedField<T, 1> initGlobalDensity() {
-    LocalizedField<T, 1> densityR("density", gD::volume(), initDensityValue);
+    Field<T, 1, true> densityFieldR("density", initDensityValue);
 
     switch(initDensityT){
     case InitDensityType::Homogeneous: {
@@ -33,24 +31,23 @@ namespace lbm {
       center[d::X] = static_cast<unsigned int>((gD::length()[d::X]-1)* (T) 0.4);
       center[d::Y] = static_cast<unsigned int>((gD::length()[d::Y]-1)* (T) 0.3);
       center[d::Z] = static_cast<unsigned int>((gD::length()[d::Z]-1)* (T) 0.2);
-      densityR[gD::getIndex(center)] = densityPeakValue;
+      densityFieldR.setGlobalValue(gD::getIndex(center), densityPeakValue);
       break;
     }
     default: {
       std::cout << "Wrong type of density initialization.";
     }
     }
-    return densityR;
+    return densityFieldR.getGlobalField();
   }
 
   template<class T>
   LocalizedField<T, L::dimD> initGlobalVelocity() {
-    MathVector<T, L::dimD> initVelocityValueProjected{{ (T) 0 }};
+    MathVector<T, L::dimD> initVelocityVectorProjected{{ (T) 0 }};
+    initVelocityVectorProjected = Project<T, L::dimD>::Do(initVelocityVector);
 
-    initVelocityValueProjected = Project<T, L::dimD>::Do(initVelocityValue);
-
-    LocalizedField<T, L::dimD> velocityR("velocity", gD::volume(),
-                                         initVelocityValueProjected);
+    Field<T, L::dimD, true> velocityFieldR("velocity",
+                                           initVelocityVectorProjected);
 
 
     switch(initVelocityT){
@@ -62,34 +59,39 @@ namespace lbm {
       std::cout << "Wrong type of velocity initialization.";
     }
     }
-    return velocityR;
+    return velocityFieldR.getGlobalField();
   }
 
   template<class T>
   LocalizedField<T, 1> initGlobalAlpha() {
-    LocalizedField<T, 1> alphaR("alpha", gD::volume(), (T) 2);
-    return alphaR;
+    Field<T, 1, true> alphaFieldR("alpha", (T) 2);
+    return alphaFieldR.getGlobalField();
   }
 
   template<class T>
-  LocalizedField<T, L::dimQ> initGlobalDistributionStart(const LocalizedField<T, 1>& globalDensity,
-                                                         const LocalizedField<T, L::dimD>& globalVelocity) {
+  LocalizedField<T, L::dimQ> initGlobalDistributionStart(const Field<T, 1, true>& densityField,
+                                                         const Field<T, L::dimD, true>& velocityField) {
     LocalizedField<T, L::dimQ> distributionR("distribution", gD::volume());
 
     Equilibrium_ equilibrium;
-
+    MathVector<unsigned int, 3> iP;
     for(unsigned int iZ = gD::start()[d::Z]; iZ < gD::end()[d::Z]; iZ++) {
       for(unsigned int iY = gD::start()[d::Y]; iY < gD::end()[d::Y]; iY++) {
         for(unsigned int iX = gD::start()[d::X]; iX < gD::end()[d::X]; iX++) {
-          unsigned int indexGlobal = gD::getIndex({iX, iY, iZ});
+          iP = {iX, iY, iZ};
 
-          equilibrium.setVariables(globalDensity.getField(indexGlobal),
-                                   globalVelocity.getVector(indexGlobal));
+          equilibrium.setVariables(densityField.getGlobalValue(iP),
+                                   velocityField.getGlobalVector(iP));
+
 
           UnrolledFor<0, L::dimQ>::Do([&] (unsigned int iQ) {
-              distributionR[gD::getIndex({iX, iY, iZ}, iQ)]
+              // std::cout << "density: " << densityField.getGlobalValue(iP)
+              //           << ", velocity: " << velocityField.getGlobalVector(iP)
+              //           << ", fEq(" << iQ << "): "
+              //           << equilibrium.compute(iQ) << std::endl;
+              distributionR[gQD::getIndex({iX, iY, iZ}, iQ)]
                 = equilibrium.compute(iQ);
-          });
+            });
         }
       }
     }
@@ -102,13 +104,12 @@ namespace lbm {
     return reader.readField("distribution", startIteration);
   }
 
-  //initialized un Localized field vide avec un nom et le lire ensuite...
 
   template<class T>
-  LocalizedField<T, L::dimQ> initGlobalDistribution(const LocalizedField<T, 1>& globalDensity,
-                                                    const LocalizedField<T, L::dimD>& globalVelocity) {
+  LocalizedField<T, L::dimQ> initGlobalDistribution(const Field<T, 1, true>& densityField,
+                                                    const Field<T, L::dimD, true>& velocityField) {
     if(!startIteration) {
-      return initGlobalDistributionStart<T>(globalDensity, globalVelocity);
+      return initGlobalDistributionStart<T>(densityField, velocityField);
     }
     else {
       return initGlobalDistributionRestart<T>();

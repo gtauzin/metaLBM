@@ -32,12 +32,6 @@ namespace lbm {
 
   public:
     #pragma omp declare simd
-    inline void setForce(const MathVector<unsigned int, 3>& iP) {
-      // ABORT EXCEPTIONS
-      force = MathVector<T, L::dimD>{{(T)(0)}};
-    }
-
-    #pragma omp declare simd
     inline const MathVector<T, L::dimD>& getForce(){
       return force;
     }

@@ -6,6 +6,10 @@
 #include <rapidxml.hpp>
 #include <rapidxml_utils.hpp>
 
+#include "Options.h"
+#include "Commons.h"
+#include "MathVector.h"
+#include "Domain.h"
 #include "Field.h"
 
 namespace lbm {
@@ -54,6 +58,8 @@ namespace lbm {
     : public Reader<T, NumberComponents, ReaderType::Generic> {
   private:
     using Reader<T, NumberComponents,ReaderType::Generic>::getFileName;
+    typedef Domain<DomainType::Global, partitionningT,
+      MemoryLayout::Generic, NumberComponents> gNCD;
 
   public:
     Reader(const std::string& filePrefix_in)
@@ -90,13 +96,13 @@ namespace lbm {
         std::string::size_type offset, offsetTemporary;
         T value = std::stod(line, &offset);
         offsetTemporary = offset;
-        fieldR[gD::getIndex(iP, 0)] = value;
+        fieldR[gNCD::getIndex(iP, 0)] = value;
 
         for(unsigned int iQ = 1; iQ < NumberComponents; ++iQ) {
           value = std::stod(line.substr(offset), &offset);
           offset += offsetTemporary;
           offsetTemporary = offset;
-          fieldR[gD::getIndex(iP, iQ)] = value;
+          fieldR[gNCD::getIndex(iP, iQ)] = value;
         }
       }
 

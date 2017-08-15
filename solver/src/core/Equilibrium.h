@@ -117,8 +117,7 @@ namespace lbm {
           fEq_iQ *= (2.0 - sqrt(1.0 + 3.0*velocity[iD]*velocity[iD]))
             * PowerBase((2* velocity[iD]
                          + sqrt(1.0 + 3.0*velocity[iD]*velocity[iD]))
-                        /(1.0 - velocity[iD]), (int) projectionI(L::celerity()[iQ])[iD]);
-
+                        /(1.0 - velocity[iD]), uiL::celerity()[iQ][iD]);
         });
 
 
@@ -158,7 +157,6 @@ namespace lbm {
     }
 
   };
-
 
   typedef Equilibrium<dataT, latticeT, equilibriumT> Equilibrium_;
 

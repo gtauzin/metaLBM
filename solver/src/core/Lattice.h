@@ -300,8 +300,8 @@ namespace lbm {
     }
   };
 
-
-    typedef Lattice<dataT, latticeT> L;
+  typedef Lattice<dataT, latticeT> L;
+  typedef Lattice<unsigned int, latticeT> uiL;
 
 }
 

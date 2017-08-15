@@ -1,13 +1,8 @@
-#define NTHREADS 1
-#define NPROCS 1
-
 #include <mpi.h>
 #include <iostream>
 #include <string>
-#include <fstream>
-#include <sstream>
 
-#include "Algorithm.h"
+#include "Routine.h"
 #include "MathVector.h"
 
 using namespace lbm;
@@ -25,10 +20,10 @@ int main(int argc, char* argv[]) {
   char hostname[MPI_MAX_PROCESSOR_NAME];
   MPI_Get_processor_name(hostname, &hostnameLength);
 
-  Algorithm_ algorithm(rankMPI, sizeMPI,
-                       std::string(hostname));
+  Routine_ routine(rankMPI, sizeMPI,
+                   std::string(hostname));
 
-  algorithm.computeLBM();
+  routine.computeLBM();
 
   MPI_Finalize();
 

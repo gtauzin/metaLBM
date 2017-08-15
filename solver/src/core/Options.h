@@ -12,7 +12,7 @@ namespace lbm {
 
   enum class DomainType {Generic, Global, Local, Halo, BufferX};
 
-  // enum class AlgorithmType {Generic, FusedPull, Pull, FusedPush, Push};
+  enum class AlgorithmType {Generic, Pull, Push};
 
   enum class InitDensityType{Homogeneous, Peak};
   enum class InitVelocityType{Homogeneous, Perturbated, Wave, Decay};

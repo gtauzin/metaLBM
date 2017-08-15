@@ -4,8 +4,8 @@
 #include <omp.h>
 
 #include "Options.h"
-#include "Domain.h"
 #include "Commons.h"
+#include "Domain.h"
 #include "MathVector.h"
 #include "Helpers.h"
 #include "Equilibrium.h"
@@ -27,7 +27,6 @@ namespace lbm {
     ForcingScheme_ forcingScheme;
     Equilibrium_ equilibrium;
 
-  public:
     Collision(const T tau_in,
               const MathVector<T, 3>& amplitude_in,
               const MathVector<T, 3>& waveLength_in)
@@ -38,6 +37,8 @@ namespace lbm {
       , equilibrium()
     {}
 
+
+  public:
     #pragma omp declare simd
     inline void setForce(const MathVector<unsigned int, 3>& iP_global) {
       force.setForce(iP_global);
@@ -54,31 +55,22 @@ namespace lbm {
     }
 
     #pragma omp declare simd
-    inline T postDistribution(const T * __restrict__ f,
+    inline T postDistribution(const T * RESTRICT f,
                               const MathVector<unsigned int, 3>& iP,
                               const unsigned int iQ) {
-
-      // std::cout << "force: "
-      //           << force.getForce()
-      //           << ", collision source: "
-      //           << forcingScheme.getCollisionSource(force.getForce(), iQ)
-      //           << std::endl;
-           return ( (T) 1.0 - (T) 1.0 / tau) * f[hD::getIndex(iP, iQ)]
+      return ( (T) 1.0 - (T) 1.0 / tau) * f[hD::getIndex(iP, iQ)]
         + forcingScheme.getCollisionSource(force.getForce(), iQ)
         + (T) 1.0 / tau * equilibrium.compute(iQ);
     }
 
     #pragma omp declare simd
-    inline void setVariables(const T * __restrict__ f,
+    inline void setVariables(const T * RESTRICT f,
                              const MathVector<unsigned int, 3>& iP,
                              const T density, const MathVector<T, L::dimD>& velocity) {
       forcingScheme.setVariables(getForce(), density, velocity);
       equilibrium.setVariables(density,
                                forcingScheme.getEquilibriumVelocity(getForce()));
     }
-
-
-
   };
 
 
@@ -94,12 +86,11 @@ namespace lbm {
     T alpha;
 
   public:
-    using Collision<T, CollisionType::GenericSRT>::Collision;
-
-
-    Collision(const T tau_in)
-      : Collision<T, CollisionType::GenericSRT>(tau_in)
-      , alpha( (T) 2.0)
+Collision(const T tau_in,
+          const MathVector<T, 3>& amplitude_in,
+          const MathVector<T, 3>& waveLength_in)
+  : Collision<T, CollisionType::GenericSRT>(tau_in, amplitude_in, waveLength_in)
+  , alpha( (T) 2)
     {}
 
     using Collision<T, CollisionType::GenericSRT>::setVariables;
@@ -131,16 +122,16 @@ namespace lbm {
     using Collision<T, CollisionType::BGK>::setForce;
 
     #pragma omp declare simd
-    inline void setVariables(const T * __restrict__ f,
+    inline void setVariables(const T * RESTRICT f,
                              const MathVector<unsigned int, 3>& iP,
                              const T density,
                              const MathVector<T, L::dimD>& velocity) {
       Collision<T, CollisionType::BGK>::setVariables(f, iP, density, velocity);
 
       UnrolledFor<0, L::dimQ>::Do([&] (unsigned int iQ) {
-          f_Forced[iQ] = f[hD::getIndex(iP-projectionI(L::celerity()[iQ]), iQ)]
+          f_Forced[iQ] = f[hD::getIndex(iP-uiL::celerity()[iQ], iQ)]
             + forcingScheme.getCollisionSource(getForce(), iQ);
-          f_NonEq[iQ] = f[hD::getIndex(iP-projectionI(L::celerity()[iQ]), iQ)]
+          f_NonEq[iQ] = f[hD::getIndex(iP-uiL::celerity()[iQ], iQ)]
             - equilibrium.compute(iQ);
       });
 
@@ -264,7 +255,6 @@ namespace lbm {
     using Collision<T, CollisionType::ELBM>::getAlpha;
 
   private:
-    using Collision<T, CollisionType::ELBM>::Collision;
     using Collision<T, CollisionType::ELBM>::tau;
     using Collision<T, CollisionType::ELBM>::alpha;
     using Collision<T, CollisionType::ELBM>::forcingScheme;
@@ -331,8 +321,6 @@ namespace lbm {
   class Collision<T, CollisionType::ForcedNR_ELBM>
     : public Collision<T, CollisionType::ELBM> {
   public:
-    using Collision<T, CollisionType::ELBM>::Collision;
-
     using Collision<T, CollisionType::ELBM>::setForce;
     using Collision<T, CollisionType::ELBM>::setVariables;
 

@@ -1,19 +1,19 @@
 #ifndef BOUNDARY_H
 #define BOUNDARY_H
 
-#include "Input.h"
 #include "Options.h"
+#include "Commons.h"
 #include "Domain.h"
 #include "MathVector.h"
 #include "StaticArray.h"
 
 namespace lbm {
 
-  template<class T, BoundaryType boundaryType>
+  template<class T, BoundaryType boundaryType, AlgorithmType algorithmType>
   class Boundary{};
 
   template<class T>
-  class Boundary<T, BoundaryType::Periodic> {
+  class Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull> {
   private:
     MathVector<unsigned int, 3> iP_Origin;
     MathVector<unsigned int, 3> iP_Destination;
@@ -74,16 +74,16 @@ namespace lbm {
 
   };
 
-  template<class T>
-  class Boundary<T, BoundaryType::Generic> {
+  template<class T, AlgorithmType algorithmType>
+  class Boundary<T, BoundaryType::Generic, algorithmType> {
 
   public:
     void apply() {}
   };
 
-  template<class T>
-  class Boundary<T, BoundaryType::BounceBack_Halfway>
-    : public Boundary<T, BoundaryType::Generic> {
+  template<class T, AlgorithmType algorithmType>
+  class Boundary<T, BoundaryType::BounceBack_Halfway, algorithmType>
+    : public Boundary<T, BoundaryType::Generic, algorithmType> {
   protected:
 
   public:
@@ -91,9 +91,9 @@ namespace lbm {
 
   };
 
-  template<class T>
-  class Boundary<T, BoundaryType::Entropic>
-    : public Boundary<T, BoundaryType::Generic> {
+  template<class T, AlgorithmType algorithmType>
+  class Boundary<T, BoundaryType::Entropic, algorithmType>
+    : public Boundary<T, BoundaryType::Generic, algorithmType> {
   protected:
 
   public:
@@ -101,8 +101,7 @@ namespace lbm {
 
   };
 
-
-  typedef Boundary<dataT, boundaryT> Boundary_;
+  typedef Boundary<dataT, boundaryT, algorithmT> Boundary_;
 
 }
 

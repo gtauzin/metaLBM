@@ -23,13 +23,14 @@ namespace lbm {
     MathVector<T, L::dimD> velocity;
     T velocity2;
 
-  public:
   ForcingScheme(const T tau_in)
     : tau(tau_in)
     , density( (T) 0)
     , velocity(MathVector<T, L::dimD>{{ (T) 0}})
     , velocity2(0)
     {}
+
+  public:
 
     inline void setDensity(const T density_in) {
       density = density_in;
@@ -63,7 +64,6 @@ namespace lbm {
     using ForcingScheme<T, ForcingSchemeType::Generic>::velocity2;
 
   public:
-
     using ForcingScheme<T, ForcingSchemeType::Generic>::ForcingScheme;
 
     using ForcingScheme<T, ForcingSchemeType::Generic>::setDensity;
@@ -144,7 +144,6 @@ namespace lbm {
       , deltaVelocity()
     {}
 
-
     using ForcingScheme<T, ForcingSchemeType::Generic>::setDensity;
     using ForcingScheme<T, ForcingSchemeType::Generic>::setVelocity;
 
@@ -172,7 +171,6 @@ namespace lbm {
     }
 
   };
-
 
   typedef ForcingScheme<dataT, forcingSchemeT> ForcingScheme_;
 
