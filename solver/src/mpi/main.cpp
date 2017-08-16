@@ -2,8 +2,8 @@
 #include <iostream>
 #include <string>
 
-#include "Routine.h"
-#include "MathVector.h"
+#include "metaLBM/Routine.h"
+#include "metaLBM/MathVector.h"
 
 using namespace lbm;
 

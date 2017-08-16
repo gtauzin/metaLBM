@@ -1,26 +1,10 @@
-file(GLOB_RECURSE MPI_sources ${PROJECT_SOURCE_DIR}/src/mpi/*.cpp)
-add_executable(lbm ${sources} ${MPI_sources})
+add_custom_target(examples COMMENT "Builds all examples.")
 
-include_directories("${PROJECT_SOURCE_DIR}/src/mpi")
+function(metalbm_add_exec targetName targetFile)
+    add_executable(${targetName} ${targetFile})
+    target_link_libraries(${targetName}
+        PRIVATE metaLBM::metaLBM)
+    add_dependencies(examples ${targetName})
+endfunction()
 
-target_link_libraries(lbm
-  ${MPI_CXX_LIBRARIES}
-  ${Boost_LIBRARIES}
-  ${FFTW_LIBRARIES}
-  )
-
-if(MPI_OMP)
-  target_link_libraries(lbm ${OpenMP_CXX_LIBRARIES})
-endif()
-
-target_compile_features(lbm PRIVATE cxx_range_for)
-
-if(MPI_COMPILE_FLAGS)
-  set_target_properties(lbm PROPERTIES
-    COMPILE_FLAGS "${MPI_COMPILE_FLAGS}")
-endif()
-
-if(MPI_LINK_FLAGS)
-  set_target_properties(lbm PROPERTIES
-    LINK_FLAGS "${MPI_LINK_FLAGS}")
-endif()
+metalbm_add_exec(lbm_mpi main.cpp)
