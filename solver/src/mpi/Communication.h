@@ -5,13 +5,13 @@
 #include <omp.h>
 #include <string>
 
-#include "Options.h"
-#include "Commons.h"
-#include "Lattice.h"
-#include "Domain.h"
-#include "DynamicArray.h"
+#include "metaLBM/Options.h"
+#include "metaLBM/Commons.h"
+#include "metaLBM/Lattice.h"
+#include "metaLBM/Domain.h"
+#include "metaLBM/DynamicArray.h"
+#include "metaLBM/Boundary.h"
 #include "Computation.h"
-#include "Boundary.h"
 
 namespace lbm {
   // TODO: 2D loop defined in Computation.h ? Maybe -- not for now???

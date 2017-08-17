@@ -10,7 +10,7 @@
 #
 # Imported targets
 # ^^^^^^^^^^^^^^^^
-# 
+#
 # ``RapidXML::RapidXML``
 #
 #
@@ -25,34 +25,37 @@
 #
 # Cache variables
 # ^^^^^^^^^^^^^^^
-# 
+#
 # The following Cache variables may also be set:
-# 
+#
 # ``RAPIDXML_ROOT``             - The root directory of RapidXml installation
 #                                 (may also be set as an environment variable)
 #
 
 set(RAPIDXML_INCLUDE_SEARCH_DIRS "")
+
+message(STATUS $ENV{RAPIDXML_ROOT})
+
 if(RAPIDXML_ROOT)
-    list(APPEND RAPIDXML_INCLUDE_SEARCH_DIRS 
-                ${RAPIDXML_ROOT}/include 
+    list(APPEND RAPIDXML_INCLUDE_SEARCH_DIRS
+                ${RAPIDXML_ROOT}/include
                 ${RAPIDXML_ROOT})
-  elseif( $ENV{RAPIDXML_ROOT} )
-      list(APPEND RAPIDXML_INCLUDE_SEARCH_DIRS 
-                  $ENV{RAPIDXML_ROOT}/include 
+elseif(DEFINED ENV{RAPIDXML_ROOT})
+      list(APPEND RAPIDXML_INCLUDE_SEARCH_DIRS
+                  $ENV{RAPIDXML_ROOT}/include
                   $ENV{RAPIDXML_ROOT})
 endif()
 
 set(RAPIDXML_KNOWN_VERSIONS "1.0" "1.1" "1.11" "1.12" "1.13")
 
-set(RAPIDXML_PATH_SUFFIXES) 
+set(RAPIDXML_PATH_SUFFIXES)
 foreach(RAPIDXML_VERSION ${RAPIDXML_KNOWN_VERSIONS})
     list(APPEND RAPIDXML_PATH_SUFFIXES "rapidxml-${RAPIDXML_VERSION}")
 endforeach()
 
 find_path(
     RAPIDXML_INCLUDE_DIRS
-    NAMES         rapidxml.hpp 
+    NAMES         rapidxml.hpp
     HINTS         ${RAPIDXML_INCLUDE_SEARCH_DIRS}
     PATH_SUFFIXES ${RAPIDXML_PATH_SUFFIXES})
 

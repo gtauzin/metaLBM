@@ -9,7 +9,6 @@
 
 namespace lbm {
 
-#pragma omp declare simd
   template <class T>
     struct EntropicStepFunctor : public RootFinderFunctor<T> {
   private:

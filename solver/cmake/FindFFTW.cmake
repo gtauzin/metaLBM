@@ -1,5 +1,5 @@
-f environment variable FFTWDIR is specified, it has same effect as FFTW_ROOT
-if( NOT FFTW_ROOT AND ENV{FFTWDIR} )
+# if environment variable FFTWDIR is specified, it has same effect as FFTW_ROOT
+if( NOT FFTW_ROOT AND DEFINED ENV{FFTWDIR} )
     set( FFTW_ROOT $ENV{FFTWDIR} )
 endif()
 # Check if we can use PkgConfig

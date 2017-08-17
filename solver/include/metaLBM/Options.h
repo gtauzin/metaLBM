@@ -11,6 +11,7 @@ namespace lbm {
   enum class PartitionningType {Generic, OneD, TwoD, ThreeD};
 
   enum class DomainType {Generic, Global, Local, Halo, BufferX};
+  enum class DataLayout {XYZ, ZXY, YZX};
 
   enum class AlgorithmType {Generic, Pull, Push};
 

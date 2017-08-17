@@ -2,6 +2,11 @@
 #include <string>
 #include <unistd.h>
 
+#define NTHREADS 1
+#define NPROCS 1
+#define _SOA
+#define DATA_TYPE double
+
 #include "metaLBM/Routine.h"
 #include "metaLBM/MathVector.h"
 

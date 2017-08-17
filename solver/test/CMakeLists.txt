@@ -1,7 +1,7 @@
 ## Boost
-find_package(Boost QUIET COMPONENTS system filesystem unit_test_framework)
-if(NOT BOOST_FOUND)
-    message(WARNING 
+find_package(Boost REQUIRED COMPONENTS system filesystem unit_test_framework)
+if(NOT Boost_FOUND)
+    message(WARNING
             "Boost was not found; tests will not be available!")
     return()
 endif()
@@ -14,7 +14,7 @@ add_custom_target(tests
 function(metaLBM_add_test targetName targetFile numProcs)
     add_executable(${targetName} ${targetFile})
     target_link_libraries(${targetName}
-            metaLBM::metaLBM
+            metalbm
             Boost::system
             Boost::filesystem
             Boost::unit_test_framework)
