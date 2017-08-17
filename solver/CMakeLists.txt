@@ -1,5 +1,5 @@
 # Project Properties
-cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.9 FATAL_ERROR)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 project(metaLBM VERSION 0.0.1 LANGUAGES CXX)
@@ -30,7 +30,7 @@ if(MPI_CXX_FOUND)
 endif()
 
 find_package(OpenMP)
-if (OpenMP_CXX_FOUND)
+if (NOT OpenMP_CXX_FOUND)
     target_link_libraries(metalbm INTERFACE OpenMP::OpenMP_CXX)
 endif()
 
