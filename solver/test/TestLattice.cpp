@@ -5,7 +5,7 @@
 namespace tt = boost::test_tools;
 
 #define NPROCS 1
-#include "lattice.h"
+#include "Lattice.h"
 
 #include <math.h>
 #include <iostream>

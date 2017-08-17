@@ -94,11 +94,11 @@ set(BOOST_ROOT $ENV{BOOST_ROOT})
 set(BOOST_INCLUDEDIR $ENV{BOOST_INCLUDEDIR})
 set(BOOST_LIBRARYDIR $ENV{BOOST_LIBRARYDIR})
 
-add_definitions(-DBOOST_LOG_DYN_LINK)
-set(Boost_USE_STATIC_LIBS OFF) # enable static linking
-set(Boost_USE_MULTITHREAD ON) # enable multithreading
+#add_definitions(-DBOOST_LOG_DYN_LINK)
+#set(Boost_USE_STATIC_LIBS OFF) # enable static linking
+#set(Boost_USE_MULTITHREAD ON) # enable multithreading
 find_package(Boost REQUIRED)
-find_package(Boost QUIET COMPONENTS log log_setup system chrono thread filesystem unit_test_framework REQUIRED)
+find_package(Boost QUIET COMPONENTS system filesystem unit_test_framework REQUIRED)
 include_directories(${Boost_INCLUDE_DIR})
 
 ## FFTW
