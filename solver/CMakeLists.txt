@@ -30,7 +30,7 @@ if(MPI_CXX_FOUND)
 endif()
 
 find_package(OpenMP)
-if (OpenMP_CXX_FOUND)
+if (NOT OpenMP_CXX_FOUND)
     target_link_libraries(metalbm INTERFACE OpenMP::OpenMP_CXX)
 endif()
 

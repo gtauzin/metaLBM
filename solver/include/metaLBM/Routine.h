@@ -66,6 +66,8 @@ namespace lbm {
     {}
 
     void compute() {
+      SCOREP_INSTRUMENT("Routine<T>::compute")
+
       printInputs();
 
       initializeLocalFields();

@@ -3,7 +3,7 @@
 #include <string>
 
 #define NTHREADS 1
-#define NPROCS 1
+#define NPROCS 2
 #define _SOA
 #define DATA_TYPE double
 
