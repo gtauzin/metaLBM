@@ -38,64 +38,64 @@ namespace lbm {
   }
 
 
-#pragma omp declare simd
   template <class T, int power>
   class Power {
   public:
+#pragma omp declare simd
     static inline T Do(const T arg) {
       return (T) pow(arg, power);
     }
   };
 
-#pragma omp declare simd
   template <class T>
   class Power<T, 0> {
   public:
+#pragma omp declare simd
     static inline T Do(const T arg) {
       return (T) 1;
     }
   };
 
-#pragma omp declare simd
   template <class T>
   class Power<T, 1> {
   public:
+#pragma omp declare simd
     static inline T Do(const T arg) {
       return (T) arg;
     }
   };
 
-#pragma omp declare simd
   template <class T>
   class Power<T, 2> {
   public:
+#pragma omp declare simd
     static inline T Do(const T arg) {
       return (T) arg*arg;
     }
   };
 
-#pragma omp declare simd
   template <class T>
   class Power<T, 3> {
   public:
+#pragma omp declare simd
     static inline T Do(const T arg) {
       return (T) arg*arg*arg;
     }
   };
 
-#pragma omp declare simd
   template <class T>
   class Power<T, 4> {
   public:
+#pragma omp declare simd
     static inline T Do(const T arg) {
       return (T) arg*arg*arg*arg;
     }
   };
 
-#pragma omp declare simd
   template <class T>
   class Power<T, -1> {
   public:
+#pragma omp declare simd
     static inline T Do(const T arg) {
       return (T) 1.0/arg;
     }

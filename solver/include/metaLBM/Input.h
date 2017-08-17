@@ -8,6 +8,7 @@
 
 namespace lbm {
   typedef DATA_TYPE dataT;
+
   constexpr LatticeType latticeT = LatticeType::D2Q9;
   constexpr int lengthX_g = 32;
   constexpr int lengthY_g = 64;

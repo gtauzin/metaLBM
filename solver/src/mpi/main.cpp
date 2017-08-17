@@ -2,8 +2,13 @@
 #include <iostream>
 #include <string>
 
-#include "Routine.h"
-#include "MathVector.h"
+#define NTHREADS 1
+#define NPROCS 1
+#define _SOA
+#define DATA_TYPE double
+
+#include "metaLBM/Routine.h"
+#include "metaLBM/MathVector.h"
 
 using namespace lbm;
 
