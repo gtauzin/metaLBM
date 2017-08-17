@@ -30,8 +30,6 @@ add_definitions(-D_SOA)
 add_definitions(${DATA_STRUCT})
 add_definitions(-DDATA_TYPE=double)
 add_definitions(${DATA_TYPE})
-add_definitions(-DLOG=)
-add_definitions(${LOG})
 message(STATUS "${NPROCS}")
 
 if(SERIAL)
@@ -98,7 +96,7 @@ add_definitions(-DBOOST_LOG_DYN_LINK)
 set(Boost_USE_STATIC_LIBS OFF) # enable static linking
 set(Boost_USE_MULTITHREAD ON) # enable multithreading
 find_package(Boost REQUIRED)
-find_package(Boost QUIET COMPONENTS log log_setup system chrono thread filesystem unit_test_framework REQUIRED)
+find_package(Boost QUIET COMPONENTS system chrono thread filesystem unit_test_framework REQUIRED)
 include_directories(${Boost_INCLUDE_DIR})
 
 ## FFTW

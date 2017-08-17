@@ -31,7 +31,6 @@ namespace lbm {
     {}
 
   public:
-
     inline void setDensity(const T density_in) {
       density = density_in;
     }
@@ -118,7 +117,6 @@ namespace lbm {
 #pragma omp declare simd
     inline T getCollisionSource(const MathVector<T, L::dimD>& force,
                                 const unsigned int iQ) const {
-
       return 0.0;
     }
   };

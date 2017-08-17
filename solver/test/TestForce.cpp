@@ -20,11 +20,12 @@ BOOST_AUTO_TEST_SUITE(TestForce)
 BOOST_AUTO_TEST_CASE(TestConstant) {
   constexpr ForceType forceType = ForceType::Constant;
   constexpr MathVector<valueType, 3> amplitude{{(valueType) 1}};
-  constexpr MathVector<int, 3> iP{{1}};
+  constexpr MathVector<unsigned int, 3> iP{{1}};
 
-  Force<valueType, forceType> force(amplitude);
+  Force<valueType, forceType> force(amplitude, amplitude);
+  force.setForce(iP);
 
-  BOOST_TEST(force.force(iP)[d::X] == (valueType) 1,
+  BOOST_TEST(force.getForce()[d::X] == (valueType) 1,
              tt::tolerance(1e-15));
 }
 

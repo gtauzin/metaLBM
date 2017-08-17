@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
   Routine_ routine(rankMPI, sizeMPI,
                    std::string(hostname));
 
-  routine.computeLBM();
+  routine.compute();
 
   return 0;
 }
