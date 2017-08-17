@@ -1,17 +1,8 @@
 ## Boost
-set(BOOST_ROOT $ENV{BOOST_ROOT})
-set(BOOST_INCLUDEDIR $ENV{BOOST_INCLUDEDIR})
-set(BOOST_LIBRARYDIR $ENV{BOOST_LIBRARYDIR})
-
-# TODO: BOOST put in tests directory
-#add_definitions(-DBOOST_LOG_DYN_LINK)
-#set(Boost_USE_STATIC_LIBS OFF) # enable static linking
-#set(Boost_USE_MULTITHREAD ON) # enable multithreading
-
-find_package(Boost QUIET COMPONENTS system filesystem unit_test_framework REQUIRED)
+find_package(Boost QUIET COMPONENTS system filesystem unit_test_framework)
 if(NOT BOOST_FOUND)
     message(WARNING 
-            "Boost was not found; tests will not be available")
+            "Boost was not found; tests will not be available!")
     return()
 endif()
 

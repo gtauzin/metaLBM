@@ -34,10 +34,7 @@ if (OpenMP_CXX_FOUND)
     target_link_libraries(metalbm INTERFACE OpenMP::OpenMP_CXX)
 endif()
 
-#find_package(FFTW) # TODO: FFTW no FOUND_LIBRARY
-#if(FFTW_FOUND) 
-    # TODO
-#endif()
+#find_package(FFTW) # TODO: 
 
 # Build Targets
 enable_testing()

@@ -1,19 +1,67 @@
-# - Try to find RapidXML
-# Once done this will define
-#  RAPIDXML_FOUND - System has RapidXML
-#  RapidXML_INCLUDE_DIR - The RapidXML include directories
+# Copyright Teodor Nikolov 2017
+# Distributed under the MIT License (MIT)
 
-find_path(RapidXML_INCLUDE_DIR rapidxml.hpp PATH_SUFFIXES rapidxml)
+# .rst:
+# FindRapidXML
+# ------------
+#
+# Locate the XML parsing library RapidXml
+#
+#
+# Imported targets
+# ^^^^^^^^^^^^^^^^
+# 
+# ``RapidXML::RapidXML``
+#
+#
+# Result variables
+# ^^^^^^^^^^^^^^^^
+#
+# This module will set the following variables in your project:
+#
+# ``RAPIDXML_FOUND``            - Found the RapidXml library
+# ``RAPIDXML_INCLUDE_DIRS``     - RapidXML include directories
+#
+#
+# Cache variables
+# ^^^^^^^^^^^^^^^
+# 
+# The following Cache variables may also be set:
+# 
+# ``RAPIDXML_ROOT``             - The root directory of RapidXml installation
+#                                 (may also be set as an environment variable)
+#
+
+set(RAPIDXML_INCLUDE_SEARCH_DIRS "")
+if(RAPIDXML_ROOT)
+    list(APPEND RAPIDXML_INCLUDE_SEARCH_DIRS 
+                ${RAPIDXML_ROOT}/include 
+                ${RAPIDXML_ROOT})
+  elseif( $ENV{RAPIDXML_ROOT} )
+      list(APPEND RAPIDXML_INCLUDE_SEARCH_DIRS 
+                  $ENV{RAPIDXML_ROOT}/include 
+                  $ENV{RAPIDXML_ROOT})
+endif()
+
+set(RAPIDXML_KNOWN_VERSIONS "1.0" "1.1" "1.11" "1.12" "1.13")
+
+set(RAPIDXML_PATH_SUFFIXES) 
+foreach(RAPIDXML_VERSION ${RAPIDXML_KNOWN_VERSIONS})
+    list(APPEND RAPIDXML_PATH_SUFFIXES "rapidxml-${RAPIDXML_VERSION}")
+endforeach()
+
+find_path(
+    RAPIDXML_INCLUDE_DIRS
+    NAMES         rapidxml.hpp 
+    HINTS         ${RAPIDXML_INCLUDE_SEARCH_DIRS}
+    PATH_SUFFIXES ${RAPIDXML_PATH_SUFFIXES})
 
 include(FindPackageHandleStandardArgs)
-# handle the QUIETLY and REQUIRED arguments and set RAPIDXML_FOUND to TRUE
-# if all listed variables are TRUE
-find_package_handle_standard_args(RapidXML DEFAULT_MSG RapidXML_INCLUDE_DIR)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(RapidXML DEFAULT_MSG RAPIDXML_INCLUDE_DIRS)
 
-mark_as_advanced(RapidXML_INCLUDE_DIR)
+mark_as_advanced(RAPIDXML_INCLUDE_DIRS)
 
 if(RAPIDXML_FOUND)
-    # provide import target:
 	 add_library(RapidXML::RapidXML INTERFACE IMPORTED)
-	 set_target_properties(RapidXML::RapidXML PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${RapidXML_INCLUDE_DIR})
+     set_target_properties(RapidXML::RapidXML PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${RAPIDXML_INCLUDE_DIRS})
 endif()
