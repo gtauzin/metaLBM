@@ -2,8 +2,7 @@
 #define OPTIONS_H
 
 namespace lbm {
-  //enum d {X, Y, Z};
-  enum d {Z, X, Y};
+  enum d {X, Y, Z};
 
   enum class LatticeType {Generic, D1Q3, D2Q5, D2Q9, D3Q15, D3Q19, D3Q27};
 
@@ -12,6 +11,7 @@ namespace lbm {
   enum class PartitionningType {Generic, OneD, TwoD, ThreeD};
 
   enum class DomainType {Generic, Global, Local, Halo, BufferX};
+  enum class DataLayout {XYZ, ZXY, YZX};
 
   enum class AlgorithmType {Generic, Pull, Push};
 

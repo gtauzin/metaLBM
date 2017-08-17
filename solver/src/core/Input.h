@@ -4,7 +4,6 @@
 #include <string>
 
 #include "Options.h"
-#include "StaticArray.h"
 #include "MathVector.h"
 
 namespace lbm {

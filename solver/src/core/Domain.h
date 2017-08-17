@@ -25,6 +25,46 @@ namespace lbm {
   struct Domain {};
 
   template <unsigned int NumberComponents>
+  struct Domain<DomainType::Generic, PartitionningType::Generic,
+                MemoryLayout::Generic, NumberComponents> {
+  public:
+    static inline constexpr MathVector<unsigned int, 3> start() {
+      return MathVector<unsigned int, 3>{0, 0, 0};
+    }
+
+    static inline constexpr MathVector<unsigned int, 3> end() {
+      return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l);
+    }
+
+    static inline constexpr MathVector<unsigned int, 3> length() {
+      return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l);
+    }
+
+    static inline constexpr unsigned int volume() {
+      return length()[d::X]*length()[d::Y]*length()[d::Z];
+    }
+
+    static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP) {
+      return length()[d::Z] * (length()[d::Y] * iP[d::X] + iP[d::Y]) + iP[d::Z];
+    }
+
+    static inline unsigned int getIndex(const unsigned int index) {
+      return index;
+    }
+
+    static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP,
+                                        const unsigned int iC) {
+      return iC * volume() + getIndex(iP);
+    }
+
+    static inline unsigned int getIndex(const unsigned int index,
+                                        const unsigned int iC) {
+      return iC * volume() + index;
+    }
+
+  };
+
+  template <unsigned int NumberComponents>
   struct Domain<DomainType::Local, PartitionningType::Generic,
                 MemoryLayout::Generic, NumberComponents> {
   public:
