@@ -17,13 +17,14 @@ namespace lbm {
   // TODO: 2D loop defined in Computation.h ? Maybe -- not for now???
 
   template<class T, LatticeType latticeType, AlgorithmType algorithmType,
-           PartitionningType partitionningType, unsigned int Dimension>
+           MemoryLayout memoryLayout, PartitionningType partitionningType,
+           unsigned int Dimension>
   class Communication
   {};
 
   template<class T, LatticeType latticeType, PartitionningType partitionningType>
-  class Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>
+  class Communication<T, latticeType, AlgorithmType::Pull,
+                      MemoryLayout::Generic, partitionningType, 0>
     : public Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull> {
   protected:
     const MathVector<int, 3> rankMPI;
@@ -178,6 +179,94 @@ namespace lbm {
     }
 
   };
+
+
+  template<class T, LatticeType latticeType, PartitionningType partitionningType>
+  class Communication<T, latticeType, AlgorithmType::Pull,
+                      MemoryLayout::AoS, partitionningType, 0>
+    : public Communication<T, latticeType, AlgorithmType::Pull,
+                           MemoryLayout::Generic, partitionningType, 0> {
+  private:
+    using Communication<T, latticeType,
+                        AlgorithmType::Pull, partitionningType, 0>::sendAndReceiveHaloX;
+
+  public:
+    Communication(const MathVector<int, 3>& rankMPI_in,
+                  const MathVector<int, 3>& sizeMPI_in,
+                  const std::string& processorName_in)
+      : Communication<T, latticeType,
+                        AlgorithmType::Pull,
+                      partitionningType, 0>(rankMPI_in, sizeMPI_in,
+                                            processorName_in)
+    {}
+
+    using Communication<T, latticeType,
+                        AlgorithmType::Pull, partitionningType, 0>::printInputs;
+    using Communication<T, latticeType,
+                        AlgorithmType::Pull, partitionningType, 0>::getRankMPI;
+    using Communication<T, latticeType,
+                        AlgorithmType::Pull, partitionningType, 0>::sendGlobalToLocal;
+    using Communication<T, latticeType,
+                        AlgorithmType::Pull, partitionningType, 0>::sendLocalToGlobal;
+    using Communication<T, latticeType,
+                        AlgorithmType::Pull, partitionningType, 0>::reduce;
+
+    inline void periodic(T * __restrict__ f) {
+      sendAndReceiveHaloX(f);
+    }
+
+  };
+
+  template<class T, LatticeType latticeType, PartitionningType partitionningType>
+  class Communication<T, latticeType,
+                        AlgorithmType::Pull, partitionningType, 2>
+    : public Communication<T, latticeType,
+                        AlgorithmType::Pull, partitionningType, 0> {
+  private:
+    using Communication<T, latticeType,
+                        AlgorithmType::Pull, partitionningType, 0>::sendAndReceiveHaloX;
+    using Communication<T, latticeType,
+                        AlgorithmType::Pull, partitionningType, 0>::applyY;
+
+  public:
+    Communication(const MathVector<int, 3>& rankMPI_in,
+                  const MathVector<int, 3>& sizeMPI_in,
+                  const std::string& processorName_in)
+      : Communication<T, latticeType,
+                        AlgorithmType::Pull,
+                      partitionningType, 0>(rankMPI_in, sizeMPI_in,
+                                            processorName_in)
+    {}
+
+    using Communication<T, latticeType,
+                        AlgorithmType::Pull, partitionningType, 0>::printInputs;
+    using Communication<T, latticeType,
+                        AlgorithmType::Pull, partitionningType, 0>::getRankMPI;
+    using Communication<T, latticeType,
+                        AlgorithmType::Pull, partitionningType, 0>::sendGlobalToLocal;
+    using Communication<T, latticeType,
+                        AlgorithmType::Pull, partitionningType, 0>::sendLocalToGlobal;
+    using Communication<T, latticeType,
+                        AlgorithmType::Pull, partitionningType, 0>::reduce;
+
+    inline void periodic(T * __restrict__ f) {
+      sendAndReceiveHaloX(f);
+
+      MathVector<unsigned int, 3> iP;
+
+#pragma omp parallel for schedule(static) num_threads(NTHREADS)
+      for (unsigned int iZ = hD::start()[d::Z]; iZ < hD::end()[d::Z]; ++iZ) {
+#pragma omp simd
+        for (unsigned int iX = hD::start()[d::X]; iX < hD::end()[d::X]; ++iX) {
+          iP = MathVector<unsigned int, 3>({iX, 0, iZ});
+          applyY(f, iP);
+        }
+      }
+
+    }
+
+  };
+
 
 
   template<class T, LatticeType latticeType, PartitionningType partitionningType>
