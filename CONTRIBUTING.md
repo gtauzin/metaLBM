@@ -22,5 +22,5 @@ Contributions are much appreciated. The project follows the standard
 
 - Indent using 4 spaces.
 - No trailing white spaces at the end of lines and no more than a single newline at the end of source file.
-- Standard library `#include`s go first then a blank line followed by Asynchronator's headers.
+- Standard library `#include`s go first then a blank line followed by metaLBM's headers.
 - Use your judgement but try to stick to the style of the surrounding code ([camelCase](https://en.wikipedia.org/wiki/Camel_case)).
