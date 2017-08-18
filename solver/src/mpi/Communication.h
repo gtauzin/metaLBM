@@ -59,34 +59,6 @@ namespace lbm {
     using Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull>::applyY;
     using Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull>::applyZ;
 
-  public:
-    void printInputs() {
-      std::cout << "MPI #" << rankMPI[d::X] << " of " << sizeMPI[d::X]
-                << " running on host " << processorName << std::endl
-                << "Right MPI #" << rightXRankMPI
-                << ", left MPI #" << leftXRankMPI << std::endl;
-    }
-
-    MathVector<int, 3> getRankMPI() {
-      return rankMPI;
-    }
-
-    void sendGlobalToLocal(T * __restrict__ globalFieldArray,
-                           T * __restrict__ localFieldArray,
-                           unsigned int numberComponents) {
-      MPI_Scatter(globalFieldArray, numberComponents*lD::volume(), MPI_DOUBLE,
-                  localFieldArray, numberComponents*lD::volume(), MPI_DOUBLE,
-                  0, MPI_COMM_WORLD);
-    }
-
-    void sendLocalToGlobal(T * __restrict__ localFieldArray,
-                           T * __restrict__ globalFieldArray,
-                           unsigned int numberComponents) {
-      MPI_Gather(localFieldArray, numberComponents*lD::volume(), MPI_DOUBLE,
-                 globalFieldArray, numberComponents*lD::volume(), MPI_DOUBLE,
-                 0, MPI_COMM_WORLD);
-    }
-
     void packToSendX(T * __restrict__ haloFieldArray) {
       MathVector<unsigned int, 3> iP_Origin;
       MathVector<unsigned int, 3> iP_Destination;
@@ -140,6 +112,34 @@ namespace lbm {
 
     }
 
+  public:
+    void printInputs() {
+      std::cout << "MPI #" << rankMPI[d::X] << " of " << sizeMPI[d::X]
+                << " running on host " << processorName << std::endl
+                << "Right MPI #" << rightXRankMPI
+                << ", left MPI #" << leftXRankMPI << std::endl;
+    }
+
+    MathVector<int, 3> getRankMPI() {
+      return rankMPI;
+    }
+
+    void sendGlobalToLocal(T * __restrict__ globalFieldArray,
+                           T * __restrict__ localFieldArray,
+                           unsigned int numberComponents) {
+      MPI_Scatter(globalFieldArray, numberComponents*lD::volume(), MPI_DOUBLE,
+                  localFieldArray, numberComponents*lD::volume(), MPI_DOUBLE,
+                  0, MPI_COMM_WORLD);
+    }
+
+    void sendLocalToGlobal(T * __restrict__ localFieldArray,
+                           T * __restrict__ globalFieldArray,
+                           unsigned int numberComponents) {
+      MPI_Gather(localFieldArray, numberComponents*lD::volume(), MPI_DOUBLE,
+                 globalFieldArray, numberComponents*lD::volume(), MPI_DOUBLE,
+                 0, MPI_COMM_WORLD);
+    }
+
     void sendAndReceiveHaloX(T * __restrict__ haloFieldArray) {
       packToSendX(haloFieldArray);
 
@@ -187,204 +187,237 @@ namespace lbm {
     : public Communication<T, latticeType, AlgorithmType::Pull,
                            MemoryLayout::Generic, partitionningType, 0> {
   private:
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::sendAndReceiveHaloX;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, partitionningType, 0>::rightXRankMPI;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, partitionningType, 0>::leftXRankMPI;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, partitionningType, 0>::statusMPI;
 
-  public:
-    Communication(const MathVector<int, 3>& rankMPI_in,
-                  const MathVector<int, 3>& sizeMPI_in,
-                  const std::string& processorName_in)
-      : Communication<T, latticeType,
-                        AlgorithmType::Pull,
-                      partitionningType, 0>(rankMPI_in, sizeMPI_in,
-                                            processorName_in)
-    {}
+  protected:
+    void sendAndReceiveHaloX(T * __restrict__ haloFieldArray) {
+      MPI_Sendrecv(haloFieldArray+L::dimQ, L::dimQ*hD::volume()/hD::length[d::X],
+                   MPI_DOUBLE, rightXRankMPI, 17,
+                   haloFieldArray+L::dimQ, L::dimQ*hD::volume()/hD::length[d::X],
+                   MPI_DOUBLE, leftXRankMPI, 17,
+                   MPI_COMM_WORLD, &statusMPI);
 
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::printInputs;
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::getRankMPI;
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::sendGlobalToLocal;
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::sendLocalToGlobal;
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::reduce;
-
-    inline void periodic(T * __restrict__ f) {
-      sendAndReceiveHaloX(f);
+      MPI_Sendrecv(haloFieldArray+L::dimQ, L::dimQ*hD::volume()/hD::length[d::X],
+                   MPI_DOUBLE, leftXRankMPI, 23,
+                   haloFieldArray+L::dimQ, L::dimQ*hD::volume()/hD::length[d::X],
+                   MPI_DOUBLE, rightXRankMPI, 23,
+                   MPI_COMM_WORLD, &statusMPI);
     }
 
-  };
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, partitionningType, 0>::applyY;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, partitionningType, 0>::applyZ;
 
-  template<class T, LatticeType latticeType, PartitionningType partitionningType>
-  class Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 2>
-    : public Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0> {
-  private:
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::sendAndReceiveHaloX;
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::applyY;
-
-  public:
-    Communication(const MathVector<int, 3>& rankMPI_in,
-                  const MathVector<int, 3>& sizeMPI_in,
-                  const std::string& processorName_in)
-      : Communication<T, latticeType,
-                        AlgorithmType::Pull,
-                      partitionningType, 0>(rankMPI_in, sizeMPI_in,
-                                            processorName_in)
-    {}
-
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::printInputs;
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::getRankMPI;
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::sendGlobalToLocal;
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::sendLocalToGlobal;
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::reduce;
-
-    inline void periodic(T * __restrict__ f) {
-      sendAndReceiveHaloX(f);
-
-      MathVector<unsigned int, 3> iP;
-
-#pragma omp parallel for schedule(static) num_threads(NTHREADS)
-      for (unsigned int iZ = hD::start()[d::Z]; iZ < hD::end()[d::Z]; ++iZ) {
-#pragma omp simd
-        for (unsigned int iX = hD::start()[d::X]; iX < hD::end()[d::X]; ++iX) {
-          iP = MathVector<unsigned int, 3>({iX, 0, iZ});
-          applyY(f, iP);
-        }
-      }
-
-    }
-
-  };
-
-
-
-  template<class T, LatticeType latticeType, PartitionningType partitionningType>
-  class Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 1>
-    : public Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0> {
-  private:
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::sendAndReceiveHaloX;
-
-  public:
-    Communication(const MathVector<int, 3>& rankMPI_in,
-                  const MathVector<int, 3>& sizeMPI_in,
-                  const std::string& processorName_in)
-      : Communication<T, latticeType,
-                        AlgorithmType::Pull,
-                      partitionningType, 0>(rankMPI_in, sizeMPI_in,
-                                            processorName_in)
-    {}
-
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::printInputs;
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::getRankMPI;
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::sendGlobalToLocal;
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::sendLocalToGlobal;
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::reduce;
-
-    inline void periodic(T * __restrict__ f) {
-      sendAndReceiveHaloX(f);
-    }
-
-  };
-
-  template<class T, LatticeType latticeType, PartitionningType partitionningType>
-  class Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 2>
-    : public Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0> {
-  private:
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::sendAndReceiveHaloX;
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::applyY;
-
-  public:
-    Communication(const MathVector<int, 3>& rankMPI_in,
-                  const MathVector<int, 3>& sizeMPI_in,
-                  const std::string& processorName_in)
-      : Communication<T, latticeType,
-                        AlgorithmType::Pull,
-                      partitionningType, 0>(rankMPI_in, sizeMPI_in,
-                                            processorName_in)
-    {}
-
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::printInputs;
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::getRankMPI;
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::sendGlobalToLocal;
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::sendLocalToGlobal;
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::reduce;
-
-    inline void periodic(T * __restrict__ f) {
-      sendAndReceiveHaloX(f);
-
-      MathVector<unsigned int, 3> iP;
-
-#pragma omp parallel for schedule(static) num_threads(NTHREADS)
-      for (unsigned int iZ = hD::start()[d::Z]; iZ < hD::end()[d::Z]; ++iZ) {
-#pragma omp simd
-        for (unsigned int iX = hD::start()[d::X]; iX < hD::end()[d::X]; ++iX) {
-          iP = MathVector<unsigned int, 3>({iX, 0, iZ});
-          applyY(f, iP);
-        }
-      }
-
-    }
-
-  };
-
-  template<class T, LatticeType latticeType, PartitionningType partitionningType>
-    class Communication<T, latticeType, AlgorithmType::Pull, partitionningType, 3>
-    : public Communication<T, latticeType, AlgorithmType::Pull, partitionningType, 0> {
-  private:
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::sendAndReceiveHaloX;
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::applyY;
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::applyZ;
 
   public:
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
                   const std::string& processorName_in)
       : Communication<T, latticeType, AlgorithmType::Pull,
-                      partitionningType, 0>(rankMPI_in, sizeMPI_in,
-                                            processorName_in)
+                      MemoryLayout::Generic, partitionningType, 0>(rankMPI_in, sizeMPI_in,
+                                                                   processorName_in)
     {}
 
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::printInputs;
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::getRankMP;
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::sendGlobalToLocal;
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::sendLocalToGlobal;
-    using Communication<T, latticeType,
-                        AlgorithmType::Pull, partitionningType, 0>::reduce;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, partitionningType, 0>::printInputs;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, partitionningType, 0>::getRankMPI;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, partitionningType, 0>::sendGlobalToLocal;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, partitionningType, 0>::sendLocalToGlobal;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, partitionningType, 0>::reduce;
+
+  };
+
+
+  template<class T, LatticeType latticeType, PartitionningType partitionningType>
+  class Communication<T, latticeType, AlgorithmType::Pull,
+                      MemoryLayout::SoA, partitionningType, 0>
+    : public Communication<T, latticeType, AlgorithmType::Pull,
+                           MemoryLayout::Generic, partitionningType, 0> {
+  private:
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, partitionningType, 0>::rightXRankMPI;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, partitionningType, 0>::leftXRankMPI;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, partitionningType, 0>::statusMPI;
+
+  protected:
+    void sendAndReceiveHaloX(T * __restrict__ haloFieldArray) {
+      UnrolledFor<0, L::dimQ>::Do([&] (unsigned int iQ) {
+          MPI_Sendrecv(haloFieldArray+, L::dimQ*hD::volume()/hD::length[d::X],
+                       MPI_DOUBLE, rightXRankMPI, 17,
+                       haloFieldArray+, L::dimQ*hD::volume()/hD::length[d::X],
+                       MPI_DOUBLE, leftXRankMPI, 17,
+                       MPI_COMM_WORLD, &statusMPI);
+          MPI_Sendrecv(haloFieldArray+, L::dimQ*hD::volume()/hD::length[d::X],
+                       MPI_DOUBLE, leftXRankMPI, 23,
+                       haloFieldArray+, L::dimQ*hD::volume()/hD::length[d::X],
+                       MPI_DOUBLE, rightXRankMPI, 23,
+                       MPI_COMM_WORLD, &statusMPI);
+      });
+    }
+
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, partitionningType, 0>::applyY;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, partitionningType, 0>::applyZ;
+
+  public:
+    Communication(const MathVector<int, 3>& rankMPI_in,
+                  const MathVector<int, 3>& sizeMPI_in,
+                  const std::string& processorName_in)
+      : Communication<T, latticeType, AlgorithmType::Pull,
+                      MemoryLayout::Generic, partitionningType, 0>(rankMPI_in, sizeMPI_in,
+                                                                   processorName_in)
+    {}
+
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, partitionningType, 0>::printInputs;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, partitionningType, 0>::getRankMPI;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, partitionningType, 0>::sendGlobalToLocal;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, partitionningType, 0>::sendLocalToGlobal;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, partitionningType, 0>::reduce;
+
+    inline void periodic(T * __restrict__ f) {
+      sendAndReceiveHaloX(f);
+    }
+
+  };
+
+
+  template<class T, LatticeType latticeType,
+           MemoryLayout memoryLayout, PartitionningType partitionningType>
+  class Communication<T, latticeType, AlgorithmType::Pull,
+                      memoryLayout, partitionningType, 1>
+    : public Communication<T, latticeType, AlgorithmType::Pull,
+                           memoryLayout, partitionningType, 0> {
+  private:
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                           memoryLayout, partitionningType, 0>::sendAndReceiveHaloX;
+
+  public:
+    Communication(const MathVector<int, 3>& rankMPI_in,
+                  const MathVector<int, 3>& sizeMPI_in,
+                  const std::string& processorName_in)
+      : Communication<T, latticeType, AlgorithmType::Pull,
+                      memoryLayout, partitionningType, 0>(rankMPI_in, sizeMPI_in,
+                                                          processorName_in)
+    {}
+
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                           memoryLayout, partitionningType, 0>::printInputs;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                           memoryLayout, partitionningType, 0>::getRankMPI;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                           memoryLayout, partitionningType, 0>::sendGlobalToLocal;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                           memoryLayout, partitionningType, 0>::sendLocalToGlobal;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                           memoryLayout, partitionningType, 0>::reduce;
+
+    inline void periodic(T * __restrict__ f) {
+      sendAndReceiveHaloX(f);
+    }
+
+  };
+
+  template<class T, LatticeType latticeType,
+           MemoryLayout memoryLayout, PartitionningType partitionningType>
+  class Communication<T, latticeType, AlgorithmType::Pull,
+                      memoryLayout, partitionningType, 2>
+    : public Communication<T, latticeType, AlgorithmType::Pull,
+                           memoryLayout, partitionningType, 0> {
+  private:
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                           memoryLayout, partitionningType, 0>::sendAndReceiveHaloX;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                           memoryLayout, partitionningType, 0>::applyY;
+
+  public:
+    Communication(const MathVector<int, 3>& rankMPI_in,
+                  const MathVector<int, 3>& sizeMPI_in,
+                  const std::string& processorName_in)
+      : Communication<T, latticeType, AlgorithmType::Pull,
+                      memoryLayout, partitionningType, 0>(rankMPI_in, sizeMPI_in,
+                                                          processorName_in)
+    {}
+
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                           memoryLayout, partitionningType, 0>::printInputs;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                           memoryLayout, partitionningType, 0>::getRankMPI;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                           memoryLayout, partitionningType, 0>::sendGlobalToLocal;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                           memoryLayout, partitionningType, 0>::sendLocalToGlobal;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                           memoryLayout, partitionningType, 0>::reduce;
+
+    inline void periodic(T * __restrict__ f) {
+      sendAndReceiveHaloX(f);
+
+      MathVector<unsigned int, 3> iP;
+
+#pragma omp parallel for schedule(static) num_threads(NTHREADS)
+      for (unsigned int iZ = hD::start()[d::Z]; iZ < hD::end()[d::Z]; ++iZ) {
+#pragma omp simd
+        for (unsigned int iX = hD::start()[d::X]; iX < hD::end()[d::X]; ++iX) {
+          iP = MathVector<unsigned int, 3>({iX, 0, iZ});
+          applyY(f, iP);
+        }
+      }
+
+    }
+
+  };
+
+  template<class T, LatticeType latticeType,
+           MemoryLayout memoryLayout, PartitionningType partitionningType>
+    class Communication<T, latticeType, AlgorithmType::Pull,
+                        memoryLayout, partitionningType, 3>
+    : public Communication<T, latticeType, AlgorithmType::Pull,
+                           memoryLayout, partitionningType, 0> {
+  private:
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                           memoryLayout, partitionningType, 0>::sendAndReceiveHaloX;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                           memoryLayout, partitionningType, 0>::applyY;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                           memoryLayout, partitionningType, 0>::applyZ;
+
+  public:
+    Communication(const MathVector<int, 3>& rankMPI_in,
+                  const MathVector<int, 3>& sizeMPI_in,
+                  const std::string& processorName_in)
+      : Communication<T, latticeType, AlgorithmType::Pull,
+                      memoryLayout, partitionningType, 0>(rankMPI_in, sizeMPI_in,
+                                                          processorName_in)
+    {}
+
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                           memoryLayout, partitionningType, 0>::printInputs;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                           memoryLayout, partitionningType, 0>::getRankMP;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                           memoryLayout, partitionningType, 0>::sendGlobalToLocal;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                           memoryLayout, partitionningType, 0>::sendLocalToGlobal;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                           memoryLayout, partitionningType, 0>::reduce;
 
     inline void periodic(T * __restrict__ f) {
       sendAndReceiveHaloX(f);
@@ -413,7 +446,8 @@ namespace lbm {
 
   };
 
-  typedef Communication<dataT, latticeT, algorithmT, partitionningT, L::dimD> Communication_;
+  typedef Communication<dataT, latticeT, algorithmT,
+                        memoryL, partitionningT, L::dimD> Communication_;
 }
 
 #endif // COMMUNICATION_H

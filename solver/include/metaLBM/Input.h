@@ -11,7 +11,7 @@ namespace lbm {
 
   constexpr LatticeType latticeT = LatticeType::D2Q9;
   constexpr int lengthX_g = 32;
-  constexpr int lengthY_g = 64;
+  constexpr int lengthY_g = 32;
   constexpr int lengthZ_g = 8;
 
   constexpr MathVector<unsigned int, 3> length_g = {lengthX_g, lengthY_g, lengthZ_g};
@@ -24,9 +24,9 @@ namespace lbm {
   constexpr MemoryLayout memoryL = MemoryLayout::SoA;
 
   constexpr int startIteration = 0;
-  constexpr int endIteration = 10;
-  constexpr int writeStep = 1;
-  constexpr int backupStep = 1;
+  constexpr int endIteration = 50;
+  constexpr int writeStep = 50;
+  constexpr int backupStep = 50;
 
   constexpr dataT relaxationTime = 0.65;
   constexpr CollisionType collisionT = CollisionType::BGK;
@@ -40,8 +40,8 @@ namespace lbm {
   constexpr ForcingSchemeType forcingSchemeT = ForcingSchemeType::ExactDifferenceMethod;
   constexpr ForceType forceT = ForceType::Kolmogorov;
 
-  constexpr MathVector<dataT, 3> forceAmplitude = { {1e-4, 0.0, 0.0} };
-  constexpr MathVector<dataT, 3> forceWaveLength = { {4.0, 0.0, 0.0} };
+  constexpr MathVector<dataT, 3> forceAmplitude = { {1e-5, 0.0, 0.0} };
+  constexpr MathVector<dataT, 3> forceWaveLength = { {8.0, 0.0, 0.0} };
   constexpr int minWavenumber = 0;
   constexpr int maxWavenumber = 0;
 
