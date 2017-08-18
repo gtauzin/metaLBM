@@ -260,8 +260,7 @@ namespace lbm {
               hMLD::start()[d::Y], hMLD::start()[d::Z]}, 0))
       , receivedFromRightBeginX(hMLD::getIndex({L::halo()[d::X]+lD::length()[d::X],
               hMLD::start()[d::Y], hMLD::start()[d::Z]}, 0))
-    {
-      std::cout << "Yeahhhhh AoS rules!" << std::endl;}
+    {}
 
     using Communication<T, latticeType, AlgorithmType::Pull,
                         MemoryLayout::Generic, partitionningType, 0>::printInputs;
@@ -300,16 +299,22 @@ namespace lbm {
   protected:
     void sendAndReceiveHaloX(T * __restrict__ haloFieldArray) {
       UnrolledFor<0, L::dimQ>::Do([&] (unsigned int iQ) {
-          sendToRightBeginX = 0;
-          receivedFromLeftBeginX = 0;
+          sendToRightBeginX = hMLD::getIndex({L::halo()[d::X]+lD::length()[d::X]-1,
+            hMLD::start()[d::Y], hMLD::start()[d::Z]}, iQ);
+          receivedFromLeftBeginX = hMLD::getIndex({0,
+            hMLD::start()[d::Y], hMLD::start()[d::Z]}, iQ);
+
           MPI_Sendrecv(haloFieldArray+sendToRightBeginX, sizeStripeX,
                        MPI_DOUBLE, rightXRankMPI, 17,
                        haloFieldArray+receivedFromLeftBeginX, sizeStripeX,
                        MPI_DOUBLE, leftXRankMPI, 17,
                        MPI_COMM_WORLD, &statusMPI);
 
-          sendToLeftBeginX = 0;
-          receivedFromRightBeginX = 0;
+          sendToLeftBeginX = hMLD::getIndex({L::halo()[d::X],
+            hMLD::start()[d::Y], hMLD::start()[d::Z]}, iQ);
+
+          receivedFromRightBeginX = hMLD::getIndex({L::halo()[d::X]+lD::length()[d::X],
+            hMLD::start()[d::Y], hMLD::start()[d::Z]}, iQ);
           MPI_Sendrecv(haloFieldArray+sendToLeftBeginX, sizeStripeX,
                        MPI_DOUBLE, leftXRankMPI, 23,
                        haloFieldArray+receivedFromRightBeginX, sizeStripeX,

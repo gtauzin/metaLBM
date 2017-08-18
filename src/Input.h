@@ -21,7 +21,7 @@ namespace lbm {
 
   constexpr AlgorithmType algorithmT = AlgorithmType::Pull;
   constexpr PartitionningType partitionningT = PartitionningType::OneD;
-  constexpr MemoryLayout memoryL = MemoryLayout::AoS;
+  constexpr MemoryLayout memoryL = MemoryLayout::SoA;
 
   constexpr int startIteration = 0;
   constexpr int endIteration = 50;
