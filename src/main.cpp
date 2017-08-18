@@ -1,6 +1,6 @@
 #define NTHREADS 1
 #define NPROCS 2
-#define _SOA
+#define _AOS
 #define DATA_TYPE double
 
 #include <mpi.h>

@@ -5,12 +5,12 @@
 #include <omp.h>
 #include <string>
 
-#include "metaLBM/Options.h"
-#include "metaLBM/Commons.h"
-#include "metaLBM/Lattice.h"
-#include "metaLBM/Domain.h"
-#include "metaLBM/DynamicArray.h"
-#include "metaLBM/Boundary.h"
+#include "Options.h"
+#include "Commons.h"
+#include "Lattice.h"
+#include "Domain.h"
+#include "DynamicArray.h"
+#include "Boundary.h"
 #include "Computation.h"
 
 namespace lbm {
@@ -214,9 +214,7 @@ namespace lbm {
             });
         }
       }
-
     }
-
   };
 
 
@@ -227,15 +225,15 @@ namespace lbm {
                            MemoryLayout::Generic, partitionningType, 0> {
   protected:
     void sendAndReceiveHaloX(T * __restrict__ haloFieldArray) {
-      MPI_Sendrecv(haloFieldArray+L::dimQ, L::dimQ*hD::volume()/hD::length()[d::X],
+      MPI_Sendrecv(haloFieldArray+sendToRightBeginX, sizeStripeX,
                    MPI_DOUBLE, rightXRankMPI, 17,
-                   haloFieldArray+L::dimQ, L::dimQ*hD::volume()/hD::length()[d::X],
+                   haloFieldArray+receivedFromLeftBeginX, sizeStripeX,
                    MPI_DOUBLE, leftXRankMPI, 17,
                    MPI_COMM_WORLD, &statusMPI);
 
-      MPI_Sendrecv(haloFieldArray+L::dimQ, L::dimQ*hD::volume()/hD::length()[d::X],
+      MPI_Sendrecv(haloFieldArray+sendToLeftBeginX, sizeStripeX,
                    MPI_DOUBLE, leftXRankMPI, 23,
-                   haloFieldArray+L::dimQ, L::dimQ*hD::volume()/hD::length()[d::X],
+                   haloFieldArray+receivedFromRightBeginX, sizeStripeX,
                    MPI_DOUBLE, rightXRankMPI, 23,
                    MPI_COMM_WORLD, &statusMPI);
     }
@@ -253,7 +251,17 @@ namespace lbm {
       : Communication<T, latticeType, AlgorithmType::Pull,
                       MemoryLayout::Generic, partitionningType, 0>(rankMPI_in, sizeMPI_in,
                                                                    processorName_in)
-    {}
+      , sizeStripeX(L::dimQ*hMLD::volume()*L::halo()[d::X]/hMLD::length()[d::X])
+      , sendToRightBeginX(hMLD::getIndex({L::halo()[d::X]+lD::length()[d::X]-1,
+              hMLD::start()[d::Y], hMLD::start()[d::Z]}, 0))
+      , receivedFromLeftBeginX(hMLD::getIndex({0,
+              hMLD::start()[d::Y], hMLD::start()[d::Z]}, 0))
+      , sendToLeftBeginX(hMLD::getIndex({L::halo()[d::X],
+              hMLD::start()[d::Y], hMLD::start()[d::Z]}, 0))
+      , receivedFromRightBeginX(hMLD::getIndex({L::halo()[d::X]+lD::length()[d::X],
+              hMLD::start()[d::Y], hMLD::start()[d::Z]}, 0))
+    {
+      std::cout << "Yeahhhhh AoS rules!" << std::endl;}
 
     using Communication<T, latticeType, AlgorithmType::Pull,
                         MemoryLayout::Generic, partitionningType, 0>::printInputs;
@@ -273,7 +281,14 @@ namespace lbm {
     using Communication<T, latticeType, AlgorithmType::Pull,
                         MemoryLayout::Generic, partitionningType, 0>::statusMPI;
 
+    typedef Domain<DomainType::Halo, PartitionningType::Generic,
+                   MemoryLayout::AoS, L::dimQ> hMLD;
 
+    unsigned int sizeStripeX;
+    unsigned int sendToRightBeginX;
+    unsigned int receivedFromLeftBeginX;
+    unsigned int sendToLeftBeginX;
+    unsigned int receivedFromRightBeginX;
   };
 
 
@@ -285,14 +300,19 @@ namespace lbm {
   protected:
     void sendAndReceiveHaloX(T * __restrict__ haloFieldArray) {
       UnrolledFor<0, L::dimQ>::Do([&] (unsigned int iQ) {
-          MPI_Sendrecv(haloFieldArray, L::dimQ*hD::volume()/hD::length()[d::X],
+          sendToRightBeginX = 0;
+          receivedFromLeftBeginX = 0;
+          MPI_Sendrecv(haloFieldArray+sendToRightBeginX, sizeStripeX,
                        MPI_DOUBLE, rightXRankMPI, 17,
-                       haloFieldArray, L::dimQ*hD::volume()/hD::length()[d::X],
+                       haloFieldArray+receivedFromLeftBeginX, sizeStripeX,
                        MPI_DOUBLE, leftXRankMPI, 17,
                        MPI_COMM_WORLD, &statusMPI);
-          MPI_Sendrecv(haloFieldArray, L::dimQ*hD::volume()/hD::length()[d::X],
+
+          sendToLeftBeginX = 0;
+          receivedFromRightBeginX = 0;
+          MPI_Sendrecv(haloFieldArray+sendToLeftBeginX, sizeStripeX,
                        MPI_DOUBLE, leftXRankMPI, 23,
-                       haloFieldArray, L::dimQ*hD::volume()/hD::length()[d::X],
+                       haloFieldArray+receivedFromRightBeginX, sizeStripeX,
                        MPI_DOUBLE, rightXRankMPI, 23,
                        MPI_COMM_WORLD, &statusMPI);
         });
@@ -310,6 +330,12 @@ namespace lbm {
       : Communication<T, latticeType, AlgorithmType::Pull,
                       MemoryLayout::Generic, partitionningType, 0>(rankMPI_in, sizeMPI_in,
                                                                    processorName_in)
+      , sizeStripeX(hMLD::volume()/hMLD::length()[d::X])
+      , sendToRightBeginX(0)
+      , receivedFromLeftBeginX(0)
+      , sendToLeftBeginX(0)
+      , receivedFromRightBeginX(0)
+
     {}
 
     using Communication<T, latticeType, AlgorithmType::Pull,
@@ -335,7 +361,14 @@ namespace lbm {
     using Communication<T, latticeType, AlgorithmType::Pull,
                         MemoryLayout::Generic, partitionningType, 0>::statusMPI;
 
+    typedef Domain<DomainType::Halo, PartitionningType::Generic,
+                   MemoryLayout::SoA, L::dimQ> hMLD;
 
+    unsigned int sizeStripeX;
+    unsigned int sendToRightBeginX;
+    unsigned int receivedFromLeftBeginX;
+    unsigned int sendToLeftBeginX;
+    unsigned int receivedFromRightBeginX;
   };
 
 

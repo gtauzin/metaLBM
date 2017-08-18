@@ -3,9 +3,9 @@
 
 #include <omp.h>
 
-#include "metaLBM/Options.h"
-#include "metaLBM/Domain.h"
-#include "metaLBM/MathVector.h"
+#include "Options.h"
+#include "Domain.h"
+#include "MathVector.h"
 
 namespace lbm {
 
