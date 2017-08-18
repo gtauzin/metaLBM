@@ -21,11 +21,11 @@ namespace lbm {
 
   constexpr AlgorithmType algorithmT = AlgorithmType::Pull;
   constexpr PartitionningType partitionningT = PartitionningType::OneD;
-  constexpr MemoryLayout memoryL = MemoryLayout::SoA;
+  constexpr MemoryLayout memoryL = MemoryLayout::AoS;
 
   constexpr int startIteration = 0;
-  constexpr int endIteration = 50;
-  constexpr int writeStep = 1;
+  constexpr int endIteration = 1000;
+  constexpr int writeStep = 100;
   constexpr int backupStep = 50;
 
   constexpr dataT relaxationTime = 0.65;

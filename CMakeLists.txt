@@ -33,9 +33,9 @@ if (NOT OpenMP_CXX_FOUND)
 endif()
 
 if(false)
-  find_package(ScoreP)
+  find_package(Scorep)
   if (SCOREP_FOUND)
-    target_link_libraries(metalbm INTERFACE ScoreP::ScoreP)
+    target_link_libraries(metalbm INTERFACE Scorep::Scorep)
   endif()
 endif()
 

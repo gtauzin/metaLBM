@@ -1,4 +1,4 @@
-#define NTHREADS 1
+#define NTHREADS 2
 #define NPROCS 2
 #define _AOS
 #define DATA_TYPE double

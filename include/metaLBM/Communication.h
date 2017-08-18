@@ -22,6 +22,7 @@ namespace lbm {
   class Communication
   {};
 
+
   template<class T, LatticeType latticeType, PartitionningType partitionningType>
   class Communication<T, latticeType, AlgorithmType::Pull,
                       MemoryLayout::Generic, partitionningType, 0>
@@ -97,8 +98,8 @@ namespace lbm {
 
       return globalSum;
     }
-
   };
+
 
   template<class T, LatticeType latticeType, PartitionningType partitionningType>
   class Communication<T, latticeType, AlgorithmType::Pull,
@@ -129,7 +130,6 @@ namespace lbm {
 
     using Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull>::applyY;
     using Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull>::applyZ;
-
 
   public:
     Communication(const MathVector<int, 3>& rankMPI_in,
@@ -243,7 +243,6 @@ namespace lbm {
     using Communication<T, latticeType, AlgorithmType::Pull,
                         MemoryLayout::Generic, partitionningType, 0>::applyZ;
 
-
   public:
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
@@ -272,6 +271,7 @@ namespace lbm {
                         MemoryLayout::Generic, partitionningType, 0>::sendLocalToGlobal;
     using Communication<T, latticeType, AlgorithmType::Pull,
                         MemoryLayout::Generic, partitionningType, 0>::reduce;
+
   private:
     using Communication<T, latticeType, AlgorithmType::Pull,
                         MemoryLayout::Generic, partitionningType, 0>::rightXRankMPI;
@@ -407,13 +407,11 @@ namespace lbm {
       sendAndReceiveHaloX(f);
     }
 
-
   private:
     using Communication<T, latticeType, AlgorithmType::Pull,
                         memoryLayout, partitionningType, 0>::sendAndReceiveHaloX;
-
-
   };
+
 
   template<class T, LatticeType latticeType,
            MemoryLayout memoryLayout, PartitionningType partitionningType>
@@ -463,6 +461,7 @@ namespace lbm {
     using Communication<T, latticeType, AlgorithmType::Pull,
                         memoryLayout, partitionningType, 0>::applyY;
   };
+
 
   template<class T, LatticeType latticeType,
            MemoryLayout memoryLayout, PartitionningType partitionningType>
@@ -515,7 +514,6 @@ namespace lbm {
 
     }
 
-
   private:
     using Communication<T, latticeType, AlgorithmType::Pull,
                         memoryLayout, partitionningType, 0>::sendAndReceiveHaloX;
@@ -524,6 +522,7 @@ namespace lbm {
     using Communication<T, latticeType, AlgorithmType::Pull,
                         memoryLayout, partitionningType, 0>::applyZ;
   };
+
 
   typedef Communication<dataT, latticeT, algorithmT,
                         memoryL, partitionningT, L::dimD> Communication_;

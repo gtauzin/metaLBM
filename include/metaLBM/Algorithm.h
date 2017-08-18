@@ -150,9 +150,9 @@ namespace lbm {
 
       auto t2 = std::chrono::high_resolution_clock::now();
 
-      dtCommunication = t1 - t0;
-      dtComputation = t2 - t1;
-      dtTotal = t2 - t0;
+      dtCommunication = (t1 - t0);
+      dtComputation = (t2 - t1);
+      dtTotal = (t2 - t0);
     }
 
     using Algorithm<T, AlgorithmType::Generic>::getCommunicationTime;
