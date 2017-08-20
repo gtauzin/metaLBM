@@ -3,6 +3,7 @@
 
 #include <omp.h>
 
+#include "Commons.h"
 #include "Options.h"
 #include "MathVector.h"
 #include "Lattice.h"
@@ -40,12 +41,16 @@ namespace lbm {
 
     inline void setVariables(const T density_in,
                              const MathVector<T, L::dimD> velocity_in) {
+      SCOREP_INSTRUMENT("Equilibrium<T, L, EquilibriumType::Incompressible>::setVariables")
+
       setDensity(density_in);
       setVelocity(velocity_in);
   }
 
     #pragma omp declare simd
-    inline T compute(const unsigned int iQ) const {
+    inline T calculate(const unsigned int iQ) const {
+      SCOREP_INSTRUMENT("Equilibrium<T, latticeType, EquilibriumType::Incompressible>::calculate")
+
       T cu = L::celerity()[iQ].dot(velocity);
 
       T fEq_iQ = 1.0
@@ -78,7 +83,9 @@ namespace lbm {
     using Equilibrium<T, LatticeType::Generic, EquilibriumType::Incompressible>::setVariables;
 
     #pragma omp declare simd
-    inline T compute(const unsigned int iQ) const {
+    inline T calculate(const unsigned int iQ) const {
+      SCOREP_INSTRUMENT("Equilibrium<T, D1Q3, EquilibriumType::Incompressible>::calculate")
+
       T fEq_iQ = 1.0;
 
       UnrolledFor<0, L::dimD>::Do([&] (int iD) {
@@ -109,7 +116,9 @@ namespace lbm {
     using Equilibrium<T, LatticeType::D1Q3, EquilibriumType::Incompressible>::setVariables;
 
     #pragma omp declare simd
-    inline T compute(const unsigned int iQ) const {
+    inline T calculate(const unsigned int iQ) const {
+      SCOREP_INSTRUMENT("Equilibrium<T, D2Q9, EquilibriumType::Incompressible>::calculate")
+
       T fEq_iQ = 1.0;
 
       UnrolledFor<0, L::dimD>::Do([&] (int iD) {
@@ -141,7 +150,8 @@ namespace lbm {
     using Equilibrium<T, LatticeType::D1Q3, EquilibriumType::Incompressible>::setVariables;
 
     #pragma omp declare simd
-    inline T compute(const unsigned int iQ) const {
+    inline T calculate(const unsigned int iQ) const {
+      SCOREP_INSTRUMENT("Equilibrium<T, D3Q27, EquilibriumType::Incompressible>::calculate")
 
       T fEq_iQ = (T) 1;
 

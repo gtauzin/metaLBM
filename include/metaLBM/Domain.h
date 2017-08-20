@@ -2,9 +2,9 @@
 #define DOMAIN_H
 
 #include "Options.h"
-#include "Lattice.h"
-#include "MathVector.h"
 #include "Helpers.h"
+#include "MathVector.h"
+#include "Lattice.h"
 
 namespace lbm {
 

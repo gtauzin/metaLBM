@@ -4,6 +4,8 @@
 #include <memory>
 #include <cmath>
 
+#include "Commons.h"
+
 namespace lbm {
 
   template<int Begin, int End, int Step = 1>

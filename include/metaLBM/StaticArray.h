@@ -1,6 +1,8 @@
 #ifndef STATICARRAY_H
 #define STATICARRAY_H
 
+
+#include "Commons.h"
 #include "Helpers.h"
 
 namespace lbm {

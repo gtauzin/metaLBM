@@ -5,13 +5,14 @@
 
 #include "Options.h"
 #include "Domain.h"
-#include "MathVector.h"
 
 namespace lbm {
 
   struct Computation {
   template<typename Callback>
     static void Do(Callback f) {
+    SCOREP_INSTRUMENT("Computation<Callback>::Do")
+
     MathVector<unsigned int, 3> iP;
       #pragma omp parallel for schedule(static) num_threads(NTHREADS)
       for(unsigned int iZ = lD::start()[d::Z]+L::halo()[d::Z];

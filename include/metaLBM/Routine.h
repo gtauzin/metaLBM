@@ -4,7 +4,9 @@
 #include <chrono>
 #include <omp.h>
 
+#include "Commons.h"
 #include "Options.h"
+#include "MathVector.h"
 #include "Initialize.h"
 #include "Domain.h"
 #include "Field.h"
@@ -130,6 +132,8 @@ namespace lbm {
     }
 
     void initializeLocalFields() {
+      SCOREP_INSTRUMENT("Routine<T>::initializeLocalFields")
+
       communication.sendGlobalToLocal(densityField.globalData(),
                                       densityField.localData(),
                                       densityField.numberComponents);

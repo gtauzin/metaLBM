@@ -15,9 +15,9 @@
 
 #endif
 
-#ifdef SCOREP
+#ifdef PROFILE_SCOREP
 #include <scorep/SCOREP_User.h>
-#define SCOREP_INSTRUMENT(function) SCOREP_USER_REGION(function, SCOREP_USER_REGION_TYPE_FUNCTION)
+#define SCOREP_INSTRUMENT(function) SCOREP_USER_REGION(function,SCOREP_USER_REGION_TYPE_FUNCTION)
 
 #else
 #define SCOREP_INSTRUMENT(function)

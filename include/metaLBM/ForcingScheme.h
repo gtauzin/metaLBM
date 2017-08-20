@@ -4,9 +4,10 @@
 #include <cmath>
 #include <omp.h>
 
-#include "Options.h"
 #include "Commons.h"
+#include "Options.h"
 #include "MathVector.h"
+#include "Lattice.h"
 #include "Equilibrium.h"
 #include "Helpers.h"
 
@@ -41,12 +42,16 @@ namespace lbm {
 
     inline void setVariables(const MathVector<T, L::dimD>& force,
                              const T density_in, const MathVector<T, L::dimD>& velocity_in) {
+      SCOREP_INSTRUMENT("ForcingScheme<T, ForcingSchemeType::Generic>::setVariables")
+
       setDensity(density_in);
       setVelocity(velocity_in);
     }
 
 #pragma omp declare simd
-    inline MathVector<T, L::dimD> getHydrodynamicVelocity(const MathVector<T, L::dimD>& force) const {
+    inline MathVector<T, L::dimD> calculateHydrodynamicVelocity(const MathVector<T, L::dimD>& force) const {
+      SCOREP_INSTRUMENT("ForcingScheme<T, ForcingSchemeType::Generic>::calculateHydrodynamicVelocity")
+
       return velocity + 0.5/density * force;
     }
 
@@ -68,16 +73,20 @@ namespace lbm {
     using ForcingScheme<T, ForcingSchemeType::Generic>::setVelocity;
     using ForcingScheme<T, ForcingSchemeType::Generic>::setVariables;
 
-    using ForcingScheme<T, ForcingSchemeType::Generic>::getVelocityHydroForcing;
+    using ForcingScheme<T, ForcingSchemeType::Generic>::calculateVelocityHydroForcing;
 
 #pragma omp declare simd
-    inline MathVector<T, L::dimD> getEquilibriumVelocity(const MathVector<T, L::dimD>& force) const {
+    inline MathVector<T, L::dimD> calculateEquilibriumVelocity(const MathVector<T, L::dimD>& force) const {
+      SCOREP_INSTRUMENT("ForcingScheme<T, ForcingSchemeType::Guo>::calculateEquilibriumVelocity")
+
       return velocity + 0.5/density * force;
     }
 
 #pragma omp declare simd
-    inline T getCollisionSource(const MathVector<T, L::dimD>& force,
+    inline T calculateCollisionSource(const MathVector<T, L::dimD>& force,
                                 const unsigned int iQ) const {
+      SCOREP_INSTRUMENT("ForcingScheme<T, ForcingSchemeType::Guo>::calculateCollisionSource")
+
       T celerity_iQDotVelocity = L::celerity()[iQ].dot(velocity);
 
       T collisionForcingR = (L::celerity()[iQ] - velocity
@@ -105,17 +114,21 @@ namespace lbm {
     using ForcingScheme<T, ForcingSchemeType::Generic>::setVelocity;
     using ForcingScheme<T, ForcingSchemeType::Generic>::setVariables;
 
-    using ForcingScheme<T, ForcingSchemeType::Generic>::getVelocityHydroForcing;
+    using ForcingScheme<T, ForcingSchemeType::Generic>::calculateVelocityHydroForcing;
 
 #pragma omp declare simd
-    inline MathVector<T, L::dimD> getEquilibriumVelocity(const MathVector<T, L::dimD>& force) const {
+    inline MathVector<T, L::dimD> calculateEquilibriumVelocity(const MathVector<T, L::dimD>& force) const {
+      SCOREP_INSTRUMENT("ForcingScheme<T, ForcingSchemeType::ShanChen>::calculateEquilibriumVelocity")
+
       return velocity + tau/density * force;
     }
 
 
 #pragma omp declare simd
-    inline T getCollisionSource(const MathVector<T, L::dimD>& force,
+    inline T calculateCollisionSource(const MathVector<T, L::dimD>& force,
                                 const unsigned int iQ) const {
+      SCOREP_INSTRUMENT("ForcingScheme<T, ForcingSchemeType::ShanChen>::calculateCollisionSource")
+
       return 0.0;
     }
   };
@@ -146,6 +159,8 @@ namespace lbm {
 
     inline void setVariables(const MathVector<T, L::dimD>& force,
                              const T density_in, const MathVector<T, L::dimD>& velocity_in) {
+      SCOREP_INSTRUMENT("ForcingScheme<T, ForcingSchemeType::ExactDifferenceMethod>::setVariables")
+
       setDensity(density_in);
       setVelocity(velocity_in);
       equilibrium.setVariables(density, velocity);
@@ -155,16 +170,19 @@ namespace lbm {
     }
 
 #pragma omp declare simd
-    inline MathVector<T, L::dimD> getEquilibriumVelocity(const MathVector<T, L::dimD>& force) const {
+    inline MathVector<T, L::dimD> calculateEquilibriumVelocity(const MathVector<T, L::dimD>& force) const {
+      SCOREP_INSTRUMENT("ForcingScheme<T, ForcingSchemeType::ExactDifferenceMethod>::calculateEquilibriumVelocity")
+
       return velocity;
     }
 
 #pragma omp declare simd
-    inline T getCollisionSource(const MathVector<T, L::dimD>& force,
+    inline T calculateCollisionSource(const MathVector<T, L::dimD>& force,
                                 const unsigned int iQ) const {
+      SCOREP_INSTRUMENT("ForcingScheme<T, ForcingSchemeType::ExactDifferenceMethod>::calculateCollisionSource")
 
-      return deltaEquilibrium.compute(iQ)
-          - equilibrium.compute(iQ);
+      return deltaEquilibrium.calculate(iQ)
+          - equilibrium.calculate(iQ);
     }
 
   };

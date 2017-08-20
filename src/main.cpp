@@ -14,6 +14,8 @@
 using namespace lbm;
 
 int main(int argc, char* argv[]) {
+  SCOREP_INSTRUMENT("main")
+
   MPI_Init(&argc, &argv);
 
   MathVector<int, 3> sizeMPI = {1, 1, 1};

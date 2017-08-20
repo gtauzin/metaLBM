@@ -5,11 +5,11 @@
 #include <omp.h>
 #include <string>
 
-#include "Options.h"
 #include "Commons.h"
+#include "Options.h"
+#include "DynamicArray.h"
 #include "Lattice.h"
 #include "Domain.h"
-#include "DynamicArray.h"
 #include "Boundary.h"
 #include "Computation.h"
 
@@ -65,6 +65,8 @@ namespace lbm {
     void sendGlobalToLocal(T * __restrict__ globalFieldArray,
                            T * __restrict__ localFieldArray,
                            unsigned int numberComponents) {
+      SCOREP_INSTRUMENT("Communication<6>::sendGlobalToLocal")
+
       MPI_Scatter(globalFieldArray, numberComponents*lD::volume(), MPI_DOUBLE,
                   localFieldArray, numberComponents*lD::volume(), MPI_DOUBLE,
                   0, MPI_COMM_WORLD);
@@ -73,6 +75,7 @@ namespace lbm {
     void sendLocalToGlobal(T * __restrict__ localFieldArray,
                            T * __restrict__ globalFieldArray,
                            unsigned int numberComponents) {
+      SCOREP_INSTRUMENT("Communication<6>::sendLocalToGlobal")
       MPI_Gather(localFieldArray, numberComponents*lD::volume(), MPI_DOUBLE,
                  globalFieldArray, numberComponents*lD::volume(), MPI_DOUBLE,
                  0, MPI_COMM_WORLD);
@@ -112,6 +115,8 @@ namespace lbm {
     const std::string processorName;
 
     void sendAndReceiveHaloX(T * __restrict__ haloFieldArray) {
+      SCOREP_INSTRUMENT("Communication<5, MemoryLayout::Default>::sendAndReceiveHaloX")
+
       packToSendX(haloFieldArray);
 
       MPI_Sendrecv(sendRightBufferX.data(), L::dimQ*sendRightBufferX.getVolume(),
@@ -220,84 +225,13 @@ namespace lbm {
 
   template<class T, LatticeType latticeType, PartitionningType partitionningType>
   class Communication<T, latticeType, AlgorithmType::Pull,
-                      MemoryLayout::AoS, partitionningType, 0>
-    : public Communication<T, latticeType, AlgorithmType::Pull,
-                           MemoryLayout::Generic, partitionningType, 0> {
-  protected:
-    void sendAndReceiveHaloX(T * __restrict__ haloFieldArray) {
-      MPI_Sendrecv(haloFieldArray+sendToRightBeginX, sizeStripeX,
-                   MPI_DOUBLE, rightXRankMPI, 17,
-                   haloFieldArray+receivedFromLeftBeginX, sizeStripeX,
-                   MPI_DOUBLE, leftXRankMPI, 17,
-                   MPI_COMM_WORLD, &statusMPI);
-
-      MPI_Sendrecv(haloFieldArray+sendToLeftBeginX, sizeStripeX,
-                   MPI_DOUBLE, leftXRankMPI, 23,
-                   haloFieldArray+receivedFromRightBeginX, sizeStripeX,
-                   MPI_DOUBLE, rightXRankMPI, 23,
-                   MPI_COMM_WORLD, &statusMPI);
-    }
-
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, partitionningType, 0>::applyY;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, partitionningType, 0>::applyZ;
-
-  public:
-    Communication(const MathVector<int, 3>& rankMPI_in,
-                  const MathVector<int, 3>& sizeMPI_in,
-                  const std::string& processorName_in)
-      : Communication<T, latticeType, AlgorithmType::Pull,
-                      MemoryLayout::Generic, partitionningType, 0>(rankMPI_in, sizeMPI_in,
-                                                                   processorName_in)
-      , sizeStripeX(L::dimQ*hMLD::volume()*L::halo()[d::X]/hMLD::length()[d::X])
-      , sendToRightBeginX(hMLD::getIndex({L::halo()[d::X]+lD::length()[d::X]-1,
-              hMLD::start()[d::Y], hMLD::start()[d::Z]}, 0))
-      , receivedFromLeftBeginX(hMLD::getIndex({0,
-              hMLD::start()[d::Y], hMLD::start()[d::Z]}, 0))
-      , sendToLeftBeginX(hMLD::getIndex({L::halo()[d::X],
-              hMLD::start()[d::Y], hMLD::start()[d::Z]}, 0))
-      , receivedFromRightBeginX(hMLD::getIndex({L::halo()[d::X]+lD::length()[d::X],
-              hMLD::start()[d::Y], hMLD::start()[d::Z]}, 0))
-    {}
-
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, partitionningType, 0>::printInputs;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, partitionningType, 0>::getRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, partitionningType, 0>::sendGlobalToLocal;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, partitionningType, 0>::sendLocalToGlobal;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, partitionningType, 0>::reduce;
-
-  private:
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, partitionningType, 0>::rightXRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, partitionningType, 0>::leftXRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, partitionningType, 0>::statusMPI;
-
-    typedef Domain<DomainType::Halo, PartitionningType::Generic,
-                   MemoryLayout::AoS, L::dimQ> hMLD;
-
-    unsigned int sizeStripeX;
-    unsigned int sendToRightBeginX;
-    unsigned int receivedFromLeftBeginX;
-    unsigned int sendToLeftBeginX;
-    unsigned int receivedFromRightBeginX;
-  };
-
-
-  template<class T, LatticeType latticeType, PartitionningType partitionningType>
-  class Communication<T, latticeType, AlgorithmType::Pull,
                       MemoryLayout::SoA, partitionningType, 0>
     : public Communication<T, latticeType, AlgorithmType::Pull,
                            MemoryLayout::Generic, partitionningType, 0> {
   protected:
     void sendAndReceiveHaloX(T * __restrict__ haloFieldArray) {
+      SCOREP_INSTRUMENT("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloX")
+
       UnrolledFor<0, L::dimQ>::Do([&] (unsigned int iQ) {
           sendToRightBeginX = hMLD::getIndex({L::halo()[d::X]+lD::length()[d::X]-1,
             hMLD::start()[d::Y], hMLD::start()[d::Z]}, iQ);
@@ -377,6 +311,81 @@ namespace lbm {
   };
 
 
+  template<class T, LatticeType latticeType, PartitionningType partitionningType>
+  class Communication<T, latticeType, AlgorithmType::Pull,
+                      MemoryLayout::AoS, partitionningType, 0>
+    : public Communication<T, latticeType, AlgorithmType::Pull,
+                           MemoryLayout::Generic, partitionningType, 0> {
+  protected:
+    void sendAndReceiveHaloX(T * __restrict__ haloFieldArray) {
+      SCOREP_INSTRUMENT("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloX")
+
+      MPI_Sendrecv(haloFieldArray+sendToRightBeginX, sizeStripeX,
+                   MPI_DOUBLE, rightXRankMPI, 17,
+                   haloFieldArray+receivedFromLeftBeginX, sizeStripeX,
+                   MPI_DOUBLE, leftXRankMPI, 17,
+                   MPI_COMM_WORLD, &statusMPI);
+
+      MPI_Sendrecv(haloFieldArray+sendToLeftBeginX, sizeStripeX,
+                   MPI_DOUBLE, leftXRankMPI, 23,
+                   haloFieldArray+receivedFromRightBeginX, sizeStripeX,
+                   MPI_DOUBLE, rightXRankMPI, 23,
+                   MPI_COMM_WORLD, &statusMPI);
+    }
+
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, partitionningType, 0>::applyY;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, partitionningType, 0>::applyZ;
+
+  public:
+    Communication(const MathVector<int, 3>& rankMPI_in,
+                  const MathVector<int, 3>& sizeMPI_in,
+                  const std::string& processorName_in)
+      : Communication<T, latticeType, AlgorithmType::Pull,
+                      MemoryLayout::Generic, partitionningType, 0>(rankMPI_in, sizeMPI_in,
+                                                                   processorName_in)
+      , sizeStripeX(L::dimQ*hMLD::volume()*L::halo()[d::X]/hMLD::length()[d::X])
+      , sendToRightBeginX(hMLD::getIndex({L::halo()[d::X]+lD::length()[d::X]-1,
+              hMLD::start()[d::Y], hMLD::start()[d::Z]}, 0))
+      , receivedFromLeftBeginX(hMLD::getIndex({0,
+              hMLD::start()[d::Y], hMLD::start()[d::Z]}, 0))
+      , sendToLeftBeginX(hMLD::getIndex({L::halo()[d::X],
+              hMLD::start()[d::Y], hMLD::start()[d::Z]}, 0))
+      , receivedFromRightBeginX(hMLD::getIndex({L::halo()[d::X]+lD::length()[d::X],
+              hMLD::start()[d::Y], hMLD::start()[d::Z]}, 0))
+    {}
+
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, partitionningType, 0>::printInputs;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, partitionningType, 0>::getRankMPI;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, partitionningType, 0>::sendGlobalToLocal;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, partitionningType, 0>::sendLocalToGlobal;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, partitionningType, 0>::reduce;
+
+  private:
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, partitionningType, 0>::rightXRankMPI;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, partitionningType, 0>::leftXRankMPI;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, partitionningType, 0>::statusMPI;
+
+    typedef Domain<DomainType::Halo, PartitionningType::Generic,
+                   MemoryLayout::AoS, L::dimQ> hMLD;
+
+    unsigned int sizeStripeX;
+    unsigned int sendToRightBeginX;
+    unsigned int receivedFromLeftBeginX;
+    unsigned int sendToLeftBeginX;
+    unsigned int receivedFromRightBeginX;
+  };
+
+
   template<class T, LatticeType latticeType,
            MemoryLayout memoryLayout, PartitionningType partitionningType>
   class Communication<T, latticeType, AlgorithmType::Pull,
@@ -404,6 +413,8 @@ namespace lbm {
                         memoryLayout, partitionningType, 0>::reduce;
 
     inline void periodic(T * __restrict__ f) {
+      SCOREP_INSTRUMENT("Communication<6>::periodic")
+
       sendAndReceiveHaloX(f);
     }
 
@@ -440,6 +451,8 @@ namespace lbm {
                         memoryLayout, partitionningType, 0>::reduce;
 
     inline void periodic(T * __restrict__ f) {
+      SCOREP_INSTRUMENT("Communication<6>::periodic")
+
       sendAndReceiveHaloX(f);
 
       MathVector<unsigned int, 3> iP;
@@ -490,6 +503,8 @@ namespace lbm {
                         memoryLayout, partitionningType, 0>::reduce;
 
     inline void periodic(T * __restrict__ f) {
+      SCOREP_INSTRUMENT("Communication<6>::periodic")
+
       sendAndReceiveHaloX(f);
 
       MathVector<unsigned int, 3> iP;

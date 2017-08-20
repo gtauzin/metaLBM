@@ -6,8 +6,8 @@
 #include <rapidxml.hpp>
 #include <rapidxml_utils.hpp>
 
-#include "Options.h"
 #include "Commons.h"
+#include "Options.h"
 #include "MathVector.h"
 #include "Domain.h"
 #include "Field.h"
@@ -50,8 +50,8 @@ namespace lbm {
       // ABORT
       return LocalizedField<T, NumberComponents>("error");
     }
-
   };
+
 
   template <class T, unsigned int NumberComponents>
     class Reader<T, NumberComponents, ReaderType::VTR>
@@ -66,8 +66,10 @@ namespace lbm {
       : Reader<T, NumberComponents,ReaderType::Generic>("outputVTR/", filePrefix_in, ".vtr")
     {}
 
-    inline LocalizedField<T, NumberComponents> readField(const std::string& fieldName,
+    inline LocalizedField<T, NumberComponents> readLocalizedField(const std::string& fieldName,
                                                          const unsigned int iteration) {
+      SCOREP_INSTRUMENT("Reader<T, NumberComponents, ReaderType::VTR>::readLocalizedField")
+
       LocalizedField<T, NumberComponents> fieldR(fieldName, gD::volume());
 
       std::string fileName = getFileName(iteration);

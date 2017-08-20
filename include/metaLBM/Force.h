@@ -4,9 +4,11 @@
 #include <cmath>
 #include <omp.h>
 
+#include "Commons.h"
 #include "Options.h"
 #include "MathVector.h"
 #include "StaticArray.h"
+#include "Lattice.h"
 
 // TODO: Functors
 
@@ -23,6 +25,8 @@ namespace lbm {
     MathVector<T, L::dimD> amplitude;
 
     Force(const MathVector<T, 3>& amplitude_in)
+      : force{(T) 0}
+      , amplitude{(T) 0}
     {
       UnrolledFor<0, L::dimD>::Do([&] (int iD) {
           amplitude[iD] = amplitude_in[iD];
@@ -51,6 +55,8 @@ namespace lbm {
 
     #pragma omp declare simd
     inline void setForce(const MathVector<unsigned int, 3>& iP) {
+      SCOREP_INSTRUMENT("Force<T, EquilibriumType::Constant>::setForce")
+
       force = amplitude;
     }
 
@@ -78,6 +84,8 @@ namespace lbm {
 
     #pragma omp declare simd
     inline void setForce(const MathVector<unsigned int, 3>& iP){
+      SCOREP_INSTRUMENT("Force<T, EquilibriumType::Sinusoidal>::setForce")
+
       UnrolledFor<0, L::dimD>::Do([&] (int iD) {
           force[iD] = amplitude[iD] * sin(iP[iD]*2*M_PI/waveLength[iD]);
       });
@@ -103,6 +111,8 @@ namespace lbm {
 
     #pragma omp declare simd
     inline void setForce(const MathVector<unsigned int, 3>& iP){
+      SCOREP_INSTRUMENT("Force<T, EquilibriumType::Kolmogorov>::setForce")
+
       force[d::X] = amplitude[d::X] * sin(iP[d::Y]*2*M_PI/waveLength[d::X]);
     }
 

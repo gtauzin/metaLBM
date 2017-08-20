@@ -3,8 +3,10 @@
 
 #include <chrono>
 
+#include "Commons.h"
 #include "Options.h"
 #include "Domain.h"
+#include "Lattice.h"
 #include "Field.h"
 #include "Distribution.h"
 #include "Moment.h"
@@ -59,6 +61,8 @@ namespace lbm {
 
     void storeLocalFields(const MathVector<unsigned int, 3>& iP,
                           const unsigned int iteration) {
+      SCOREP_INSTRUMENT("Algorithm<T, AlgorithmType::Pull>::storeLocalFields")
+
       if(iteration%writeStep == 0) {
         const unsigned int indexLocal = hD::getIndexLocal(iP);
 
@@ -121,6 +125,8 @@ namespace lbm {
     {}
 
     void iterate(const unsigned int iteration) {
+      SCOREP_INSTRUMENT("Algorithm<T, AlgorithmType::Pull>::iterate")
+
       f_Previous.swapHalo(f_Next);
 
       //force.update(iteration);
@@ -133,7 +139,9 @@ namespace lbm {
       auto t1 = std::chrono::high_resolution_clock::now();
 
       Computation::Do([&] (MathVector<unsigned int, 3>& iP) {
-          moment.computeMoments(f_Previous.haloData(), iP);
+          SCOREP_INSTRUMENT("Algorithn<T, AlgorithmType::Pull>::lambda[fused_collide_and_push]")
+
+          moment.calculateMoments(f_Previous.haloData(), iP);
 
           collision.setForce(iP+gD::offset(communication.getRankMPI()));
           collision.setVariables(f_Previous.haloData(), iP,
@@ -141,8 +149,8 @@ namespace lbm {
 
           UnrolledFor<0, L::dimQ>::Do([&] (unsigned int iQ) {
               f_Next.setHaloField(hD::getIndex(iP, iQ),
-                                  collision.postDistribution(f_Previous.haloData(),
-                                                             iP-uiL::celerity()[iQ], iQ));
+                                  collision.calculate(f_Previous.haloData(),
+                                                      iP-uiL::celerity()[iQ], iQ));
             });
 
           storeLocalFields(iP, iteration);
@@ -158,9 +166,8 @@ namespace lbm {
     using Algorithm<T, AlgorithmType::Generic>::getCommunicationTime;
     using Algorithm<T, AlgorithmType::Generic>::getComputationTime;
     using Algorithm<T, AlgorithmType::Generic>::getTotalTime;
-
-
   };
+
 
   typedef Algorithm<dataT, algorithmT> Algorithm_;
 

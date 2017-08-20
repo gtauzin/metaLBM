@@ -5,10 +5,9 @@
 #include <string>
 #include <stdlib.h>
 
+#include "Commons.h"
 #include "Options.h"
 #include "MathVector.h"
-
-#define CACHE_LINE 64
 
 namespace lbm {
 

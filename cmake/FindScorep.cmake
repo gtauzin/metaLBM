@@ -38,10 +38,10 @@ else(NOT SCOREP_CONFIG)
 
     message(STATUS "SCOREP library found. (using ${SCOREP_CONFIG})")
 
-    execute_process(COMMAND ${SCOREP_CONFIG} "--user" "--cppflags" OUTPUT_VARIABLE SCOREP_INCLUDE_DIRS)
+    execute_process(COMMAND ${SCOREP_CONFIG} "--user" "--nocompiler" "--cppflags" OUTPUT_VARIABLE SCOREP_INCLUDE_DIRS)
     string(REPLACE "-I" ";" SCOREP_INCLUDE_DIRS ${SCOREP_INCLUDE_DIRS})
 
-    execute_process(COMMAND ${SCOREP_CONFIG} "--user" "--ldflags" OUTPUT_VARIABLE _LINK_LD_ARGS)
+    execute_process(COMMAND ${SCOREP_CONFIG} "--user" "--nocompiler" "--ldflags" OUTPUT_VARIABLE _LINK_LD_ARGS)
     string( REPLACE " " ";" _LINK_LD_ARGS ${_LINK_LD_ARGS} )
     foreach( _ARG ${_LINK_LD_ARGS} )
         if(${_ARG} MATCHES "^-L")
@@ -50,7 +50,7 @@ else(NOT SCOREP_CONFIG)
         endif(${_ARG} MATCHES "^-L")
     endforeach(_ARG)
 
-    execute_process(COMMAND ${SCOREP_CONFIG} "--user" "--libs" OUTPUT_VARIABLE _LINK_LD_ARGS)
+    execute_process(COMMAND ${SCOREP_CONFIG} "--user" "--nocompiler" "--libs" OUTPUT_VARIABLE _LINK_LD_ARGS)
     string( REPLACE " " ";" _LINK_LD_ARGS ${_LINK_LD_ARGS} )
     foreach( _ARG ${_LINK_LD_ARGS} )
       if(${_ARG} MATCHES "^-l")

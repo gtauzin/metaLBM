@@ -5,8 +5,8 @@
 #include <fstream>
 #include <ostream>
 
-#include "Options.h"
 #include "Commons.h"
+#include "Options.h"
 #include "Domain.h"
 #include "DynamicArray.h"
 #include "MathVector.h"
@@ -297,8 +297,6 @@ namespace lbm {
     MathVector<T, NumberComponents> getGlobalVector(const MathVector<unsigned int, 3>& iP) const {
       return MathVector<T, NumberComponents>{{(T) -1}};
     }
-
-
   };
 
 }

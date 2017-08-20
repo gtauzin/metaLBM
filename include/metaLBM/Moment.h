@@ -3,8 +3,8 @@
 
 #include <omp.h>
 
-#include "Options.h"
 #include "Commons.h"
+#include "Options.h"
 #include "Lattice.h"
 #include "MathVector.h"
 #include "Helpers.h"
@@ -20,10 +20,12 @@ namespace lbm {
 
   public:
 #pragma omp declare simd
-    inline void computeMoments(const T * RESTRICT f,
+    inline void calculateMoments(const T * RESTRICT f,
                                const MathVector<unsigned int, 3>& iP) {
-      computeDensity(f, iP);
-      computeVelocity(f, iP, density);
+      SCOREP_INSTRUMENT("Moment<T>::calculateMoments")
+
+      calculateDensity(f, iP);
+      calculateVelocity(f, iP, density);
     }
 
     #pragma omp declare simd
@@ -37,8 +39,10 @@ namespace lbm {
     }
 
 #pragma omp declare simd
-    inline void computeDensity(const T * RESTRICT f,
+    inline void calculateDensity(const T * RESTRICT f,
                                const MathVector<unsigned int, 3>& iP) {
+      SCOREP_INSTRUMENT("Moment<T>::calculateDensity")
+
       density = f[hD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)];
 
       UnrolledFor<1, L::dimQ>::Do([&] (unsigned int iQ) {
@@ -47,10 +51,12 @@ namespace lbm {
     }
 
     #pragma omp declare simd
-     inline void computeVelocity(const T * RESTRICT f,
+     inline void calculateVelocity(const T * RESTRICT f,
                                 const MathVector<unsigned int, 3>& iP,
                                 const T density_in) {
-      velocity = L::celerity()[0]
+       SCOREP_INSTRUMENT("Moment<T>::calculateVelocity")
+
+       velocity = L::celerity()[0]
         * f[hD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)];
 
       UnrolledFor<1, L::dimQ>::Do([&] (unsigned int iQ) {
@@ -62,8 +68,10 @@ namespace lbm {
     }
 
     #pragma omp declare simd
-    inline T computeEntropy(const T * RESTRICT f,
+    inline T calculateEntropy(const T * RESTRICT f,
                             const MathVector<unsigned int, 3>& iP) {
+      SCOREP_INSTRUMENT("Moment<T>::calculateEntropy")
+
       entropy = f[hD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)]
         * log(f[hD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)]
               /L::weight()[0]);

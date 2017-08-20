@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 
+#include "Commons.h"
 #include "Options.h"
 #include "Lattice.h"
 #include "Domain.h"
@@ -17,6 +18,8 @@ namespace lbm {
 
   template<class T>
   LocalizedField<T, 1> initGlobalDensity() {
+    SCOREP_INSTRUMENT("initGlobalDensity<T>")
+
     Field<T, 1, true> densityFieldR("density", initDensityValue);
 
     switch(initDensityT){
@@ -42,6 +45,8 @@ namespace lbm {
 
   template<class T>
   LocalizedField<T, L::dimD> initGlobalVelocity() {
+    SCOREP_INSTRUMENT("initGlobalVelocity<T>")
+
     MathVector<T, L::dimD> initVelocityVectorProjected{{ (T) 0 }};
     initVelocityVectorProjected = Project<T, L::dimD>::Do(initVelocityVector);
 
@@ -63,6 +68,8 @@ namespace lbm {
 
   template<class T>
   LocalizedField<T, 1> initGlobalAlpha() {
+    SCOREP_INSTRUMENT("initGlobalAlpha<T>")
+
     Field<T, 1, true> alphaFieldR("alpha", (T) 2);
     return alphaFieldR.getGlobalField();
   }
@@ -70,6 +77,8 @@ namespace lbm {
   template<class T>
   LocalizedField<T, L::dimQ> initGlobalDistributionStart(const Field<T, 1, true>& densityField,
                                                          const Field<T, L::dimD, true>& velocityField) {
+    SCOREP_INSTRUMENT("initGlobalDistributionStart<T>")
+
     LocalizedField<T, L::dimQ> distributionR("distribution", gD::volume());
 
     Equilibrium_ equilibrium;
@@ -84,12 +93,8 @@ namespace lbm {
 
 
           UnrolledFor<0, L::dimQ>::Do([&] (unsigned int iQ) {
-              // std::cout << "density: " << densityField.getGlobalValue(iP)
-              //           << ", velocity: " << velocityField.getGlobalVector(iP)
-              //           << ", fEq(" << iQ << "): "
-              //           << equilibrium.compute(iQ) << std::endl;
               distributionR[gQD::getIndex({iX, iY, iZ}, iQ)]
-                = equilibrium.compute(iQ);
+                = equilibrium.calculate(iQ);
             });
         }
       }
@@ -99,15 +104,19 @@ namespace lbm {
 
   template<class T>
   LocalizedField<T, L::dimQ> initGlobalDistributionRestart() {
+    SCOREP_INSTRUMENT("initGlobalDistributionRestart<T>")
+
     Reader<T, L::dimQ, ReaderType::VTR> reader(prefix);
-    return reader.readField("distribution", startIteration);
+    return reader.readLocalizedField("distribution", startIteration);
   }
 
 
   template<class T>
   LocalizedField<T, L::dimQ> initGlobalDistribution(const Field<T, 1, true>& densityField,
                                                     const Field<T, L::dimD, true>& velocityField) {
-    if(!startIteration) {
+    SCOREP_INSTRUMENT("initGlobalDistribution<T>")
+
+    if(startIteration == 0) {
       return initGlobalDistributionStart<T>(densityField, velocityField);
     }
     else {

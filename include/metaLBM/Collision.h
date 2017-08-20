@@ -3,9 +3,10 @@
 
 #include <omp.h>
 
-#include "Options.h"
 #include "Commons.h"
+#include "Options.h"
 #include "Domain.h"
+#include "Lattice.h"
 #include "MathVector.h"
 #include "Helpers.h"
 #include "Equilibrium.h"
@@ -37,7 +38,6 @@ namespace lbm {
       , equilibrium()
     {}
 
-
   public:
     #pragma omp declare simd
     inline void setForce(const MathVector<unsigned int, 3>& iP_global) {
@@ -51,25 +51,29 @@ namespace lbm {
 
     #pragma omp declare simd
     inline const MathVector<T, L::dimD> getHydrodynamicVelocity() {
-      return forcingScheme.getHydrodynamicVelocity(getForce());
+      return forcingScheme.calculateHydrodynamicVelocity(getForce());
     }
 
     #pragma omp declare simd
-    inline T postDistribution(const T * RESTRICT f,
+    inline T calculate(const T * RESTRICT f,
                               const MathVector<unsigned int, 3>& iP,
                               const unsigned int iQ) {
+      SCOREP_INSTRUMENT("Collision<T, CollisionType::GenericSRT>::calculate")
+
       return ( (T) 1.0 - (T) 1.0 / tau) * f[hD::getIndex(iP, iQ)]
-        + forcingScheme.getCollisionSource(force.getForce(), iQ)
-        + (T) 1.0 / tau * equilibrium.compute(iQ);
+        + forcingScheme.calculateCollisionSource(force.getForce(), iQ)
+        + (T) 1.0 / tau * equilibrium.calculate(iQ);
     }
 
     #pragma omp declare simd
     inline void setVariables(const T * RESTRICT f,
                              const MathVector<unsigned int, 3>& iP,
                              const T density, const MathVector<T, L::dimD>& velocity) {
+      SCOREP_INSTRUMENT("Collision<T, CollisionType::GenericSRT>::setVariables")
+
       forcingScheme.setVariables(getForce(), density, velocity);
       equilibrium.setVariables(density,
-                               forcingScheme.getEquilibriumVelocity(getForce()));
+                               forcingScheme.calculateEquilibriumVelocity(getForce()));
     }
   };
 
@@ -86,9 +90,9 @@ namespace lbm {
     T alpha;
 
   public:
-Collision(const T tau_in,
-          const MathVector<T, 3>& amplitude_in,
-          const MathVector<T, 3>& waveLength_in)
+    Collision(const T tau_in,
+              const MathVector<T, 3>& amplitude_in,
+              const MathVector<T, 3>& waveLength_in)
   : Collision<T, CollisionType::GenericSRT>(tau_in, amplitude_in, waveLength_in)
   , alpha( (T) 2)
     {}
@@ -96,7 +100,7 @@ Collision(const T tau_in,
     using Collision<T, CollisionType::GenericSRT>::setVariables;
     using Collision<T, CollisionType::GenericSRT>::setForce;
 
-    using Collision<T, CollisionType::GenericSRT>::postDistribution;
+    using Collision<T, CollisionType::GenericSRT>::calculate;
 
     using Collision<T, CollisionType::GenericSRT>::getHydrodynamicVelocity;
     using Collision<T, CollisionType::GenericSRT>::getForce;
@@ -104,8 +108,8 @@ Collision(const T tau_in,
     inline T getAlpha() {
       return alpha;
     }
-
   };
+
 
   template <class T>
   class Collision<T, CollisionType::ELBM>
@@ -126,6 +130,8 @@ Collision(const T tau_in,
                              const MathVector<unsigned int, 3>& iP,
                              const T density,
                              const MathVector<T, L::dimD>& velocity) {
+      SCOREP_INSTRUMENT("Collision<T, CollisionType::ELBM>::calculate")
+
       Collision<T, CollisionType::BGK>::setVariables(f, iP, density, velocity);
 
       UnrolledFor<0, L::dimQ>::Do([&] (unsigned int iQ) {
@@ -135,11 +141,11 @@ Collision(const T tau_in,
             - equilibrium.compute(iQ);
       });
 
-      computeAlpha();
+      calculateAlpha();
       tau = (T) 1.0/(alpha*beta);
     }
 
-    using Collision<T, CollisionType::BGK>::postDistribution;
+    using Collision<T, CollisionType::BGK>::calculate;
 
     using Collision<T, CollisionType::BGK>::getHydrodynamicVelocity;
     using Collision<T, CollisionType::BGK>::getForce;
@@ -159,6 +165,7 @@ Collision(const T tau_in,
 
 #pragma omp declare simd
     inline bool isDeviationSmall(const T error) {
+      SCOREP_INSTRUMENT("Collision<T, CollisionType::ELBM>::isDeviationSmall")
 
       bool isDeviationSmallR = true;
       T deviation;
@@ -176,6 +183,7 @@ Collision(const T tau_in,
 
 #pragma omp declare simd
     T calculateAlphaMax() {
+      SCOREP_INSTRUMENT("Collision<T, CollisionType::ELBM>::calculateAlphaMax")
 
       T alphaMaxR = 2.5;
       T alphaMaxTemp;
@@ -194,7 +202,9 @@ Collision(const T tau_in,
     }
 
 #pragma omp declare simd
-    inline T calculateAlpha(const T alphaMin, const T alphaMax) {
+    inline T solveAlpha(const T alphaMin, const T alphaMax) {
+      SCOREP_INSTRUMENT("Collision<T, CollisionType::ELBM>::solveAlpha")
+
       std::shared_ptr<RootFinderFunctor<T>> entropicStepFunctor =
         std::shared_ptr<RootFinderFunctor<T>>(new EntropicStepFunctor<T>(f_Forced, f_NonEq));
       const T tolerance = 1e-5;
@@ -213,7 +223,9 @@ Collision(const T tau_in,
     }
 
     #pragma omp declare simd
-    inline void computeAlpha() {
+    inline void calculateAlpha() {
+      SCOREP_INSTRUMENT("Collision<T, CollisionType::ELBM>::calculateAlpha")
+
       if(isDeviationSmall( (T) 1.0e-3)) {
         alpha = 2.0;
       }
@@ -227,13 +239,13 @@ Collision(const T tau_in,
 
         else {
           T alphaMin = 1.;
-          alpha = calculateAlpha(alphaMin, alphaMax);
+          alpha = solveAlpha(alphaMin, alphaMax);
 
         }
       }
     }
-
   };
+
 
   template <class T>
   class Collision<T, CollisionType::Approached_ELBM>
@@ -248,7 +260,7 @@ Collision(const T tau_in,
     using Collision<T, CollisionType::ELBM>::setForce;
     using Collision<T, CollisionType::ELBM>::setVariables;
 
-    using Collision<T, CollisionType::ELBM>::postDistribution;
+    using Collision<T, CollisionType::ELBM>::calculate;
 
     using Collision<T, CollisionType::ELBM>::getHydrodynamicVelocity;
     using Collision<T, CollisionType::ELBM>::getForce;
@@ -264,10 +276,11 @@ Collision(const T tau_in,
 
     using Collision<T, CollisionType::ELBM>::isDeviationSmall;
     using Collision<T, CollisionType::ELBM>::calculateAlphaMax;
-    using Collision<T, CollisionType::ELBM>::calculateAlpha;
+    using Collision<T, CollisionType::ELBM>::solveAlpha;
 
 #pragma omp declare simd
     inline T approximateAlpha() {
+      SCOREP_INSTRUMENT("Collision<T, CollisionType::Approached_ELBM>::approximateAlpha")
 
       T a1 = 0.0;
       T a2 = 0.0;
@@ -294,7 +307,9 @@ Collision(const T tau_in,
     }
 
     #pragma omp declare simd
-    inline void computeAlpha() {
+    inline void calculateAlpha() {
+      SCOREP_INSTRUMENT("Collision<T, CollisionType::Approached_ELBM>::calculateAlpha")
+
       if(isRelativeDeviationSmall( (T) 1.0e-3)) {
         T alphaApproximated = approximateAlpha();
         alpha = alphaApproximated;
@@ -308,14 +323,13 @@ Collision(const T tau_in,
 
         else {
           T alphaMin = 1.;
-          alpha = calculateAlpha(alphaMin, alphaMax);
+          alpha = solveAlpha(alphaMin, alphaMax);
 
         }
       }
     }
-
-
   };
+
 
   template <class T>
   class Collision<T, CollisionType::ForcedNR_ELBM>
@@ -324,7 +338,7 @@ Collision(const T tau_in,
     using Collision<T, CollisionType::ELBM>::setForce;
     using Collision<T, CollisionType::ELBM>::setVariables;
 
-    using Collision<T, CollisionType::ELBM>::postDistribution;
+    using Collision<T, CollisionType::ELBM>::calculate;
 
     using Collision<T, CollisionType::ELBM>::getHydrodynamicVelocity;
     using Collision<T, CollisionType::ELBM>::getForce;
@@ -341,7 +355,9 @@ Collision(const T tau_in,
     using Collision<T, CollisionType::ELBM>::isDeviationSmall;
     using Collision<T, CollisionType::ELBM>::calculateAlphaMax;
 
-    inline T calculateAlpha(const T alphaMin, const T alphaMax) {
+    inline T solveAlpha(const T alphaMin, const T alphaMax) {
+      SCOREP_INSTRUMENT("Collision<T, CollisionType::ForcedNR_ELBM>::solveAlpha")
+
       std::shared_ptr<RootFinderFunctor<T>> entropicStepFunctor =
         std::shared_ptr<RootFinderFunctor<T>>(new EntropicStepFunctor<T>(f_Forced, f_NonEq));
       const T tolerance = 1e-5;
@@ -359,7 +375,9 @@ Collision(const T tau_in,
     }
 
     #pragma omp declare simd
-    inline T computeAlpha() {
+    inline T calculateAlpha() {
+      SCOREP_INSTRUMENT("Collision<T, CollisionType::ForcedNR_ELBM>::calculateAlpha")
+
       T alphaMax = calculateAlphaMax();
 
       if(alphaMax < 2.) {
@@ -368,11 +386,9 @@ Collision(const T tau_in,
 
       else {
         T alphaMin = 1.;
-        alpha = calculateAlpha(alphaMin, alphaMax);
-
+        alpha = solveAlpha(alphaMin, alphaMax);
       }
     }
-
   };
 
   template <class T>
@@ -382,26 +398,28 @@ Collision(const T tau_in,
     using Collision<T, CollisionType::ForcedNR_ELBM>::setForce;
     using Collision<T, CollisionType::ForcedNR_ELBM>::setVariables;
 
-    using Collision<T, CollisionType::ForcedNR_ELBM>::postDistribution;
+    using Collision<T, CollisionType::ForcedNR_ELBM>::calculate;
 
     using Collision<T, CollisionType::ForcedNR_ELBM>::getHydrodynamicVelocity;
     using Collision<T, CollisionType::ForcedNR_ELBM>::getForce;
     using Collision<T, CollisionType::ForcedNR_ELBM>::getAlpha;
 
   private:
-    using Collision<T, CollisionType::ELBM>::alpha;
-    using Collision<T, CollisionType::ELBM>::f_Forced;
-    using Collision<T, CollisionType::ELBM>::f_NonEq;
+    using Collision<T, CollisionType::ForcedNR_ELBM>::alpha;
+    using Collision<T, CollisionType::ForcedNR_ELBM>::f_Forced;
+    using Collision<T, CollisionType::ForcedNR_ELBM>::f_NonEq;
 
 
-    using Collision<T, CollisionType::ELBM>::forcingScheme;
-    using Collision<T, CollisionType::ELBM>::equilibrium;
+    using Collision<T, CollisionType::ForcedNR_ELBM>::forcingScheme;
+    using Collision<T, CollisionType::ForcedNR_ELBM>::equilibrium;
 
     using Collision<T, CollisionType::ForcedNR_ELBM>::isDeviationSmall;
     using Collision<T, CollisionType::ForcedNR_ELBM>::calculateAlphaMax;
-    using Collision<T, CollisionType::ForcedNR_ELBM>::computeAlpha;
+    using Collision<T, CollisionType::ForcedNR_ELBM>::calculateAlpha;
 
-    inline T calculateAlpha(const T alphaMin, const T alphaMax) {
+    inline T solveAlpha(const T alphaMin, const T alphaMax) {
+      SCOREP_INSTRUMENT("Collision<T, CollisionType::ForcedBNR_ELBM>::solveAlpha")
+
       std::shared_ptr<RootFinderFunctor<T>> entropicStepFunctor =
         std::shared_ptr<RootFinderFunctor<T>>(new EntropicStepFunctor<T>(f_Forced, f_NonEq));
       const T tolerance = 1e-5;
@@ -418,8 +436,8 @@ Collision(const T tau_in,
 
       return alphaR;
     }
-
   };
+
 
   typedef Collision<dataT, collisionT> Collision_;
 

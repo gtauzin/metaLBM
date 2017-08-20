@@ -4,7 +4,9 @@
 #include <cmath>
 #include <omp.h>
 
+#include "Commons.h"
 #include "MathVector.h"
+#include "Lattice.h"
 #include "Helpers.h"
 
 namespace lbm {
