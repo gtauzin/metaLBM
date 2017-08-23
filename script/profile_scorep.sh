@@ -1,12 +1,15 @@
 #!/bin/bash
 
-cd ~/Workspace/metaLBM_private/
+cd ~/metaLBM_private/
+rm -rf build
 mkdir build
 cd build
-rm -rf *
-SCOREP_WRAPPER=OFF CC=scorep-gcc CXX=scorep-g++ cmake .. -DCMAKE_BUILD_TYPE=Debug
-SCOREP_WRAPPER=ON make lbm
-cd src
-
+SCOREP_WRAPPER=OFF cmake .. -DCMAKE_C_COMPILER=scorep-mpicc -DCMAKE_CXX_COMPILER=scorep-mpic++
+export SCOREP_WRAPPER=ON
 export SCOREP_ENABLE_TRACING=true
-mpirun -np $1 ./lbm
+export SCOREP_TOTAL_MEMORY=3g
+
+make lbm VERBOSE=1 SCOREP_WRAPPER_INSTRUMENTER_FLAGS="--verbose --user --nocompiler"
+
+cd ../script
+./submit_job.sh

@@ -1,0 +1,14 @@
+#!/bin/bash
+#
+#SBATCH --job-name=%JOBNAME%
+#SBATCH --nodes=%NODES%
+#SBATCH --ntasks-per-node=%NTASKSPERNODE%
+#SBATCH --exclusive
+#SBATCH --mail-user=guillaumetauzin.ut@gmail.com
+#SBATCH --mail-type=ALL
+
+export OMP_PROC_BIND=true
+export OMP_PLACES=cores
+
+cd $HOME/metaLBM_private/bin
+srun ./lbm
