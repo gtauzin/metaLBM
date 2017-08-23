@@ -38,7 +38,7 @@ namespace lbm {
            const std::string& fileFormat_in,
            const MathVector<int, 3> rankMPI_in,
            const bool isSerial_in)
-      : writeFolder("../../output/")
+      : writeFolder("../output/")
       , writerFolder(writerFolder_in)
       , fileExtension(fileExtension_in)
       , filePrefix(filePrefix_in)

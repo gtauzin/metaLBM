@@ -14,6 +14,9 @@ else()
     message(STATUS "No CUDA support")
 endif()
 
+# Project Output
+set(EXECUTABLE_OUTPUT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/bin")
+
 # Setup the `metalbm` target
 add_library(metalbm INTERFACE)
 target_compile_features(metalbm INTERFACE cxx_std_11)

@@ -1,4 +1,4 @@
-#define NTHREADS 2
+#define NTHREADS 1
 #define NPROCS 2
 #define _AOS
 #define DATA_TYPE double
@@ -8,6 +8,7 @@
 #include <string>
 
 #include "Input.h"
+#include "metaLBM/Commons.h"
 #include "metaLBM/Routine.h"
 #include "metaLBM/MathVector.h"
 

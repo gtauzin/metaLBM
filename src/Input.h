@@ -22,9 +22,9 @@ namespace lbm {
   constexpr MemoryLayout memoryL = MemoryLayout::AoS;
 
   constexpr int startIteration = 0;
-  constexpr int endIteration = 10;
-  constexpr int writeStep = 11;
-  constexpr int backupStep = 11;
+  constexpr int endIteration = 3000;
+  constexpr int writeStep = endIteration+1;
+  constexpr int backupStep = endIteration+1;
 
   constexpr dataT relaxationTime = 0.65;
   constexpr CollisionType collisionT = CollisionType::BGK;
