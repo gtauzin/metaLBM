@@ -7,11 +7,11 @@ namespace tt = boost::test_tools;
 #include <iostream>
 
 #define NPROCS 1
-#include "Lattice.h"
+#include "metaLBM/Lattice.h"
 typedef double valueType;
 typedef lbm::Lattice<valueType, lbm::LatticeType::D1Q3> L;
-#include "Force.h"
-#include "MathVector.h"
+#include "metaLBM/Force.h"
+#include "metaLBM/MathVector.h"
 
 using namespace lbm;
 

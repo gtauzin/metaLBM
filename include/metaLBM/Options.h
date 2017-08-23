@@ -12,6 +12,8 @@ namespace lbm {
 
   enum class DomainType {Generic, Global, Local, Halo, BufferX};
 
+  enum class Architecture {Generic, CPU, GPU};
+
   enum class AlgorithmType {Generic, Pull, Push};
 
   enum class InitDensityType{Homogeneous, Peak};
