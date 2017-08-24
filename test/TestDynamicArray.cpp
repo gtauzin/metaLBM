@@ -15,18 +15,23 @@ BOOST_AUTO_TEST_SUITE(TestDynamicArray)
 BOOST_AUTO_TEST_CASE(TestArchitectureCPU) {
   constexpr Architecture architecture = Architecture::CPU;
   typedef double dataT;
-  DynamicArray<dataT, architecture> dArray1(5, (dataT) 1);
+  DynamicArray<dataT, architecture> dArray1(4, (dataT) 1);
   DynamicArray<dataT, architecture> dArray2(5, (dataT) 2);
 
+  BOOST_CHECK(dArray1.size() == 4);
   BOOST_CHECK(dArray1[0] == (dataT) 1);
-
+  BOOST_CHECK(dArray2.size() == 5);
   BOOST_CHECK(dArray2[0] == (dataT) 2);
 
   dArray1.swap(dArray2);
 
+  BOOST_CHECK(dArray1.size() == 5);
   BOOST_CHECK(dArray1[0] == (dataT) 2);
-
+  BOOST_CHECK(dArray2.size() == 4);
   BOOST_CHECK(dArray2[0] == (dataT) 1);
+
+  dArray1.resize(3);
+  BOOST_CHECK(dArray1.size() == 3);
 
 }
 

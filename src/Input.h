@@ -22,15 +22,15 @@ namespace lbm {
   constexpr MemoryLayout memoryL = MemoryLayout::AoS;
 
   constexpr int startIteration = 0;
-  constexpr int endIteration = 3000;
-  constexpr int writeStep = endIteration+1;
+  constexpr int endIteration = 100;
+  constexpr int writeStep = 1;//endIteration+1;
   constexpr int backupStep = endIteration+1;
 
   constexpr dataT relaxationTime = 0.65;
   constexpr CollisionType collisionT = CollisionType::BGK;
   constexpr EquilibriumType equilibriumT = EquilibriumType::Incompressible;
 
-  constexpr InitDensityType initDensityT = InitDensityType::Homogeneous;
+  constexpr InitDensityType initDensityT = InitDensityType::Peak;
   constexpr dataT initDensityValue = 1.0;
   constexpr InitVelocityType initVelocityT = InitVelocityType::Homogeneous;
   constexpr MathVector<dataT, 3> initVelocityVector = { {0.0, 0.0, 0.0} };
@@ -38,7 +38,7 @@ namespace lbm {
   constexpr ForcingSchemeType forcingSchemeT = ForcingSchemeType::ExactDifferenceMethod;
   constexpr ForceType forceT = ForceType::Kolmogorov;
 
-  constexpr MathVector<dataT, 3> forceAmplitude = { {1e-5, 0.0, 0.0} };
+  constexpr MathVector<dataT, 3> forceAmplitude = { {0.0, 0.0, 0.0} };
   constexpr MathVector<dataT, 3> forceWaveLength = { {8.0, 0.0, 0.0} };
   constexpr int minWavenumber = 0;
   constexpr int maxWavenumber = 0;

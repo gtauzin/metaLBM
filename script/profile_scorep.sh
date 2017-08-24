@@ -4,7 +4,7 @@ cd ~/metaLBM_private/
 rm -rf build
 mkdir build
 cd build
-SCOREP_WRAPPER=OFF cmake .. -DCMAKE_C_COMPILER=scorep-mpicc -DCMAKE_CXX_COMPILER=scorep-mpic++
+SCOREP_WRAPPER=OFF cmake .. -DCMAKE_C_COMPILER=scorep-mpicc -DCMAKE_CXX_COMPILER=scorep-mpic++ -DPROFILE_SCOREP=ON
 export SCOREP_WRAPPER=ON
 export SCOREP_ENABLE_TRACING=true
 export SCOREP_TOTAL_MEMORY=3g

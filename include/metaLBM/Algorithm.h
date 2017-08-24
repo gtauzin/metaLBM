@@ -138,7 +138,8 @@ namespace lbm {
 
       auto t1 = std::chrono::high_resolution_clock::now();
 
-      Computation::Do([&] (MathVector<unsigned int, 3>& iP) {
+      Computation::Do(lD::start()+L::halo(), lD::end()+L::halo(),
+                      [&] (MathVector<unsigned int, 3>& iP) {
           SCOREP_INSTRUMENT("Algorithn<T, AlgorithmType::Pull>::lambda[fused_collide_and_push]")
 
           moment.calculateMoments(f_Previous.haloData(), iP);

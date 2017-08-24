@@ -8,7 +8,7 @@ namespace lbm {
 
   enum class MemoryLayout {Generic, Default, SoA, AoS};
 
-  enum class PartitionningType {Generic, OneD, TwoD, ThreeD};
+  enum class PartitionningType {Generic, OneD, OneD_Pack, TwoD, ThreeD};
 
   enum class DomainType {Generic, Global, Local, Halo, BufferX};
 

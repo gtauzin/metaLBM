@@ -10,18 +10,17 @@ namespace lbm {
 
   struct Computation {
   template<typename Callback>
-    static void Do(Callback f) {
+  static void Do(MathVector<unsigned int, 3> start,
+                 MathVector<unsigned int, 3> end,
+                 Callback f) {
     SCOREP_INSTRUMENT("Computation<Callback>::Do")
 
     MathVector<unsigned int, 3> iP;
       #pragma omp parallel for schedule(static) num_threads(NTHREADS)
-      for(unsigned int iZ = lD::start()[d::Z]+L::halo()[d::Z];
-          iZ < lD::end()[d::Z]+L::halo()[d::Z]; ++iZ) {
-        for(unsigned int iY = lD::start()[d::Y]+L::halo()[d::Y];
-            iY < lD::end()[d::Y]+L::halo()[d::Y]; ++iY) {
+    for(unsigned int iZ = start[d::Z]; iZ < end[d::Z]; ++iZ) {
+      for(unsigned int iY = start[d::Y]; iY < end[d::Y]; ++iY) {
           #pragma omp simd
-          for(unsigned int iX = lD::start()[d::X]+L::halo()[d::X];
-              iX < lD::end()[d::X]+L::halo()[d::X]; ++iX) {
+        for(unsigned int iX = start[d::X]; iX < end[d::X]; ++iX) {
             iP = {iX, iY, iZ};
             f(iP);
           }

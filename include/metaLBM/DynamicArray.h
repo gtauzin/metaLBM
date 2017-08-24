@@ -9,87 +9,42 @@
 
 namespace lbm {
 
-  template<class U, Architecture architecture>
-    class DynamicArray {};
+  template<class U, Architecture architecture = Architecture::CPU>
+  class DynamicArray {};
 
 
   template<class U>
   class DynamicArray<U, Architecture::Generic> {
-  private:
-    U * RESTRICT dArray;
+  protected:
     unsigned int numberElements;
+    U * RESTRICT dArrayPtr;
+
+    DynamicArray(const unsigned int numberElements_in = 0,
+                 U * dArrayPtr_in = NULL)
+      : numberElements(numberElements_in)
+      , dArrayPtr(dArrayPtr_in)
+    {}
 
   public:
-    enum exception {MEMFAIL, INVALIDSIZE};
-
-    DynamicArray()
-      : numberElements(0)
-    {
-      dArray = (U*)malloc(numberElements*sizeof(U));
-
-      if (dArray == NULL)
-        throw MEMFAIL;
-    }
-
-    DynamicArray(const unsigned int numberElements_in,
-                 const U& value_in = (U) 0)
-      : numberElements(numberElements_in)
-    {
-      dArray = (U*)malloc(numberElements*sizeof(U));
-
-      if (dArray == NULL)
-        throw MEMFAIL;
-
-      for(unsigned int i = 0; i < numberElements; ++i) dArray[i] = value_in;
-    }
-
-
-  DynamicArray(const DynamicArray& dArray_in)
-      : numberElements(dArray_in.size())
-    {
-      dArray = (U*)malloc(dArray_in.size()*sizeof(U));
-
-      if (dArray == NULL)
-        throw MEMFAIL;
-
-      memcpy(dArray, dArray_in.data(), dArray_in.size()*sizeof(U));
-    }
-
-    ~DynamicArray(){
-      if(dArray) {
-        free(dArray);
-        dArray = NULL;
-      }
-    }
-
     U& operator[] (int i) {
-      return dArray[i];
+      return dArrayPtr[i];
     }
 
     const U& operator[] (int i) const {
-      return dArray[i];
-    }
-
-    DynamicArray<U, Architecture::Generic>& operator=(const DynamicArray& other) {
-      if (this == &other)
-        return *this;
-
-      if (other.size() == 0)
-        clear();
-
-      resize(other.size());
-      memcpy(dArray, other.data(), other.size()*sizeof(U));
-      return *this;
+      return dArrayPtr[i];
     }
 
     U * RESTRICT data() {
-      return dArray;
+      return dArrayPtr;
     }
 
     const U * RESTRICT data() const {
-      return dArray;
+      return dArrayPtr;
     }
 
+    void swap(DynamicArray& other) {
+      std::swap(*this, other);
+    }
 
     const unsigned int size() {
       return numberElements;
@@ -99,124 +54,47 @@ namespace lbm {
       return numberElements;
     }
 
-    void resize(unsigned int numberElements_in) {
-      numberElements = numberElements_in;
-
-      if (numberElements != 0)
-        {
-          dArray = (U*)realloc(dArray, numberElements*sizeof(U));
-
-          if (dArray == NULL)
-            throw MEMFAIL;
-        }
-      else {
-        clear();
-      }
-    }
-
-    void swap(DynamicArray<U, Architecture::Generic>& other) {
-      std::swap(*this, other);
-      /* U * RESTRICT temporary = other.data(); */
-      /* other.data() = data(); */
-      /* dArray = temporary; */
-    }
-
-    void copy(DynamicArray other) {
-      memcpy(dArray, other.data(), other.size()*sizeof(U));
-    }
-
-    void clear() {
-      numberElements = 0;
-      dArray = (U*)realloc(dArray, numberElements*sizeof(U));
-    }
   };
 
 
   template<class U>
   class DynamicArray<U, Architecture::CPU>
-    :public DynamicArray<U, Architecture::Generic>{
+    :public DynamicArray<U, Architecture::Generic> {
   private:
-    U * RESTRICT dArray;
-    unsigned int numberElements;
+    using DynamicArray<U, Architecture::Generic>::numberElements;
+    using DynamicArray<U, Architecture::Generic>::dArrayPtr;
 
   public:
-    enum exception {MEMFAIL, INVALIDSIZE};
+    using DynamicArray<U, Architecture::Generic>::DynamicArray;
+    using DynamicArray<U, Architecture::Generic>::operator[];
+    using DynamicArray<U, Architecture::Generic>::data;
+    using DynamicArray<U, Architecture::Generic>::size;
+    using DynamicArray<U, Architecture::Generic>::swap;
 
     DynamicArray()
-      : numberElements(0)
-    {
-      dArray = (U*)malloc(numberElements*sizeof(U));
-
-      if (dArray == NULL)
-        throw MEMFAIL;
-    }
+      : DynamicArray<U, Architecture::Generic>()
+    {}
 
     DynamicArray(const unsigned int numberElements_in,
                  const U& value_in = (U) 0)
-      : numberElements(numberElements_in)
+      : DynamicArray<U, Architecture::Generic>(numberElements_in)
     {
-      dArray = (U*)malloc(numberElements*sizeof(U));
-
-      if (dArray == NULL)
-        throw MEMFAIL;
-
-      for(unsigned int i = 0; i < numberElements; ++i) dArray[i] = value_in;
+      dArrayPtr = (U*)malloc(numberElements*sizeof(U));
+      for(unsigned int i = 0; i < numberElements; ++i) dArrayPtr[i] = value_in;
     }
 
-
-  DynamicArray(const DynamicArray& dArray_in)
-      : numberElements(dArray_in.size())
+    DynamicArray(const DynamicArray& dArray_in)
+      : DynamicArray<U, Architecture::Generic>(dArray_in.size())
     {
-      dArray = (U*)malloc(dArray_in.size()*sizeof(U));
-
-      if (dArray == NULL)
-        throw MEMFAIL;
-
-      memcpy(dArray, dArray_in.data(), dArray_in.size()*sizeof(U));
+      dArrayPtr = (U*)malloc(dArray_in.size()*sizeof(U));
+      copyFrom(dArray_in);
     }
 
     ~DynamicArray(){
-      if(dArray) {
-        free(dArray);
-        dArray = NULL;
+      if(dArrayPtr) {
+        free(dArrayPtr);
+        dArrayPtr = NULL;
       }
-    }
-
-    U& operator[] (int i) {
-      return dArray[i];
-    }
-
-    const U& operator[] (int i) const {
-      return dArray[i];
-    }
-
-    DynamicArray<U, Architecture::CPU>& operator=(const DynamicArray& other) {
-      if (this == &other)
-        return *this;
-
-      if (other.size() == 0)
-        clear();
-
-      resize(other.size());
-      memcpy(dArray, other.data(), other.size()*sizeof(U));
-      return *this;
-    }
-
-    U * RESTRICT data() {
-      return dArray;
-    }
-
-    const U * RESTRICT data() const {
-      return dArray;
-    }
-
-
-    const unsigned int size() {
-      return numberElements;
-    }
-
-    const unsigned int size() const {
-      return numberElements;
     }
 
     void resize(unsigned int numberElements_in) {
@@ -224,25 +102,24 @@ namespace lbm {
 
       if (numberElements != 0)
         {
-          dArray = (U*)realloc(dArray, numberElements*sizeof(U));
-
-          if (dArray == NULL)
-            throw MEMFAIL;
+          dArrayPtr = (U*)realloc(dArrayPtr, numberElements*sizeof(U));
         }
       else {
         clear();
       }
     }
 
-    using DynamicArray<U, Architecture::Generic>::swap;
+    void copyFrom(const DynamicArray<U, Architecture::CPU>& other) {
+      memcpy(dArrayPtr, other.data(), other.size()*sizeof(U));
+    }
 
-    void copy(DynamicArray other) {
-      memcpy(dArray, other.data(), other.size()*sizeof(U));
+    void copyTo(DynamicArray<U, Architecture::CPU> other) {
+      memcpy(other.data(), dArrayPtr, numberElements*sizeof(U));
     }
 
     void clear() {
       numberElements = 0;
-      dArray = (U*)realloc(dArray, numberElements*sizeof(U));
+      dArrayPtr = (U*)realloc(dArrayPtr, numberElements*sizeof(U));
     }
   };
 
