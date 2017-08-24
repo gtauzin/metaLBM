@@ -18,7 +18,7 @@ namespace lbm {
 
   template<class T>
   LocalizedField<T, 1> initGlobalDensity() {
-    SCOREP_INSTRUMENT("initGlobalDensity<T>")
+    SCOREP_INSTRUMENT_ON("initGlobalDensity<T>")
 
     Field<T, 1, true> densityFieldR("density", initDensityValue);
 
@@ -45,7 +45,7 @@ namespace lbm {
 
   template<class T>
   LocalizedField<T, L::dimD> initGlobalVelocity() {
-    SCOREP_INSTRUMENT("initGlobalVelocity<T>")
+    SCOREP_INSTRUMENT_ON("initGlobalVelocity<T>")
 
     MathVector<T, L::dimD> initVelocityVectorProjected{{ (T) 0 }};
     initVelocityVectorProjected = Project<T, L::dimD>::Do(initVelocityVector);
@@ -68,7 +68,7 @@ namespace lbm {
 
   template<class T>
   LocalizedField<T, 1> initGlobalAlpha() {
-    SCOREP_INSTRUMENT("initGlobalAlpha<T>")
+    SCOREP_INSTRUMENT_ON("initGlobalAlpha<T>")
 
     Field<T, 1, true> alphaFieldR("alpha", (T) 2);
     return alphaFieldR.getGlobalField();
@@ -77,7 +77,7 @@ namespace lbm {
   template<class T>
   LocalizedField<T, L::dimQ> initGlobalDistributionStart(const Field<T, 1, true>& densityField,
                                                          const Field<T, L::dimD, true>& velocityField) {
-    SCOREP_INSTRUMENT("initGlobalDistributionStart<T>")
+    SCOREP_INSTRUMENT_ON("initGlobalDistributionStart<T>")
 
     LocalizedField<T, L::dimQ> distributionR("distribution", gD::volume());
 
@@ -104,7 +104,7 @@ namespace lbm {
 
   template<class T>
   LocalizedField<T, L::dimQ> initGlobalDistributionRestart() {
-    SCOREP_INSTRUMENT("initGlobalDistributionRestart<T>")
+    SCOREP_INSTRUMENT_ON("initGlobalDistributionRestart<T>")
 
     Reader<T, L::dimQ, ReaderType::VTR> reader(prefix);
     return reader.readLocalizedField("distribution", startIteration);
@@ -114,7 +114,7 @@ namespace lbm {
   template<class T>
   LocalizedField<T, L::dimQ> initGlobalDistribution(const Field<T, 1, true>& densityField,
                                                     const Field<T, L::dimD, true>& velocityField) {
-    SCOREP_INSTRUMENT("initGlobalDistribution<T>")
+    SCOREP_INSTRUMENT_ON("initGlobalDistribution<T>")
 
     if(startIteration == 0) {
       return initGlobalDistributionStart<T>(densityField, velocityField);

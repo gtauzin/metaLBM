@@ -21,7 +21,7 @@ namespace lbm {
   protected:
     inline void applyX(T * __restrict__ f,
                        const MathVector<unsigned int, 3>& iP) {
-      SCOREP_INSTRUMENT("Boundary<T, boundaryType, algorithmType>::applyX")
+      SCOREP_INSTRUMENT_ON("Boundary<T, boundaryType, algorithmType>::applyX")
 
       iP_Origin = {L::halo()[d::X], iP[d::Y], iP[d::Z]};
       iP_Destination = {L::halo()[d::X] + lD::length()[d::X], iP[d::Y], iP[d::Z]};
@@ -41,7 +41,7 @@ namespace lbm {
 
     inline void applyY(T * __restrict__ f,
                        const MathVector<unsigned int, 3>& iP) {
-      SCOREP_INSTRUMENT("Boundary<T, boundaryType, algorithmType>::applyY")
+      SCOREP_INSTRUMENT_ON("Boundary<T, boundaryType, algorithmType>::applyY")
 
       iP_Origin = {iP[d::X], L::halo()[d::Y], iP[d::Z]};
       iP_Destination = {iP[d::X], L::halo()[d::Y] + lD::length()[d::Y], iP[d::Z]};
@@ -60,7 +60,7 @@ namespace lbm {
 
     inline void applyZ(T * __restrict__ f,
                        const MathVector<unsigned int, 3>& iP) {
-      SCOREP_INSTRUMENT("Boundary<T, boundaryType, algorithmType>::applyZ")
+      SCOREP_INSTRUMENT_ON("Boundary<T, boundaryType, algorithmType>::applyZ")
 
       iP_Origin = {iP[d::X], iP[d::Y], L::halo()[d::Z]};
       iP_Destination = {iP[d::X], iP[d::Y], L::halo()[d::Z] + lD::length()[d::Z]};

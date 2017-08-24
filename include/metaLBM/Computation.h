@@ -13,7 +13,7 @@ namespace lbm {
   static void Do(MathVector<unsigned int, 3> start,
                  MathVector<unsigned int, 3> end,
                  Callback f) {
-    SCOREP_INSTRUMENT("Computation<Callback>::Do")
+    SCOREP_INSTRUMENT_ON("Computation<Callback>::Do")
 
     MathVector<unsigned int, 3> iP;
       #pragma omp parallel for schedule(static) num_threads(NTHREADS)

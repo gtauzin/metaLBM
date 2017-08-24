@@ -67,7 +67,7 @@ namespace lbm {
     void sendGlobalToLocal(T * __restrict__ globalFieldArray,
                            T * __restrict__ localFieldArray,
                            unsigned int numberComponents) {
-      SCOREP_INSTRUMENT("Communication<6>::sendGlobalToLocal")
+      SCOREP_INSTRUMENT_ON("Communication<6>::sendGlobalToLocal")
 
       MPI_Scatter(globalFieldArray, numberComponents*lD::volume(), MPI_DOUBLE,
                   localFieldArray, numberComponents*lD::volume(), MPI_DOUBLE,
@@ -77,7 +77,7 @@ namespace lbm {
     void sendLocalToGlobal(T * __restrict__ localFieldArray,
                            T * __restrict__ globalFieldArray,
                            unsigned int numberComponents) {
-      SCOREP_INSTRUMENT("Communication<6>::sendLocalToGlobal")
+      SCOREP_INSTRUMENT_ON("Communication<6>::sendLocalToGlobal")
 
       MPI_Gather(localFieldArray, numberComponents*lD::volume(), MPI_DOUBLE,
                  globalFieldArray, numberComponents*lD::volume(), MPI_DOUBLE,
@@ -118,7 +118,7 @@ namespace lbm {
     const std::string processorName;
 
     void sendAndReceiveHaloX(T * __restrict__ haloFieldArray) {
-      SCOREP_INSTRUMENT("Communication<5, MemoryLayout::Default>::sendAndReceiveHaloX")
+      SCOREP_INSTRUMENT_ON("Communication<5, MemoryLayout::Default>::sendAndReceiveHaloX")
 
       packToSendX(haloFieldArray);
 
@@ -252,7 +252,7 @@ namespace lbm {
                            MemoryLayout::Generic, PartitionningType::Generic, 0> {
   protected:
     void sendAndReceiveHaloX(T * __restrict__ haloFieldArray) {
-      SCOREP_INSTRUMENT("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloX")
+      SCOREP_INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloX")
 
       UnrolledFor<0, L::dimQ>::Do([&] (unsigned int iQ) {
           sendToRightBeginX = hMLD::getIndex({L::halo()[d::X]+lD::length()[d::X]-1,
@@ -357,7 +357,7 @@ namespace lbm {
                            MemoryLayout::Generic, PartitionningType::Generic, 0> {
   protected:
     void sendAndReceiveHaloX(T * __restrict__ haloFieldArray) {
-      SCOREP_INSTRUMENT("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloX")
+      SCOREP_INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloX")
 
           MPI_Irecv(haloFieldArray+receivedFromLeftBeginX, sizeStripeX,
                     MPI_DOUBLE, leftXRankMPI, 17, MPI_COMM_WORLD, &requestMPI[0]);
@@ -465,7 +465,7 @@ namespace lbm {
                         memoryLayout, PartitionningType::OneD, 0>::reduce;
 
     inline void periodic(T * __restrict__ f) {
-      SCOREP_INSTRUMENT("Communication<6>::periodic")
+      SCOREP_INSTRUMENT_ON("Communication<6>::periodic")
 
       sendAndReceiveHaloX(f);
     }
@@ -502,7 +502,7 @@ namespace lbm {
                         memoryLayout, PartitionningType::OneD, 0>::reduce;
 
     inline void periodic(T * __restrict__ f) {
-      SCOREP_INSTRUMENT("Communication<6>::periodic")
+      SCOREP_INSTRUMENT_ON("Communication<6>::periodic")
 
         //record event (compute_done) in default stream (0)
         //launch local periodic boundary kernel in default stream (0)
@@ -557,7 +557,7 @@ namespace lbm {
                         memoryLayout, PartitionningType::OneD, 0>::reduce;
 
     inline void periodic(T * __restrict__ f) {
-      SCOREP_INSTRUMENT("Communication<6>::periodic")
+      SCOREP_INSTRUMENT_ON("Communication<6>::periodic")
 
       sendAndReceiveHaloX(f);
 

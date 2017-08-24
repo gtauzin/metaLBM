@@ -68,7 +68,7 @@ namespace lbm {
 
     inline LocalizedField<T, NumberComponents> readLocalizedField(const std::string& fieldName,
                                                          const unsigned int iteration) {
-      SCOREP_INSTRUMENT("Reader<T, NumberComponents, ReaderType::VTR>::readLocalizedField")
+      SCOREP_INSTRUMENT_ON("Reader<T, NumberComponents, ReaderType::VTR>::readLocalizedField")
 
       LocalizedField<T, NumberComponents> fieldR(fieldName, gD::volume());
 

@@ -64,7 +64,7 @@ namespace lbm {
     {}
 
     void compute() {
-      SCOREP_INSTRUMENT("Routine<T>::compute")
+      SCOREP_INSTRUMENT_ON("Routine<T>::compute")
 
       printInputs();
 
@@ -132,7 +132,7 @@ namespace lbm {
     }
 
     void initializeLocalFields() {
-      SCOREP_INSTRUMENT("Routine<T>::initializeLocalFields")
+      SCOREP_INSTRUMENT_ON("Routine<T>::initializeLocalFields")
 
       communication.sendGlobalToLocal(densityField.globalData(),
                                       densityField.localData(),
