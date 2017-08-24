@@ -58,7 +58,7 @@ namespace lbm {
     inline T calculate(const T * RESTRICT f,
                               const MathVector<unsigned int, 3>& iP,
                               const unsigned int iQ) {
-      SCOREP_INSTRUMENT("Collision<T, CollisionType::GenericSRT>::calculate")
+      SCOREP_INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::calculate")
 
       return ( (T) 1.0 - (T) 1.0 / tau) * f[hD::getIndex(iP, iQ)]
         + forcingScheme.calculateCollisionSource(force.getForce(), iQ)
@@ -69,7 +69,7 @@ namespace lbm {
     inline void setVariables(const T * RESTRICT f,
                              const MathVector<unsigned int, 3>& iP,
                              const T density, const MathVector<T, L::dimD>& velocity) {
-      SCOREP_INSTRUMENT("Collision<T, CollisionType::GenericSRT>::setVariables")
+      SCOREP_INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::setVariables")
 
       forcingScheme.setVariables(getForce(), density, velocity);
       equilibrium.setVariables(density,
@@ -130,7 +130,7 @@ namespace lbm {
                              const MathVector<unsigned int, 3>& iP,
                              const T density,
                              const MathVector<T, L::dimD>& velocity) {
-      SCOREP_INSTRUMENT("Collision<T, CollisionType::ELBM>::calculate")
+      SCOREP_INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::calculate")
 
       Collision<T, CollisionType::BGK>::setVariables(f, iP, density, velocity);
 
@@ -165,7 +165,7 @@ namespace lbm {
 
 #pragma omp declare simd
     inline bool isDeviationSmall(const T error) {
-      SCOREP_INSTRUMENT("Collision<T, CollisionType::ELBM>::isDeviationSmall")
+      SCOREP_INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::isDeviationSmall")
 
       bool isDeviationSmallR = true;
       T deviation;
@@ -183,7 +183,7 @@ namespace lbm {
 
 #pragma omp declare simd
     T calculateAlphaMax() {
-      SCOREP_INSTRUMENT("Collision<T, CollisionType::ELBM>::calculateAlphaMax")
+      SCOREP_INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::calculateAlphaMax")
 
       T alphaMaxR = 2.5;
       T alphaMaxTemp;
@@ -203,7 +203,7 @@ namespace lbm {
 
 #pragma omp declare simd
     inline T solveAlpha(const T alphaMin, const T alphaMax) {
-      SCOREP_INSTRUMENT("Collision<T, CollisionType::ELBM>::solveAlpha")
+      SCOREP_INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::solveAlpha")
 
       std::shared_ptr<RootFinderFunctor<T>> entropicStepFunctor =
         std::shared_ptr<RootFinderFunctor<T>>(new EntropicStepFunctor<T>(f_Forced, f_NonEq));
@@ -224,7 +224,7 @@ namespace lbm {
 
     #pragma omp declare simd
     inline void calculateAlpha() {
-      SCOREP_INSTRUMENT("Collision<T, CollisionType::ELBM>::calculateAlpha")
+      SCOREP_INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::calculateAlpha")
 
       if(isDeviationSmall( (T) 1.0e-3)) {
         alpha = 2.0;
@@ -280,7 +280,7 @@ namespace lbm {
 
 #pragma omp declare simd
     inline T approximateAlpha() {
-      SCOREP_INSTRUMENT("Collision<T, CollisionType::Approached_ELBM>::approximateAlpha")
+      SCOREP_INSTRUMENT_OFF("Collision<T, CollisionType::Approached_ELBM>::approximateAlpha")
 
       T a1 = 0.0;
       T a2 = 0.0;
@@ -308,7 +308,7 @@ namespace lbm {
 
     #pragma omp declare simd
     inline void calculateAlpha() {
-      SCOREP_INSTRUMENT("Collision<T, CollisionType::Approached_ELBM>::calculateAlpha")
+      SCOREP_INSTRUMENT_OFF("Collision<T, CollisionType::Approached_ELBM>::calculateAlpha")
 
       if(isRelativeDeviationSmall( (T) 1.0e-3)) {
         T alphaApproximated = approximateAlpha();
@@ -356,7 +356,7 @@ namespace lbm {
     using Collision<T, CollisionType::ELBM>::calculateAlphaMax;
 
     inline T solveAlpha(const T alphaMin, const T alphaMax) {
-      SCOREP_INSTRUMENT("Collision<T, CollisionType::ForcedNR_ELBM>::solveAlpha")
+      SCOREP_INSTRUMENT_OFF("Collision<T, CollisionType::ForcedNR_ELBM>::solveAlpha")
 
       std::shared_ptr<RootFinderFunctor<T>> entropicStepFunctor =
         std::shared_ptr<RootFinderFunctor<T>>(new EntropicStepFunctor<T>(f_Forced, f_NonEq));
@@ -376,7 +376,7 @@ namespace lbm {
 
     #pragma omp declare simd
     inline T calculateAlpha() {
-      SCOREP_INSTRUMENT("Collision<T, CollisionType::ForcedNR_ELBM>::calculateAlpha")
+      SCOREP_INSTRUMENT_OFF("Collision<T, CollisionType::ForcedNR_ELBM>::calculateAlpha")
 
       T alphaMax = calculateAlphaMax();
 
@@ -418,7 +418,7 @@ namespace lbm {
     using Collision<T, CollisionType::ForcedNR_ELBM>::calculateAlpha;
 
     inline T solveAlpha(const T alphaMin, const T alphaMax) {
-      SCOREP_INSTRUMENT("Collision<T, CollisionType::ForcedBNR_ELBM>::solveAlpha")
+      SCOREP_INSTRUMENT_OFF("Collision<T, CollisionType::ForcedBNR_ELBM>::solveAlpha")
 
       std::shared_ptr<RootFinderFunctor<T>> entropicStepFunctor =
         std::shared_ptr<RootFinderFunctor<T>>(new EntropicStepFunctor<T>(f_Forced, f_NonEq));

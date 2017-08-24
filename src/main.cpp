@@ -15,7 +15,7 @@
 using namespace lbm;
 
 int main(int argc, char* argv[]) {
-  SCOREP_INSTRUMENT("main")
+  SCOREP_INSTRUMENT_ON("main")
 
   MPI_Init(&argc, &argv);
 

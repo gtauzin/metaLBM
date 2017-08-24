@@ -55,7 +55,7 @@ namespace lbm {
 
     #pragma omp declare simd
     inline void setForce(const MathVector<unsigned int, 3>& iP) {
-      SCOREP_INSTRUMENT("Force<T, EquilibriumType::Constant>::setForce")
+      SCOREP_INSTRUMENT_OFF("Force<T, EquilibriumType::Constant>::setForce")
 
       force = amplitude;
     }
@@ -84,7 +84,7 @@ namespace lbm {
 
     #pragma omp declare simd
     inline void setForce(const MathVector<unsigned int, 3>& iP){
-      SCOREP_INSTRUMENT("Force<T, EquilibriumType::Sinusoidal>::setForce")
+      SCOREP_INSTRUMENT_OFF("Force<T, EquilibriumType::Sinusoidal>::setForce")
 
       UnrolledFor<0, L::dimD>::Do([&] (int iD) {
           force[iD] = amplitude[iD] * sin(iP[iD]*2*M_PI/waveLength[iD]);
@@ -111,7 +111,7 @@ namespace lbm {
 
     #pragma omp declare simd
     inline void setForce(const MathVector<unsigned int, 3>& iP){
-      SCOREP_INSTRUMENT("Force<T, EquilibriumType::Kolmogorov>::setForce")
+      SCOREP_INSTRUMENT_OFF("Force<T, EquilibriumType::Kolmogorov>::setForce")
 
       force[d::X] = amplitude[d::X] * sin(iP[d::Y]*2*M_PI/waveLength[d::X]);
     }

@@ -41,7 +41,7 @@ namespace lbm {
 
     inline void setVariables(const T density_in,
                              const MathVector<T, L::dimD> velocity_in) {
-      SCOREP_INSTRUMENT("Equilibrium<T, L, EquilibriumType::Incompressible>::setVariables")
+      SCOREP_INSTRUMENT_OFF("Equilibrium<T, L, EquilibriumType::Incompressible>::setVariables")
 
       setDensity(density_in);
       setVelocity(velocity_in);
@@ -49,7 +49,7 @@ namespace lbm {
 
     #pragma omp declare simd
     inline T calculate(const unsigned int iQ) const {
-      SCOREP_INSTRUMENT("Equilibrium<T, latticeType, EquilibriumType::Incompressible>::calculate")
+      SCOREP_INSTRUMENT_OFF("Equilibrium<T, latticeType, EquilibriumType::Incompressible>::calculate")
 
       T cu = L::celerity()[iQ].dot(velocity);
 
@@ -84,7 +84,7 @@ namespace lbm {
 
     #pragma omp declare simd
     inline T calculate(const unsigned int iQ) const {
-      SCOREP_INSTRUMENT("Equilibrium<T, D1Q3, EquilibriumType::Incompressible>::calculate")
+      SCOREP_INSTRUMENT_OFF("Equilibrium<T, D1Q3, EquilibriumType::Incompressible>::calculate")
 
       T fEq_iQ = 1.0;
 
@@ -117,7 +117,7 @@ namespace lbm {
 
     #pragma omp declare simd
     inline T calculate(const unsigned int iQ) const {
-      SCOREP_INSTRUMENT("Equilibrium<T, D2Q9, EquilibriumType::Incompressible>::calculate")
+      SCOREP_INSTRUMENT_OFF("Equilibrium<T, D2Q9, EquilibriumType::Incompressible>::calculate")
 
       T fEq_iQ = 1.0;
 
@@ -151,7 +151,7 @@ namespace lbm {
 
     #pragma omp declare simd
     inline T calculate(const unsigned int iQ) const {
-      SCOREP_INSTRUMENT("Equilibrium<T, D3Q27, EquilibriumType::Incompressible>::calculate")
+      SCOREP_INSTRUMENT_OFF("Equilibrium<T, D3Q27, EquilibriumType::Incompressible>::calculate")
 
       T fEq_iQ = (T) 1;
 

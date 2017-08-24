@@ -22,7 +22,7 @@ namespace lbm {
 #pragma omp declare simd
     inline void calculateMoments(const T * RESTRICT f,
                                const MathVector<unsigned int, 3>& iP) {
-      SCOREP_INSTRUMENT("Moment<T>::calculateMoments")
+      SCOREP_INSTRUMENT_OFF("Moment<T>::calculateMoments")
 
       calculateDensity(f, iP);
       calculateVelocity(f, iP, density);
@@ -41,7 +41,7 @@ namespace lbm {
 #pragma omp declare simd
     inline void calculateDensity(const T * RESTRICT f,
                                const MathVector<unsigned int, 3>& iP) {
-      SCOREP_INSTRUMENT("Moment<T>::calculateDensity")
+      SCOREP_INSTRUMENT_OFF("Moment<T>::calculateDensity")
 
       density = f[hD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)];
 
@@ -54,7 +54,7 @@ namespace lbm {
      inline void calculateVelocity(const T * RESTRICT f,
                                 const MathVector<unsigned int, 3>& iP,
                                 const T density_in) {
-       SCOREP_INSTRUMENT("Moment<T>::calculateVelocity")
+       SCOREP_INSTRUMENT_OFF("Moment<T>::calculateVelocity")
 
        velocity = L::celerity()[0]
         * f[hD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)];
@@ -70,7 +70,7 @@ namespace lbm {
     #pragma omp declare simd
     inline T calculateEntropy(const T * RESTRICT f,
                             const MathVector<unsigned int, 3>& iP) {
-      SCOREP_INSTRUMENT("Moment<T>::calculateEntropy")
+      SCOREP_INSTRUMENT_OFF("Moment<T>::calculateEntropy")
 
       entropy = f[hD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)]
         * log(f[hD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)]

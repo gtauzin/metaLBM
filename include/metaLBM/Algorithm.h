@@ -61,7 +61,7 @@ namespace lbm {
 
     void storeLocalFields(const MathVector<unsigned int, 3>& iP,
                           const unsigned int iteration) {
-      SCOREP_INSTRUMENT("Algorithm<T, AlgorithmType::Pull>::storeLocalFields")
+      SCOREP_INSTRUMENT_OFF("Algorithm<T, AlgorithmType::Pull>::storeLocalFields")
 
       if(iteration%writeStep == 0) {
         const unsigned int indexLocal = hD::getIndexLocal(iP);
@@ -125,7 +125,7 @@ namespace lbm {
     {}
 
     void iterate(const unsigned int iteration) {
-      SCOREP_INSTRUMENT("Algorithm<T, AlgorithmType::Pull>::iterate")
+      SCOREP_INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate")
 
       f_Previous.swapHalo(f_Next);
 
@@ -140,7 +140,7 @@ namespace lbm {
 
       Computation::Do(lD::start()+L::halo(), lD::end()+L::halo(),
                       [&] (MathVector<unsigned int, 3>& iP) {
-          SCOREP_INSTRUMENT("Algorithn<T, AlgorithmType::Pull>::lambda[fused_collide_and_push]")
+          SCOREP_INSTRUMENT_ON("Algorithn<T, AlgorithmType::Pull>::lambda[fused_collide_and_push]")
 
           moment.calculateMoments(f_Previous.haloData(), iP);
 
