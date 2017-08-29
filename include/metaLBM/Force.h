@@ -35,6 +35,7 @@ namespace lbm {
 
   public:
     #pragma omp declare simd
+    DEVICE HOST
     inline const MathVector<T, L::dimD>& getForce(){
       return force;
     }
@@ -54,6 +55,7 @@ namespace lbm {
     {}
 
     #pragma omp declare simd
+    DEVICE HOST
     inline void setForce(const MathVector<unsigned int, 3>& iP) {
       SCOREP_INSTRUMENT_OFF("Force<T, EquilibriumType::Constant>::setForce")
 
@@ -83,6 +85,7 @@ namespace lbm {
     }
 
     #pragma omp declare simd
+    DEVICE HOST
     inline void setForce(const MathVector<unsigned int, 3>& iP){
       SCOREP_INSTRUMENT_OFF("Force<T, EquilibriumType::Sinusoidal>::setForce")
 
@@ -110,6 +113,7 @@ namespace lbm {
     {}
 
     #pragma omp declare simd
+    DEVICE HOST
     inline void setForce(const MathVector<unsigned int, 3>& iP){
       SCOREP_INSTRUMENT_OFF("Force<T, EquilibriumType::Kolmogorov>::setForce")
 

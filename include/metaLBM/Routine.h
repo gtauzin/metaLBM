@@ -18,23 +18,25 @@
 
 namespace lbm {
 
-  template<class T>
+  template<class T, Architecture architecture>
   class Routine {
   private:
     Communication_ communication;
 
-    Field<T, 1, writeDensity> densityField;
-    Field<T, L::dimD, writeVelocity> velocityField;
-    Field<T, L::dimD, writeDensity> forceField;
-    Field<T, 1, writeDensity> alphaField;
+    Field<T, 1, architecture, writeDensity> densityField;
+    Field<T, L::dimD, architecture, writeVelocity> velocityField;
+    Field<T, L::dimD, architecture, writeDensity> forceField;
+    Field<T, 1, architecture, writeDensity> alphaField;
 
-    Distribution<T> f_Previous;
-    Distribution<T> f_Next;
+    Distribution<T, architecture> f_Previous;
+    Distribution<T, architecture> f_Next;
     Algorithm_ algorithm;
 
     Writer_ writer;
 
-    double mass;
+    double initialMass;
+    double finalMass;
+    double differenceMass;
     double computationTime;
     double communicationTime;
     double writeTime;
@@ -56,7 +58,9 @@ namespace lbm {
       , algorithm(communication, densityField, velocityField, forceField, alphaField,
                   f_Previous, f_Next)
       , writer(prefix, rankMPI_in)
-      , mass(0.0)
+      , initialMass(0.0)
+      , finalMass(0.0)
+      , differenceMass(0.0)
       , computationTime(0.0)
       , communicationTime(0.0)
       , writeTime(0.0)
@@ -72,7 +76,8 @@ namespace lbm {
 
       writeFields(startIteration);
 
-      mass = communication.reduce(densityField.localData());
+      initialMass = communication.reduce(densityField.localDeviceArray(),
+                                         densityField.localHostArray());
 
       for(int iteration = startIteration+1; iteration <= endIteration; ++iteration) {
 
@@ -85,7 +90,11 @@ namespace lbm {
         totalTime += algorithm.getTotalTime();
       }
 
-      mass = fabs(mass-communication.reduce(densityField.localData()))/mass;
+
+      finalMass = communication.reduce(densityField.localDeviceArray(),
+                                       densityField.localHostArray());
+
+      differenceMass = fabs(initialMass-finalMass)/initialMass;
       printOutputs();
     }
 
@@ -126,7 +135,10 @@ namespace lbm {
         const double mlups = (gD::volume() * 1e-6)/(totalTime / (endIteration-startIteration+1));
 
         std::cout << "MLUPS           : " << mlups << std::endl
-                  << "% mass diff.    : " << mass << std::endl
+                  << "Correct mass    : " << densityField.localHostArray().size() << std::endl
+                  << "Initial mass    : " << initialMass << std::endl
+                  << "Final mass      : " << finalMass << std::endl
+                  << "% mass diff.    : " << differenceMass << std::endl
                   << "----------------------------------------------" << std::endl;
       }
     }
@@ -134,25 +146,30 @@ namespace lbm {
     void initializeLocalFields() {
       SCOREP_INSTRUMENT_ON("Routine<T>::initializeLocalFields")
 
-      communication.sendGlobalToLocal(densityField.globalData(),
-                                      densityField.localData(),
+      communication.sendGlobalToLocal(densityField.globalArray(),
+                                      densityField.localHostArray(),
+                                      densityField.localDeviceArray(),
                                       densityField.numberComponents);
 
-      communication.sendGlobalToLocal(velocityField.globalData(),
-                                      velocityField.localData(),
+      communication.sendGlobalToLocal(velocityField.globalArray(),
+                                      velocityField.localHostArray(),
+                                      velocityField.localDeviceArray(),
                                       velocityField.numberComponents);
 
-      communication.sendGlobalToLocal(alphaField.globalData(),
-                                      alphaField.localData(),
+      communication.sendGlobalToLocal(alphaField.globalArray(),
+                                      alphaField.localHostArray(),
+                                      alphaField.localDeviceArray(),
                                       alphaField.numberComponents);
 
-      communication.sendGlobalToLocal(f_Previous.globalData(),
-                                      f_Previous.localData(),
+      communication.sendGlobalToLocal(f_Previous.globalArray(),
+                                      f_Previous.localHostArray(),
+                                      f_Previous.localDeviceArray(),
                                       f_Previous.numberComponents);
       f_Previous.unpackLocal();
 
-      communication.sendGlobalToLocal(f_Next.globalData(),
-                                      f_Next.localData(),
+      communication.sendGlobalToLocal(f_Next.globalArray(),
+                                      f_Next.localHostArray(),
+                                      f_Next.localDeviceArray(),
                                       f_Next.numberComponents);
       f_Next.unpackLocal();
 
@@ -163,17 +180,21 @@ namespace lbm {
         writer.openFile(iteration);
 
         if(writer.isSerial) {
-          communication.sendLocalToGlobal(densityField.localData(),
-                                          densityField.globalData(),
+          communication.sendLocalToGlobal(densityField.localDeviceArray(),
+                                          densityField.localHostArray(),
+                                          densityField.globalArray(),
                                           densityField.numberComponents);
-          communication.sendLocalToGlobal(velocityField.localData(),
-                                          velocityField.globalData(),
+          communication.sendLocalToGlobal(velocityField.localDeviceArray(),
+                                          velocityField.localHostArray(),
+                                          velocityField.globalArray(),
                                           velocityField.numberComponents);
-          communication.sendLocalToGlobal(alphaField.localData(),
-                                          alphaField.globalData(),
+          communication.sendLocalToGlobal(alphaField.localDeviceArray(),
+                                          alphaField.localHostArray(),
+                                          alphaField.globalArray(),
                                           alphaField.numberComponents);
-          communication.sendLocalToGlobal(forceField.localData(),
-                                          forceField.globalData(),
+          communication.sendLocalToGlobal(forceField.localDeviceArray(),
+                                          forceField.localHostArray(),
+                                          forceField.globalArray(),
                                           forceField.numberComponents);
         }
 
@@ -190,8 +211,9 @@ namespace lbm {
           f_Previous.packLocal();
 
           if(writer.isSerial) {
-            communication.sendLocalToGlobal(f_Previous.localData(),
-                                            f_Previous.globalData(),
+            communication.sendLocalToGlobal(f_Previous.localDeviceArray(),
+                                            f_Previous.localHostArray(),
+                                            f_Previous.globalArray(),
                                             f_Previous.numberComponents);
           }
 
@@ -206,7 +228,7 @@ namespace lbm {
   };
 
 
-  typedef Routine<dataT> Routine_;
+  typedef Routine<dataT, architecture> Routine_;
 
 }
 

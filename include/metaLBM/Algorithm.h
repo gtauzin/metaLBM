@@ -17,20 +17,20 @@
 
 namespace lbm {
 
-  template<class T, AlgorithmType>
+  template<class T, AlgorithmType, Architecture architecture>
   class Algorithm {};
 
-  template<class T>
-  class Algorithm<T, AlgorithmType::Generic> {
+  template<class T, Architecture architecture>
+    class Algorithm<T, AlgorithmType::Generic, architecture> {
   protected:
     Communication_& communication;
 
-    Field<T, 1, writeDensity>& densityField;
-    Field<T, L::dimD, writeVelocity>& velocityField;
-    Field<T, L::dimD, writeDensity>& forceField;
-    Field<T, 1, writeDensity>& alphaField;
-    Distribution<T>& f_Previous;
-    Distribution<T>& f_Next;
+    Field<T, 1, architecture, writeDensity>& densityField;
+    Field<T, L::dimD, architecture, writeVelocity>& velocityField;
+    Field<T, L::dimD, architecture, writeDensity>& forceField;
+    Field<T, 1, architecture, writeDensity>& alphaField;
+    Distribution<T, architecture>& f_Previous;
+    Distribution<T, architecture>& f_Next;
 
     Collision_ collision;
     Moment<T> moment;
@@ -41,12 +41,12 @@ namespace lbm {
     std::chrono::duration<double> dtTotal;
 
     Algorithm(Communication_& communication_in,
-              Field<T, 1, writeDensity>& densityField_in,
-              Field<T, L::dimD, writeVelocity>& velocityField_in,
-              Field<T, L::dimD, writeDensity>& forceField_in,
-              Field<T, 1, writeDensity>& alphaField_in,
-              Distribution<T>& f_Previous_in,
-              Distribution<T>& f_Next_in)
+              Field<T, 1, architecture, writeDensity>& densityField_in,
+              Field<T, L::dimD, architecture, writeVelocity>& velocityField_in,
+              Field<T, L::dimD, architecture, writeDensity>& forceField_in,
+              Field<T, 1, architecture, writeDensity>& alphaField_in,
+              Distribution<T, architecture>& f_Previous_in,
+              Distribution<T, architecture>& f_Next_in)
       : communication(communication_in)
       , densityField(densityField_in)
       , velocityField(velocityField_in)
@@ -87,41 +87,41 @@ namespace lbm {
     }
   };
 
-  template<class T>
-  class Algorithm<T, AlgorithmType::Pull>
-    : public Algorithm<T, AlgorithmType::Generic> {
+  template<class T, Architecture architecture>
+    class Algorithm<T, AlgorithmType::Pull, architecture>
+    : public Algorithm<T, AlgorithmType::Generic, architecture> {
   private:
-    using Algorithm<T, AlgorithmType::Generic>::communication;
+    using Algorithm<T, AlgorithmType::Generic, architecture>::communication;
 
-    using Algorithm<T, AlgorithmType::Generic>::densityField;
-    using Algorithm<T, AlgorithmType::Generic>::velocityField;
-    using Algorithm<T, AlgorithmType::Generic>::forceField;
-    using Algorithm<T, AlgorithmType::Generic>::alphaField;
-    using Algorithm<T, AlgorithmType::Generic>::f_Previous;
-    using Algorithm<T, AlgorithmType::Generic>::f_Next;
+    using Algorithm<T, AlgorithmType::Generic, architecture>::densityField;
+    using Algorithm<T, AlgorithmType::Generic, architecture>::velocityField;
+    using Algorithm<T, AlgorithmType::Generic, architecture>::forceField;
+    using Algorithm<T, AlgorithmType::Generic, architecture>::alphaField;
+    using Algorithm<T, AlgorithmType::Generic, architecture>::f_Previous;
+    using Algorithm<T, AlgorithmType::Generic, architecture>::f_Next;
 
-    using Algorithm<T, AlgorithmType::Generic>::collision;
-    using Algorithm<T, AlgorithmType::Generic>::moment;
-    using Algorithm<T, AlgorithmType::Generic>::boundary;
+    using Algorithm<T, AlgorithmType::Generic, architecture>::collision;
+    using Algorithm<T, AlgorithmType::Generic, architecture>::moment;
+    using Algorithm<T, AlgorithmType::Generic, architecture>::boundary;
 
-    using Algorithm<T, AlgorithmType::Generic>::dtComputation;
-    using Algorithm<T, AlgorithmType::Generic>::dtCommunication;
-    using Algorithm<T, AlgorithmType::Generic>::dtTotal;
+    using Algorithm<T, AlgorithmType::Generic, architecture>::dtComputation;
+    using Algorithm<T, AlgorithmType::Generic, architecture>::dtCommunication;
+    using Algorithm<T, AlgorithmType::Generic, architecture>::dtTotal;
 
-    using Algorithm<T, AlgorithmType::Generic>::storeLocalFields;
+    using Algorithm<T, AlgorithmType::Generic, architecture>::storeLocalFields;
 
   public:
     Algorithm(Communication_& communication_in,
-              Field<T, 1, writeDensity>& densityField_in,
-              Field<T, L::dimD, writeVelocity>& velocityField_in,
-              Field<T, L::dimD, writeDensity>& forceField_in,
-              Field<T, 1, writeDensity>& alphaField_in,
-              Distribution<T>& f_Previous_in,
-              Distribution<T>& f_Next_in)
-      : Algorithm<T, AlgorithmType::Generic>(communication_in,
-                                             densityField_in, velocityField_in,
-                                             forceField_in, alphaField_in,
-                                             f_Previous_in, f_Next_in)
+              Field<T, 1, architecture, writeDensity>& densityField_in,
+              Field<T, L::dimD, architecture, writeVelocity>& velocityField_in,
+              Field<T, L::dimD, architecture, writeDensity>& forceField_in,
+              Field<T, 1, architecture, writeDensity>& alphaField_in,
+              Distribution<T, architecture>& f_Previous_in,
+              Distribution<T, architecture>& f_Next_in)
+      : Algorithm<T, AlgorithmType::Generic, architecture>(communication_in,
+                                                           densityField_in, velocityField_in,
+                                                           forceField_in, alphaField_in,
+                                                           f_Previous_in, f_Next_in)
     {}
 
     void iterate(const unsigned int iteration) {
@@ -132,25 +132,27 @@ namespace lbm {
       //force.update(iteration);
 
       auto t0 = std::chrono::high_resolution_clock::now();
-      communication.periodic(f_Previous.haloData());
+      communication.periodic(f_Previous.haloDeviceArray(),
+                             f_Previous.haloHostArray(),
+                             f_Previous.haloComputedData());
 
       //boundary.apply(f_Previous.haloData());
 
       auto t1 = std::chrono::high_resolution_clock::now();
 
-      Computation::Do(lD::start()+L::halo(), lD::end()+L::halo(),
+      Computation_::Do(lD::start()+L::halo(), lD::end()+L::halo(),
                       [&] (MathVector<unsigned int, 3>& iP) {
           SCOREP_INSTRUMENT_ON("Algorithn<T, AlgorithmType::Pull>::lambda[fused_collide_and_push]")
 
-          moment.calculateMoments(f_Previous.haloData(), iP);
+          moment.calculateMoments(f_Previous.haloComputedData(), iP);
 
           collision.setForce(iP+gD::offset(communication.getRankMPI()));
-          collision.setVariables(f_Previous.haloData(), iP,
+          collision.setVariables(f_Previous.haloComputedData(), iP,
                                  moment.getDensity(), moment.getVelocity());
 
           UnrolledFor<0, L::dimQ>::Do([&] (unsigned int iQ) {
               f_Next.setHaloField(hD::getIndex(iP, iQ),
-                                  collision.calculate(f_Previous.haloData(),
+                                  collision.calculate(f_Previous.haloComputedData(),
                                                       iP-uiL::celerity()[iQ], iQ));
             });
 
@@ -164,13 +166,13 @@ namespace lbm {
       dtTotal = (t2 - t0);
     }
 
-    using Algorithm<T, AlgorithmType::Generic>::getCommunicationTime;
-    using Algorithm<T, AlgorithmType::Generic>::getComputationTime;
-    using Algorithm<T, AlgorithmType::Generic>::getTotalTime;
+    using Algorithm<T, AlgorithmType::Generic, architecture>::getCommunicationTime;
+    using Algorithm<T, AlgorithmType::Generic, architecture>::getComputationTime;
+    using Algorithm<T, AlgorithmType::Generic, architecture>::getTotalTime;
   };
 
 
-  typedef Algorithm<dataT, algorithmT> Algorithm_;
+  typedef Algorithm<dataT, algorithmT, architecture> Algorithm_;
 
 }
 

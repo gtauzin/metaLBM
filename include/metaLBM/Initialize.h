@@ -8,19 +8,19 @@
 #include "Options.h"
 #include "Lattice.h"
 #include "Domain.h"
+#include "DynamicArray.cuh"
 #include "MathVector.h"
 #include "Field.h"
-#include "Distribution.h"
 #include "Equilibrium.h"
 #include "Reader.h"
 
 namespace lbm {
 
   template<class T>
-  LocalizedField<T, 1> initGlobalDensity() {
+    DynamicArray<T, Architecture::CPU> initGlobalDensity() {
     SCOREP_INSTRUMENT_ON("initGlobalDensity<T>")
 
-    Field<T, 1, true> densityFieldR("density", initDensityValue);
+      Field<T, 1, Architecture::CPU, true> densityFieldR("density", initDensityValue);
 
     switch(initDensityT){
     case InitDensityType::Homogeneous: {
@@ -40,17 +40,17 @@ namespace lbm {
       std::cout << "Wrong type of density initialization.";
     }
     }
-    return densityFieldR.getGlobalField();
+    return densityFieldR.globalArray();
   }
 
   template<class T>
-  LocalizedField<T, L::dimD> initGlobalVelocity() {
+  DynamicArray<T, Architecture::CPU> initGlobalVelocity() {
     SCOREP_INSTRUMENT_ON("initGlobalVelocity<T>")
 
     MathVector<T, L::dimD> initVelocityVectorProjected{{ (T) 0 }};
     initVelocityVectorProjected = Project<T, L::dimD>::Do(initVelocityVector);
 
-    Field<T, L::dimD, true> velocityFieldR("velocity",
+    Field<T, L::dimD, Architecture::CPU, true> velocityFieldR("velocity",
                                            initVelocityVectorProjected);
 
 
@@ -63,23 +63,23 @@ namespace lbm {
       std::cout << "Wrong type of velocity initialization.";
     }
     }
-    return velocityFieldR.getGlobalField();
+    return velocityFieldR.globalArray();
   }
 
   template<class T>
-  LocalizedField<T, 1> initGlobalAlpha() {
+  DynamicArray<T, Architecture::CPU> initGlobalAlpha() {
     SCOREP_INSTRUMENT_ON("initGlobalAlpha<T>")
 
-    Field<T, 1, true> alphaFieldR("alpha", (T) 2);
-    return alphaFieldR.getGlobalField();
+    Field<T, 1, Architecture::CPU, true> alphaFieldR("alpha", (T) 2);
+    return alphaFieldR.globalArray();
   }
 
   template<class T>
-  LocalizedField<T, L::dimQ> initGlobalDistributionStart(const Field<T, 1, true>& densityField,
-                                                         const Field<T, L::dimD, true>& velocityField) {
+  DynamicArray<T, Architecture::CPU> initGlobalDistributionStart(const Field<T, 1, Architecture::CPU, true>& densityField,
+                                                                 const Field<T, L::dimD, Architecture::CPU, true>& velocityField) {
     SCOREP_INSTRUMENT_ON("initGlobalDistributionStart<T>")
 
-    LocalizedField<T, L::dimQ> distributionR("distribution", gD::volume());
+    DynamicArray<T, Architecture::CPU> distributionR(gD::volume()*L::dimQ);
 
     Equilibrium_ equilibrium;
     MathVector<unsigned int, 3> iP;
@@ -103,17 +103,17 @@ namespace lbm {
   }
 
   template<class T>
-  LocalizedField<T, L::dimQ> initGlobalDistributionRestart() {
+  DynamicArray<T, Architecture::CPU> initGlobalDistributionRestart() {
     SCOREP_INSTRUMENT_ON("initGlobalDistributionRestart<T>")
 
     Reader<T, L::dimQ, ReaderType::VTR> reader(prefix);
-    return reader.readLocalizedField("distribution", startIteration);
+    return reader.readArray("distribution", startIteration);
   }
 
 
   template<class T>
-  LocalizedField<T, L::dimQ> initGlobalDistribution(const Field<T, 1, true>& densityField,
-                                                    const Field<T, L::dimD, true>& velocityField) {
+    DynamicArray<T, Architecture::CPU> initGlobalDistribution(const Field<T, 1, Architecture::CPU, true>& densityField,
+                                                              const Field<T, L::dimD, Architecture::CPU, true>& velocityField) {
     SCOREP_INSTRUMENT_ON("initGlobalDistribution<T>")
 
     if(startIteration == 0) {

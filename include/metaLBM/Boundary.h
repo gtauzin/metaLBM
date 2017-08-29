@@ -19,7 +19,8 @@ namespace lbm {
     MathVector<unsigned int, 3> iP_Destination;
 
   protected:
-    inline void applyX(T * __restrict__ f,
+    DEVICE HOST
+    inline void applyX(T * RESTRICT f,
                        const MathVector<unsigned int, 3>& iP) {
       SCOREP_INSTRUMENT_ON("Boundary<T, boundaryType, algorithmType>::applyX")
 
@@ -39,9 +40,13 @@ namespace lbm {
 
     }
 
-    inline void applyY(T * __restrict__ f,
+    DEVICE HOST
+    inline void applyY(T * RESTRICT f,
                        const MathVector<unsigned int, 3>& iP) {
       SCOREP_INSTRUMENT_ON("Boundary<T, boundaryType, algorithmType>::applyY")
+
+      std::cout << "applyY called!" << std::endl;
+
 
       iP_Origin = {iP[d::X], L::halo()[d::Y], iP[d::Z]};
       iP_Destination = {iP[d::X], L::halo()[d::Y] + lD::length()[d::Y], iP[d::Z]};
@@ -58,7 +63,8 @@ namespace lbm {
         });
     }
 
-    inline void applyZ(T * __restrict__ f,
+    DEVICE HOST
+    inline void applyZ(T * RESTRICT f,
                        const MathVector<unsigned int, 3>& iP) {
       SCOREP_INSTRUMENT_ON("Boundary<T, boundaryType, algorithmType>::applyZ")
 

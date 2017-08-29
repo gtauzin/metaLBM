@@ -45,10 +45,10 @@ namespace lbm {
     }
 
   public:
-    inline LocalizedField<T, NumberComponents> readField(const std::string& fieldName,
-                                                         const unsigned int iteration) {
+    inline DynamicArray<T, Architecture::CPU> readArray(const std::string& fieldName,
+                                                        const unsigned int iteration) {
       // ABORT
-      return LocalizedField<T, NumberComponents>("error");
+      return DynamicArray<T, Architecture::CPU>();
     }
   };
 
@@ -59,18 +59,18 @@ namespace lbm {
   private:
     using Reader<T, NumberComponents,ReaderType::Generic>::getFileName;
     typedef Domain<DomainType::Global, partitionningT,
-      MemoryLayout::Generic, NumberComponents> gNCD;
+                   MemoryLayout::Generic, NumberComponents> gNCD;
 
   public:
     Reader(const std::string& filePrefix_in)
       : Reader<T, NumberComponents,ReaderType::Generic>("outputVTR/", filePrefix_in, ".vtr")
     {}
 
-    inline LocalizedField<T, NumberComponents> readLocalizedField(const std::string& fieldName,
-                                                         const unsigned int iteration) {
-      SCOREP_INSTRUMENT_ON("Reader<T, NumberComponents, ReaderType::VTR>::readLocalizedField")
+    inline DynamicArray<T, Architecture::CPU> readArray(const std::string& fieldName,
+                                                        const unsigned int iteration) {
+      SCOREP_INSTRUMENT_ON("Reader<T, NumberComponents, ReaderType::VTR>::readArray")
 
-      LocalizedField<T, NumberComponents> fieldR(fieldName, gD::volume());
+      DynamicArray<T, Architecture::CPU> arrayR(gD::volume());
 
       std::string fileName = getFileName(iteration);
       rapidxml::file<> xmlFile(fileName.c_str());
@@ -98,17 +98,17 @@ namespace lbm {
         std::string::size_type offset, offsetTemporary;
         T value = std::stod(line, &offset);
         offsetTemporary = offset;
-        fieldR[gNCD::getIndex(iP, 0)] = value;
+        arrayR[gNCD::getIndex(iP, 0)] = value;
 
         for(unsigned int iQ = 1; iQ < NumberComponents; ++iQ) {
           value = std::stod(line.substr(offset), &offset);
           offset += offsetTemporary;
           offsetTemporary = offset;
-          fieldR[gNCD::getIndex(iP, iQ)] = value;
+          arrayR[gNCD::getIndex(iP, iQ)] = value;
         }
       }
 
-      return fieldR;
+      return arrayR;
     }
 
   };

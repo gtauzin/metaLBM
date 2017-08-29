@@ -11,44 +11,55 @@
 
 namespace lbm {
 
+  template <class T, Architecture architecture>
+    class Distribution {};
+
   template <class T>
-  class Distribution
-    : public Field<T, L::dimQ, true> {
+  class Distribution<T, Architecture::CPU>
+    : public Field<T, L::dimQ, Architecture::CPU, true> {
   protected:
-    using Field<T, L::dimQ, true>::globalField;
-    using Field<T, L::dimQ, true>::localField;
-    LocalizedField<T, L::dimQ> haloField;
+    using Field<T, L::dimQ, Architecture::CPU, true>::localArrayHost;
+    using Field<T, L::dimQ, Architecture::CPU, true>::localArrayDevice;
+
+    DynamicArray<T, Architecture::CPU> haloArrayHost;
+    DynamicArray<T, Architecture::GPU> haloArrayDevice;
 
   public:
-    using Field<T, L::dimQ, true>::setGlobalField;
+    using Field<T, L::dimQ, Architecture::CPU, true>::globalArray;
+    using Field<T, L::dimQ, Architecture::CPU, true>::setGlobalField;
 
     Distribution(const std::string& fieldName_in)
-      : Field<T, L::dimQ, true>(fieldName_in)
-      , haloField(fieldName_in, hD::volume())
-      {}
+      : Field<T, L::dimQ, Architecture::CPU, true>(fieldName_in)
+      , haloArrayHost(hD::volume()*L::dimQ)
+      , haloArrayDevice()
+    {}
 
     Distribution(const std::string& fieldName_in,
-                 const LocalizedField<T, L::dimQ>& globalField_in)
-      : Field<T, L::dimQ, true>(fieldName_in, globalField_in)
-      , haloField(fieldName_in, hD::volume())
-      {}
+                 const DynamicArray<T, Architecture::CPU>& globalArray_in)
+      : Field<T, L::dimQ, Architecture::CPU, true>(fieldName_in, globalArray_in)
+      , haloArrayHost(hD::volume()*L::dimQ)
+      , haloArrayDevice()
+    {}
 
-    T * RESTRICT haloData(const unsigned int iC = 0) {
-      return haloField.data(iC);
+    void swapHalo(Distribution<T, Architecture::CPU>& distribution_in) {
+      haloArrayHost.swap(distribution_in.haloHostArray());
     }
 
-    void swapHalo(Distribution<T>& distribution_in) {
-      haloField.swap(distribution_in.getHaloField());
-    }
-
-    LocalizedField<T, L::dimQ>& getHaloField() {
-      return haloField;
+    DynamicArray<T, Architecture::CPU>& haloHostArray() {
+      return haloArrayHost;
     }
 
     void setHaloField(const unsigned int index, const T value) {
-      haloField[index] = value;
+      haloArrayHost[index] = value;
     }
 
+    T * RESTRICT haloComputedData() {
+      return haloArrayHost.data();
+    }
+
+    DynamicArray<T, Architecture::GPU>& haloDeviceArray() {
+      return haloArrayDevice;
+    }
 
     void packLocal() {
       MathVector<unsigned int, 3> iP;
@@ -64,8 +75,8 @@ namespace lbm {
             iP = {iX, iY, iZ};
 
             UnrolledFor<0, L::dimQ>::Do([&] (unsigned int iQ) {
-                localField[hD::getIndexLocal(iP, iQ)]
-                    = haloField[hD::getIndex(iP, iQ)];
+                localArrayHost[hD::getIndexLocal(iP, iQ)]
+                    = haloArrayHost[hD::getIndex(iP, iQ)];
             });
           }
         }
@@ -86,32 +97,112 @@ namespace lbm {
             iP = {iX, iY, iZ};
 
             UnrolledFor<0, L::dimQ>::Do([&] (unsigned int iQ) {
-                haloField[hD::getIndex(iP, iQ)]
-                  = localField[lD::getIndex(iP-L::halo(), iQ)];
+                haloArrayHost[hD::getIndex(iP, iQ)]
+                  = localArrayHost[lD::getIndex(iP-L::halo(), iQ)];
             });
-
-            /* MathVector<int, 3> rankMPI{1, 0, 0}; */
-            /* MPI_Comm_rank(MPI_COMM_WORLD, &rankMPI[d::X]); */
-            /* if(rankMPI[d::X] == 1 && iP == MathVector<unsigned int, 3>({3,3,0})) { */
-            /*   std::cout << "In unpackLocal" << std::endl; */
-
-            /*   for(int iQ = 0; iQ < L::dimQ; ++iQ) { */
-            /*     std::cout << "localField(" << iQ << "): " */
-            /*               << localField[lD::getIndex(iP-L::halo(), iQ)] */
-            /*               << ", globalField(" << iQ << "): " */
-            /*               << globalField[gQD::getIndex(gD::offset({1,0,0})+iP-L::halo(), iQ)] */
-            /*               << std::endl; */
-            /*   } */
-            /* } */
-
 
           }
         }
       }
    }
 
+  };
+
+
+  template <class T>
+  class Distribution<T, Architecture::GPU>
+    : public Field<T, L::dimQ, Architecture::GPU, true> {
+  protected:
+    using Field<T, L::dimQ, Architecture::GPU, true>::localArrayHost;
+    using Field<T, L::dimQ, Architecture::GPU, true>::localArrayDevice;
+
+    DynamicArray<T, Architecture::CPU> haloArrayHost;
+    DynamicArray<T, Architecture::GPU> haloArrayDevice;
+
+  public:
+    using Field<T, L::dimQ, Architecture::GPU, true>::globalArray;
+    using Field<T, L::dimQ, Architecture::GPU, true>::setGlobalField;
+
+    Distribution(const std::string& fieldName_in)
+      : Field<T, L::dimQ, Architecture::GPU, true>(fieldName_in)
+      , haloArrayHost(hD::volume()*L::dimQ)
+      , haloArrayDevice(hD::volume()*L::dimQ)
+      {}
+
+    Distribution(const std::string& fieldName_in,
+                 const DynamicArray<T, Architecture::CPU>& globalArray_in)
+      : Field<T, L::dimQ, Architecture::GPU, true>(fieldName_in, globalArray_in)
+      , haloArrayHost(hD::volume()*L::dimQ)
+      , haloArrayDevice(hD::volume()*L::dimQ)
+      {}
+
+    void swapHalo(Distribution<T, Architecture::GPU>& distribution_in) {
+      haloArrayDevice.swap(distribution_in.haloDeviceArray());
+    }
+
+    DynamicArray<T, Architecture::CPU>& haloHostArray() {
+      return haloArrayHost;
+    }
+
+    void setHaloField(const unsigned int index, const T value) {
+      haloArrayDevice[index] = value;
+    }
+
+    T * RESTRICT haloComputedData() {
+      return haloArrayDevice.data();
+    }
+
+    DynamicArray<T, Architecture::GPU>& haloDeviceArray() {
+      return haloArrayDevice;
+    }
+
+    void packLocal() {
+      MathVector<unsigned int, 3> iP;
+
+      #pragma omp parallel for schedule(static) num_threads(NTHREADS)
+      for(unsigned int iZ = lD::start()[d::Z]+L::halo()[d::Z];
+          iZ < lD::end()[d::Z]+L::halo()[d::Z]; ++iZ) {
+        for(unsigned int iY = lD::start()[d::Y]+L::halo()[d::Y];
+            iY < lD::end()[d::Y]+L::halo()[d::Y]; ++iY) {
+         #pragma omp simd
+          for(unsigned int iX = lD::start()[d::X]+L::halo()[d::X];
+              iX < lD::end()[d::X]+L::halo()[d::X]; ++iX) {
+            iP = {iX, iY, iZ};
+
+            UnrolledFor<0, L::dimQ>::Do([&] (unsigned int iQ) {
+                localArrayHost[hD::getIndexLocal(iP, iQ)]
+                    = haloArrayHost[hD::getIndex(iP, iQ)];
+            });
+          }
+        }
+      }
+    }
+
+    void unpackLocal() {
+      MathVector<unsigned int, 3> iP;
+
+      #pragma omp parallel for schedule(static) num_threads(NTHREADS)
+      for(unsigned int iZ = lD::start()[d::Z]+L::halo()[d::Z];
+          iZ < lD::end()[d::Z]+L::halo()[d::Z]; ++iZ) {
+        for(unsigned int iY = lD::start()[d::Y]+L::halo()[d::Y];
+            iY < lD::end()[d::Y]+L::halo()[d::Y]; ++iY) {
+         #pragma omp simd
+          for(unsigned int iX = lD::start()[d::X]+L::halo()[d::X];
+              iX < lD::end()[d::X]+L::halo()[d::X]; ++iX) {
+            iP = {iX, iY, iZ};
+
+            UnrolledFor<0, L::dimQ>::Do([&] (unsigned int iQ) {
+                haloArrayHost[hD::getIndex(iP, iQ)]
+                  = localArrayHost[lD::getIndex(iP-L::halo(), iQ)];
+            });
+
+          }
+        }
+      }
+   }
 
   };
+
 }
 
 #endif // DISTRIBUTION_H

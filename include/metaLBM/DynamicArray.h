@@ -9,7 +9,7 @@
 
 namespace lbm {
 
-  template<class U, Architecture architecture = Architecture::CPU>
+  template<class U, Architecture architecture>
   class DynamicArray {};
 
 
@@ -59,13 +59,12 @@ namespace lbm {
 
   template<class U>
   class DynamicArray<U, Architecture::CPU>
-    :public DynamicArray<U, Architecture::Generic> {
+    : public DynamicArray<U, Architecture::Generic> {
   private:
     using DynamicArray<U, Architecture::Generic>::numberElements;
     using DynamicArray<U, Architecture::Generic>::dArrayPtr;
 
   public:
-    using DynamicArray<U, Architecture::Generic>::DynamicArray;
     using DynamicArray<U, Architecture::Generic>::operator[];
     using DynamicArray<U, Architecture::Generic>::data;
     using DynamicArray<U, Architecture::Generic>::size;
@@ -97,23 +96,11 @@ namespace lbm {
       }
     }
 
-    void resize(unsigned int numberElements_in) {
-      numberElements = numberElements_in;
-
-      if (numberElements != 0)
-        {
-          dArrayPtr = (U*)realloc(dArrayPtr, numberElements*sizeof(U));
-        }
-      else {
-        clear();
-      }
-    }
-
     void copyFrom(const DynamicArray<U, Architecture::CPU>& other) {
       memcpy(dArrayPtr, other.data(), other.size()*sizeof(U));
     }
 
-    void copyTo(DynamicArray<U, Architecture::CPU> other) {
+    void copyTo(DynamicArray<U, Architecture::CPU>& other) const {
       memcpy(other.data(), dArrayPtr, numberElements*sizeof(U));
     }
 

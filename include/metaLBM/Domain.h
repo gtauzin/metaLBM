@@ -10,7 +10,7 @@ namespace lbm {
 
 
   /**
-   * Domain defining space where LocalizedField lives and providing them
+   * Domain defining space where DynamicArray lives and providing them
    * with a multi-dimensional index.
    *
    * @tparam latticeType type of lattice used.

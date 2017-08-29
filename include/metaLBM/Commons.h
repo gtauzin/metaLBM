@@ -1,33 +1,46 @@
 #ifndef COMMONS_H
 #define COMMONS_H
 
-#define RESTRICT __restrict__
+#include <iostream>
 
 #ifdef __CUDA_ARCH__
+  #include <cuda_runtime_api.h>
+  #include <cuda.h>
 
-#define cudaCheckError() {                                          \
- cudaError_t e=cudaGetLastError();                                 \
- if(e!=cudaSuccess) {                                              \
-   printf("Cuda failure %s:%d: '%s'\n",__FILE__,__LINE__,cudaGetErrorString(e));           \
-   exit(0); \
- }                                                                 \
-}
+  #define CUDA_CALL(call) {
+    cudaError_t error = call;
+    if(error != cudaSuccess) {
+      std::cout << "Cuda failure " << __FILE__ << ":" << __LINE__
+                << ": '" << cudaGetErrorString(error) << "'" << std::endl;
+      exit(0);
+    }
+  }
 
-#define _HOST_ __host__
-#define _DEVICE_ __device__
-
-#else
-
-#define _HOST_
-#define _DEVICE_
-
-#ifdef PROFILE_SCOREP
-#include <scorep/SCOREP_User.h>
-#define SCOREP_INSTRUMENT_ON(function) SCOREP_USER_REGION(function,SCOREP_USER_REGION_TYPE_FUNCTION)
+  #define HOST __host__
+  #define DEVICE __device__
+  #define GLOBAL(function) {
+    __global__ function
+  }
+  #define RESTRICT
 
 #else
-#define SCOREP_INSTRUMENT_ON(function)
-#endif
+  #define CUDA_CALL(call)
+
+  #define HOST
+  #define DEVICE
+  #define GLOBAL(function)
+  #define RESTRICT __restrict__
+
+  #ifdef PROFILE_SCOREP
+    #include <scorep/SCOREP_User.h>
+
+    #define SCOREP_INSTRUMENT_ON(function) {
+      SCOREP_USER_REGION(function,SCOREP_USER_REGION_TYPE_FUNCTION)
+    }
+
+  #else
+    #define SCOREP_INSTRUMENT_ON(function)
+  #endif
 
 #endif
 

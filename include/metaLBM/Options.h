@@ -8,13 +8,13 @@ namespace lbm {
 
   enum class MemoryLayout {Generic, Default, SoA, AoS};
 
-  enum class PartitionningType {Generic, OneD, OneD_Pack, TwoD, ThreeD};
+  enum class PartitionningType {Generic, OneD, TwoD, ThreeD};
 
   enum class DomainType {Generic, Global, Local, Halo, BufferX};
 
   enum class Architecture {Generic, CPU, GPU};
 
-  enum class AlgorithmType {Generic, Pull, Push};
+  enum class AlgorithmType {Generic, Pull};
 
   enum class InitDensityType{Homogeneous, Peak};
   enum class InitVelocityType{Homogeneous, Perturbated, Wave, Decay};

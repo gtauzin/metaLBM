@@ -19,7 +19,8 @@ namespace lbm {
     T entropy;
 
   public:
-#pragma omp declare simd
+    #pragma omp declare simd
+    DEVICE HOST
     inline void calculateMoments(const T * RESTRICT f,
                                const MathVector<unsigned int, 3>& iP) {
       SCOREP_INSTRUMENT_OFF("Moment<T>::calculateMoments")
@@ -29,16 +30,19 @@ namespace lbm {
     }
 
     #pragma omp declare simd
+    DEVICE HOST
     inline const T& getDensity() {
       return density;
     }
 
-#pragma omp declare simd
+    #pragma omp declare simd
+    DEVICE HOST
     inline const MathVector<T, L::dimD>& getVelocity() {
       return velocity;
     }
 
-#pragma omp declare simd
+    #pragma omp declare simd
+    DEVICE HOST
     inline void calculateDensity(const T * RESTRICT f,
                                const MathVector<unsigned int, 3>& iP) {
       SCOREP_INSTRUMENT_OFF("Moment<T>::calculateDensity")
@@ -51,9 +55,10 @@ namespace lbm {
     }
 
     #pragma omp declare simd
-     inline void calculateVelocity(const T * RESTRICT f,
-                                const MathVector<unsigned int, 3>& iP,
-                                const T density_in) {
+    DEVICE HOST
+    inline void calculateVelocity(const T * RESTRICT f,
+                                  const MathVector<unsigned int, 3>& iP,
+                                  const T density_in) {
        SCOREP_INSTRUMENT_OFF("Moment<T>::calculateVelocity")
 
        velocity = L::celerity()[0]
@@ -68,6 +73,7 @@ namespace lbm {
     }
 
     #pragma omp declare simd
+    DEVICE HOST
     inline T calculateEntropy(const T * RESTRICT f,
                             const MathVector<unsigned int, 3>& iP) {
       SCOREP_INSTRUMENT_OFF("Moment<T>::calculateEntropy")

@@ -30,15 +30,21 @@ namespace lbm {
       , velocity2(0)
     {}
 
+    #pragma omp declare simd
+    DEVICE HOST
     inline void setDensity(T density_in) {
       density = density_in;
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     inline void setVelocity(MathVector<T, L::dimD> velocity_in) {
       velocity = velocity_in;
       velocity2 = velocity_in.norm2();
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     inline void setVariables(const T density_in,
                              const MathVector<T, L::dimD> velocity_in) {
       SCOREP_INSTRUMENT_OFF("Equilibrium<T, L, EquilibriumType::Incompressible>::setVariables")
@@ -48,6 +54,7 @@ namespace lbm {
   }
 
     #pragma omp declare simd
+    DEVICE HOST
     inline T calculate(const unsigned int iQ) const {
       SCOREP_INSTRUMENT_OFF("Equilibrium<T, latticeType, EquilibriumType::Incompressible>::calculate")
 
@@ -83,6 +90,7 @@ namespace lbm {
     using Equilibrium<T, LatticeType::Generic, EquilibriumType::Incompressible>::setVariables;
 
     #pragma omp declare simd
+    DEVICE HOST
     inline T calculate(const unsigned int iQ) const {
       SCOREP_INSTRUMENT_OFF("Equilibrium<T, D1Q3, EquilibriumType::Incompressible>::calculate")
 
@@ -116,6 +124,7 @@ namespace lbm {
     using Equilibrium<T, LatticeType::D1Q3, EquilibriumType::Incompressible>::setVariables;
 
     #pragma omp declare simd
+    DEVICE HOST
     inline T calculate(const unsigned int iQ) const {
       SCOREP_INSTRUMENT_OFF("Equilibrium<T, D2Q9, EquilibriumType::Incompressible>::calculate")
 
@@ -150,6 +159,7 @@ namespace lbm {
     using Equilibrium<T, LatticeType::D1Q3, EquilibriumType::Incompressible>::setVariables;
 
     #pragma omp declare simd
+    DEVICE HOST
     inline T calculate(const unsigned int iQ) const {
       SCOREP_INSTRUMENT_OFF("Equilibrium<T, D3Q27, EquilibriumType::Incompressible>::calculate")
 

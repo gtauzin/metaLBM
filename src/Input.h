@@ -12,7 +12,7 @@ namespace lbm {
   constexpr LatticeType latticeT = LatticeType::D2Q9;
   constexpr int lengthX_g = 32;
   constexpr int lengthY_g = 32;
-  constexpr int lengthZ_g = 8;
+  constexpr int lengthZ_g = 1;
 
   constexpr MathVector<unsigned int, 3> length_g = {lengthX_g, lengthY_g, lengthZ_g};
   constexpr MathVector<unsigned int, 3> length_l = {lengthX_g/NPROCS, lengthY_g, lengthZ_g};
@@ -21,8 +21,12 @@ namespace lbm {
   constexpr PartitionningType partitionningT = PartitionningType::OneD;
   constexpr MemoryLayout memoryL = MemoryLayout::AoS;
 
+
+  constexpr Architecture architecture = Architecture::GPU;
+
+
   constexpr int startIteration = 0;
-  constexpr int endIteration = 100;
+  constexpr int endIteration = 20;
   constexpr int writeStep = 1;//endIteration+1;
   constexpr int backupStep = endIteration+1;
 
@@ -36,7 +40,7 @@ namespace lbm {
   constexpr MathVector<dataT, 3> initVelocityVector = { {0.0, 0.0, 0.0} };
 
   constexpr ForcingSchemeType forcingSchemeT = ForcingSchemeType::ExactDifferenceMethod;
-  constexpr ForceType forceT = ForceType::Kolmogorov;
+  constexpr ForceType forceT = ForceType::Constant;
 
   constexpr MathVector<dataT, 3> forceAmplitude = { {0.0, 0.0, 0.0} };
   constexpr MathVector<dataT, 3> forceWaveLength = { {8.0, 0.0, 0.0} };
