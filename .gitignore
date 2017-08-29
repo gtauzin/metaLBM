@@ -8,5 +8,5 @@ output*
 bin*
 build*
 doc*
-script/*.out
-script/*.err
+script/*out*
+script/*err*
