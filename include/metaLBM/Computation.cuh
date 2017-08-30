@@ -8,6 +8,8 @@
 
 namespace lbm {
 
+#ifdef __CUDA_ARCH__
+
   template<typename Callback>
   GLOBAL
   void kernel_1D(const MathVector<unsigned int, 3>& start,
@@ -111,7 +113,9 @@ namespace lbm {
     }
   };
 
-  }
+#endif
+
+}
 
 
 
