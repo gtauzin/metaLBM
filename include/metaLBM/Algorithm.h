@@ -141,7 +141,7 @@ namespace lbm {
       auto t1 = std::chrono::high_resolution_clock::now();
 
       Computation_::Do(lD::start()+L::halo(), lD::end()+L::halo(),
-                      [&] (MathVector<unsigned int, 3>& iP) {
+                      [&] HOST DEVICE (MathVector<unsigned int, 3>& iP) {
           SCOREP_INSTRUMENT_ON("Algorithn<T, AlgorithmType::Pull>::lambda[fused_collide_and_push]")
 
           moment.calculateMoments(f_Previous.haloComputedData(), iP);
@@ -150,7 +150,7 @@ namespace lbm {
           collision.setVariables(f_Previous.haloComputedData(), iP,
                                  moment.getDensity(), moment.getVelocity());
 
-          UnrolledFor<0, L::dimQ>::Do([&] (unsigned int iQ) {
+          UnrolledFor<0, L::dimQ>::Do([&] HOST DEVICE (unsigned int iQ) {
               f_Next.setHaloField(hD::getIndex(iP, iQ),
                                   collision.calculate(f_Previous.haloComputedData(),
                                                       iP-uiL::celerity()[iQ], iQ));

@@ -76,7 +76,7 @@ namespace lbm {
   template <class T>
   class Equilibrium<T, LatticeType::D1Q3, EquilibriumType::Incompressible>
     : public Equilibrium<T, LatticeType::Generic, EquilibriumType::Incompressible> {
-  private:
+  protected:
     using Equilibrium<T, LatticeType::Generic, EquilibriumType::Incompressible>::density;
     using Equilibrium<T, LatticeType::Generic, EquilibriumType::Incompressible>::velocity;
     using Equilibrium<T, LatticeType::Generic, EquilibriumType::Incompressible>::velocity2;
@@ -96,7 +96,7 @@ namespace lbm {
 
       T fEq_iQ = 1.0;
 
-      UnrolledFor<0, L::dimD>::Do([&] (int iD) {
+      UnrolledFor<0, L::dimD>::Do([&] HOST DEVICE (int iD) {
           fEq_iQ *= (2.0 - sqrt(1.0 + 3.0*velocity[iD]*velocity[iD]))
             * PowerBase((2* velocity[iD]
                         + sqrt(1.0 + 3.0*velocity[iD]*velocity[iD]))
@@ -130,7 +130,7 @@ namespace lbm {
 
       T fEq_iQ = 1.0;
 
-      UnrolledFor<0, L::dimD>::Do([&] (int iD) {
+      UnrolledFor<0, L::dimD>::Do([&] HOST DEVICE (int iD) {
           fEq_iQ *= (2.0 - sqrt(1.0 + 3.0*velocity[iD]*velocity[iD]))
             * PowerBase((2* velocity[iD]
                          + sqrt(1.0 + 3.0*velocity[iD]*velocity[iD]))
@@ -165,7 +165,7 @@ namespace lbm {
 
       T fEq_iQ = (T) 1;
 
-      UnrolledFor<0, L::dimD>::Do([&] (int iD) {
+      UnrolledFor<0, L::dimD>::Do([&] HOST DEVICE (int iD) {
           fEq_iQ *= (2.0 - sqrt(1.0 + 3.0*velocity[iD]*velocity[iD]))
             * PowerBase((2* velocity[iD]
                          + sqrt(1.0 + 3.0*velocity[iD]*velocity[iD]))

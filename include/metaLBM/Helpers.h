@@ -11,6 +11,8 @@ namespace lbm {
   template<int Begin, int End, int Step = 1>
   struct UnrolledFor {
     template<typename F>
+    #pragma omp declare simd
+    DEVICE HOST
     static void Do (F f) {
       f(Begin);
       UnrolledFor<Begin+Step, End, Step>::Do(f);
@@ -20,12 +22,15 @@ namespace lbm {
   template<int End>
   struct UnrolledFor<End, End> {
     template<typename F>
+    #pragma omp declare simd
+    DEVICE HOST
     static void Do (F f) {
     }
   };
 
-  #pragma omp declare simd
   template <class T>
+  #pragma omp declare simd
+  DEVICE HOST
   inline T PowerBase(T arg, int power) {
     if(power == 1) {
       return arg;
@@ -43,7 +48,8 @@ namespace lbm {
   template <class T, int power>
   class Power {
   public:
-#pragma omp declare simd
+    #pragma omp declare simd
+    DEVICE HOST
     static inline T Do(const T arg) {
       return (T) pow(arg, power);
     }
@@ -52,7 +58,8 @@ namespace lbm {
   template <class T>
   class Power<T, 0> {
   public:
-#pragma omp declare simd
+    #pragma omp declare simd
+    DEVICE HOST
     static inline T Do(const T arg) {
       return (T) 1;
     }
@@ -61,7 +68,8 @@ namespace lbm {
   template <class T>
   class Power<T, 1> {
   public:
-#pragma omp declare simd
+    #pragma omp declare simd
+    DEVICE HOST
     static inline T Do(const T arg) {
       return (T) arg;
     }
@@ -70,7 +78,8 @@ namespace lbm {
   template <class T>
   class Power<T, 2> {
   public:
-#pragma omp declare simd
+    #pragma omp declare simd
+    DEVICE HOST
     static inline T Do(const T arg) {
       return (T) arg*arg;
     }
@@ -79,7 +88,8 @@ namespace lbm {
   template <class T>
   class Power<T, 3> {
   public:
-#pragma omp declare simd
+    #pragma omp declare simd
+    DEVICE HOST
     static inline T Do(const T arg) {
       return (T) arg*arg*arg;
     }
@@ -88,7 +98,8 @@ namespace lbm {
   template <class T>
   class Power<T, 4> {
   public:
-#pragma omp declare simd
+    #pragma omp declare simd
+    DEVICE HOST
     static inline T Do(const T arg) {
       return (T) arg*arg*arg*arg;
     }
@@ -97,7 +108,8 @@ namespace lbm {
   template <class T>
   class Power<T, -1> {
   public:
-#pragma omp declare simd
+    #pragma omp declare simd
+    DEVICE HOST
     static inline T Do(const T arg) {
       return (T) 1.0/arg;
     }
@@ -107,9 +119,10 @@ namespace lbm {
   template <class T>
   struct RootFinderFunctor {
   public:
+    #pragma omp declare simd
+    DEVICE HOST
     RootFinderFunctor(){};
 
-#pragma omp declare simd
     virtual T evaluateFunction(T const& x) = 0;
 
     virtual T evaluateDerivative(T const& x) = 0;

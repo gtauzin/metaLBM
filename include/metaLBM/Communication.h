@@ -128,7 +128,7 @@ namespace lbm {
 
       haloDeviceArray.copyTo(haloHostArray);
 
-      UnrolledFor<0, L::dimQ>::Do([&] (unsigned int iQ) {
+      UnrolledFor<0, L::dimQ>::Do([&] HOST DEVICE (unsigned int iQ) {
           sendToRightBeginX = hMLD::getIndex({L::halo()[d::X]+lD::length()[d::X]-1,
             hMLD::start()[d::Y], hMLD::start()[d::Z]}, iQ);
           receivedFromLeftBeginX = hMLD::getIndex({0,
@@ -393,7 +393,7 @@ namespace lbm {
         //record event (compute_done) in default stream (0)
         //launch local periodic boundary kernel in default stream (0)
 
-      Computation_::Do(hD::start(), endY, [&] (MathVector<unsigned int, 3>& iP) {
+      Computation_::Do(hD::start(), endY, [&] HOST DEVICE (MathVector<unsigned int, 3>& iP) {
         applyY(haloComputedArray, iP);
       });
 
@@ -445,11 +445,11 @@ namespace lbm {
                          T * RESTRICT haloComputedArray) {
       SCOREP_INSTRUMENT_ON("Communication<6>::periodic")
 
-      Computation_::Do(hD::start(), endY, [&] (MathVector<unsigned int, 3>& iP) {
+      Computation_::Do(hD::start(), endY, [&] HOST DEVICE (MathVector<unsigned int, 3>& iP) {
         applyY(haloComputedArray, iP);
       });
 
-      Computation_::Do(hD::start(), endZ, [&] (MathVector<unsigned int, 3>& iP) {
+      Computation_::Do(hD::start(), endZ, [&] HOST DEVICE (MathVector<unsigned int, 3>& iP) {
         applyZ(haloComputedArray, iP);
       });
 

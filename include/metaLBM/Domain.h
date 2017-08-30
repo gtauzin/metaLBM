@@ -27,35 +27,51 @@ namespace lbm {
   struct Domain<DomainType::Generic, PartitionningType::Generic,
                 MemoryLayout::Generic, NumberComponents> {
   public:
+    #pragma omp declare simd
+    DEVICE HOST
     static inline constexpr MathVector<unsigned int, 3> start() {
       return MathVector<unsigned int, 3>{0, 0, 0};
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline constexpr MathVector<unsigned int, 3> end() {
       return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l);
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline constexpr MathVector<unsigned int, 3> length() {
       return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l);
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline constexpr unsigned int volume() {
       return length()[d::X]*length()[d::Y]*length()[d::Z];
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP) {
       return length()[d::Z] * (length()[d::Y] * iP[d::X] + iP[d::Y]) + iP[d::Z];
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline unsigned int getIndex(const unsigned int index) {
       return index;
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP,
                                         const unsigned int iC) {
       return iC * volume() + getIndex(iP);
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline unsigned int getIndex(const unsigned int index,
                                         const unsigned int iC) {
       return iC * volume() + index;
@@ -67,35 +83,51 @@ namespace lbm {
   struct Domain<DomainType::Local, PartitionningType::Generic,
                 MemoryLayout::Generic, NumberComponents> {
   public:
+    #pragma omp declare simd
+    DEVICE HOST
     static inline constexpr MathVector<unsigned int, 3> start() {
       return MathVector<unsigned int, 3>{0, 0, 0};
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline constexpr MathVector<unsigned int, 3> end() {
       return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l);
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline constexpr MathVector<unsigned int, 3> length() {
       return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l);
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline constexpr unsigned int volume() {
       return length()[d::X]*length()[d::Y]*length()[d::Z];
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP) {
       return length()[d::Z] * (length()[d::Y] * iP[d::X] + iP[d::Y]) + iP[d::Z];
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline unsigned int getIndex(const unsigned int index) {
       return index;
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP,
                                         const unsigned int iC) {
       return iC * volume() + getIndex(iP);
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline unsigned int getIndex(const unsigned int index,
                                         const unsigned int iC) {
       return iC * volume() + index;
@@ -111,32 +143,43 @@ namespace lbm {
                     MemoryLayout::Generic, 1>
   {
   public:
+    #pragma omp declare simd
+    DEVICE HOST
     static inline constexpr MathVector<unsigned int, 3> start() {
       return MathVector<unsigned int, 3>{0, 0, 0};
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline constexpr MathVector<unsigned int, 3> end() {
       return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_g);
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline constexpr MathVector<unsigned int, 3> length() {
       return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_g);
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline constexpr unsigned int volume() {
       return length()[d::X]*length()[d::Y]*length()[d::Z];
     }
 
-    static inline MathVector<unsigned int, 3> offset
-      (const MathVector<int, 3>& rankMPI = MathVector<int, 3>{0, 0, 0}) {
+    #pragma omp declare simd
+    DEVICE HOST
+    static inline MathVector<unsigned int, 3> offset(const MathVector<int, 3>& rankMPI) {
       MathVector<unsigned int, 3> offsetR{{0}};
-      UnrolledFor<0, L::dimD>::Do([&] (unsigned int iD) {
+      UnrolledFor<0, L::dimD>::Do([&] HOST DEVICE (unsigned int iD) {
           offsetR[iD] = (unsigned int) length_g[iD]*rankMPI[iD];
         });
 
       return offsetR;
   }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP) {
       const unsigned int localLengthX = Domain<DomainType::Local, PartitionningType::Generic,
                                                MemoryLayout::Generic, 1>::length()[d::X];
@@ -148,6 +191,8 @@ namespace lbm {
       return iP[d::X]/localLengthX * localVolume + indexLocal;
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP,
                                         const unsigned int iC) {
       const unsigned int localLengthX = Domain<DomainType::Local, PartitionningType::Generic,
@@ -180,6 +225,8 @@ namespace lbm {
     using Domain<DomainType::Global, partitionningType,
                  MemoryLayout::Generic, 1>::offset;
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP) {
       const unsigned int localLengthX = Domain<DomainType::Local, PartitionningType::Generic,
                                                MemoryLayout::Generic, NumberComponents>::length()[d::X];
@@ -191,6 +238,8 @@ namespace lbm {
       return iP[d::X]/localLengthX * NumberComponents * localVolume + indexLocal;
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP,
                                         const unsigned int iC) {
       const unsigned int localLengthX = Domain<DomainType::Local, PartitionningType::Generic,
@@ -212,32 +261,46 @@ namespace lbm {
     : public Domain<DomainType::Local, PartitionningType::Generic,
                     MemoryLayout::Generic, NumberComponents> {
   public:
+    #pragma omp declare simd
+    DEVICE HOST
     static inline constexpr MathVector<unsigned int, 3> start() {
       return MathVector<unsigned int, 3>{0, 0, 0};
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline constexpr MathVector<unsigned int, 3> end() {
       return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l) + 2 * L::halo();
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline constexpr MathVector<unsigned int, 3> length() {
       return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l) + 2 * L::halo();
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline constexpr unsigned int volume() {
       return length()[d::X]*length()[d::Y]*length()[d::Z];
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP) {
       return length()[d::Z] * (length()[d::Y] * iP[d::X] + iP[d::Y]) + iP[d::Z];
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline unsigned int getIndexLocal(const MathVector<unsigned int, 3>& iP,
                                              const unsigned int iC) {
       return Domain<DomainType::Local, PartitionningType::Generic,
                     MemoryLayout::Generic, NumberComponents>::getIndex(iP - L::halo(), iC);
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline unsigned int getIndexLocal(const MathVector<unsigned int, 3>& iP) {
       return Domain<DomainType::Local, PartitionningType::Generic,
                     MemoryLayout::Generic, NumberComponents>::getIndex(iP - L::halo());
@@ -268,11 +331,15 @@ namespace lbm {
                  MemoryLayout::Generic, NumberComponents>::getIndexLocal;
 
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP,
                                         const unsigned int iC) {
       return getIndex(iP) * L::dimQ + iC;
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline unsigned int getIndex(const unsigned int index,
                                         const unsigned int iC) {
       return index * L::dimQ + iC;
@@ -302,11 +369,15 @@ namespace lbm {
                  MemoryLayout::Generic, NumberComponents>::getIndexLocal;
 
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP,
                                         const unsigned int iC) {
       return iC * volume() + getIndex(iP);
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline unsigned int getIndex(const unsigned int index,
                                         const unsigned int iC) {
       return iC * volume() + index;
@@ -320,30 +391,42 @@ namespace lbm {
     : public Domain<DomainType::Halo, PartitionningType::Generic,
                     MemoryLayout::Generic, NumberComponents> {
   public:
+    #pragma omp declare simd
+    DEVICE HOST
     static inline constexpr MathVector<unsigned int, 3> start() {
       return MathVector<unsigned int, 3>{0, 0, 0};
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline constexpr MathVector<unsigned int, 3> end() {
       return {L::halo()[d::X],
               ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l)[d::Y]+2*L::halo()[d::Y],
               ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l)[d::Z]+2*L::halo()[d::Z]};
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline constexpr MathVector<unsigned int, 3> length() {
       return {L::halo()[d::X],
           ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l)[d::Y]+2*L::halo()[d::Y],
               ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l)[d::Z]+2*L::halo()[d::Z]};
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline constexpr unsigned int volume() {
       return length()[d::X]*length()[d::Y]*length()[d::Z];
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP) {
       return length()[d::Z] * (length()[d::Y] * iP[d::X] + iP[d::Y]) + iP[d::Z];
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
     static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP,
                                         const unsigned int iC) {
       return iC * volume() + getIndex(iP);

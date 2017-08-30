@@ -46,11 +46,11 @@ namespace lbm {
       std::swap(*this, other);
     }
 
-    const unsigned int size() {
+    unsigned int size() {
       return numberElements;
     }
 
-    const unsigned int size() const {
+    unsigned int size() const {
       return numberElements;
     }
 

@@ -92,7 +92,7 @@ namespace lbm {
                                    velocityField.getGlobalVector(iP));
 
 
-          UnrolledFor<0, L::dimQ>::Do([&] (unsigned int iQ) {
+          UnrolledFor<0, L::dimQ>::Do([&] HOST DEVICE (unsigned int iQ) {
               distributionR[gQD::getIndex({iX, iY, iZ}, iQ)]
                 = equilibrium.calculate(iQ);
             });

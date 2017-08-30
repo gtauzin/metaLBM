@@ -28,7 +28,7 @@ namespace lbm {
       : force{(T) 0}
       , amplitude{(T) 0}
     {
-      UnrolledFor<0, L::dimD>::Do([&] (int iD) {
+      UnrolledFor<0, L::dimD>::Do([&] HOST DEVICE (int iD) {
           amplitude[iD] = amplitude_in[iD];
       });
     }
@@ -79,7 +79,7 @@ namespace lbm {
       : Force<T, ForceType::Generic>(amplitude_in)
       , waveLength{(T) 0}
     {
-      UnrolledFor<0, L::dimD>::Do([&] (int iD) {
+      UnrolledFor<0, L::dimD>::Do([&] HOST DEVICE (int iD) {
           waveLength[iD] =  waveLength_in[iD];
       });
     }
@@ -89,7 +89,7 @@ namespace lbm {
     inline void setForce(const MathVector<unsigned int, 3>& iP){
       SCOREP_INSTRUMENT_OFF("Force<T, EquilibriumType::Sinusoidal>::setForce")
 
-      UnrolledFor<0, L::dimD>::Do([&] (int iD) {
+      UnrolledFor<0, L::dimD>::Do([&] HOST DEVICE (int iD) {
           force[iD] = amplitude[iD] * sin(iP[iD]*2*M_PI/waveLength[iD]);
       });
     }

@@ -194,7 +194,7 @@ namespace lbm {
 
     void setGlobalVector(const MathVector<unsigned int, 3>& iP,
                          const MathVector<T, NumberComponents> vector) {
-      UnrolledFor<0, NumberComponents>::Do([&] (unsigned int iC) {
+      UnrolledFor<0, NumberComponents>::Do([&] HOST DEVICE (unsigned int iC) {
           setGlobalValue(iP, vector[iC], iC);
       });
     }
@@ -206,7 +206,7 @@ namespace lbm {
 
     MathVector<T, NumberComponents> getGlobalVector(const MathVector<unsigned int, 3>& iP) const {
       MathVector<T, NumberComponents> vectorR;
-      UnrolledFor<0, NumberComponents>::Do([&] (unsigned int iC) {
+      UnrolledFor<0, NumberComponents>::Do([&] HOST DEVICE (unsigned int iC) {
           vectorR[iC] = getGlobalValue(iP, iC);
       });
 
@@ -224,7 +224,7 @@ namespace lbm {
 
     void setLocalVector(const unsigned int index,
                             const MathVector<T, NumberComponents> vector) {
-      UnrolledFor<0, NumberComponents>::Do([&] (unsigned int iC) {
+      UnrolledFor<0, NumberComponents>::Do([&] HOST DEVICE (unsigned int iC) {
           setLocalValue(index, vector[iC], iC);
       });
     }
@@ -291,7 +291,7 @@ namespace lbm {
 
     void setLocalVector(const unsigned int index,
                         const MathVector<T, NumberComponents> vector) {
-      UnrolledFor<0, NumberComponents>::Do([&] (unsigned int iC) {
+      UnrolledFor<0, NumberComponents>::Do([&] HOST DEVICE (unsigned int iC) {
           setLocalValue(index, vector[iC], iC);
       });
     }

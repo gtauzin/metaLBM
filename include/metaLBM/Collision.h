@@ -134,7 +134,7 @@ namespace lbm {
 
       Collision<T, CollisionType::BGK>::setVariables(f, iP, density, velocity);
 
-      UnrolledFor<0, L::dimQ>::Do([&] (unsigned int iQ) {
+      UnrolledFor<0, L::dimQ>::Do([&] HOST DEVICE (unsigned int iQ) {
           f_Forced[iQ] = f[hD::getIndex(iP-uiL::celerity()[iQ], iQ)]
             + forcingScheme.getCollisionSource(getForce(), iQ);
           f_NonEq[iQ] = f[hD::getIndex(iP-uiL::celerity()[iQ], iQ)]
@@ -170,7 +170,7 @@ namespace lbm {
       bool isDeviationSmallR = true;
       T deviation;
 
-      UnrolledFor<0, L::dimQ>::Do([&] (unsigned int iQ) {
+      UnrolledFor<0, L::dimQ>::Do([&] HOST DEVICE (unsigned int iQ) {
           deviation = fabs(f_NonEq[iQ]/f_Forced[iQ]);
 
           if(deviation > error) {
@@ -188,7 +188,7 @@ namespace lbm {
       T alphaMaxR = 2.5;
       T alphaMaxTemp;
 
-      UnrolledFor<0, L::dimQ>::Do([&] (unsigned int iQ) {
+      UnrolledFor<0, L::dimQ>::Do([&] HOST DEVICE (unsigned int iQ) {
           if(f_NonEq[iQ] > 0) {
             alphaMaxTemp = fabs(f_Forced[iQ]/f_NonEq[iQ]);
 
@@ -287,7 +287,7 @@ namespace lbm {
       T a3 = 0.0;
       T a4 = 0.0;
 
-      UnrolledFor<0, L::dimQ>::Do([&] (unsigned int iQ) {
+      UnrolledFor<0, L::dimQ>::Do([&] HOST DEVICE (unsigned int iQ) {
           T temp = f_NonEq[iQ]/f_Forced[iQ];
           a1 += f_NonEq[iQ]*temp;
           a2 += f_NonEq[iQ]*temp*temp;

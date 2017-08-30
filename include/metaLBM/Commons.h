@@ -7,35 +7,35 @@
   #include <cuda_runtime_api.h>
   #include <cuda.h>
 
-  #define CUDA_CALL(call) {
-    cudaError_t error = call;
-    if(error != cudaSuccess) {
-      std::cout << "Cuda failure " << __FILE__ << ":" << __LINE__
-                << ": '" << cudaGetErrorString(error) << "'" << std::endl;
-      exit(0);
-    }
+  #define CUDA_CALL(call) {                                                     \
+    cudaError_t error = call;                                                   \
+    if(error != cudaSuccess) {                                                  \
+      std::cout << "Cuda failure " << __FILE__ << ":" << __LINE__               \
+                << ": '" << cudaGetErrorString(error) << "'" << std::endl;      \
+      exit(0);                                                                  \
+    }                                                                           \
   }
 
   #define HOST __host__
   #define DEVICE __device__
-  #define GLOBAL(function) {
-    __global__ function
-  }
+  #define GLOBAL __global__
   #define RESTRICT
+
+  #define SCOREP_INSTRUMENT_ON(function)
 
 #else
   #define CUDA_CALL(call)
 
   #define HOST
   #define DEVICE
-  #define GLOBAL(function)
+  #define GLOBAL
   #define RESTRICT __restrict__
 
   #ifdef PROFILE_SCOREP
     #include <scorep/SCOREP_User.h>
 
-    #define SCOREP_INSTRUMENT_ON(function) {
-      SCOREP_USER_REGION(function,SCOREP_USER_REGION_TYPE_FUNCTION)
+    #define SCOREP_INSTRUMENT_ON(function) {                                    \
+      SCOREP_USER_REGION(function,SCOREP_USER_REGION_TYPE_FUNCTION)             \
     }
 
   #else

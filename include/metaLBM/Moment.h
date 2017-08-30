@@ -49,7 +49,7 @@ namespace lbm {
 
       density = f[hD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)];
 
-      UnrolledFor<1, L::dimQ>::Do([&] (unsigned int iQ) {
+      UnrolledFor<1, L::dimQ>::Do([&] HOST DEVICE (unsigned int iQ) {
           density += f[hD::getIndex(iP-uiL::celerity()[iQ], iQ)];
       });
     }
@@ -64,7 +64,7 @@ namespace lbm {
        velocity = L::celerity()[0]
         * f[hD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)];
 
-      UnrolledFor<1, L::dimQ>::Do([&] (unsigned int iQ) {
+      UnrolledFor<1, L::dimQ>::Do([&] HOST DEVICE (unsigned int iQ) {
           velocity += L::celerity()[iQ]
             * f[hD::getIndex(iP-uiL::celerity()[iQ], iQ)];
         });
@@ -82,7 +82,7 @@ namespace lbm {
         * log(f[hD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)]
               /L::weight()[0]);
 
-      UnrolledFor<1, L::dimQ>::Do([&] (unsigned int iQ) {
+      UnrolledFor<1, L::dimQ>::Do([&] HOST DEVICE (unsigned int iQ) {
           int indexPop_iQ = hD::getIndex(iP-uiL::celerity()[iQ], iQ);
           entropy += f[indexPop_iQ]
             * log(f[indexPop_iQ]/L::weight()[iQ]);
