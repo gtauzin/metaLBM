@@ -31,7 +31,7 @@ namespace lbm {
     #pragma omp declare simd
     DEVICE HOST
     static inline constexpr MathVector<unsigned int, 3> halo() {
-      return {1, 0, 0};
+      return MathVector<unsigned int, 3>({1, 0, 0});
     }
 
     static constexpr T inv_cs2 = (T)3;
@@ -52,9 +52,9 @@ namespace lbm {
     DEVICE HOST
     static inline constexpr MathVector<T, dimQ> weight() {
       return
-        {
+        MathVector<T, dimQ>({
           (T)2/(T)3, (T)1/(T)6, (T)1/(T)6
-            };
+            });
     }
   };
 
@@ -69,7 +69,7 @@ namespace lbm {
     #pragma omp declare simd
     DEVICE HOST
     static inline constexpr MathVector<unsigned int, 3> halo() {
-      return {1, 1, 0};
+      return MathVector<unsigned int, 3>({1, 1, 0});
     }
 
     static constexpr T inv_cs2 = (T)3;
@@ -92,11 +92,11 @@ namespace lbm {
     DEVICE HOST
     static inline constexpr MathVector<T, dimQ> weight() {
       return
-        {
+        MathVector<T, dimQ>({
           (T)4/(T)6,
             (T)1/(T)12, (T)1/(T)12,
             (T)1/(T)12, (T)1/(T)12
-            };
+            });
     }
 
   };
@@ -112,7 +112,7 @@ namespace lbm {
     #pragma omp declare simd
     DEVICE HOST
     static inline constexpr MathVector<unsigned int, 3> halo() {
-      return {1, 1, 0};
+      return MathVector<unsigned int, 3>({1, 1, 0});
     }
 
     static constexpr T inv_cs2 = (T)3;
@@ -139,11 +139,11 @@ namespace lbm {
     DEVICE HOST
     static inline constexpr MathVector<T, dimQ> weight() {
       return
-        {
+        MathVector<T, dimQ>({
           (T)4/(T)9, (T)1/(T)36, (T)1/(T)9,
             (T)1/(T)36, (T)1/(T)9, (T)1/(T)36,
             (T)1/(T)9, (T)1/(T)36, (T)1/(T)9
-            };
+            });
     }
 
   };
@@ -159,7 +159,7 @@ namespace lbm {
     #pragma omp declare simd
     DEVICE HOST
     static inline constexpr MathVector<unsigned int, 3> halo() {
-      return {1, 1, 1};
+      return MathVector<unsigned int, 3>({1, 1, 1});
     }
 
     static constexpr T inv_cs2 = (T)3;
@@ -192,13 +192,13 @@ namespace lbm {
     DEVICE HOST
     static inline constexpr MathVector<T, dimQ> weight() {
       return
-        {
+        MathVector<T, dimQ>({
           (T)2/(T)9,
             (T)1/(T)9, (T)1/(T)9, (T)1/(T)9,
             (T)1/(T)72, (T)1/(T)72, (T)1/(T)72, (T)1/(T)72,
             (T)1/(T)9, (T)1/(T)9, (T)1/(T)9,
             (T)1/(T)72, (T)1/(T)72, (T)1/(T)72, (T)1/(T)72
-            };
+            });
     }
   };
 
@@ -214,7 +214,7 @@ namespace lbm {
     #pragma omp declare simd
     DEVICE HOST
     static inline constexpr MathVector<unsigned int, 3> halo() {
-      return {1, 1, 1};
+      return MathVector<unsigned int, 3>({1, 1, 1});
     }
 
     static constexpr T inv_cs2 = (T)3;
@@ -252,7 +252,7 @@ namespace lbm {
     DEVICE HOST
     static inline constexpr MathVector<T, dimQ> weight() {
       return
-        {
+        MathVector<T, dimQ>({
           (T)1/(T)3,
             (T)1/(T)18, (T)1/(T)18, (T)1/(T)18,
             (T)1/(T)36, (T)1/(T)36, (T)1/(T)36,
@@ -260,7 +260,7 @@ namespace lbm {
             (T)1/(T)18, (T)1/(T)18, (T)1/(T)18,
             (T)1/(T)36, (T)1/(T)36, (T)1/(T)36,
             (T)1/(T)36, (T)1/(T)36, (T)1/(T)36
-            };
+            });
     }
   };
 
@@ -276,7 +276,7 @@ namespace lbm {
     #pragma omp declare simd
     DEVICE HOST
     static inline constexpr MathVector<unsigned int, 3> halo() {
-      return {1, 1, 1};
+      return MathVector<unsigned int, 3>({1, 1, 1});
     }
 
     static constexpr T inv_cs2 = (T)3;
@@ -321,7 +321,7 @@ namespace lbm {
     DEVICE HOST
     static inline constexpr MathVector<T, dimQ> weight() {
       return
-        {
+        MathVector<T, dimQ>({
           (T)8/(T)27, (T)2/(T)27, (T)2/(T)27,
             (T)2/(T)27, (T)1/(T)54, (T)1/(T)54,
             (T)1/(T)54, (T)1/(T)54, (T)1/(T)54,
@@ -331,7 +331,7 @@ namespace lbm {
             (T)1/(T)54, (T)1/(T)54, (T)1/(T)54,
             (T)1/(T)54, (T)1/(T)54, (T)1/(T)216,
             (T)1/(T)216, (T)1/(T)216, (T)1/(T)216
-            };
+            });
     }
   };
 

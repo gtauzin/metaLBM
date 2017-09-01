@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "metaLBM/Commons.h"
 #include "metaLBM/Options.h"
 #include "metaLBM/MathVector.h"
 

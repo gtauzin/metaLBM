@@ -93,7 +93,7 @@ namespace lbm {
 
 
           for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
-            distributionR[gQD::getIndex({iX, iY, iZ}, iQ)]
+            distributionR[gQD::getIndex(MathVector<unsigned int, 3>({iX, iY, iZ}), iQ)]
               = equilibrium.calculate(iQ);
           }
         }

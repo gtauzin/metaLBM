@@ -36,6 +36,7 @@ namespace lbm {
     MPI_Status statusMPI[4];
     MPI_Request requestMPI[4];
 
+    DEVICE HOST
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
                   const std::string& processorName_in,
@@ -61,10 +62,12 @@ namespace lbm {
                 << ", left MPI #" << leftXRankMPI << std::endl;
     }
 
+    DEVICE HOST
     MathVector<int, 3> getRankMPI() {
       return rankMPI;
     }
 
+    DEVICE HOST
     void sendGlobalToLocal(DynamicArray<T, Architecture::CPU>& globalArray,
                            DynamicArray<T, Architecture::CPU>& localHostArray,
                            DynamicArray<T, Architecture::GPU>& localDeviceArray,
@@ -78,6 +81,7 @@ namespace lbm {
       localDeviceArray.copyFrom(localHostArray);
     }
 
+    DEVICE HOST
     void sendLocalToGlobal(DynamicArray<T, Architecture::GPU>& localDeviceArray,
                            DynamicArray<T, Architecture::CPU>& localHostArray,
                            DynamicArray<T, Architecture::CPU>& globalArray,
@@ -91,6 +95,7 @@ namespace lbm {
                  0, MPI_COMM_WORLD);
     }
 
+    DEVICE HOST
     T reduce(const DynamicArray<T, Architecture::GPU>& localDeviceArray,
              DynamicArray<T, Architecture::CPU>& localHostArray) {
 
@@ -100,7 +105,8 @@ namespace lbm {
       for(unsigned int iZ = lD::start()[d::Z]; iZ < lD::end()[d::Z]; ++iZ) {
         for(unsigned int iY = lD::start()[d::Y]; iY < lD::end()[d::Y]; ++iY) {
           for(unsigned int iX = lD::start()[d::X]; iX < lD::end()[d::X]; ++iX) {
-            localSum += localHostArray[lD::getIndex({iX, iY, iZ})];
+            localSum
+              += localHostArray[lD::getIndex(MathVector<unsigned int, 3>({iX, iY, iZ}))];
           }
         }
       }
@@ -117,6 +123,7 @@ namespace lbm {
       return globalSum;
     }
 
+    DEVICE HOST
     void setHaloComputedData(T * RESTRICT haloComputedData_in) {
       haloComputedData = haloComputedData_in;
     }
@@ -129,6 +136,7 @@ namespace lbm {
     : public Communication<T, latticeType, AlgorithmType::Pull,
                            MemoryLayout::Generic, PartitionningType::Generic, 0> {
   protected:
+    DEVICE HOST
     void sendAndReceiveHaloX(DynamicArray<T, Architecture::GPU>& haloDeviceArray,
                              DynamicArray<T, Architecture::CPU>& haloHostArray) {
       SCOREP_INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloX")
@@ -136,16 +144,16 @@ namespace lbm {
       haloDeviceArray.copyTo(haloHostArray);
 
       UnrolledFor<0, L::dimQ>::Do([&] HOST DEVICE (unsigned int iQ) {
-          sendToRightBeginX = hMLD::getIndex({L::halo()[d::X]+lD::length()[d::X]-1,
-            hMLD::start()[d::Y], hMLD::start()[d::Z]}, iQ);
-          receivedFromLeftBeginX = hMLD::getIndex({0,
-            hMLD::start()[d::Y], hMLD::start()[d::Z]}, iQ);
+          sendToRightBeginX = hMLD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X]+lD::length()[d::X]-1,
+                hMLD::start()[d::Y], hMLD::start()[d::Z]}), iQ);
+          receivedFromLeftBeginX = hMLD::getIndex(MathVector<unsigned int, 3>({0,
+                hMLD::start()[d::Y], hMLD::start()[d::Z]}), iQ);
 
-          sendToLeftBeginX = hMLD::getIndex({L::halo()[d::X],
-            hMLD::start()[d::Y], hMLD::start()[d::Z]}, iQ);
+          sendToLeftBeginX = hMLD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X],
+                hMLD::start()[d::Y], hMLD::start()[d::Z]}), iQ);
 
-          receivedFromRightBeginX = hMLD::getIndex({L::halo()[d::X]+lD::length()[d::X],
-            hMLD::start()[d::Y], hMLD::start()[d::Z]}, iQ);
+          receivedFromRightBeginX = hMLD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X]+lD::length()[d::X],
+                  hMLD::start()[d::Y], hMLD::start()[d::Z]}), iQ);
 
 
           MPI_Irecv(haloHostArray.data()+receivedFromLeftBeginX, sizeStripeX,
@@ -177,6 +185,7 @@ namespace lbm {
                         MemoryLayout::Generic, PartitionningType::Generic, 0>::applyZ;
 
   public:
+    DEVICE HOST
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
                   const std::string& processorName_in,
@@ -243,6 +252,7 @@ namespace lbm {
     : public Communication<T, latticeType, AlgorithmType::Pull,
                            MemoryLayout::Generic, PartitionningType::Generic, 0> {
   protected:
+    DEVICE HOST
     void sendAndReceiveHaloX(DynamicArray<T, Architecture::GPU>& haloDeviceArray,
                              DynamicArray<T, Architecture::CPU>& haloHostArray) {
       SCOREP_INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloX")
@@ -275,6 +285,7 @@ namespace lbm {
                         MemoryLayout::Generic, PartitionningType::Generic, 0>::applyZ;
 
   public:
+    DEVICE HOST
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
                   const std::string& processorName_in,
@@ -284,14 +295,14 @@ namespace lbm {
                       PartitionningType::Generic, 0>(rankMPI_in, sizeMPI_in,
                                                      processorName_in, haloComputedData_in)
       , sizeStripeX(L::dimQ*hMLD::volume()*L::halo()[d::X]/hMLD::length()[d::X])
-      , sendToRightBeginX(hMLD::getIndex({L::halo()[d::X]+lD::length()[d::X]-1,
-              hMLD::start()[d::Y], hMLD::start()[d::Z]}, 0))
-      , receivedFromLeftBeginX(hMLD::getIndex({0,
-              hMLD::start()[d::Y], hMLD::start()[d::Z]}, 0))
-      , sendToLeftBeginX(hMLD::getIndex({L::halo()[d::X],
-              hMLD::start()[d::Y], hMLD::start()[d::Z]}, 0))
-      , receivedFromRightBeginX(hMLD::getIndex({L::halo()[d::X]+lD::length()[d::X],
-              hMLD::start()[d::Y], hMLD::start()[d::Z]}, 0))
+      , sendToRightBeginX(hMLD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X]+lD::length()[d::X]-1,
+                hMLD::start()[d::Y], hMLD::start()[d::Z]}), 0))
+      , receivedFromLeftBeginX(hMLD::getIndex(MathVector<unsigned int, 3>({0,
+                hMLD::start()[d::Y], hMLD::start()[d::Z]}), 0))
+      , sendToLeftBeginX(hMLD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X],
+                hMLD::start()[d::Y], hMLD::start()[d::Z]}), 0))
+      , receivedFromRightBeginX(hMLD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X]+lD::length()[d::X],
+                hMLD::start()[d::Y], hMLD::start()[d::Z]}), 0))
     {}
 
     using Communication<T, latticeType, AlgorithmType::Pull,
@@ -345,6 +356,7 @@ namespace lbm {
     : public Communication<T, latticeType, AlgorithmType::Pull,
                            memoryLayout, PartitionningType::OneD, 0> {
   public:
+    DEVICE HOST
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
                   const std::string& processorName_in,
@@ -368,6 +380,7 @@ namespace lbm {
     using Communication<T, latticeType, AlgorithmType::Pull,
                         memoryLayout, PartitionningType::OneD, 0>::setHaloComputedData;
 
+    DEVICE HOST
     inline void periodic(DynamicArray<T, Architecture::GPU>& haloDeviceArray,
                          DynamicArray<T, Architecture::CPU>& haloHostArray) {
       SCOREP_INSTRUMENT_ON("Communication<6>::periodic")
@@ -388,6 +401,7 @@ namespace lbm {
     : public Communication<T, latticeType, AlgorithmType::Pull,
                            memoryLayout, PartitionningType::OneD, 1> {
   public:
+    DEVICE HOST
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
                   const std::string& processorName_in,
@@ -396,7 +410,8 @@ namespace lbm {
                       memoryLayout, PartitionningType::OneD, 1>(rankMPI_in, sizeMPI_in,
                                                                 processorName_in,
                                                                 haloComputedData_in)
-      , endY({hD::end()[d::X], hD::start()[d::Y]+1, hD::end()[d::Z]})
+      , endY(MathVector<unsigned int, 3>({hD::end()[d::X],
+              hD::start()[d::Y]+1, hD::end()[d::Z]}))
     {}
 
     using Communication<T, latticeType, AlgorithmType::Pull,
@@ -412,10 +427,12 @@ namespace lbm {
     using Communication<T, latticeType, AlgorithmType::Pull,
                         memoryLayout, PartitionningType::OneD, 1>::setHaloComputedData;
 
+    DEVICE HOST
     inline void operator()(const MathVector<unsigned int, 3>& iP) {
       applyY(haloComputedData, iP);
     }
 
+    DEVICE HOST
     inline void periodic(DynamicArray<T, Architecture::GPU>& haloDeviceArray,
                          DynamicArray<T, Architecture::CPU>& haloHostArray) {
       SCOREP_INSTRUMENT_ON("Communication<6>::periodic")
@@ -432,13 +449,16 @@ namespace lbm {
 
     }
 
-  private:
+  protected:
     using Communication<T, latticeType, AlgorithmType::Pull,
                         memoryLayout, PartitionningType::OneD, 1>::haloComputedData;
+
+  private:
+    const MathVector<unsigned int, 3> endY;
+
     using Communication<T, latticeType, AlgorithmType::Pull,
                         memoryLayout, PartitionningType::OneD, 1>::applyY;
 
-    const MathVector<unsigned int, 3> endY;
   };
 
 
@@ -449,6 +469,7 @@ namespace lbm {
     : public Communication<T, latticeType, AlgorithmType::Pull,
                            memoryLayout, PartitionningType::OneD, 2> {
   public:
+    DEVICE HOST
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
                   const std::string& processorName_in,
@@ -457,7 +478,8 @@ namespace lbm {
                       memoryLayout, PartitionningType::OneD, 2>(rankMPI_in, sizeMPI_in,
                                                                 processorName_in,
                                                                 haloComputedData_in)
-      , endZ({hD::end()[d::X], hD::end()[d::Y], hD::start()[d::Z]+1})
+      , endZ(MathVector<unsigned int, 3>({hD::end()[d::X],
+              hD::end()[d::Y], hD::start()[d::Z]+1}))
     {}
 
     using Communication<T, latticeType, AlgorithmType::Pull,
@@ -473,10 +495,12 @@ namespace lbm {
     using Communication<T, latticeType, AlgorithmType::Pull,
                         memoryLayout, PartitionningType::OneD, 2>::setHaloComputedData;
 
+    DEVICE HOST
     inline void operator()(const MathVector<unsigned int, 3>& iP) {
       applyZ(haloComputedData, iP);
     }
 
+    DEVICE HOST
     inline void periodic(DynamicArray<T, Architecture::GPU>& haloDeviceArray,
                          DynamicArray<T, Architecture::CPU>& haloHostArray) {
       SCOREP_INSTRUMENT_ON("Communication<6>::periodic")

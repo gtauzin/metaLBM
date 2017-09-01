@@ -52,8 +52,6 @@ namespace lbm {
   };
 
   template<class U, unsigned int Size>
-  #pragma omp declare simd
-  DEVICE HOST
   std::ostream& operator<<(std::ostream& os, const StaticArray<U, Size>& sArray){
     os << "[";
     for(unsigned int i = 0; i < Size-1; ++i) {

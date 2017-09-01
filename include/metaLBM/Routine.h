@@ -102,7 +102,7 @@ namespace lbm {
 
       communication.printInputs();
 
-      if (communication.getRankMPI() == MathVector<int, 3>{0, 0, 0}) {
+      if (communication.getRankMPI() == MathVector<int, 3>({0, 0, 0})) {
         std::cout.precision(15);
         std::cout << "-------------------OPTIONS-------------------" << std::endl
                   << "Lattice         : D" << L::dimD << "Q" << L::dimQ << std::endl
@@ -125,7 +125,7 @@ namespace lbm {
     }
 
     void printOutputs() {
-      if (communication.getRankMPI() == MathVector<int, 3>{0, 0, 0}) {
+      if (communication.getRankMPI() == MathVector<int, 3>({0, 0, 0})) {
         std::cout << "--------------------OUTPUTS-------------------" << std::endl
                   << "Total time      : " << totalTime << " s" << std::endl
                   << "Comp time       : " << computationTime << " s" << std::endl
