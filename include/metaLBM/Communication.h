@@ -2,7 +2,6 @@
 #define COMMUNICATION_H
 
 #include <mpi.h>
-#include <omp.h>
 #include <string>
 
 #include "Commons.h"
@@ -30,6 +29,8 @@ namespace lbm {
     const MathVector<int, 3> sizeMPI;
     const std::string processorName;
 
+    T * RESTRICT haloComputedData;
+
     const unsigned int rightXRankMPI;
     const unsigned int leftXRankMPI;
     MPI_Status statusMPI[4];
@@ -37,7 +38,8 @@ namespace lbm {
 
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
-                  const std::string& processorName_in)
+                  const std::string& processorName_in,
+                  T * RESTRICT haloComputedData_in)
       : Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull>()
       , rankMPI(rankMPI_in)
       , sizeMPI(sizeMPI_in)
@@ -46,6 +48,7 @@ namespace lbm {
       , leftXRankMPI((rankMPI_in[d::X] + 1) % sizeMPI_in[d::X])
       , statusMPI()
       , requestMPI()
+      , haloComputedData(haloComputedData_in)
     {}
 
     using Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull>::applyY;
@@ -113,6 +116,10 @@ namespace lbm {
 
       return globalSum;
     }
+
+    void setHaloComputedData(T * RESTRICT haloComputedData_in) {
+      haloComputedData = haloComputedData_in;
+    }
   };
 
 
@@ -162,6 +169,9 @@ namespace lbm {
     }
 
     using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        0>::haloComputedData;
+    using Communication<T, latticeType, AlgorithmType::Pull,
                         MemoryLayout::Generic, PartitionningType::Generic, 0>::applyY;
     using Communication<T, latticeType, AlgorithmType::Pull,
                         MemoryLayout::Generic, PartitionningType::Generic, 0>::applyZ;
@@ -169,11 +179,12 @@ namespace lbm {
   public:
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
-                  const std::string& processorName_in)
+                  const std::string& processorName_in,
+                  T * RESTRICT haloComputedData_in)
       : Communication<T, latticeType, AlgorithmType::Pull,
                       MemoryLayout::Generic,
                       PartitionningType::Generic, 0>(rankMPI_in, sizeMPI_in,
-                                                     processorName_in)
+                                                     processorName_in, haloComputedData_in)
       , sizeStripeX(hMLD::volume()/hMLD::length()[d::X])
       , sendToRightBeginX(0)
       , receivedFromLeftBeginX(0)
@@ -197,6 +208,9 @@ namespace lbm {
     using Communication<T, latticeType, AlgorithmType::Pull,
                         MemoryLayout::Generic,
                         PartitionningType::Generic, 0>::reduce;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic,
+                        PartitionningType::Generic, 0>::setHaloComputedData;
 
   private:
     using Communication<T, latticeType, AlgorithmType::Pull,
@@ -252,7 +266,9 @@ namespace lbm {
       haloDeviceArray.copyFrom(haloHostArray);
 
     }
-
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        0>::haloComputedData;
     using Communication<T, latticeType, AlgorithmType::Pull,
                         MemoryLayout::Generic, PartitionningType::Generic, 0>::applyY;
     using Communication<T, latticeType, AlgorithmType::Pull,
@@ -261,11 +277,12 @@ namespace lbm {
   public:
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
-                  const std::string& processorName_in)
+                  const std::string& processorName_in,
+                  T * RESTRICT haloComputedData_in)
       : Communication<T, latticeType, AlgorithmType::Pull,
                       MemoryLayout::Generic,
                       PartitionningType::Generic, 0>(rankMPI_in, sizeMPI_in,
-                                                     processorName_in)
+                                                     processorName_in, haloComputedData_in)
       , sizeStripeX(L::dimQ*hMLD::volume()*L::halo()[d::X]/hMLD::length()[d::X])
       , sendToRightBeginX(hMLD::getIndex({L::halo()[d::X]+lD::length()[d::X]-1,
               hMLD::start()[d::Y], hMLD::start()[d::Z]}, 0))
@@ -292,6 +309,9 @@ namespace lbm {
     using Communication<T, latticeType, AlgorithmType::Pull,
                         MemoryLayout::Generic,
                         PartitionningType::Generic, 0>::reduce;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        MemoryLayout::Generic,
+                        PartitionningType::Generic, 0>::setHaloComputedData;
 
   private:
     using Communication<T, latticeType, AlgorithmType::Pull,
@@ -327,10 +347,12 @@ namespace lbm {
   public:
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
-                  const std::string& processorName_in)
+                  const std::string& processorName_in,
+                  T * RESTRICT haloComputedData_in)
       : Communication<T, latticeType, AlgorithmType::Pull,
                       memoryLayout, PartitionningType::OneD, 0>(rankMPI_in, sizeMPI_in,
-                                                                processorName_in)
+                                                                processorName_in,
+                                                                haloComputedData_in)
     {}
 
     using Communication<T, latticeType, AlgorithmType::Pull,
@@ -343,10 +365,11 @@ namespace lbm {
                         memoryLayout, PartitionningType::OneD, 0>::sendLocalToGlobal;
     using Communication<T, latticeType, AlgorithmType::Pull,
                         memoryLayout, PartitionningType::OneD, 0>::reduce;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        memoryLayout, PartitionningType::OneD, 0>::setHaloComputedData;
 
     inline void periodic(DynamicArray<T, Architecture::GPU>& haloDeviceArray,
-                         DynamicArray<T, Architecture::CPU>& haloHostArray,
-                         T * RESTRICT haloComputedArray) {
+                         DynamicArray<T, Architecture::CPU>& haloHostArray) {
       SCOREP_INSTRUMENT_ON("Communication<6>::periodic")
 
         sendAndReceiveHaloX(haloDeviceArray, haloHostArray);
@@ -363,51 +386,58 @@ namespace lbm {
   class Communication<T, latticeType, AlgorithmType::Pull,
                       memoryLayout, PartitionningType::OneD, 2>
     : public Communication<T, latticeType, AlgorithmType::Pull,
-                           memoryLayout, PartitionningType::OneD, 0> {
+                           memoryLayout, PartitionningType::OneD, 1> {
   public:
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
-                  const std::string& processorName_in)
+                  const std::string& processorName_in,
+                  T * RESTRICT haloComputedData_in)
       : Communication<T, latticeType, AlgorithmType::Pull,
-                      memoryLayout, PartitionningType::OneD, 0>(rankMPI_in, sizeMPI_in,
-                                                                processorName_in)
+                      memoryLayout, PartitionningType::OneD, 1>(rankMPI_in, sizeMPI_in,
+                                                                processorName_in,
+                                                                haloComputedData_in)
       , endY({hD::end()[d::X], hD::start()[d::Y]+1, hD::end()[d::Z]})
     {}
 
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::OneD, 0>::printInputs;
+                        memoryLayout, PartitionningType::OneD, 1>::printInputs;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::OneD, 0>::getRankMPI;
+                        memoryLayout, PartitionningType::OneD, 1>::getRankMPI;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::OneD, 0>::sendGlobalToLocal;
+                        memoryLayout, PartitionningType::OneD, 1>::sendGlobalToLocal;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::OneD, 0>::sendLocalToGlobal;
+                        memoryLayout, PartitionningType::OneD, 1>::sendLocalToGlobal;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::OneD, 0>::reduce;
+                        memoryLayout, PartitionningType::OneD, 1>::reduce;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        memoryLayout, PartitionningType::OneD, 1>::setHaloComputedData;
+
+    inline void operator()(const MathVector<unsigned int, 3>& iP) {
+      applyY(haloComputedData, iP);
+    }
 
     inline void periodic(DynamicArray<T, Architecture::GPU>& haloDeviceArray,
-                         DynamicArray<T, Architecture::CPU>& haloHostArray,
-                         T * RESTRICT haloComputedArray) {
+                         DynamicArray<T, Architecture::CPU>& haloHostArray) {
       SCOREP_INSTRUMENT_ON("Communication<6>::periodic")
 
         //record event (compute_done) in default stream (0)
         //launch local periodic boundary kernel in default stream (0)
-
-      Computation_::Do(hD::start(), endY, [&] HOST DEVICE (MathVector<unsigned int, 3>& iP) {
-        applyY(haloComputedArray, iP);
-      });
+      Computation_::Do(hD::start(), endY, *this);
 
       //wait for compute to be done -> synchronize event compute_done
 
-      sendAndReceiveHaloX(haloDeviceArray, haloHostArray);
+      Communication<T, latticeType, AlgorithmType::Pull,
+                    memoryLayout, PartitionningType::OneD, 1>::periodic(haloDeviceArray,
+                                                                        haloHostArray);
 
     }
 
   private:
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::OneD, 0>::sendAndReceiveHaloX;
+                        memoryLayout, PartitionningType::OneD, 1>::haloComputedData;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::OneD, 0>::applyY;
+                        memoryLayout, PartitionningType::OneD, 1>::applyY;
+
     const MathVector<unsigned int, 3> endY;
   };
 
@@ -417,53 +447,53 @@ namespace lbm {
   class Communication<T, latticeType, AlgorithmType::Pull,
                       memoryLayout, PartitionningType::OneD, 3>
     : public Communication<T, latticeType, AlgorithmType::Pull,
-                           memoryLayout, PartitionningType::OneD, 0> {
+                           memoryLayout, PartitionningType::OneD, 2> {
   public:
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
-                  const std::string& processorName_in)
+                  const std::string& processorName_in,
+                  T * RESTRICT haloComputedData_in)
       : Communication<T, latticeType, AlgorithmType::Pull,
-                      memoryLayout, PartitionningType::OneD, 0>(rankMPI_in, sizeMPI_in,
-                                                          processorName_in)
-      , endY({hD::end()[d::X], hD::start()[d::Y]+1, hD::end()[d::Z]})
+                      memoryLayout, PartitionningType::OneD, 2>(rankMPI_in, sizeMPI_in,
+                                                                processorName_in,
+                                                                haloComputedData_in)
       , endZ({hD::end()[d::X], hD::end()[d::Y], hD::start()[d::Z]+1})
     {}
 
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::OneD, 0>::printInputs;
+                        memoryLayout, PartitionningType::OneD, 2>::printInputs;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::OneD, 0>::getRankMP;
+                        memoryLayout, PartitionningType::OneD, 2>::getRankMPI;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::OneD, 0>::sendGlobalToLocal;
+                        memoryLayout, PartitionningType::OneD, 2>::sendGlobalToLocal;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::OneD, 0>::sendLocalToGlobal;
+                        memoryLayout, PartitionningType::OneD, 2>::sendLocalToGlobal;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::OneD, 0>::reduce;
+                        memoryLayout, PartitionningType::OneD, 2>::reduce;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        memoryLayout, PartitionningType::OneD, 2>::setHaloComputedData;
+
+    inline void operator()(const MathVector<unsigned int, 3>& iP) {
+      applyZ(haloComputedData, iP);
+    }
 
     inline void periodic(DynamicArray<T, Architecture::GPU>& haloDeviceArray,
-                         DynamicArray<T, Architecture::CPU>& haloHostArray,
-                         T * RESTRICT haloComputedArray) {
+                         DynamicArray<T, Architecture::CPU>& haloHostArray) {
       SCOREP_INSTRUMENT_ON("Communication<6>::periodic")
 
-      Computation_::Do(hD::start(), endY, [&] HOST DEVICE (MathVector<unsigned int, 3>& iP) {
-        applyY(haloComputedArray, iP);
-      });
+      Computation_::Do(hD::start(), endZ, *this);
 
-      Computation_::Do(hD::start(), endZ, [&] HOST DEVICE (MathVector<unsigned int, 3>& iP) {
-        applyZ(haloComputedArray, iP);
-      });
+      Communication<T, latticeType, AlgorithmType::Pull,
+                    memoryLayout, PartitionningType::OneD, 2>::periodic(haloDeviceArray,
+                                                                        haloHostArray);
 
-      sendAndReceiveHaloX(haloDeviceArray, haloHostArray);
     }
 
   private:
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::OneD, 0>::sendAndReceiveHaloX;
+                        memoryLayout, PartitionningType::OneD, 2>::haloComputedData;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::OneD, 0>::applyY;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::OneD, 0>::applyZ;
-    const MathVector<unsigned int, 3> endY;
+                        memoryLayout, PartitionningType::OneD, 2>::applyZ;
     const MathVector<unsigned int, 3> endZ;
   };
 

@@ -1,7 +1,6 @@
 #ifndef EQUILIBRIUM_H
 #define EQUILIBRIUM_H
 
-#include <omp.h>
 
 #include "Commons.h"
 #include "Options.h"
@@ -96,12 +95,12 @@ namespace lbm {
 
       T fEq_iQ = 1.0;
 
-      UnrolledFor<0, L::dimD>::Do([&] HOST DEVICE (int iD) {
-          fEq_iQ *= (2.0 - sqrt(1.0 + 3.0*velocity[iD]*velocity[iD]))
-            * PowerBase((2* velocity[iD]
-                        + sqrt(1.0 + 3.0*velocity[iD]*velocity[iD]))
-                       /(1.0 - velocity[iD]), L::celerity()[iQ][iD]);
-        });
+      for(unsigned int iD = 0; iD < L::dimD; ++iD) {
+        fEq_iQ *= (2.0 - sqrt(1.0 + 3.0*velocity[iD]*velocity[iD]))
+          * PowerBase((2* velocity[iD]
+                       + sqrt(1.0 + 3.0*velocity[iD]*velocity[iD]))
+                      /(1.0 - velocity[iD]), L::celerity()[iQ][iD]);
+      }
 
       return density * L::weight()[iQ]*fEq_iQ;
     }
@@ -130,12 +129,12 @@ namespace lbm {
 
       T fEq_iQ = 1.0;
 
-      UnrolledFor<0, L::dimD>::Do([&] HOST DEVICE (int iD) {
-          fEq_iQ *= (2.0 - sqrt(1.0 + 3.0*velocity[iD]*velocity[iD]))
-            * PowerBase((2* velocity[iD]
-                         + sqrt(1.0 + 3.0*velocity[iD]*velocity[iD]))
-                        /(1.0 - velocity[iD]), uiL::celerity()[iQ][iD]);
-        });
+      for(unsigned int iD = 0; iD < L::dimD; ++iD) {
+        fEq_iQ *= (2.0 - sqrt(1.0 + 3.0*velocity[iD]*velocity[iD]))
+          * PowerBase((2* velocity[iD]
+                       + sqrt(1.0 + 3.0*velocity[iD]*velocity[iD]))
+                      /(1.0 - velocity[iD]), uiL::celerity()[iQ][iD]);
+      }
 
 
       return density * L::weight()[iQ]*fEq_iQ;
@@ -165,12 +164,12 @@ namespace lbm {
 
       T fEq_iQ = (T) 1;
 
-      UnrolledFor<0, L::dimD>::Do([&] HOST DEVICE (int iD) {
-          fEq_iQ *= (2.0 - sqrt(1.0 + 3.0*velocity[iD]*velocity[iD]))
-            * PowerBase((2* velocity[iD]
-                         + sqrt(1.0 + 3.0*velocity[iD]*velocity[iD]))
-                        /(1.0 - velocity[iD]), L::celerity()[iQ][iD]);
-        });
+      for(unsigned int iD = 0; iD < L::dimD; ++iD) {
+        fEq_iQ *= (2.0 - sqrt(1.0 + 3.0*velocity[iD]*velocity[iD]))
+          * PowerBase((2* velocity[iD]
+                       + sqrt(1.0 + 3.0*velocity[iD]*velocity[iD]))
+                      /(1.0 - velocity[iD]), L::celerity()[iQ][iD]);
+      }
 
       return density * L::weight()[iQ]*fEq_iQ;
     }

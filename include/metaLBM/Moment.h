@@ -1,8 +1,6 @@
 #ifndef MOMENT_H
 #define MOMENT_H
 
-#include <omp.h>
-
 #include "Commons.h"
 #include "Options.h"
 #include "Lattice.h"
@@ -22,7 +20,7 @@ namespace lbm {
     #pragma omp declare simd
     DEVICE HOST
     inline void calculateMoments(const T * RESTRICT f,
-                               const MathVector<unsigned int, 3>& iP) {
+                                 const MathVector<unsigned int, 3>& iP) {
       SCOREP_INSTRUMENT_OFF("Moment<T>::calculateMoments")
 
       calculateDensity(f, iP);
@@ -49,9 +47,9 @@ namespace lbm {
 
       density = f[hD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)];
 
-      UnrolledFor<1, L::dimQ>::Do([&] HOST DEVICE (unsigned int iQ) {
-          density += f[hD::getIndex(iP-uiL::celerity()[iQ], iQ)];
-      });
+      for(unsigned int iQ = 1; iQ < L::dimQ; ++iQ) {
+        density += f[hD::getIndex(iP-uiL::celerity()[iQ], iQ)];
+      }
     }
 
     #pragma omp declare simd
@@ -64,10 +62,10 @@ namespace lbm {
        velocity = L::celerity()[0]
         * f[hD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)];
 
-      UnrolledFor<1, L::dimQ>::Do([&] HOST DEVICE (unsigned int iQ) {
-          velocity += L::celerity()[iQ]
-            * f[hD::getIndex(iP-uiL::celerity()[iQ], iQ)];
-        });
+       for(unsigned int iQ = 1; iQ < L::dimQ; ++iQ) {
+         velocity += L::celerity()[iQ]
+           * f[hD::getIndex(iP-uiL::celerity()[iQ], iQ)];
+       }
 
       velocity /= density_in;
     }
@@ -82,11 +80,11 @@ namespace lbm {
         * log(f[hD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)]
               /L::weight()[0]);
 
-      UnrolledFor<1, L::dimQ>::Do([&] HOST DEVICE (unsigned int iQ) {
-          int indexPop_iQ = hD::getIndex(iP-uiL::celerity()[iQ], iQ);
-          entropy += f[indexPop_iQ]
-            * log(f[indexPop_iQ]/L::weight()[iQ]);
-        });
+      for(unsigned int iQ = 1; iQ < L::dimQ; ++iQ) {
+        int indexPop_iQ = hD::getIndex(iP-uiL::celerity()[iQ], iQ);
+        entropy += f[indexPop_iQ]
+          * log(f[indexPop_iQ]/L::weight()[iQ]);
+      }
     }
 
   };

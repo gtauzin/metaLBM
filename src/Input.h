@@ -9,10 +9,10 @@
 namespace lbm {
   typedef DATA_TYPE dataT;
 
-  constexpr LatticeType latticeT = LatticeType::D2Q9;
+  constexpr LatticeType latticeT = LatticeType::D3Q27;
   constexpr int lengthX_g = 32;
   constexpr int lengthY_g = 32;
-  constexpr int lengthZ_g = 1;
+  constexpr int lengthZ_g = 32;
 
   constexpr MathVector<unsigned int, 3> length_g = {lengthX_g, lengthY_g, lengthZ_g};
   constexpr MathVector<unsigned int, 3> length_l = {lengthX_g/NPROCS, lengthY_g, lengthZ_g};
@@ -46,7 +46,7 @@ namespace lbm {
   constexpr BoundaryType boundaryT = BoundaryType::Generic;
 
   constexpr WriterType writerT = WriterType::VTR;
-  constexpr auto prefix = "test-zxy";
+  constexpr auto prefix = "test";
 
   constexpr bool writeDensity = 1;
   constexpr bool writeVelocity = 1;

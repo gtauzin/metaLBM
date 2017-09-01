@@ -194,9 +194,9 @@ namespace lbm {
 
     void setGlobalVector(const MathVector<unsigned int, 3>& iP,
                          const MathVector<T, NumberComponents> vector) {
-      UnrolledFor<0, NumberComponents>::Do([&] HOST DEVICE (unsigned int iC) {
-          setGlobalValue(iP, vector[iC], iC);
-      });
+      for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+        setGlobalValue(iP, vector[iC], iC);
+      }
     }
 
     T getGlobalValue(const MathVector<unsigned int, 3>& iP,
@@ -206,9 +206,9 @@ namespace lbm {
 
     MathVector<T, NumberComponents> getGlobalVector(const MathVector<unsigned int, 3>& iP) const {
       MathVector<T, NumberComponents> vectorR;
-      UnrolledFor<0, NumberComponents>::Do([&] HOST DEVICE (unsigned int iC) {
-          vectorR[iC] = getGlobalValue(iP, iC);
-      });
+      for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+        vectorR[iC] = getGlobalValue(iP, iC);
+      }
 
       return vectorR;
     }
@@ -224,9 +224,9 @@ namespace lbm {
 
     void setLocalVector(const unsigned int index,
                             const MathVector<T, NumberComponents> vector) {
-      UnrolledFor<0, NumberComponents>::Do([&] HOST DEVICE (unsigned int iC) {
-          setLocalValue(index, vector[iC], iC);
-      });
+      for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+        setLocalValue(index, vector[iC], iC);
+      }
     }
 
     DynamicArray<T, Architecture::GPU>& localDeviceArray() {
@@ -291,9 +291,9 @@ namespace lbm {
 
     void setLocalVector(const unsigned int index,
                         const MathVector<T, NumberComponents> vector) {
-      UnrolledFor<0, NumberComponents>::Do([&] HOST DEVICE (unsigned int iC) {
-          setLocalValue(index, vector[iC], iC);
-      });
+      for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+        setLocalValue(index, vector[iC], iC);
+      }
     }
 
   };

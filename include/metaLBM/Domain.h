@@ -171,9 +171,9 @@ namespace lbm {
     DEVICE HOST
     static inline MathVector<unsigned int, 3> offset(const MathVector<int, 3>& rankMPI) {
       MathVector<unsigned int, 3> offsetR{{0}};
-      UnrolledFor<0, L::dimD>::Do([&] HOST DEVICE (unsigned int iD) {
+      for(unsigned int iD = 0; iD < L::dimD; ++iD) {
           offsetR[iD] = (unsigned int) length_g[iD]*rankMPI[iD];
-        });
+      }
 
       return offsetR;
   }

@@ -2,7 +2,6 @@
 #define FORCINGSCHEME_H
 
 #include <cmath>
-#include <omp.h>
 
 #include "Commons.h"
 #include "Options.h"

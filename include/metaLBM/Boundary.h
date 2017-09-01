@@ -28,16 +28,16 @@ namespace lbm {
       iP_Origin = {L::halo()[d::X], iP[d::Y], iP[d::Z]};
       iP_Destination = {L::halo()[d::X] + lD::length()[d::X], iP[d::Y], iP[d::Z]};
 
-      UnrolledFor<0, L::dimQ>::Do([&] HOST DEVICE (int iQ) {
-          f[hD::getIndex(iP_Destination, iQ)] = f[hD::getIndex(iP_Origin, iQ)];
-      });
+      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+        f[hD::getIndex(iP_Destination, iQ)] = f[hD::getIndex(iP_Origin, iQ)];
+      }
 
       iP_Origin = {L::halo()[d::X]+ lD::length()[d::X] -1, iP[d::Y], iP[d::Z]};
       iP_Destination = {0, iP[d::Y], iP[d::Z]};
 
-      UnrolledFor<0, L::dimQ>::Do([&] HOST DEVICE (int iQ) {
-          f[hD::getIndex(iP_Destination, iQ)] = f[hD::getIndex(iP_Origin, iQ)];
-      });
+      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+        f[hD::getIndex(iP_Destination, iQ)] = f[hD::getIndex(iP_Origin, iQ)];
+      }
 
     }
 
@@ -47,22 +47,19 @@ namespace lbm {
                        const MathVector<unsigned int, 3>& iP) {
       SCOREP_INSTRUMENT_ON("Boundary<T, boundaryType, algorithmType>::applyY")
 
-      std::cout << "applyY called!" << std::endl;
-
-
       iP_Origin = {iP[d::X], L::halo()[d::Y], iP[d::Z]};
       iP_Destination = {iP[d::X], L::halo()[d::Y] + lD::length()[d::Y], iP[d::Z]};
 
-      UnrolledFor<0, L::dimQ>::Do([&] HOST DEVICE (int iQ) {
-          f[hD::getIndex(iP_Destination, iQ)] = f[hD::getIndex(iP_Origin, iQ)];
-        });
+      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+        f[hD::getIndex(iP_Destination, iQ)] = f[hD::getIndex(iP_Origin, iQ)];
+      }
 
       iP_Origin = {iP[d::X], L::halo()[d::Y]+ lD::length()[d::Y] -1, iP[d::Z]};
       iP_Destination = {iP[d::X], 0, iP[d::Z]};
 
-      UnrolledFor<0, L::dimQ>::Do([&] HOST DEVICE (int iQ) {
-          f[hD::getIndex(iP_Destination, iQ)] = f[hD::getIndex(iP_Origin, iQ)];
-        });
+      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+        f[hD::getIndex(iP_Destination, iQ)] = f[hD::getIndex(iP_Origin, iQ)];
+      }
     }
 
     #pragma omp simd
@@ -74,16 +71,16 @@ namespace lbm {
       iP_Origin = {iP[d::X], iP[d::Y], L::halo()[d::Z]};
       iP_Destination = {iP[d::X], iP[d::Y], L::halo()[d::Z] + lD::length()[d::Z]};
 
-      UnrolledFor<0, L::dimQ>::Do([&] HOST DEVICE (int iQ) {
-          f[hD::getIndex(iP_Destination, iQ)] = f[hD::getIndex(iP_Origin, iQ)];
-      });
+      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+        f[hD::getIndex(iP_Destination, iQ)] = f[hD::getIndex(iP_Origin, iQ)];
+      }
 
       iP_Origin = {iP[d::X], iP[d::Y], L::halo()[d::Z] + lD::length()[d::Z] - 1};
       iP_Destination = {iP[d::X], iP[d::Y], 0};
 
-      UnrolledFor<0, L::dimQ>::Do([&] HOST DEVICE (int iQ) {
+      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
           f[hD::getIndex(iP_Destination, iQ)] = f[hD::getIndex(iP_Origin, iQ)];
-      });
+      }
 
     }
 

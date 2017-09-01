@@ -2,7 +2,6 @@
 #define ENTROPICSTEP_H
 
 #include <cmath>
-#include <omp.h>
 
 #include "Commons.h"
 #include "MathVector.h"

@@ -2,7 +2,6 @@
 #define FORCE_H
 
 #include <cmath>
-#include <omp.h>
 
 #include "Commons.h"
 #include "Options.h"
@@ -28,9 +27,9 @@ namespace lbm {
       : force{(T) 0}
       , amplitude{(T) 0}
     {
-      UnrolledFor<0, L::dimD>::Do([&] HOST DEVICE (int iD) {
-          amplitude[iD] = amplitude_in[iD];
-      });
+      for(unsigned int iD = 0; iD < L::dimD; ++iD) {
+        amplitude[iD] = amplitude_in[iD];
+      }
     }
 
   public:
@@ -79,9 +78,9 @@ namespace lbm {
       : Force<T, ForceType::Generic>(amplitude_in)
       , waveLength{(T) 0}
     {
-      UnrolledFor<0, L::dimD>::Do([&] HOST DEVICE (int iD) {
-          waveLength[iD] =  waveLength_in[iD];
-      });
+      for(unsigned int iD = 0; iD < L::dimD; ++iD) {
+        waveLength[iD] =  waveLength_in[iD];
+      }
     }
 
     #pragma omp declare simd
@@ -89,9 +88,9 @@ namespace lbm {
     inline void setForce(const MathVector<unsigned int, 3>& iP){
       SCOREP_INSTRUMENT_OFF("Force<T, EquilibriumType::Sinusoidal>::setForce")
 
-      UnrolledFor<0, L::dimD>::Do([&] HOST DEVICE (int iD) {
-          force[iD] = amplitude[iD] * sin(iP[iD]*2*M_PI/waveLength[iD]);
-      });
+      for(unsigned int iD = 0; iD < L::dimD; ++iD) {
+        force[iD] = amplitude[iD] * sin(iP[iD]*2*M_PI/waveLength[iD]);
+      }
     }
 
     using Force<T, ForceType::Generic>::getForce;

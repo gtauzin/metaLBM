@@ -10,7 +10,7 @@
 #include "Input.h"
 
 namespace lbm {
-  constexpr Architecture architecture = Architecture::CPU;
+  constexpr Architecture arch = Architecture::CPU;
 }
 
 #include "metaLBM/Commons.h"
@@ -52,8 +52,8 @@ int main(int argc, char* argv[]) {
   MPI_Comm_free(&localComm);
   MPI_Info_free(&info);
 
-  Routine_ routine(rankMPI, sizeMPI,
-                   std::string(hostname));
+  Routine<dataT, arch> routine(rankMPI, sizeMPI,
+                               std::string(hostname));
 
   routine.compute();
 

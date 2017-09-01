@@ -45,45 +45,39 @@ namespace lbm {
     DEVICE HOST
     inline U sum() {
       U sumR = 0;
-      UnrolledFor<0, NumberComponents>::Do([&] HOST DEVICE (int i) {
-          sumR += sArray[i];
-        });
+      for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+          sumR += sArray[iC];
+      }
 
       return sumR;
     }
 
     #pragma omp declare simd
     DEVICE HOST
-    inline U norm2() const {
-      U norm2R = 0;
-      UnrolledFor<0, NumberComponents>::Do([&] HOST DEVICE (int i) {
-          norm2R += sArray[i] * sArray[i];
-        });
-
-      return norm2R;
-    }
-
-    #pragma omp declare simd
-    DEVICE HOST
-    inline U dot(MathVector<U, NumberComponents> other){
+    inline U dot(const MathVector<U, NumberComponents>& other){
       U dotR = 0;
-
-      UnrolledFor<0, NumberComponents>::Do([&] HOST DEVICE (int i) {
-          dotR += sArray[i]*other[i];
-        });
+      for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+        dotR += sArray[iC]*other[iC];
+      }
 
       return dotR;
     }
 
     #pragma omp declare simd
     DEVICE HOST
-    inline U magnitude(){
-      return sqrt(this->norm2());
+    inline U norm2() const {
+      U norm2R = 0;
+      for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+        norm2R += sArray[iC]*sArray[iC];
+      }
+
+      return norm2R;
     }
 
   };
 
   template<class U, unsigned int NumberComponents>
+  HOST
   std::ostream& operator<<(std::ostream& os,
                            const MathVector<U, NumberComponents>& mV) {
     os << mV.sArray;
@@ -91,11 +85,12 @@ namespace lbm {
   }
 
   template<class U, unsigned int NumberComponents>
+  HOST
   std::ofstream& operator<<(std::ofstream& file,
                            const MathVector<U, NumberComponents>& mV){
     file << "\t\t\t\t";
 
-    UnrolledFor<0, NumberComponents-1>::Do([&] HOST DEVICE (int i) {
+    UnrolledFor<0, NumberComponents-1>::Do([&] HOST (int i) {
         file << mV[i] << " ";
     });
 
@@ -120,9 +115,9 @@ namespace lbm {
   MathVector<U, NumberComponents>& operator+=(MathVector<U, NumberComponents>& lhs,
                                               const MathVector<U, NumberComponents>& rhs)
   {
-    UnrolledFor<0, NumberComponents>::Do([&] HOST DEVICE (int i) {
-        lhs[i] += rhs[i];
-      });
+    for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+        lhs[iC] += rhs[iC];
+    }
 
     return lhs;
   }
@@ -134,9 +129,9 @@ namespace lbm {
                                             const MathVector<U, NumberComponents>& mV_b)
   {
     MathVector<U, NumberComponents> mV_result;
-    UnrolledFor<0, NumberComponents>::Do([&] HOST DEVICE (int i) {
-        mV_result[i] = mV_a[i] + mV_b[i];
-      });
+    for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+      mV_result[iC] = mV_a[iC] + mV_b[iC];
+    }
     return mV_result;
   }
 
@@ -145,11 +140,10 @@ namespace lbm {
   #pragma omp declare simd
   DEVICE HOST
   MathVector<U, NumberComponents>& operator*=(MathVector<U, NumberComponents>& mV,
-                                              const U factor)
-  {
-    UnrolledFor<0, NumberComponents>::Do([&] HOST DEVICE (int i) {
-        mV[i] *= factor;
-      });
+                                              const U factor) {
+    for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+      mV[iC] *= factor;
+    }
 
     return mV;
   }
@@ -161,9 +155,9 @@ namespace lbm {
                                             const V factor)
   {
     MathVector<U, NumberComponents> mV_result;
-    UnrolledFor<0, NumberComponents>::Do([&] HOST DEVICE (int i) {
-        mV_result[i] = mV[i] * (U) factor;
-      });
+    for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+        mV_result[iC] = mV[iC] * (U) factor;
+    }
 
     return mV_result;
   }
@@ -175,9 +169,9 @@ namespace lbm {
                                             const MathVector<U, NumberComponents>& mV)
   {
     MathVector<U, NumberComponents> mV_result;
-    UnrolledFor<0, NumberComponents>::Do([&] HOST DEVICE (int i) {
-        mV_result[i] = mV[i] * (U) factor;
-      });
+    for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+        mV_result[iC] = mV[iC] * (U) factor;
+    }
 
     return mV_result;
   }
@@ -189,9 +183,9 @@ namespace lbm {
   MathVector<U, NumberComponents>& operator/=(MathVector<U, NumberComponents>& mV,
                                               const U factor)
   {
-    UnrolledFor<0, NumberComponents>::Do([&] HOST DEVICE (int i) {
-        mV[i] /= factor;
-      });
+    for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+      mV[iC] /= factor;
+    }
 
     return mV;
   }
@@ -203,9 +197,9 @@ namespace lbm {
                                             const U factor)
   {
     MathVector<U, NumberComponents> mV_result;
-    UnrolledFor<0, NumberComponents>::Do([&] HOST DEVICE (int i) {
-        mV_result[i] = mV[i] / factor;
-      });
+    for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+      mV_result[iC] = mV[iC] / factor;
+    }
 
     return mV_result;
   }
@@ -216,9 +210,9 @@ namespace lbm {
   MathVector<U, NumberComponents>& operator-=(MathVector<U, NumberComponents>& lhs,
                                               const MathVector<U, NumberComponents>& rhs)
   {
-    UnrolledFor<0, NumberComponents>::Do([&] HOST DEVICE (int i) {
-        lhs[i] -= rhs[i];
-      });
+    for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+      lhs[iC] -= rhs[iC];
+    }
 
     return lhs;
   }
@@ -230,9 +224,9 @@ namespace lbm {
                                             const MathVector<U, NumberComponents>& mV_b)
   {
     MathVector<U, NumberComponents> mV_result;
-    UnrolledFor<0, NumberComponents>::Do([&] HOST DEVICE (int i) {
-        mV_result[i] = mV_a[i] - mV_b[i];
-      });
+    for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+      mV_result[iC] = mV_a[iC] - mV_b[iC];
+    }
 
     return mV_result;
   }
@@ -244,9 +238,9 @@ namespace lbm {
                                                        const MathVector<unsigned int, NumberComponents>& mV_b)
   {
     MathVector<unsigned int, NumberComponents> mV_result;
-    UnrolledFor<0, NumberComponents>::Do([&] HOST DEVICE (int i) {
-        mV_result[i] = mV_a[i] - mV_b[i];
-      });
+    for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+      mV_result[iC] = mV_a[iC] - mV_b[iC];
+    }
 
     return mV_result;
   }
@@ -258,9 +252,9 @@ namespace lbm {
                                                        const MathVector<U, NumberComponents>& mV_b)
   {
     MathVector<unsigned int, NumberComponents> mV_result;
-    UnrolledFor<0, NumberComponents>::Do([&] HOST DEVICE (int i) {
-        mV_result[i] = mV_a[i] - (unsigned int) mV_b[i];
-      });
+    for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+      mV_result[iC] = mV_a[iC] - (unsigned int) mV_b[iC];
+    }
 
     return mV_result;
   }
@@ -272,9 +266,9 @@ namespace lbm {
                                                        const MathVector<unsigned int, NumberComponents>& mV_b)
   {
     MathVector<unsigned int, NumberComponents> mV_result;
-    UnrolledFor<0, NumberComponents>::Do([&] HOST DEVICE (int i) {
-        mV_result[i] = (unsigned int) mV_a[i] - mV_b[i];
-      });
+    for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+      mV_result[iC] = (unsigned int) mV_a[iC] - mV_b[iC];
+    }
 
     return mV_result;
   }
@@ -284,12 +278,7 @@ namespace lbm {
   MathVector<unsigned int, 3> operator-(const MathVector<unsigned int, 3>& mV_a,
                                         const MathVector<unsigned int, 3>& mV_b)
   {
-    MathVector<unsigned int, 3> mV_result = mV_a;
-    UnrolledFor<0, 3>::Do([&] HOST DEVICE (int i) {
-        mV_result[i] = mV_a[i] - mV_b[i];
-      });
-
-    return mV_result;
+    return {mV_a[0] - mV_b[0], mV_a[1] - mV_b[1], mV_a[2] - mV_b[2]};
   }
 
   template<unsigned int NumberComponents>
@@ -299,9 +288,9 @@ namespace lbm {
                                         const MathVector<unsigned int, NumberComponents>& mV_b)
   {
     MathVector<unsigned int, 3> mV_result = mV_a;
-    UnrolledFor<0, NumberComponents>::Do([&] HOST DEVICE (int i) {
-        mV_result[i] = mV_a[i] - mV_b[i];
-      });
+    for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+        mV_result[iC] = mV_a[iC] - mV_b[iC];
+    }
 
     return mV_result;
   }
@@ -313,9 +302,9 @@ namespace lbm {
                                         const MathVector<unsigned int, 3>& mV_b)
   {
     MathVector<unsigned int, 3> mV_result = -1* mV_b;
-    UnrolledFor<0, NumberComponents>::Do([&] HOST DEVICE (int i) {
-        mV_result[i] = mV_a[i] - mV_b[i];
-      });
+    for(unsigned int iC = 0; iC < 3; ++iC) {
+      mV_result[iC] = mV_a[iC] - mV_b[iC];
+    }
 
     return mV_result;
   }
@@ -329,9 +318,9 @@ namespace lbm {
 
       MathVector<T, Dimension> mVProjected{{ (T) 0 }};
 
-    UnrolledFor<0, Dimension>::Do([&] HOST DEVICE (unsigned int iD) {
-      mVProjected[iD] = mV[iD];
-     });
+      for(unsigned int iD = 0; iD < Dimension; ++iD) {
+        mVProjected[iD] = mV[iD];
+      }
 
     return mVProjected;
     }
@@ -345,9 +334,9 @@ namespace lbm {
 
       MathVector<T, 3> mVProjected = { (T) 1, (T) 1, (T) 1};
 
-      UnrolledFor<0, Dimension>::Do([&] HOST DEVICE (unsigned int iD) {
+      for(unsigned int iD = 0; iD < Dimension; ++iD) {
           mVProjected[iD] = mV[iD];
-      });
+      }
 
     return mVProjected;
     }

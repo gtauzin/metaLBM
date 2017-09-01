@@ -40,6 +40,8 @@ namespace lbm {
     std::chrono::duration<double> dtCommunication;
     std::chrono::duration<double> dtTotal;
 
+    bool isWritten;
+
     Algorithm(Communication_& communication_in,
               Field<T, 1, architecture, writeDensity>& densityField_in,
               Field<T, L::dimD, architecture, writeVelocity>& velocityField_in,
@@ -57,20 +59,21 @@ namespace lbm {
       , collision(relaxationTime, forceAmplitude, forceWaveLength)
       , moment()
       , boundary()
+      , dtComputation()
+      , dtCommunication()
+      , dtTotal()
+      , isWritten()
     {}
 
-    void storeLocalFields(const MathVector<unsigned int, 3>& iP,
-                          const unsigned int iteration) {
+    void storeLocalFields(const MathVector<unsigned int, 3>& iP) {
       SCOREP_INSTRUMENT_OFF("Algorithm<T, AlgorithmType::Pull>::storeLocalFields")
 
-      if(iteration%writeStep == 0) {
-        const unsigned int indexLocal = hD::getIndexLocal(iP);
+      const unsigned int indexLocal = hD::getIndexLocal(iP);
 
-        densityField.setLocalValue(indexLocal, moment.getDensity());
-        velocityField.setLocalVector(indexLocal, collision.getHydrodynamicVelocity());
-        alphaField.setLocalValue(indexLocal, collision.getAlpha());
-        forceField.setLocalVector(indexLocal, collision.getForce());
-      }
+      densityField.setLocalValue(indexLocal, moment.getDensity());
+      velocityField.setLocalVector(indexLocal, collision.getHydrodynamicVelocity());
+      alphaField.setLocalValue(indexLocal, collision.getAlpha());
+      forceField.setLocalVector(indexLocal, collision.getForce());
     }
 
   public:
@@ -100,6 +103,8 @@ namespace lbm {
     using Algorithm<T, AlgorithmType::Generic, architecture>::f_Previous;
     using Algorithm<T, AlgorithmType::Generic, architecture>::f_Next;
 
+    using Algorithm<T, AlgorithmType::Generic, architecture>::isWritten;
+
     using Algorithm<T, AlgorithmType::Generic, architecture>::collision;
     using Algorithm<T, AlgorithmType::Generic, architecture>::moment;
     using Algorithm<T, AlgorithmType::Generic, architecture>::boundary;
@@ -124,40 +129,42 @@ namespace lbm {
                                                            f_Previous_in, f_Next_in)
     {}
 
-    void iterate(const unsigned int iteration) {
+    void operator()(MathVector<unsigned int, 3>& iP) {
+      moment.calculateMoments(f_Previous.haloComputedData(), iP);
+
+      collision.setForce(iP+gD::offset(communication.getRankMPI()));
+      collision.setVariables(f_Previous.haloComputedData(), iP,
+                             moment.getDensity(), moment.getVelocity());
+
+      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+        f_Next.setHaloField(hD::getIndex(iP, iQ),
+                            collision.calculate(f_Previous.haloComputedData(),
+                                                iP-uiL::celerity()[iQ], iQ));
+      }
+
+      storeLocalFields(iP);
+    }
+
+    void setIsWritten(bool isWritten_in) {
+      isWritten = isWritten_in;
+    }
+
+    void iterate() {
       SCOREP_INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate")
 
       f_Previous.swapHalo(f_Next);
-
+      communication.setHaloComputedData(f_Previous.haloComputedData());
       //force.update(iteration);
 
       auto t0 = std::chrono::high_resolution_clock::now();
       communication.periodic(f_Previous.haloDeviceArray(),
-                             f_Previous.haloHostArray(),
-                             f_Previous.haloComputedData());
+                             f_Previous.haloHostArray());
 
       //boundary.apply(f_Previous.haloData());
 
       auto t1 = std::chrono::high_resolution_clock::now();
 
-      Computation_::Do(lD::start()+L::halo(), lD::end()+L::halo(),
-                      [&] HOST DEVICE (MathVector<unsigned int, 3>& iP) {
-          SCOREP_INSTRUMENT_ON("Algorithn<T, AlgorithmType::Pull>::lambda[fused_collide_and_push]")
-
-          moment.calculateMoments(f_Previous.haloComputedData(), iP);
-
-          collision.setForce(iP+gD::offset(communication.getRankMPI()));
-          collision.setVariables(f_Previous.haloComputedData(), iP,
-                                 moment.getDensity(), moment.getVelocity());
-
-          UnrolledFor<0, L::dimQ>::Do([&] HOST DEVICE (unsigned int iQ) {
-              f_Next.setHaloField(hD::getIndex(iP, iQ),
-                                  collision.calculate(f_Previous.haloComputedData(),
-                                                      iP-uiL::celerity()[iQ], iQ));
-            });
-
-          storeLocalFields(iP, iteration);
-        });
+      Computation_::Do(lD::start()+L::halo(), lD::end()+L::halo(), *this);
 
       auto t2 = std::chrono::high_resolution_clock::now();
 
@@ -172,7 +179,7 @@ namespace lbm {
   };
 
 
-  typedef Algorithm<dataT, algorithmT, architecture> Algorithm_;
+  typedef Algorithm<dataT, algorithmT, arch> Algorithm_;
 
 }
 

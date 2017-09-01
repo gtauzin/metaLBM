@@ -1,8 +1,6 @@
 #ifndef COMPUTATION_H
 #define COMPUTATION_H
 
-#include <omp.h>
-
 #include "Options.h"
 #include "Domain.h"
 
@@ -38,11 +36,6 @@ namespace lbm {
                  const MathVector<unsigned int, 3>& end,
                  Callback function) {
     SCOREP_INSTRUMENT_ON("Computation<Callback>::Do")
-
-      std::cout << "Do called!" << std::endl;
-      std::cout << "start   : " << start << std::endl;
-      std::cout << "end     : " << end << std::endl;
-
 
     MathVector<unsigned int, 3> iP;
     #pragma omp parallel for schedule(static) num_threads(NTHREADS)
@@ -81,7 +74,7 @@ namespace lbm {
 
   };
 
-  typedef Computation<architecture, L::dimD> Computation_;
+  typedef Computation<arch, L::dimD> Computation_;
 
 
 }

@@ -30,6 +30,9 @@ namespace lbm {
 
     const MathVector<int, 3> rankMPI;
 
+    const bool isSerial;
+    bool isWritten;
+
     std::ofstream file;
 
     Writer(const std::string& writerFolder_in,
@@ -45,6 +48,7 @@ namespace lbm {
       , fileFormat(fileFormat_in)
       , rankMPI(rankMPI_in)
       , isSerial(isSerial_in)
+      , isWritten(false)
     {}
 
     std::string getFileName(const unsigned int iteration) {
@@ -57,31 +61,14 @@ namespace lbm {
       return fileName;
     }
 
-  public:
-    const bool isSerial;
-
-    inline void openFile(const unsigned int iteration) {
-      std::string fileName = getFileName(iteration);
-      file.open(fileName, std::ofstream::out | std::ofstream::trunc);
-
-      if(file) {
-        writeHeader();
-      }
-      else {
-        std::cout << "Write: could not open " << fileName << std::endl;
-      }
+    inline bool getIsSerial() {
+      return isSerial;
     }
 
-    inline void closeFile() {
-      writeFooter();
-      file.close();
+    inline bool getIsWritten(const unsigned int iteration) {
+      return (iteration % writeStep) == 0;
     }
 
-    void writeHeader() {
-    }
-
-    void writeFooter() {
-    }
   };
 
   template <class T>
@@ -93,6 +80,9 @@ namespace lbm {
       : Writer<T, WriterType::Generic>("outputVTR/", filePrefix_in,
                                        ".vtr", "ascii", rankMPI_in, true)
     {}
+
+    using Writer<T, WriterType::Generic>::getIsSerial;
+    using Writer<T, WriterType::Generic>::getIsWritten;
 
     inline void openFile(const unsigned int iteration) {
       std::string fileName = getFileName(iteration);
@@ -110,7 +100,6 @@ namespace lbm {
       writeFooter();
       file.close();
     }
-
 
     void writeField(const std::string& fieldName,
                     const unsigned int numberComponents,
@@ -142,6 +131,7 @@ namespace lbm {
     using Writer<T, WriterType::Generic>::file;
     using Writer<T, WriterType::Generic>::fileFormat;
     using Writer<T, WriterType::Generic>::rankMPI;
+
 
     std::string getFileName(const unsigned int iteration) {
       if(rankMPI[d::X] == 0) {

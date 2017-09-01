@@ -74,10 +74,10 @@ namespace lbm {
               iX < lD::end()[d::X]+L::halo()[d::X]; ++iX) {
             iP = {iX, iY, iZ};
 
-            UnrolledFor<0, L::dimQ>::Do([&] HOST DEVICE (unsigned int iQ) {
+            for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
                 localArrayHost[hD::getIndexLocal(iP, iQ)]
                     = haloArrayHost[hD::getIndex(iP, iQ)];
-            });
+            }
           }
         }
       }
@@ -96,10 +96,10 @@ namespace lbm {
               iX < lD::end()[d::X]+L::halo()[d::X]; ++iX) {
             iP = {iX, iY, iZ};
 
-            UnrolledFor<0, L::dimQ>::Do([&] HOST DEVICE (unsigned int iQ) {
-                haloArrayHost[hD::getIndex(iP, iQ)]
+            for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+              haloArrayHost[hD::getIndex(iP, iQ)]
                   = localArrayHost[lD::getIndex(iP-L::halo(), iQ)];
-            });
+            }
 
           }
         }
@@ -156,6 +156,7 @@ namespace lbm {
       return haloArrayDevice;
     }
 
+
     void packLocal() {
       MathVector<unsigned int, 3> iP;
 
@@ -169,10 +170,10 @@ namespace lbm {
               iX < lD::end()[d::X]+L::halo()[d::X]; ++iX) {
             iP = {iX, iY, iZ};
 
-            UnrolledFor<0, L::dimQ>::Do([&] HOST DEVICE (unsigned int iQ) {
+            for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
                 localArrayHost[hD::getIndexLocal(iP, iQ)]
                     = haloArrayHost[hD::getIndex(iP, iQ)];
-            });
+            }
           }
         }
       }
@@ -191,10 +192,10 @@ namespace lbm {
               iX < lD::end()[d::X]+L::halo()[d::X]; ++iX) {
             iP = {iX, iY, iZ};
 
-            UnrolledFor<0, L::dimQ>::Do([&] HOST DEVICE (unsigned int iQ) {
-                haloArrayHost[hD::getIndex(iP, iQ)]
+            for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+              haloArrayHost[hD::getIndex(iP, iQ)]
                   = localArrayHost[lD::getIndex(iP-L::halo(), iQ)];
-            });
+            }
 
           }
         }

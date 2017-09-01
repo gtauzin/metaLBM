@@ -15,9 +15,9 @@ namespace lbm {
     #pragma omp declare simd
     DEVICE HOST
     StaticArray<U, Size>& operator=(const StaticArray<U, Size> other){
-      UnrolledFor<0, Size>::Do([&] HOST DEVICE (int i) {
-          sArray[i] = other[i];
-        });
+      for(unsigned int i = 0; i < Size; ++i) {
+        sArray[i] = other[i];
+      }
 
       return *this;
     }
@@ -25,9 +25,9 @@ namespace lbm {
     #pragma omp declare simd
     DEVICE HOST
     StaticArray<U, Size>& operator=(const U other[Size]){
-      UnrolledFor<0, Size>::Do([&] HOST DEVICE (int i) {
+      for(unsigned int i = 0; i < Size; ++i) {
           sArray[i] = other[i];
-        });
+      }
 
       return *this;
     }
@@ -56,9 +56,9 @@ namespace lbm {
   DEVICE HOST
   std::ostream& operator<<(std::ostream& os, const StaticArray<U, Size>& sArray){
     os << "[";
-    UnrolledFor<0, Size-1>::Do([&] HOST DEVICE (int i) {
-        os << sArray[i] << " ";
-      });
+    for(unsigned int i = 0; i < Size-1; ++i) {
+      os << sArray[i] << " ";
+    }
     os << sArray[Size-1] << "]";
     return os;
   }

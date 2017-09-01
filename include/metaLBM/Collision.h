@@ -1,7 +1,6 @@
 #ifndef COLLISION_H
 #define COLLISION_H
 
-#include <omp.h>
 
 #include "Commons.h"
 #include "Options.h"

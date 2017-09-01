@@ -10,7 +10,7 @@
 #include "Input.h"
 
 namespace lbm {
-  constexpr Architecture architecture = Architecture::CPU;
+  constexpr Architecture arch = Architecture::CPU;
 }
 
 #include "metaLBM/Commons.h"
@@ -20,7 +20,7 @@ namespace lbm {
 using namespace lbm;
 
 int main(int argc, char* argv[]) {
-  SCOREP_INSTRUMENT_ON("main")
+  //  SCOREP_INSTRUMENT_ON("main")
 
   MPI_Init(&argc, &argv);
 
@@ -34,8 +34,8 @@ int main(int argc, char* argv[]) {
   char hostname[MPI_MAX_PROCESSOR_NAME];
   MPI_Get_processor_name(hostname, &hostnameLength);
 
-  Routine_ routine(rankMPI, sizeMPI,
-                   std::string(hostname));
+  Routine<dataT, arch> routine(rankMPI, sizeMPI,
+                                            std::string(hostname));
 
   routine.compute();
 

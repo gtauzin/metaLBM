@@ -2,7 +2,6 @@
 #define ROUTINE_H
 
 #include <chrono>
-#include <omp.h>
 
 #include "Commons.h"
 #include "Options.h"
@@ -21,8 +20,6 @@ namespace lbm {
   template<class T, Architecture architecture>
   class Routine {
   private:
-    Communication_ communication;
-
     Field<T, 1, architecture, writeDensity> densityField;
     Field<T, L::dimD, architecture, writeVelocity> velocityField;
     Field<T, L::dimD, architecture, writeDensity> forceField;
@@ -30,6 +27,7 @@ namespace lbm {
 
     Distribution<T, architecture> f_Previous;
     Distribution<T, architecture> f_Next;
+    Communication_ communication;
     Algorithm_ algorithm;
 
     Writer_ writer;
@@ -46,8 +44,7 @@ namespace lbm {
     Routine(const MathVector<int, 3>& rankMPI_in,
             const MathVector<int, 3>& sizeMPI_in,
             const std::string& processorName_in)
-      : communication(rankMPI_in, sizeMPI_in, processorName_in)
-      , densityField("density", initGlobalDensity<T>())
+      : densityField("density", initGlobalDensity<T>())
       , velocityField("velocity", initGlobalVelocity<T>())
       , forceField("force")
       , alphaField("alpha", initGlobalAlpha<T>())
@@ -55,6 +52,8 @@ namespace lbm {
                                                                      velocityField))
       , f_Next("nextDistribution", initGlobalDistribution<T>(densityField,
                                                              velocityField))
+      , communication(rankMPI_in, sizeMPI_in, processorName_in,
+                      f_Next.haloComputedData())
       , algorithm(communication, densityField, velocityField, forceField, alphaField,
                   f_Previous, f_Next)
       , writer(prefix, rankMPI_in)
@@ -80,8 +79,8 @@ namespace lbm {
                                          densityField.localHostArray());
 
       for(int iteration = startIteration+1; iteration <= endIteration; ++iteration) {
-
-        algorithm.iterate(iteration);
+        algorithm.setIsWritten(writer.getIsWritten(iteration));
+        algorithm.iterate();
 
         writeFields(iteration);
 
@@ -176,10 +175,10 @@ namespace lbm {
     }
 
     void writeFields(const int iteration) {
-      if(iteration%writeStep == 0) {
+      if(writer.getIsWritten(iteration)) {
         writer.openFile(iteration);
 
-        if(writer.isSerial) {
+        if(writer.getIsSerial()) {
           communication.sendLocalToGlobal(densityField.localDeviceArray(),
                                           densityField.localHostArray(),
                                           densityField.globalArray(),
@@ -210,7 +209,7 @@ namespace lbm {
         if(iteration%backupStep == 0) {
           f_Previous.packLocal();
 
-          if(writer.isSerial) {
+          if(writer.getIsSerial()) {
             communication.sendLocalToGlobal(f_Previous.localDeviceArray(),
                                             f_Previous.localHostArray(),
                                             f_Previous.globalArray(),
@@ -226,9 +225,6 @@ namespace lbm {
     }
 
   };
-
-
-  typedef Routine<dataT, architecture> Routine_;
 
 }
 
