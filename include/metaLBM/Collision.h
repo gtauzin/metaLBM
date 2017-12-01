@@ -39,21 +39,25 @@ namespace lbm {
 
   public:
     #pragma omp declare simd
+    DEVICE HOST
     inline void setForce(const MathVector<unsigned int, 3>& iP_global) {
       force.setForce(iP_global);
     }
 
     #pragma omp declare simd
+    DEVICE HOST
     inline const MathVector<T, L::dimD>& getForce() {
       return force.getForce();
     }
 
     #pragma omp declare simd
+    DEVICE HOST
     inline const MathVector<T, L::dimD> getHydrodynamicVelocity() {
       return forcingScheme.calculateHydrodynamicVelocity(getForce());
     }
 
     #pragma omp declare simd
+    DEVICE HOST
     inline T calculate(const T * RESTRICT f,
                               const MathVector<unsigned int, 3>& iP,
                               const unsigned int iQ) {
@@ -65,6 +69,7 @@ namespace lbm {
     }
 
     #pragma omp declare simd
+    DEVICE HOST
     inline void setVariables(const T * RESTRICT f,
                              const MathVector<unsigned int, 3>& iP,
                              const T density, const MathVector<T, L::dimD>& velocity) {
@@ -104,6 +109,7 @@ namespace lbm {
     using Collision<T, CollisionType::GenericSRT>::getHydrodynamicVelocity;
     using Collision<T, CollisionType::GenericSRT>::getForce;
 
+    DEVICE HOST
     inline T getAlpha() {
       return alpha;
     }
@@ -125,6 +131,7 @@ namespace lbm {
     using Collision<T, CollisionType::BGK>::setForce;
 
     #pragma omp declare simd
+    DEVICE HOST
     inline void setVariables(const T * RESTRICT f,
                              const MathVector<unsigned int, 3>& iP,
                              const T density,
@@ -162,7 +169,8 @@ namespace lbm {
     MathVector<T, L::dimQ> f_Forced;
     MathVector<T, L::dimQ> f_NonEq;
 
-#pragma omp declare simd
+    #pragma omp declare simd
+    DEVICE HOST
     inline bool isDeviationSmall(const T error) {
       SCOREP_INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::isDeviationSmall")
 
@@ -180,7 +188,8 @@ namespace lbm {
       return isDeviationSmallR;
     }
 
-#pragma omp declare simd
+    #pragma omp declare simd
+    DEVICE HOST
     T calculateAlphaMax() {
       SCOREP_INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::calculateAlphaMax")
 
@@ -200,7 +209,8 @@ namespace lbm {
       return alphaMaxR;
     }
 
-#pragma omp declare simd
+    #pragma omp declare simd
+    DEVICE HOST
     inline T solveAlpha(const T alphaMin, const T alphaMax) {
       SCOREP_INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::solveAlpha")
 
@@ -222,6 +232,7 @@ namespace lbm {
     }
 
     #pragma omp declare simd
+    DEVICE HOST
     inline void calculateAlpha() {
       SCOREP_INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::calculateAlpha")
 
@@ -277,7 +288,8 @@ namespace lbm {
     using Collision<T, CollisionType::ELBM>::calculateAlphaMax;
     using Collision<T, CollisionType::ELBM>::solveAlpha;
 
-#pragma omp declare simd
+    #pragma omp declare simd
+    DEVICE HOST
     inline T approximateAlpha() {
       SCOREP_INSTRUMENT_OFF("Collision<T, CollisionType::Approached_ELBM>::approximateAlpha")
 
@@ -306,6 +318,7 @@ namespace lbm {
     }
 
     #pragma omp declare simd
+    DEVICE HOST
     inline void calculateAlpha() {
       SCOREP_INSTRUMENT_OFF("Collision<T, CollisionType::Approached_ELBM>::calculateAlpha")
 
@@ -354,6 +367,8 @@ namespace lbm {
     using Collision<T, CollisionType::ELBM>::isDeviationSmall;
     using Collision<T, CollisionType::ELBM>::calculateAlphaMax;
 
+    #pragma omp declare simd
+    DEVICE HOST
     inline T solveAlpha(const T alphaMin, const T alphaMax) {
       SCOREP_INSTRUMENT_OFF("Collision<T, CollisionType::ForcedNR_ELBM>::solveAlpha")
 
@@ -374,6 +389,7 @@ namespace lbm {
     }
 
     #pragma omp declare simd
+    DEVICE HOST
     inline T calculateAlpha() {
       SCOREP_INSTRUMENT_OFF("Collision<T, CollisionType::ForcedNR_ELBM>::calculateAlpha")
 
@@ -416,6 +432,8 @@ namespace lbm {
     using Collision<T, CollisionType::ForcedNR_ELBM>::calculateAlphaMax;
     using Collision<T, CollisionType::ForcedNR_ELBM>::calculateAlpha;
 
+    #pragma omp declare simd
+    DEVICE HOST
     inline T solveAlpha(const T alphaMin, const T alphaMax) {
       SCOREP_INSTRUMENT_OFF("Collision<T, CollisionType::ForcedBNR_ELBM>::solveAlpha")
 

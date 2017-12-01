@@ -10,13 +10,20 @@
 namespace lbm {
   typedef DATA_TYPE dataT;
 
-  constexpr LatticeType latticeT = LatticeType::D3Q27;
+  constexpr LatticeType latticeT = LatticeType::D1Q3;
   constexpr int lengthX_g = 32;
   constexpr int lengthY_g = 32;
   constexpr int lengthZ_g = 32;
 
-  constexpr MathVector<unsigned int, 3> length_g = {lengthX_g, lengthY_g, lengthZ_g};
-  constexpr MathVector<unsigned int, 3> length_l = {lengthX_g/NPROCS, lengthY_g, lengthZ_g};
+  DEVICE HOST
+  constexpr MathVector<unsigned int, 3> length_g() {
+    return MathVector<unsigned int, 3>({lengthX_g, lengthY_g, lengthZ_g});
+  }
+
+  DEVICE HOST
+    constexpr MathVector<unsigned int, 3> length_l() {
+    return MathVector<unsigned int, 3>({lengthX_g/NPROCS, lengthY_g, lengthZ_g});
+  }
 
   constexpr AlgorithmType algorithmT = AlgorithmType::Pull;
   constexpr PartitionningType partitionningT = PartitionningType::OneD;

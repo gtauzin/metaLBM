@@ -60,9 +60,8 @@ namespace lbm {
 
   template<>
   struct Computation<Architecture::GPU, 1> {
-  public:
     template<typename Callback>
-    DEVICE
+    HOST
     static void Do(const MathVector<unsigned int, 3>& start,
                    const MathVector<unsigned int, 3>& end,
                    Callback function) {
@@ -70,7 +69,9 @@ namespace lbm {
 
       dim3 dimBlock(128, 1, 1);
       dim3 dimGrid(hD::length()[d::X]/128, 1, 1);
-      CUDA_CALL(( kernel_1D<<<dimBlock, dimGrid>>>(start, end, function); ))
+      //CUDA_CALL(
+      kernel_1D<Callback><<<dimBlock, dimGrid >>>(start, end, function);
+      //)
 
       CUDA_CALL( cudaDeviceSynchronize(); )
     }
@@ -80,7 +81,7 @@ namespace lbm {
   struct Computation<Architecture::GPU, 2> {
   public:
     template<typename Callback>
-    DEVICE
+    HOST
     static void Do(const MathVector<unsigned int, 3>& start,
                    const MathVector<unsigned int, 3>& end,
                    Callback function) {
@@ -88,7 +89,9 @@ namespace lbm {
 
       dim3 dimBlock(128, 1, 1);
       dim3 dimGrid(hD::length()[d::Y]/128, hD::length()[d::X], 1);
-      CUDA_CALL(( kernel_2D<<<dimBlock, dimGrid>>>(start, end, function); ))
+      //      CUDA_CALL(
+      kernel_2D<Callback><<<dimBlock, dimGrid>>>(start, end, function);
+                //)
 
       CUDA_CALL( cudaDeviceSynchronize(); )
     }
@@ -99,7 +102,7 @@ namespace lbm {
   struct Computation<Architecture::GPU, 3> {
   public:
     template<typename Callback>
-    DEVICE
+    HOST
     static void Do(const MathVector<unsigned int, 3>& start,
                    const MathVector<unsigned int, 3>& end,
                    Callback function) {
@@ -107,7 +110,9 @@ namespace lbm {
 
       dim3 dimBlock(128, 1, 1);
       dim3 dimGrid(hD::length()[d::Z]/128, hD::length()[d::Y], hD::length()[d::X]);
-      CUDA_CALL(( kernel_3D<<<dimBlock, dimGrid>>>(start, end, function); ))
+      //CUDA_CALL(
+      kernel_3D<Callback><<<dimBlock, dimGrid>>>(start, end, function);
+                //)
 
       CUDA_CALL( cudaDeviceSynchronize(); )
     }
@@ -115,8 +120,8 @@ namespace lbm {
 
 #endif
 
+  typedef Computation<arch, L::dimD> Computation_;
+
 }
-
-
 
 #endif // COMPUTATION_CUH

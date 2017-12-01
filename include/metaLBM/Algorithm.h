@@ -13,7 +13,7 @@
 #include "Collision.h"
 #include "Boundary.h"
 #include "Communication.h"
-#include "Computation.h"
+#include "Computation.cuh"
 
 namespace lbm {
 
@@ -65,6 +65,7 @@ namespace lbm {
       , isWritten()
     {}
 
+    DEVICE HOST
     void storeLocalFields(const MathVector<unsigned int, 3>& iP) {
       SCOREP_INSTRUMENT_OFF("Algorithm<T, AlgorithmType::Pull>::storeLocalFields")
 
@@ -129,6 +130,7 @@ namespace lbm {
                                                            f_Previous_in, f_Next_in)
     {}
 
+    DEVICE HOST
     void operator()(MathVector<unsigned int, 3>& iP) {
       moment.calculateMoments(f_Previous.haloComputedData(), iP);
 

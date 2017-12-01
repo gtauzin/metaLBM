@@ -25,15 +25,15 @@ namespace lbm {
                        const MathVector<unsigned int, 3>& iP) {
       SCOREP_INSTRUMENT_ON("Boundary<T, boundaryType, algorithmType>::applyX")
 
-      iP_Origin = {L::halo()[d::X], iP[d::Y], iP[d::Z]};
-      iP_Destination = {L::halo()[d::X] + lD::length()[d::X], iP[d::Y], iP[d::Z]};
+      iP_Origin =  MathVector<unsigned int, 3>({L::halo()[d::X], iP[d::Y], iP[d::Z]});
+      iP_Destination =  MathVector<unsigned int, 3>({L::halo()[d::X] + lD::length()[d::X], iP[d::Y], iP[d::Z]});
 
       for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
         f[hD::getIndex(iP_Destination, iQ)] = f[hD::getIndex(iP_Origin, iQ)];
       }
 
-      iP_Origin = {L::halo()[d::X]+ lD::length()[d::X] -1, iP[d::Y], iP[d::Z]};
-      iP_Destination = {0, iP[d::Y], iP[d::Z]};
+      iP_Origin =  MathVector<unsigned int, 3>({L::halo()[d::X]+ lD::length()[d::X] -1, iP[d::Y], iP[d::Z]});
+      iP_Destination =  MathVector<unsigned int, 3>({0, iP[d::Y], iP[d::Z]});
 
       for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
         f[hD::getIndex(iP_Destination, iQ)] = f[hD::getIndex(iP_Origin, iQ)];
@@ -47,15 +47,16 @@ namespace lbm {
                        const MathVector<unsigned int, 3>& iP) {
       SCOREP_INSTRUMENT_ON("Boundary<T, boundaryType, algorithmType>::applyY")
 
-      iP_Origin = {iP[d::X], L::halo()[d::Y], iP[d::Z]};
-      iP_Destination = {iP[d::X], L::halo()[d::Y] + lD::length()[d::Y], iP[d::Z]};
+      iP_Origin =  MathVector<unsigned int, 3>({iP[d::X], L::halo()[d::Y], iP[d::Z]});
+      iP_Destination =  MathVector<unsigned int, 3>({iP[d::X], L::halo()[d::Y] + lD::length()[d::Y], iP[d::Z]});
 
       for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
         f[hD::getIndex(iP_Destination, iQ)] = f[hD::getIndex(iP_Origin, iQ)];
       }
 
-      iP_Origin = {iP[d::X], L::halo()[d::Y]+ lD::length()[d::Y] -1, iP[d::Z]};
-      iP_Destination = {iP[d::X], 0, iP[d::Z]};
+      iP_Origin =  MathVector<unsigned int, 3>({iP[d::X],
+            L::halo()[d::Y]+ lD::length()[d::Y] -1, iP[d::Z]});
+      iP_Destination =  MathVector<unsigned int, 3>({iP[d::X], 0, iP[d::Z]});
 
       for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
         f[hD::getIndex(iP_Destination, iQ)] = f[hD::getIndex(iP_Origin, iQ)];
@@ -68,15 +69,17 @@ namespace lbm {
                        const MathVector<unsigned int, 3>& iP) {
       SCOREP_INSTRUMENT_ON("Boundary<T, boundaryType, algorithmType>::applyZ")
 
-      iP_Origin = {iP[d::X], iP[d::Y], L::halo()[d::Z]};
-      iP_Destination = {iP[d::X], iP[d::Y], L::halo()[d::Z] + lD::length()[d::Z]};
+      iP_Origin =  MathVector<unsigned int, 3>({iP[d::X], iP[d::Y], L::halo()[d::Z]});
+      iP_Destination =  MathVector<unsigned int, 3>({iP[d::X], iP[d::Y],
+            L::halo()[d::Z] + lD::length()[d::Z]});
 
       for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
         f[hD::getIndex(iP_Destination, iQ)] = f[hD::getIndex(iP_Origin, iQ)];
       }
 
-      iP_Origin = {iP[d::X], iP[d::Y], L::halo()[d::Z] + lD::length()[d::Z] - 1};
-      iP_Destination = {iP[d::X], iP[d::Y], 0};
+      iP_Origin =  MathVector<unsigned int, 3>({iP[d::X], iP[d::Y],
+            L::halo()[d::Z] + lD::length()[d::Z] - 1});
+      iP_Destination =  MathVector<unsigned int, 3>({iP[d::X], iP[d::Y], 0});
 
       for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
           f[hD::getIndex(iP_Destination, iQ)] = f[hD::getIndex(iP_Origin, iQ)];

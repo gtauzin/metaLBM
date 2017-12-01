@@ -10,7 +10,7 @@
 #include "Input.h"
 
 namespace lbm {
-  constexpr Architecture arch = Architecture::CPU;
+  constexpr Architecture arch = Architecture::GPU;
 }
 
 #include "metaLBM/Commons.h"
@@ -38,12 +38,12 @@ int main(int argc, char* argv[]) {
   MPI_Info info;
 
   MPI_Info_create(&info);
-  MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, rankMPI[d::X],
-                      info, &localComm);
+  //MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, rankMPI[d::X],
+  //                      info, &localComm);
 
   int localRank = -1;
 
-  MPI_Comm_rank(localComm, &localRank);
+  //MPI_Comm_rank(localComm, &localRank);
 
   int numberDevices = 0;
   CUDA_CALL( cudaGetDeviceCount(&numberDevices); )

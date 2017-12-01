@@ -10,7 +10,7 @@
   #define CUDA_CALL(call) {                                                     \
     cudaError_t error = call;                                                   \
     if(error != cudaSuccess) {                                                  \
-      std::cout << "Cuda failure " << __FILE__ << ":" << __LINE__               \
+      std::cerr << "Cuda failure " << __FILE__ << ":" << __LINE__               \
                 << ": '" << cudaGetErrorString(error) << "'" << std::endl;      \
       exit(0);                                                                  \
     }                                                                           \
@@ -18,6 +18,7 @@
 
   #define HOST __host__
   #define DEVICE __device__
+  #define CONSTANT __constant__
   #define GLOBAL __global__
   #define RESTRICT
 
@@ -28,6 +29,7 @@
 
   #define HOST
   #define DEVICE
+  #define CONSTANT
   #define GLOBAL
   #define RESTRICT __restrict__
 

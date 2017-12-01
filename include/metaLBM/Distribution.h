@@ -41,6 +41,7 @@ namespace lbm {
       , haloArrayDevice()
     {}
 
+    DEVICE HOST
     void swapHalo(Distribution<T, Architecture::CPU>& distribution_in) {
       haloArrayHost.swap(distribution_in.haloHostArray());
     }
@@ -49,14 +50,17 @@ namespace lbm {
       return haloArrayHost;
     }
 
+    DEVICE HOST
     void setHaloField(const unsigned int index, const T value) {
       haloArrayHost[index] = value;
     }
 
+    DEVICE HOST
     T * RESTRICT haloComputedData() {
       return haloArrayHost.data();
     }
 
+    DEVICE HOST
     DynamicArray<T, Architecture::GPU>& haloDeviceArray() {
       return haloArrayDevice;
     }
@@ -72,7 +76,7 @@ namespace lbm {
          #pragma omp simd
           for(unsigned int iX = lD::start()[d::X]+L::halo()[d::X];
               iX < lD::end()[d::X]+L::halo()[d::X]; ++iX) {
-            iP = {iX, iY, iZ};
+            iP =  MathVector<unsigned int, 3>({iX, iY, iZ});
 
             for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
                 localArrayHost[hD::getIndexLocal(iP, iQ)]
@@ -94,7 +98,7 @@ namespace lbm {
          #pragma omp simd
           for(unsigned int iX = lD::start()[d::X]+L::halo()[d::X];
               iX < lD::end()[d::X]+L::halo()[d::X]; ++iX) {
-            iP = {iX, iY, iZ};
+            iP =  MathVector<unsigned int, 3>({iX, iY, iZ});
 
             for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
               haloArrayHost[hD::getIndex(iP, iQ)]
@@ -136,6 +140,7 @@ namespace lbm {
       , haloArrayDevice(hD::volume()*L::dimQ)
       {}
 
+    DEVICE HOST
     void swapHalo(Distribution<T, Architecture::GPU>& distribution_in) {
       haloArrayDevice.swap(distribution_in.haloDeviceArray());
     }
@@ -144,14 +149,17 @@ namespace lbm {
       return haloArrayHost;
     }
 
+    DEVICE HOST
     void setHaloField(const unsigned int index, const T value) {
       haloArrayDevice[index] = value;
     }
 
+    DEVICE HOST
     T * RESTRICT haloComputedData() {
       return haloArrayDevice.data();
     }
 
+    DEVICE HOST
     DynamicArray<T, Architecture::GPU>& haloDeviceArray() {
       return haloArrayDevice;
     }
@@ -168,7 +176,7 @@ namespace lbm {
          #pragma omp simd
           for(unsigned int iX = lD::start()[d::X]+L::halo()[d::X];
               iX < lD::end()[d::X]+L::halo()[d::X]; ++iX) {
-            iP = {iX, iY, iZ};
+            iP = MathVector<unsigned int, 3>({iX, iY, iZ});
 
             for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
                 localArrayHost[hD::getIndexLocal(iP, iQ)]
@@ -190,7 +198,7 @@ namespace lbm {
          #pragma omp simd
           for(unsigned int iX = lD::start()[d::X]+L::halo()[d::X];
               iX < lD::end()[d::X]+L::halo()[d::X]; ++iX) {
-            iP = {iX, iY, iZ};
+            iP = MathVector<unsigned int, 3>({iX, iY, iZ});
 
             for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
               haloArrayHost[hD::getIndex(iP, iQ)]

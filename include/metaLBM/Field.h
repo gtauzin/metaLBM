@@ -89,21 +89,26 @@ namespace lbm {
       return DynamicArray<T, Architecture::CPU>();
     }
 
+    DEVICE HOST
     void setLocalValue(const unsigned int index, const T value, unsigned int iC = 0) {
     }
 
+    DEVICE HOST
     void setLocalVector(const unsigned int index,
                        const MathVector<T, NumberComponents> vector) {
     }
 
+    DEVICE HOST
     T getLocalValue(const unsigned int index, const unsigned int iC = 0) {
       return (T) -1;
     }
 
+    DEVICE HOST
     MathVector<T, NumberComponents> getLocalVector(const unsigned int index) {
       return MathVector<T, NumberComponents>{{(T) -1}};
     }
 
+    DEVICE HOST
     DynamicArray<T, Architecture::GPU> localDeviceArray() {
       return DynamicArray<T, Architecture::GPU>();
     }
@@ -143,7 +148,7 @@ namespace lbm {
       for(unsigned int iZ = gD::start()[d::Z]; iZ < gD::end()[d::Z]; iZ++) {
         for(unsigned int iY = gD::start()[d::Y]; iY < gD::end()[d::Y]; iY++) {
           for(unsigned int iX = gD::start()[d::X]; iX < gD::end()[d::X]; iX++) {
-            iP = {iX, iY, iZ};
+            iP =  MathVector<unsigned int, 3>({iX, iY, iZ});
             setGlobalVector(iP, vector_in);
           }
         }
@@ -217,11 +222,13 @@ namespace lbm {
       return localArrayHost;
     }
 
+    DEVICE HOST
     void setLocalValue(const unsigned int index,
                            const T value, unsigned int iC = 0) {
       localArrayHost[lNCD::getIndex(index, iC)] = value;
     }
 
+    DEVICE HOST
     void setLocalVector(const unsigned int index,
                             const MathVector<T, NumberComponents> vector) {
       for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
@@ -284,11 +291,13 @@ namespace lbm {
       return localArrayDevice;
     }
 
+    DEVICE HOST
     void setLocalValue(const unsigned int index,
                        const T value, unsigned int iC = 0) {
       localArrayDevice[lNCD::getIndex(index, iC)] = value;
     }
 
+    DEVICE HOST
     void setLocalVector(const unsigned int index,
                         const MathVector<T, NumberComponents> vector) {
       for(unsigned int iC = 0; iC < NumberComponents; ++iC) {

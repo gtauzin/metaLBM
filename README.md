@@ -79,52 +79,41 @@ As of April 2017, metaLBM support the following features:
 
 The project structure follows a common C++ layout within the [solver](solver) directory.
 
-- The [solver/test](solver/test) directory contains source code for unit tests.
-- The [solver/include](include) directory contains headers-only library dependencies.
-- The [solver/src](solver/src) directory contains all source files.
-- The [solver/log](solver/log) directory contains log files generated when ENABLE_LOG
+- The [test](test) directory contains source code for unit tests.
+- The [include](include) directory contains headers-only library dependencies.
+- The [src](src) directory contains all source files.
+- The [log](log) directory contains log files generated when ENABLE_LOG
 is defined.
-- The [solver/doc](solver/doc) directory contains documentation generating code
+- The [doc](doc) directory contains documentation generating code
 with doxygen.
 
-The [solver/src](solver/src) directory contains several subdirectories which are aiming
+The [src](src) directory contains several subdirectories which are aiming
 at exploiting different type of parallelism. They are included if the corresponding option
 is passed to CMake.
-
-- The [solver/src/core](solver/src/core) directory contains core source code describing the framework
-and the physics.
-- The [solver/src/omp](solver/src/omp) directory contains a serial or shared memory
-parallelisation version of the LBM algorithm. Activate it by passing the flags `-DSERIAL=ON`
-or `-DOMP=ON` to cmake.
-- The [solver/src/mpi](solver/src/mpi) directory a distributed memory or an hybrid
-parallelisation version of the LBM algorithm. Activate it by passing the flags `-DMPI=ON`
-or `-DMPI_OMP` to cmake.
-- The [solver/src/cuda](solver/src/cuda) directory contains a GPU parallelisation version
-of the LBM algorithm. Activate it by passing the flag `-DCUDA=ON` to cmake.
-- The [solver/src/mpi_cuda](solver/src/cuda) directory contains a multi-GPU
-parallelisation version of the LBM algorithm. Activate it by passing the flag
-`-DCUDA_MPI=ON` to cmake.
 
 Input parameters files are read from the [input](input) directory.
 - The [input/inputJSON](input/inputJSON) directory contains the json files with
 simulation parameters.
 - The [input/inputPy](input/inputPy) directory contains the python scripts required
-to convert the input files.
+to convert the input file to a header file.
+Alternatively, Input.h in the [input](input) directory can be directly modified.
 
 Output files are dumped in the [output](output) directory.
 - The [output/outputVTR](output/outputVTR) directory contains all generated VTK
+files.
+- The [output/outputHDF5](output/outputHDF5) directory contains all generated HDF5
 files.
 - The [output/outputBackup](output/outputBackup) directory contains all generated
 backup VTR files used to restart a simulation.
 
 ## Building metaLBM
 
-Provided a working installation of CMake(>= 3.2) is present, `cd` to project
+Provided a working installation of CMake(>= 3.8) is present, `cd` to project
 root and setup build directory
 
 ```shell
-mkdir solver/build
-cd solver/build
+mkdir build
+cd build
 cmake ..
 ```
 
@@ -135,10 +124,9 @@ a custom compiler:
 cmake .. -DCMAKE_CXX_COMPILER=/path/to/compiler
 ```
 
-To build the distributed-memory parallel version of metaLBM, a `MPI 3.0` compliant
-library implementation is needed (eg `OpenMPI`, `MPICH`). If the library is already
-installed, `CMake ` usually finds the library without problems.
-In case multiple `MPI` libraries are installed, do
+metaLBM requires a `MPI 3.0` compliant library implementation is needed (eg
+`OpenMPI`, `MPICH`). If the library is already installed, `CMake ` usually
+finds the library without problems. In case multiple `MPI` libraries are installed, do
 
 ```shell
 man mpicxx
@@ -147,31 +135,27 @@ man mpicxx
 to check if it is pointing to the right library. `CMake` uses it to determine
 the correct library locations.
 
-metaLBM uses extensively the [Boost](http://www.boost.org/) library and therefore a
-working installation is required. You may have to set the environment variables
-`BOOST_ROOT` to the location of the `Boost`'s root directory, `BOOST_INCLUDEDIR` to
-the location of the `Boost`'s include directory, and `BOOST_LIBRARYDIR` to the
-location of the `Boost`'s lib directory before running `cmake`:
+To build tests, you will need a working intallation of
+[GoogleTest](https://github.com/google/googletest). You may have to set the
+environment variable `GTEST_ROOT` to the location of the `GTest`'s root directory
+before running `cmake`:
 
 ```shell
-export BOOST_ROOT="path/to/boost/root"
-export BOOST_INCLUDEDIR="path/to/boost/include"
-export BOOST_LIBRARYDIR="path/to/boost/lib"
+export GTEST_ROOT="path/to/gtest/root"
 ```
 
-In particular, metaLBM exploits the synergy between Boost Test and Boost Log to run
-unit tests. To build all tests do:
+To build all tests do:
 
 ```shell
 make tests
 ```
 
-If you want to add unit tests, just add a source file in [solver/test/](solver/test/),
+If you want to add unit tests, just add a source file in [test/](test/),
 edit the correspondng `CMakeLists.txt` files to include your new targets and rebuild the
-project `cmake ..` from your [solver/build](solver/build) directory. There are
+project `cmake ..` from your [build](build) directory. There are
 predeclared functions which make it easy to add new targets.
 
-metaLBM supports scale-dependent forces, which are based on [FFTW](http://www.fftw.org)
+metaLBM supports forcing in Fourier space, which is based on [FFTW](http://www.fftw.org)
 library and therefore you will need a working installation. You may have to set the
 environment variables `FFTW_INCLUDE_DIR` to the location of the `FFTW`'s include directory,
 and `FFTW_LIBRARY_DIR` to the location of the `FFTW`'s lib directory before running `cmake`:
@@ -182,14 +166,14 @@ export FFTW_LIBRARY_DIR="path/to/fftw/lib"
 ```
 
 To generate documentation for the project, you need a working `doxygen`
-installation. Run from your [solver/build](solver/build) directory:
+installation. Run from your [build](build) directory:
 
 ```shell
 make doc
 ```
 
-Documentation will be generated in a subfolder [solver/doc](solver/doc) and the webpage
-can be found in [solver/doc/html/index.html](solver/doc/html/index.html).
+Documentation will be generated in a subfolder [doc](doc) and the webpage
+can be found in [doc/html/index.html](doc/html/index.html).
 
 Check the [Wiki](https://gitlab.com/rooknrowl/metaLBM/wikis/home) for
 additional tips on how to run a simulation.

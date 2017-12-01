@@ -52,5 +52,6 @@ endif()
 # Build Targets
 enable_testing()
 add_subdirectory(src)
+add_subdirectory(example)
 add_subdirectory(test)
 add_subdirectory(doc)

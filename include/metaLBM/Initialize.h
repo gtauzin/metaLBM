@@ -86,7 +86,7 @@ namespace lbm {
     for(unsigned int iZ = gD::start()[d::Z]; iZ < gD::end()[d::Z]; iZ++) {
       for(unsigned int iY = gD::start()[d::Y]; iY < gD::end()[d::Y]; iY++) {
         for(unsigned int iX = gD::start()[d::X]; iX < gD::end()[d::X]; iX++) {
-          iP = {iX, iY, iZ};
+          iP =  MathVector<unsigned int, 3>({iX, iY, iZ});
 
           equilibrium.setVariables(densityField.getGlobalValue(iP),
                                    velocityField.getGlobalVector(iP));

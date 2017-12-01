@@ -35,13 +35,13 @@ namespace lbm {
     #pragma omp declare simd
     HOST DEVICE
     static inline constexpr MathVector<unsigned int, 3> end() {
-      return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l);
+      return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l());
     }
 
     #pragma omp declare simd
     HOST DEVICE
     static inline constexpr MathVector<unsigned int, 3> length() {
-      return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l);
+      return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l());
     }
 
     #pragma omp declare simd
@@ -91,13 +91,13 @@ namespace lbm {
     #pragma omp declare simd
     HOST DEVICE
     static inline constexpr MathVector<unsigned int, 3> end() {
-      return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l);
+      return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l());
     }
 
     #pragma omp declare simd
     HOST DEVICE
     static inline constexpr MathVector<unsigned int, 3> length() {
-      return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l);
+      return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l());
     }
 
     #pragma omp declare simd
@@ -151,13 +151,13 @@ namespace lbm {
     #pragma omp declare simd
     HOST DEVICE
     static inline constexpr MathVector<unsigned int, 3> end() {
-      return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_g);
+      return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_g());
     }
 
     #pragma omp declare simd
     HOST DEVICE
     static inline constexpr MathVector<unsigned int, 3> length() {
-      return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_g);
+      return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_g());
     }
 
     #pragma omp declare simd
@@ -171,7 +171,7 @@ namespace lbm {
     static inline MathVector<unsigned int, 3> offset(const MathVector<int, 3>& rankMPI) {
       MathVector<unsigned int, 3> offsetR{{0}};
       for(unsigned int iD = 0; iD < L::dimD; ++iD) {
-          offsetR[iD] = (unsigned int) length_g[iD]*rankMPI[iD];
+          offsetR[iD] = (unsigned int) length_g()[iD]*rankMPI[iD];
       }
 
       return offsetR;
@@ -271,13 +271,13 @@ namespace lbm {
     #pragma omp declare simd
     HOST DEVICE
     static inline constexpr MathVector<unsigned int, 3> end() {
-      return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l) + 2 * L::halo();
+      return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l()) + 2 * L::halo();
     }
 
     #pragma omp declare simd
     HOST DEVICE
     static inline constexpr MathVector<unsigned int, 3> length() {
-      return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l) + 2 * L::halo();
+      return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l()) + 2 * L::halo();
     }
 
     #pragma omp declare simd
@@ -402,16 +402,16 @@ namespace lbm {
     HOST DEVICE
     static inline constexpr MathVector<unsigned int, 3> end() {
       return MathVector<unsigned int, 3>({L::halo()[d::X],
-              ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l)[d::Y]+2*L::halo()[d::Y],
-            ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l)[d::Z]+2*L::halo()[d::Z]});
+              ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l())[d::Y]+2*L::halo()[d::Y],
+            ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l())[d::Z]+2*L::halo()[d::Z]});
     }
 
     #pragma omp declare simd
     HOST DEVICE
     static inline constexpr MathVector<unsigned int, 3> length() {
       return MathVector<unsigned int, 3>({L::halo()[d::X],
-          ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l)[d::Y]+2*L::halo()[d::Y],
-            ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l)[d::Z]+2*L::halo()[d::Z]});
+          ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l())[d::Y]+2*L::halo()[d::Y],
+            ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l())[d::Z]+2*L::halo()[d::Z]});
     }
 
     #pragma omp declare simd

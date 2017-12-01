@@ -77,6 +77,7 @@ namespace lbm {
                             cudaMemcpyDeviceToDevice); )
     }
 
+    DEVICE HOST
     void clear() {
       numberElements = 0;
       CUDA_CALL( cudaFree(dArrayPtr) );

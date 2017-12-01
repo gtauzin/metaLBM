@@ -26,30 +26,40 @@ namespace lbm {
     {}
 
   public:
+    DEVICE HOST
     U& operator[] (int i) {
       return dArrayPtr[i];
     }
 
+    DEVICE HOST
     const U& operator[] (int i) const {
       return dArrayPtr[i];
     }
 
+    DEVICE HOST
     U * RESTRICT data() {
       return dArrayPtr;
     }
 
+    DEVICE HOST
     const U * RESTRICT data() const {
       return dArrayPtr;
     }
 
+    DEVICE HOST
     void swap(DynamicArray& other) {
-      std::swap(*this, other);
+      DynamicArray temp = *this;
+      *this = other;
+      other = temp;
+      //std::swap(*this, other);
     }
 
+    DEVICE HOST
     unsigned int size() {
       return numberElements;
     }
 
+    DEVICE HOST
     unsigned int size() const {
       return numberElements;
     }

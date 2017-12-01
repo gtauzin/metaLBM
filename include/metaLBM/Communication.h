@@ -36,7 +36,7 @@ namespace lbm {
     MPI_Status statusMPI[4];
     MPI_Request requestMPI[4];
 
-    DEVICE HOST
+    HOST
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
                   const std::string& processorName_in,
@@ -67,7 +67,7 @@ namespace lbm {
       return rankMPI;
     }
 
-    DEVICE HOST
+    HOST
     void sendGlobalToLocal(DynamicArray<T, Architecture::CPU>& globalArray,
                            DynamicArray<T, Architecture::CPU>& localHostArray,
                            DynamicArray<T, Architecture::GPU>& localDeviceArray,
@@ -81,7 +81,7 @@ namespace lbm {
       localDeviceArray.copyFrom(localHostArray);
     }
 
-    DEVICE HOST
+    HOST
     void sendLocalToGlobal(DynamicArray<T, Architecture::GPU>& localDeviceArray,
                            DynamicArray<T, Architecture::CPU>& localHostArray,
                            DynamicArray<T, Architecture::CPU>& globalArray,
@@ -95,7 +95,7 @@ namespace lbm {
                  0, MPI_COMM_WORLD);
     }
 
-    DEVICE HOST
+    HOST
     T reduce(const DynamicArray<T, Architecture::GPU>& localDeviceArray,
              DynamicArray<T, Architecture::CPU>& localHostArray) {
 
@@ -252,7 +252,7 @@ namespace lbm {
     : public Communication<T, latticeType, AlgorithmType::Pull,
                            MemoryLayout::Generic, PartitionningType::Generic, 0> {
   protected:
-    DEVICE HOST
+    HOST
     void sendAndReceiveHaloX(DynamicArray<T, Architecture::GPU>& haloDeviceArray,
                              DynamicArray<T, Architecture::CPU>& haloHostArray) {
       SCOREP_INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloX")
@@ -285,7 +285,7 @@ namespace lbm {
                         MemoryLayout::Generic, PartitionningType::Generic, 0>::applyZ;
 
   public:
-    DEVICE HOST
+    HOST
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
                   const std::string& processorName_in,
@@ -356,7 +356,7 @@ namespace lbm {
     : public Communication<T, latticeType, AlgorithmType::Pull,
                            memoryLayout, PartitionningType::OneD, 0> {
   public:
-    DEVICE HOST
+    HOST
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
                   const std::string& processorName_in,
@@ -380,7 +380,7 @@ namespace lbm {
     using Communication<T, latticeType, AlgorithmType::Pull,
                         memoryLayout, PartitionningType::OneD, 0>::setHaloComputedData;
 
-    DEVICE HOST
+    HOST
     inline void periodic(DynamicArray<T, Architecture::GPU>& haloDeviceArray,
                          DynamicArray<T, Architecture::CPU>& haloHostArray) {
       SCOREP_INSTRUMENT_ON("Communication<6>::periodic")
@@ -401,7 +401,7 @@ namespace lbm {
     : public Communication<T, latticeType, AlgorithmType::Pull,
                            memoryLayout, PartitionningType::OneD, 1> {
   public:
-    DEVICE HOST
+    HOST
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
                   const std::string& processorName_in,
@@ -432,14 +432,14 @@ namespace lbm {
       applyY(haloComputedData, iP);
     }
 
-    DEVICE HOST
+    HOST
     inline void periodic(DynamicArray<T, Architecture::GPU>& haloDeviceArray,
                          DynamicArray<T, Architecture::CPU>& haloHostArray) {
       SCOREP_INSTRUMENT_ON("Communication<6>::periodic")
 
         //record event (compute_done) in default stream (0)
         //launch local periodic boundary kernel in default stream (0)
-      Computation_::Do(hD::start(), endY, *this);
+        Computation_::Do(hD::start(), endY, *this);
 
       //wait for compute to be done -> synchronize event compute_done
 
@@ -469,7 +469,7 @@ namespace lbm {
     : public Communication<T, latticeType, AlgorithmType::Pull,
                            memoryLayout, PartitionningType::OneD, 2> {
   public:
-    DEVICE HOST
+    HOST
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
                   const std::string& processorName_in,
@@ -500,7 +500,7 @@ namespace lbm {
       applyZ(haloComputedData, iP);
     }
 
-    DEVICE HOST
+    HOST
     inline void periodic(DynamicArray<T, Architecture::GPU>& haloDeviceArray,
                          DynamicArray<T, Architecture::CPU>& haloHostArray) {
       SCOREP_INSTRUMENT_ON("Communication<6>::periodic")
