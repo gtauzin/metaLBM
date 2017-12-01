@@ -1,0 +1,2 @@
+add_executable(example_constexpr GlobalCOnstexpr.cu)
+set_target_properties(example_constexpr PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
