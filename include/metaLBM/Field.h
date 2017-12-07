@@ -192,8 +192,8 @@ namespace lbm {
     }
 
     void setGlobalValue(const MathVector<unsigned int, 3>& iP,
-                            const T value,
-                            const unsigned int iC) {
+                        const T value,
+                        const unsigned int iC) {
       setGlobalValue(gNCD::getIndex(iP, iC), value);
     }
 
@@ -205,7 +205,7 @@ namespace lbm {
     }
 
     T getGlobalValue(const MathVector<unsigned int, 3>& iP,
-                         const unsigned int iC = 0) const {
+                     const unsigned int iC = 0) const {
       return globalArrayHost[gNCD::getIndex(iP, iC)];
     }
 

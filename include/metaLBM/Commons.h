@@ -3,9 +3,9 @@
 
 #include <iostream>
 
-#ifdef __CUDA_ARCH__
-  #include <cuda_runtime_api.h>
-  #include <cuda.h>
+#ifdef __NVCC__
+#include <cuda_runtime_api.h>
+#include <cuda.h>
 
   #define CUDA_CALL(call) {                                                     \
     cudaError_t error = call;                                                   \

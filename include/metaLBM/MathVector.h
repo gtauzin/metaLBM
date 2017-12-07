@@ -27,6 +27,16 @@ namespace lbm {
       return sArray[i];
     }
 
+    DEVICE HOST
+    U * RESTRICT data() {
+      return sArray.data();
+    }
+
+    DEVICE HOST
+    const U * RESTRICT data() const {
+      return sArray.data();
+    }
+
     #pragma omp declare simd
     DEVICE HOST
     MathVector<U, NumberComponents>& operator=(const MathVector<U, NumberComponents> other){

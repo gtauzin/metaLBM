@@ -10,7 +10,8 @@
 #include "Lattice.h"
 #include "Domain.h"
 #include "Boundary.h"
-#include "Computation.cuh"
+#include "Computation.h"
+//#include "Computation.cuh"
 
 namespace lbm {
 
@@ -143,7 +144,7 @@ namespace lbm {
 
       haloDeviceArray.copyTo(haloHostArray);
 
-      UnrolledFor<0, L::dimQ>::Do([&] HOST DEVICE (unsigned int iQ) {
+      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
           sendToRightBeginX = hMLD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X]+lD::length()[d::X]-1,
                 hMLD::start()[d::Y], hMLD::start()[d::Z]}), iQ);
           receivedFromLeftBeginX = hMLD::getIndex(MathVector<unsigned int, 3>({0,
@@ -170,7 +171,7 @@ namespace lbm {
 
           MPI_Waitall(4, requestMPI, statusMPI);
 
-        });
+        }
 
         haloDeviceArray.copyFrom(haloHostArray);
 
@@ -385,7 +386,7 @@ namespace lbm {
                          DynamicArray<T, Architecture::CPU>& haloHostArray) {
       SCOREP_INSTRUMENT_ON("Communication<6>::periodic")
 
-        sendAndReceiveHaloX(haloDeviceArray, haloHostArray);
+      sendAndReceiveHaloX(haloDeviceArray, haloHostArray);
     }
 
   private:
@@ -410,8 +411,10 @@ namespace lbm {
                       memoryLayout, PartitionningType::OneD, 1>(rankMPI_in, sizeMPI_in,
                                                                 processorName_in,
                                                                 haloComputedData_in)
+      , startY(hD::start())
       , endY(MathVector<unsigned int, 3>({hD::end()[d::X],
               hD::start()[d::Y]+1, hD::end()[d::Z]}))
+      , lengthY(endY-startY)
     {}
 
     using Communication<T, latticeType, AlgorithmType::Pull,
@@ -439,7 +442,10 @@ namespace lbm {
 
         //record event (compute_done) in default stream (0)
         //launch local periodic boundary kernel in default stream (0)
-        Computation_::Do(hD::start(), endY, *this);
+        Computation<arch, L::dimD>().Do(startY,
+                                        endY,
+                                        lengthY,
+                                        *this);
 
       //wait for compute to be done -> synchronize event compute_done
 
@@ -454,7 +460,9 @@ namespace lbm {
                         memoryLayout, PartitionningType::OneD, 1>::haloComputedData;
 
   private:
+    const MathVector<unsigned int, 3> startY;
     const MathVector<unsigned int, 3> endY;
+    const MathVector<unsigned int, 3> lengthY;
 
     using Communication<T, latticeType, AlgorithmType::Pull,
                         memoryLayout, PartitionningType::OneD, 1>::applyY;
@@ -478,8 +486,10 @@ namespace lbm {
                       memoryLayout, PartitionningType::OneD, 2>(rankMPI_in, sizeMPI_in,
                                                                 processorName_in,
                                                                 haloComputedData_in)
+      , startZ(hD::start())
       , endZ(MathVector<unsigned int, 3>({hD::end()[d::X],
               hD::end()[d::Y], hD::start()[d::Z]+1}))
+      , lengthZ(endZ-startZ)
     {}
 
     using Communication<T, latticeType, AlgorithmType::Pull,
@@ -505,7 +515,10 @@ namespace lbm {
                          DynamicArray<T, Architecture::CPU>& haloHostArray) {
       SCOREP_INSTRUMENT_ON("Communication<6>::periodic")
 
-      Computation_::Do(hD::start(), endZ, *this);
+        Computation<arch, L::dimD>().Do(startZ.data(),
+                                       endZ.data(),
+                                       lengthZ.data(),
+                                       *this);
 
       Communication<T, latticeType, AlgorithmType::Pull,
                     memoryLayout, PartitionningType::OneD, 2>::periodic(haloDeviceArray,
@@ -518,7 +531,9 @@ namespace lbm {
                         memoryLayout, PartitionningType::OneD, 2>::haloComputedData;
     using Communication<T, latticeType, AlgorithmType::Pull,
                         memoryLayout, PartitionningType::OneD, 2>::applyZ;
+    const MathVector<unsigned int, 3> startZ;
     const MathVector<unsigned int, 3> endZ;
+    const MathVector<unsigned int, 3> lengthZ;
   };
 
 

@@ -116,7 +116,9 @@ namespace lbm {
     inline void setForce(const MathVector<unsigned int, 3>& iP){
       SCOREP_INSTRUMENT_OFF("Force<T, EquilibriumType::Kolmogorov>::setForce")
 
-      force[d::X] = amplitude[d::X] * sin(iP[d::Y]*2*M_PI/waveLength[d::X]);
+        //force[d::X] = amplitude[d::X] * sin(iP[d::Y]*2*M_PI/waveLength[d::X]);
+        force[d::Y] = amplitude[d::Y] * sin(iP[d::X]*2*M_PI/waveLength[d::Y]);
+
     }
 
     using Force<T, ForceType::Generic>::getForce;

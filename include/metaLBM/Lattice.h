@@ -5,9 +5,9 @@
 #include <string>
 #include <stdlib.h>
 
+#include "MathVector.h"
 #include "Commons.h"
 #include "Options.h"
-#include "MathVector.h"
 
 namespace lbm {
 

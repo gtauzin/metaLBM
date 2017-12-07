@@ -28,7 +28,7 @@ namespace lbm {
     Distribution<T, architecture> f_Previous;
     Distribution<T, architecture> f_Next;
     Communication_ communication;
-    Algorithm_ algorithm;
+    Algorithm<dataT, algorithmT, arch> algorithm;
 
     Writer_ writer;
 
@@ -149,6 +149,8 @@ namespace lbm {
                                       densityField.localHostArray(),
                                       densityField.localDeviceArray(),
                                       densityField.numberComponents);
+
+      //std::cout << "before: " << velocityField.getGlobalVector
 
       communication.sendGlobalToLocal(velocityField.globalArray(),
                                       velocityField.localHostArray(),

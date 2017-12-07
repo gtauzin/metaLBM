@@ -53,7 +53,6 @@ namespace lbm {
     Field<T, L::dimD, Architecture::CPU, true> velocityFieldR("velocity",
                                            initVelocityVectorProjected);
 
-
     switch(initVelocityT){
     case InitVelocityType::Homogeneous: {
       break;

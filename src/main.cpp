@@ -1,5 +1,5 @@
 #define NTHREADS 1
-#define NPROCS 1
+#define NPROCS 2
 #define _AOS
 #define DATA_TYPE double
 
@@ -8,14 +8,18 @@
 #include <string>
 
 #include "Input.h"
+#include "metaLBM/Lattice.h"
+#include "metaLBM/Commons.h"
+#include "metaLBM/MathVector.h"
+#include "metaLBM/Computation.h"
 
 namespace lbm {
   constexpr Architecture arch = Architecture::CPU;
+
+  typedef Computation<arch, L::dimD> Computation_;
 }
 
-#include "metaLBM/Commons.h"
 #include "metaLBM/Routine.h"
-#include "metaLBM/MathVector.h"
 
 using namespace lbm;
 

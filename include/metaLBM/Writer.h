@@ -105,6 +105,9 @@ namespace lbm {
                     const unsigned int numberComponents,
                     const T * RESTRICT field,
                     const gD& globalDomain) {
+      //std::cout << fieldName << std::endl;
+
+      std::cout << "In writer: " << field[0] << std::endl;
 
       file << "\t\t\t<DataArray type=\"Float32\" "
            << "NumberOfComponents=\"" << numberComponents << "\" "
@@ -114,9 +117,9 @@ namespace lbm {
         for(unsigned int iY = gD::start()[d::Y]; iY < gD::end()[d::Y]; iY++) {
           for(unsigned int iX = gD::start()[d::X]; iX < gD::end()[d::X]; iX++) {
             MathVector<unsigned int, 3> iP = {iX, iY, iZ};
-
             file << "\t\t\t\t";
             for(unsigned int iC = 0; iC < numberComponents; ++iC) {
+              //std::cout << iP << ", " << iC << std::endl;
               file << field[globalDomain.getIndex(iP, iC)] << " ";
             }
              file << std::endl;

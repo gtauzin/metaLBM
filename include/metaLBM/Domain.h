@@ -3,8 +3,8 @@
 
 #include "Options.h"
 #include "Helpers.h"
-#include "MathVector.h"
 #include "Lattice.h"
+#include "MathVector.h"
 
 namespace lbm {
 

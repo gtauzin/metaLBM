@@ -1,6 +1,8 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
+#include "Commons.h"
+
 namespace lbm {
   enum d {X, Y, Z};
 
@@ -34,6 +36,15 @@ namespace lbm {
 
   enum class ReaderType {Generic, None, VTR, HDF5};
   enum class WriterType {Generic, None, VTR, HDF5};
+
+
+  template<class T, AlgorithmType, Architecture architecture>
+  class Algorithm {
+  public:
+    HOST DEVICE
+    void operator()(unsigned int iP_Array[3]);
+  };
+
 
 }
 

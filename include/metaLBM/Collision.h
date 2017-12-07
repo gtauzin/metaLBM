@@ -64,7 +64,7 @@ namespace lbm {
       SCOREP_INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::calculate")
 
       return ( (T) 1.0 - (T) 1.0 / tau) * f[hD::getIndex(iP, iQ)]
-        + forcingScheme.calculateCollisionSource(force.getForce(), iQ)
+        + forcingScheme.calculateCollisionSource(getForce(), iQ)
         + (T) 1.0 / tau * equilibrium.calculate(iQ);
     }
 
@@ -140,12 +140,12 @@ namespace lbm {
 
       Collision<T, CollisionType::BGK>::setVariables(f, iP, density, velocity);
 
-      UnrolledFor<0, L::dimQ>::Do([&] HOST DEVICE (unsigned int iQ) {
+      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
           f_Forced[iQ] = f[hD::getIndex(iP-uiL::celerity()[iQ], iQ)]
-            + forcingScheme.getCollisionSource(getForce(), iQ);
+            + forcingScheme.calculateCollisionSource(getForce(), iQ);
           f_NonEq[iQ] = f[hD::getIndex(iP-uiL::celerity()[iQ], iQ)]
-            - equilibrium.compute(iQ);
-      });
+            - equilibrium.calculate(iQ);
+      }
 
       calculateAlpha();
       tau = (T) 1.0/(alpha*beta);
@@ -177,13 +177,13 @@ namespace lbm {
       bool isDeviationSmallR = true;
       T deviation;
 
-      UnrolledFor<0, L::dimQ>::Do([&] HOST DEVICE (unsigned int iQ) {
-          deviation = fabs(f_NonEq[iQ]/f_Forced[iQ]);
+      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+        deviation = fabs(f_NonEq[iQ]/f_Forced[iQ]);
 
           if(deviation > error) {
             isDeviationSmallR = false;
           }
-        });
+        }
 
       return isDeviationSmallR;
     }
@@ -196,15 +196,15 @@ namespace lbm {
       T alphaMaxR = 2.5;
       T alphaMaxTemp;
 
-      UnrolledFor<0, L::dimQ>::Do([&] HOST DEVICE (unsigned int iQ) {
-          if(f_NonEq[iQ] > 0) {
-            alphaMaxTemp = fabs(f_Forced[iQ]/f_NonEq[iQ]);
+      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+        if(f_NonEq[iQ] > 0) {
+          alphaMaxTemp = fabs(f_Forced[iQ]/f_NonEq[iQ]);
 
-            if(alphaMaxTemp < alphaMaxR) {
-              alphaMaxR = alphaMaxTemp;
-            }
+          if(alphaMaxTemp < alphaMaxR) {
+            alphaMaxR = alphaMaxTemp;
           }
-        });
+        }
+      }
 
       return alphaMaxR;
     }
@@ -298,13 +298,13 @@ namespace lbm {
       T a3 = 0.0;
       T a4 = 0.0;
 
-      UnrolledFor<0, L::dimQ>::Do([&] HOST DEVICE (unsigned int iQ) {
-          T temp = f_NonEq[iQ]/f_Forced[iQ];
-          a1 += f_NonEq[iQ]*temp;
-          a2 += f_NonEq[iQ]*temp*temp;
-          a3 += f_NonEq[iQ]*temp*temp*temp;
-          a4 += f_NonEq[iQ]*temp*temp*temp*temp;
-        });
+      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+        T temp = f_NonEq[iQ]/f_Forced[iQ];
+        a1 += f_NonEq[iQ]*temp;
+        a2 += f_NonEq[iQ]*temp*temp;
+        a3 += f_NonEq[iQ]*temp*temp*temp;
+        a4 += f_NonEq[iQ]*temp*temp*temp*temp;
+      }
 
       a1 *= 1.0/2.0;
       a2 *= 1.0/6.0;

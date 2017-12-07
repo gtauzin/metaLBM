@@ -44,6 +44,17 @@ namespace lbm {
       return sArray[i];
     }
 
+    DEVICE HOST
+    U * RESTRICT data() {
+      return sArray;
+    }
+
+    DEVICE HOST
+    const U * RESTRICT data() const {
+      return sArray;
+    }
+
+
     #pragma omp declare simd
     DEVICE HOST
     static constexpr unsigned int size() {

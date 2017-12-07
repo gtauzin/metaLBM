@@ -1,3 +1,4 @@
+include_directories("${PROJECT_SOURCE_DIR}/src")
 add_executable(cpulbm main.cpp)
 target_link_libraries(cpulbm PRIVATE metalbm)
 

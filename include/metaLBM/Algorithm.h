@@ -13,12 +13,11 @@
 #include "Collision.h"
 #include "Boundary.h"
 #include "Communication.h"
-#include "Computation.cuh"
+#include "Computation.h"
+//#include "Computation.cuh"
+
 
 namespace lbm {
-
-  template<class T, AlgorithmType, Architecture architecture>
-  class Algorithm {};
 
   template<class T, Architecture architecture>
     class Algorithm<T, AlgorithmType::Generic, architecture> {
@@ -42,6 +41,10 @@ namespace lbm {
 
     bool isWritten;
 
+    MathVector<unsigned int, 3> startIterate;
+    MathVector<unsigned int, 3> endIterate;
+    MathVector<unsigned int, 3> lengthIterate;
+
     Algorithm(Communication_& communication_in,
               Field<T, 1, architecture, writeDensity>& densityField_in,
               Field<T, L::dimD, architecture, writeVelocity>& velocityField_in,
@@ -63,6 +66,9 @@ namespace lbm {
       , dtCommunication()
       , dtTotal()
       , isWritten()
+      , startIterate(lD::start()+L::halo())
+      , endIterate(lD::end()+L::halo())
+      , lengthIterate(lD::length())
     {}
 
     DEVICE HOST
@@ -104,8 +110,6 @@ namespace lbm {
     using Algorithm<T, AlgorithmType::Generic, architecture>::f_Previous;
     using Algorithm<T, AlgorithmType::Generic, architecture>::f_Next;
 
-    using Algorithm<T, AlgorithmType::Generic, architecture>::isWritten;
-
     using Algorithm<T, AlgorithmType::Generic, architecture>::collision;
     using Algorithm<T, AlgorithmType::Generic, architecture>::moment;
     using Algorithm<T, AlgorithmType::Generic, architecture>::boundary;
@@ -113,6 +117,12 @@ namespace lbm {
     using Algorithm<T, AlgorithmType::Generic, architecture>::dtComputation;
     using Algorithm<T, AlgorithmType::Generic, architecture>::dtCommunication;
     using Algorithm<T, AlgorithmType::Generic, architecture>::dtTotal;
+
+    using Algorithm<T, AlgorithmType::Generic, architecture>::isWritten;
+
+    using Algorithm<T, AlgorithmType::Generic, architecture>::startIterate;
+    using Algorithm<T, AlgorithmType::Generic, architecture>::endIterate;
+    using Algorithm<T, AlgorithmType::Generic, architecture>::lengthIterate;
 
     using Algorithm<T, AlgorithmType::Generic, architecture>::storeLocalFields;
 
@@ -130,8 +140,8 @@ namespace lbm {
                                                            f_Previous_in, f_Next_in)
     {}
 
-    DEVICE HOST
-    void operator()(MathVector<unsigned int, 3>& iP) {
+    HOST DEVICE
+    void operator()(const MathVector<unsigned int, 3>& iP) {
       moment.calculateMoments(f_Previous.haloComputedData(), iP);
 
       collision.setForce(iP+gD::offset(communication.getRankMPI()));
@@ -151,6 +161,7 @@ namespace lbm {
       isWritten = isWritten_in;
     }
 
+    HOST
     void iterate() {
       SCOREP_INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate")
 
@@ -166,7 +177,10 @@ namespace lbm {
 
       auto t1 = std::chrono::high_resolution_clock::now();
 
-      Computation_::Do(lD::start()+L::halo(), lD::end()+L::halo(), *this);
+      Computation<architecture, L::dimD>().Do(startIterate,
+                                              endIterate,
+                                              lengthIterate,
+                                              *this);
 
       auto t2 = std::chrono::high_resolution_clock::now();
 
@@ -179,9 +193,6 @@ namespace lbm {
     using Algorithm<T, AlgorithmType::Generic, architecture>::getComputationTime;
     using Algorithm<T, AlgorithmType::Generic, architecture>::getTotalTime;
   };
-
-
-  typedef Algorithm<dataT, algorithmT, arch> Algorithm_;
 
 }
 

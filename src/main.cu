@@ -1,22 +1,25 @@
+#include <mpi.h>
+#include <iostream>
+#include <string>
+
 #define NTHREADS 1
 #define NPROCS 1
 #define _AOS
 #define DATA_TYPE double
 
-#include <mpi.h>
-#include <iostream>
-#include <string>
 
 #include "Input.h"
+#include "metaLBM/Lattice.h"
+#include "metaLBM/Commons.h"
+#include "metaLBM/MathVector.h"
+#include "metaLBM/Computation.h"
+#include "metaLBM/Computation.cuh"
 
 namespace lbm {
   constexpr Architecture arch = Architecture::GPU;
 }
 
-#include "metaLBM/Commons.h"
 #include "metaLBM/Routine.h"
-#include "metaLBM/MathVector.h"
-
 using namespace lbm;
 
 int main(int argc, char* argv[]) {
@@ -51,6 +54,9 @@ int main(int argc, char* argv[]) {
 
   MPI_Comm_free(&localComm);
   MPI_Info_free(&info);
+
+
+
 
   Routine<dataT, arch> routine(rankMPI, sizeMPI,
                                std::string(hostname));
