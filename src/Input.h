@@ -16,7 +16,7 @@ namespace lbm {
   constexpr int lengthZ_g = 16;
 
   constexpr unsigned int startIteration = 0;
-  constexpr unsigned int endIteration = 1000;
+  constexpr unsigned int endIteration = 10;
   constexpr unsigned int writeStep = 10;//endIteration+1;
   constexpr unsigned int successiveWriteStep = 2;
   constexpr unsigned int backupStep = endIteration+1;
