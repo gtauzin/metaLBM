@@ -10,6 +10,16 @@
 
 namespace lbm {
 
+  template<typename U>
+  GLOBAL
+  void initKernel(U * dArrayPtr, const U value, const unsigned int numberElements) {
+    unsigned int idx = blockIdx.x*blockDim.x + threadIdx.x;
+
+    if(idx < numberElements) {
+      dArrayPtr[idx] = value;
+    }
+  }
+
   template<class U>
   class DynamicArray<U, Architecture::GPU>
     :public DynamicArray<U, Architecture::Generic> {
@@ -33,22 +43,17 @@ namespace lbm {
     {
       CUDA_CALL( cudaMalloc((void**)&dArrayPtr, numberElements*sizeof(U)); )
 
-      MathVector<unsigned int, 3> start{0, 0, 0};
-      MathVector<unsigned int, 3> end{numberElements_in, 0, 0};
-      MathVector<unsigned int, 3> length{numberElements_in, 0, 0};
+      dim3 dimBlock(128, 1, 1);
+      dim3 dimGrid(numberElements/128, 1, 1);
 
-      Computation<Architecture::GPU, 1>().Do(start,
-                                            end,
-                                            length,
-                                            [=] HOST DEVICE (MathVector<unsigned int, 3> iP) {
-                                              dArrayPtr[iP[0]] = value_in;
-                                            });
+      initKernel<<<dimBlock, dimGrid >>>(dArrayPtr, value_in, numberElements);
+
     }
 
     DynamicArray(const DynamicArray<U, Architecture::CPU>& dArray_in)
       : DynamicArray<U, Architecture::Generic>(dArray_in.size())
     {
-      CUDA_CALL( cudaMalloc(&dArrayPtr, dArray_in.size()*sizeof(U)); )
+      CUDA_CALL( cudaMalloc((void**)&dArrayPtr, dArray_in.size()*sizeof(U)); )
       copyFrom(dArray_in);
     }
 
@@ -56,7 +61,7 @@ namespace lbm {
     DynamicArray(const DynamicArray<U, Architecture::GPU>& dArray_in)
       : DynamicArray<U, Architecture::Generic>(dArray_in.size())
     {
-      CUDA_CALL( cudaMalloc(&dArrayPtr, numberElements*sizeof(U)); )
+      CUDA_CALL( cudaMalloc((void**)&dArrayPtr, numberElements*sizeof(U)); )
       copyFrom(dArray_in);
   }
 
@@ -66,8 +71,6 @@ namespace lbm {
         dArrayPtr = NULL;
       }
     }
-
-
 
     void copyFrom(const DynamicArray<U, Architecture::CPU>& other) {
       CUDA_CALL( cudaMemcpy(dArrayPtr, other.data(), other.size()*sizeof(U),
