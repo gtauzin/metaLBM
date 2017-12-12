@@ -37,12 +37,12 @@ namespace lbm {
       MathVector<unsigned int, 3> end{numberElements_in, 0, 0};
       MathVector<unsigned int, 3> length{numberElements_in, 0, 0};
 
-      Computation<Architecture::GPU, 1>::Do(start,
+      Computation<Architecture::GPU, 1>().Do(start,
                                             end,
                                             length,
-                                            [=] DEVICE (int i) {
-                                              dArrayPtr[i] = value_in;
-                                            };)
+                                            [=] HOST DEVICE (MathVector<unsigned int, 3> iP) {
+                                              dArrayPtr[iP[0]] = value_in;
+                                            });
     }
 
     DynamicArray(const DynamicArray<U, Architecture::CPU>& dArray_in)
@@ -66,6 +66,8 @@ namespace lbm {
         dArrayPtr = NULL;
       }
     }
+
+
 
     void copyFrom(const DynamicArray<U, Architecture::CPU>& other) {
       CUDA_CALL( cudaMemcpy(dArrayPtr, other.data(), other.size()*sizeof(U),
