@@ -31,8 +31,18 @@ namespace lbm {
                  const U& value_in = (U) 0)
       : DynamicArray<U, Architecture::Generic>(numberElements_in)
     {
-      CUDA_CALL( cudaMalloc(&dArrayPtr, numberElements*sizeof(U)); )
-      for(unsigned int i = 0; i < numberElements; ++i) dArrayPtr[i] = value_in;
+      CUDA_CALL( cudaMalloc((void**)&dArrayPtr, numberElements*sizeof(U)); )
+
+      MathVector<unsigned int, 3> start{0, 0, 0};
+      MathVector<unsigned int, 3> end{numberElements_in, 0, 0};
+      MathVector<unsigned int, 3> length{numberElements_in, 0, 0};
+
+      Computation<Architecture::GPU, 1>::Do(start,
+                                            end,
+                                            length,
+                                            [=] DEVICE (int i) {
+                                              dArrayPtr[i] = value_in;
+                                            };)
     }
 
     DynamicArray(const DynamicArray<U, Architecture::CPU>& dArray_in)

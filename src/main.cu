@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
 
   MPI_Init(&argc, &argv);
 
-  MathVector<int, 3> sizeMPI = {1, 1, 1};
+  MathVector<int, 3> sizeMPI{1, 1, 1};
   MPI_Comm_size(MPI_COMM_WORLD, &sizeMPI[d::X]);
 
   MathVector<int, 3> rankMPI{0, 0, 0};
@@ -41,13 +41,14 @@ int main(int argc, char* argv[]) {
   MPI_Info info;
 
   MPI_Info_create(&info);
-  //MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, rankMPI[d::X],
-  //                      info, &localComm);
+  MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, rankMPI[d::X],
+                      info, &localComm);
 
-  int localRank = -1;
+  int localRank = 0;
 
-  //MPI_Comm_rank(localComm, &localRank);
+  MPI_Comm_rank(localComm, &localRank);
 
+  std::cout << "Local rank: " << localRank << std::endl;
   int numberDevices = 0;
   CUDA_CALL( cudaGetDeviceCount(&numberDevices); )
   CUDA_CALL( cudaSetDevice(localRank % numberDevices); )
