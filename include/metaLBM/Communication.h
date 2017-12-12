@@ -515,10 +515,10 @@ namespace lbm {
                          DynamicArray<T, Architecture::CPU>& haloHostArray) {
       SCOREP_INSTRUMENT_ON("Communication<6>::periodic")
 
-        Computation<arch, L::dimD>().Do(startZ.data(),
-                                       endZ.data(),
-                                       lengthZ.data(),
-                                       *this);
+      Computation<arch, L::dimD>().Do(startZ,
+                                      endZ,
+                                      lengthZ,
+                                      *this);
 
       Communication<T, latticeType, AlgorithmType::Pull,
                     memoryLayout, PartitionningType::OneD, 2>::periodic(haloDeviceArray,

@@ -441,6 +441,7 @@ namespace lbm {
                  MemoryLayout::Generic, L::dimD> gDD;
   typedef Domain<DomainType::Global, partitionningT,
                  MemoryLayout::Generic, L::dimQ> gQD;
+
   typedef Domain<DomainType::Local, PartitionningType::Generic,
                  MemoryLayout::Generic, 1> lD;
   typedef Domain<DomainType::Halo, PartitionningType::Generic,

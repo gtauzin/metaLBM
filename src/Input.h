@@ -11,15 +11,15 @@ namespace lbm {
   typedef DATA_TYPE dataT;
 
   constexpr LatticeType latticeT = LatticeType::D2Q9;
-  constexpr int lengthX_g = 16;
-  constexpr int lengthY_g = 16;
-  constexpr int lengthZ_g = 4;
+  constexpr int lengthX_g = 32;
+  constexpr int lengthY_g = 32;
+  constexpr int lengthZ_g = 32;
 
-  constexpr int startIteration = 0;
-  constexpr int endIteration = 3;
-  constexpr int writeStep = 1;//endIteration+1;
-  constexpr int backupStep = endIteration+1;
-
+  constexpr unsigned int startIteration = 0;
+  constexpr unsigned int endIteration = 1000;
+  constexpr unsigned int writeStep = 10;//endIteration+1;
+  constexpr unsigned int successiveWriteStep = 2;
+  constexpr unsigned int backupStep = endIteration+1;
 
   DEVICE HOST
   constexpr MathVector<unsigned int, 3> length_g() {
@@ -42,7 +42,7 @@ namespace lbm {
   constexpr InitDensityType initDensityT = InitDensityType::Peak;
   constexpr dataT initDensityValue = 1.0;
   constexpr InitVelocityType initVelocityT = InitVelocityType::Homogeneous;
-  constexpr MathVector<dataT, 3> initVelocityVector = { {0.5, 0.2, 0.0} };
+  constexpr MathVector<dataT, 3> initVelocityVector = { {0.05, 0.02, 0.0} };
 
   constexpr ForcingSchemeType forcingSchemeT = ForcingSchemeType::ExactDifferenceMethod;
   constexpr ForceType forceT = ForceType::Constant;
@@ -56,6 +56,7 @@ namespace lbm {
 
   constexpr WriterType writerT = WriterType::VTR;
   constexpr auto prefix = "test_fields";
+  constexpr WriterFileFormat writerFileFormatT = WriterFileFormat::ascii;
 
   constexpr bool writeDensity = 1;
   constexpr bool writeVelocity = 1;

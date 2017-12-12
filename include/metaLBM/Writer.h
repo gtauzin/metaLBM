@@ -16,11 +16,11 @@
 
 namespace lbm {
 
-  template <class T, WriterType writerType>
+  template <class T, WriterType writerType, WriterFileFormat writerFileFormat>
   class Writer {};
 
   template <class T>
-  class Writer<T, WriterType::Generic> {
+    class Writer<T, WriterType::Generic, WriterFileFormat::Generic> {
   protected:
     const std::string writeFolder;
     const std::string writerFolder;
@@ -72,55 +72,39 @@ namespace lbm {
   };
 
   template <class T>
-  class Writer<T, WriterType::VTR>
-    : public Writer<T, WriterType::Generic> {
+    class Writer<T, WriterType::VTR, WriterFileFormat::Generic>
+    : public Writer<T, WriterType::Generic, WriterFileFormat::Generic> {
   public:
     Writer(const std::string& filePrefix_in,
-           const MathVector<int, 3> rankMPI_in)
-      : Writer<T, WriterType::Generic>("outputVTR/", filePrefix_in,
-                                       ".vtr", "ascii", rankMPI_in, true)
+           const MathVector<int, 3> rankMPI_in,
+           const std::string fileFormat_in)
+      : Writer<T, WriterType::Generic, WriterFileFormat::Generic>("outputVTR/", filePrefix_in,
+                                                                  ".vtr", fileFormat_in,
+                                                                  rankMPI_in, true)
     {}
 
-    using Writer<T, WriterType::Generic>::getIsSerial;
-    using Writer<T, WriterType::Generic>::getIsWritten;
+    using Writer<T, WriterType::Generic, WriterFileFormat::Generic>::getIsSerial;
+    using Writer<T, WriterType::Generic, WriterFileFormat::Generic>::getIsWritten;
 
-    inline void openFile(const unsigned int iteration) {
-      std::string fileName = getFileName(iteration);
-      file.open(fileName, std::ofstream::out | std::ofstream::trunc);
-
-      if(file) {
-        writeHeader();
-      }
-      else {
-        std::cout << "Write VTR: could not open file " << fileName << std::endl;
-      }
-    }
 
     inline void closeFile() {
       writeFooter();
       file.close();
     }
 
-    void writeField(const std::string& fieldName,
-                    const unsigned int numberComponents,
-                    const T * RESTRICT field,
-                    const gD& globalDomain) {
-      //std::cout << fieldName << std::endl;
-
-      std::cout << "In writer: " << field[0] << std::endl;
-
+    template<unsigned int NumberComponents>
+      void writeField(const Field<T, NumberComponents, Architecture::CPU, true> field) {
       file << "\t\t\t<DataArray type=\"Float32\" "
-           << "NumberOfComponents=\"" << numberComponents << "\" "
-           << "Name=\"" << fieldName << "\" "
+           << "NumberOfComponents=\"" << NumberComponents << "\" "
+           << "Name=\"" << field.fieldName << "\" "
            << "format=\"" + fileFormat + "\">\n";
       for(unsigned int iZ = gD::start()[d::Z]; iZ < gD::end()[d::Z]; iZ++) {
         for(unsigned int iY = gD::start()[d::Y]; iY < gD::end()[d::Y]; iY++) {
           for(unsigned int iX = gD::start()[d::X]; iX < gD::end()[d::X]; iX++) {
             MathVector<unsigned int, 3> iP = {iX, iY, iZ};
             file << "\t\t\t\t";
-            for(unsigned int iC = 0; iC < numberComponents; ++iC) {
-              //std::cout << iP << ", " << iC << std::endl;
-              file << field[globalDomain.getIndex(iP, iC)] << " ";
+            for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+              file << field.getGlobalValue(iP, iC) << " ";
             }
              file << std::endl;
           }
@@ -129,16 +113,20 @@ namespace lbm {
       file << "\t\t\t</DataArray>\n";
     }
 
+    template<unsigned int NumberComponents>
+    void writeField(const Field<T, NumberComponents, Architecture::CPU, false> field) {
+    }
 
-  private:
-    using Writer<T, WriterType::Generic>::file;
-    using Writer<T, WriterType::Generic>::fileFormat;
-    using Writer<T, WriterType::Generic>::rankMPI;
+
+  protected:
+    using Writer<T, WriterType::Generic, WriterFileFormat::Generic>::file;
+    using Writer<T, WriterType::Generic, WriterFileFormat::Generic>::fileFormat;
+    using Writer<T, WriterType::Generic, WriterFileFormat::Generic>::rankMPI;
 
 
     std::string getFileName(const unsigned int iteration) {
       if(rankMPI[d::X] == 0) {
-        return Writer<T, WriterType::Generic>::getFileName(iteration);
+        return Writer<T, WriterType::Generic, WriterFileFormat::Generic>::getFileName(iteration);
       }
 
       else {
@@ -163,17 +151,23 @@ namespace lbm {
 
     void writeFooter() {
       file << "\t\t</PointData>\n" << "\t\t<CellData />\n" << "\t\t<Coordinates>\n";
-      file << "\t\t\t<DataArray type=\"Float32\" Name=\"X\" format=\"ascii\">\n";
+      file << "\t\t\t<DataArray type=\"Float32\" "
+           << "Name=\"" << "X" << "\" "
+           << "format=\"" + fileFormat + "\">\n";
       for(unsigned int iX = gD::start()[d::X]; iX < gD::end()[d::X]; iX++){
         file << "\t\t\t\t" << iX+1 << "\n";
       }
       file << "\t\t\t</DataArray>\n";
-      file << "\t\t\t<DataArray type=\"Float32\" Name=\"Y\" format=\"ascii\">\n";
+      file << "\t\t\t<DataArray type=\"Float32\" "
+           << "Name=\"" << "Y" << "\" "
+           << "format=\"" + fileFormat + "\">\n";
       for(unsigned int iY = gD::start()[d::Y]; iY < gD::end()[d::Y]; iY++){
         file << "\t\t\t\t" << iY+1 << "\n";
       }
       file << "\t\t\t</DataArray>\n";
-      file << "\t\t\t<DataArray type=\"Float32\" Name=\"Z\" format=\"ascii\">\n";
+      file << "\t\t\t<DataArray type=\"Float32\" "
+           << "Name=\"" << "Z" << "\" "
+           << "format=\"" + fileFormat + "\">\n";
       for(unsigned int iZ = gD::start()[d::Z]; iZ < gD::end()[d::Z]; iZ++){
         file << "\t\t\t\t" << iZ+1 << "\n";
       }
@@ -184,7 +178,163 @@ namespace lbm {
 
   };
 
-  typedef Writer<dataT, writerT> Writer_;
+  template <class T>
+    class Writer<T, WriterType::VTR, WriterFileFormat::ascii>
+    : public Writer<T, WriterType::VTR, WriterFileFormat::Generic> {
+  public:
+    Writer(const std::string& filePrefix_in,
+           const MathVector<int, 3> rankMPI_in)
+      : Writer<T, WriterType::VTR, WriterFileFormat::Generic>(filePrefix_in,
+                                                              rankMPI_in,
+                                                              "ascii")
+    {}
+
+    using Writer<T, WriterType::VTR, WriterFileFormat::Generic>::getIsSerial;
+    using Writer<T, WriterType::VTR, WriterFileFormat::Generic>::getIsWritten;
+
+    inline void openFile(const unsigned int iteration) {
+      std::string fileName = getFileName(iteration);
+      file.open(fileName, std::ofstream::out | std::ofstream::trunc);
+
+      if(file) {
+        writeHeader();
+      }
+      else {
+        std::cout << "Write VTR: could not open file " << fileName << std::endl;
+      }
+    }
+
+    using Writer<T, WriterType::VTR, WriterFileFormat::Generic>::closeFile;
+
+    using Writer<T, WriterType::VTR, WriterFileFormat::Generic>::writeField;
+
+
+  private:
+    using Writer<T, WriterType::VTR, WriterFileFormat::Generic>::file;
+    using Writer<T, WriterType::VTR, WriterFileFormat::Generic>::fileFormat;
+    using Writer<T, WriterType::VTR, WriterFileFormat::Generic>::rankMPI;
+
+    using Writer<T, WriterType::VTR, WriterFileFormat::Generic>::getFileName;
+    using Writer<T, WriterType::VTR, WriterFileFormat::Generic>::writeHeader;
+    using Writer<T, WriterType::VTR, WriterFileFormat::Generic>::writeFooter;
+  };
+
+
+    template <class T>
+    class Writer<T, WriterType::VTR, WriterFileFormat::binary>
+    : public Writer<T, WriterType::VTR, WriterFileFormat::Generic> {
+  public:
+    Writer(const std::string& filePrefix_in,
+           const MathVector<int, 3> rankMPI_in)
+      : Writer<T, WriterType::VTR, WriterFileFormat::Generic>(filePrefix_in,
+                                                              rankMPI_in,
+                                                              "binary")
+    {}
+
+    using Writer<T, WriterType::VTR, WriterFileFormat::Generic>::getIsSerial;
+    using Writer<T, WriterType::VTR, WriterFileFormat::Generic>::getIsWritten;
+
+    inline void openFile(const unsigned int iteration) {
+      std::string fileName = getFileName(iteration);
+      file.open(fileName, std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
+      //file.write();
+
+      if(file) {
+        writeHeader();
+      }
+      else {
+        std::cout << "Write VTR: could not open file " << fileName << std::endl;
+      }
+    }
+
+    using Writer<T, WriterType::VTR, WriterFileFormat::Generic>::closeFile;
+
+    using Writer<T, WriterType::VTR, WriterFileFormat::Generic>::writeField;
+
+
+  private:
+    using Writer<T, WriterType::VTR, WriterFileFormat::Generic>::file;
+    using Writer<T, WriterType::VTR, WriterFileFormat::Generic>::fileFormat;
+    using Writer<T, WriterType::VTR, WriterFileFormat::Generic>::rankMPI;
+
+    using Writer<T, WriterType::VTR, WriterFileFormat::Generic>::getFileName;
+    using Writer<T, WriterType::VTR, WriterFileFormat::Generic>::writeHeader;
+    using Writer<T, WriterType::VTR, WriterFileFormat::Generic>::writeFooter;
+  };
+
+
+
+  template <class T>
+    class Writer<T, WriterType::HDF5, WriterFileFormat::Generic>
+    : public Writer<T, WriterType::Generic, WriterFileFormat::Generic> {
+  public:
+    Writer(const std::string& filePrefix_in,
+           const MathVector<int, 3> rankMPI_in,
+           const std::string fileFormat_in)
+      : Writer<T, WriterType::Generic, WriterFileFormat::Generic>("outputHDF5/",
+                                                                  filePrefix_in,
+                                                                  ".h5", fileFormat_in,
+                                                                  rankMPI_in, false)
+    {}
+
+    using Writer<T, WriterType::Generic, WriterFileFormat::Generic>::getIsSerial;
+    using Writer<T, WriterType::Generic, WriterFileFormat::Generic>::getIsWritten;
+
+
+    inline void closeFile() {
+      writeFooter();
+      file.close();
+    }
+
+    template<unsigned int NumberComponents>
+      void writeField(const Field<T, NumberComponents, Architecture::CPU, true> field) {
+
+      for(unsigned int iZ = gD::start()[d::Z]; iZ < gD::end()[d::Z]; iZ++) {
+        for(unsigned int iY = gD::start()[d::Y]; iY < gD::end()[d::Y]; iY++) {
+          for(unsigned int iX = gD::start()[d::X]; iX < gD::end()[d::X]; iX++) {
+            MathVector<unsigned int, 3> iP = {iX, iY, iZ};
+            file << "\t\t\t\t";
+            for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+              file << field.getGlobalValue(iP, iC) << " ";
+            }
+             file << std::endl;
+          }
+        }
+      }
+
+    }
+
+    template<unsigned int NumberComponents>
+    void writeField(const Field<T, NumberComponents, Architecture::CPU, false> field) {
+    }
+
+
+  private:
+    using Writer<T, WriterType::Generic, WriterFileFormat::Generic>::file;
+    using Writer<T, WriterType::Generic, WriterFileFormat::Generic>::fileFormat;
+    using Writer<T, WriterType::Generic, WriterFileFormat::Generic>::rankMPI;
+
+
+    std::string getFileName(const unsigned int iteration) {
+      if(rankMPI[d::X] == 0) {
+        return Writer<T, WriterType::Generic, WriterFileFormat::Generic>::getFileName(iteration);
+      }
+
+      else {
+        return "/dev/null";
+      }
+    }
+
+    void writeHeader() {
+    }
+
+    void writeFooter() {
+    }
+
+  };
+
+
+  typedef Writer<dataT, writerT, writerFileFormatT> Writer_;
 
 }
 

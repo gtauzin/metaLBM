@@ -199,14 +199,10 @@ namespace lbm {
                                           forceField.numberComponents);
         }
 
-        writer.writeField(densityField.fieldName, densityField.numberComponents,
-                          densityField.globalData(), gD());
-        writer.writeField(velocityField.fieldName, velocityField.numberComponents,
-                          velocityField.globalData(), gDD());
-        writer.writeField(alphaField.fieldName, alphaField.numberComponents,
-                          alphaField.globalData(), gD());
-        writer.writeField(forceField.fieldName, forceField.numberComponents,
-                          forceField.globalData(), gDD());
+        writer.writeField(densityField);
+        writer.writeField(velocityField);
+        writer.writeField(alphaField);
+        writer.writeField(forceField);
 
         if(iteration%backupStep == 0) {
           f_Previous.packLocal();
@@ -218,8 +214,7 @@ namespace lbm {
                                             f_Previous.numberComponents);
           }
 
-          writer.writeField(f_Previous.fieldName, f_Previous.numberComponents,
-                            f_Previous.globalData(), gQD());
+          writer.writeField(f_Previous);
         }
 
         writer.closeFile();

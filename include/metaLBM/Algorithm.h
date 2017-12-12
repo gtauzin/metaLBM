@@ -19,6 +19,14 @@
 
 namespace lbm {
 
+  template<class T, AlgorithmType, Architecture architecture>
+  class Algorithm {
+  public:
+    HOST DEVICE
+      void operator()(const MathVector<unsigned int, 3> iP);
+  };
+
+
   template<class T, Architecture architecture>
     class Algorithm<T, AlgorithmType::Generic, architecture> {
   protected:
