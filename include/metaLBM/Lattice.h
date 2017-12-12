@@ -148,6 +148,93 @@ namespace lbm {
 
   };
 
+
+  template <class T>
+  struct Lattice<T, LatticeType::D2Q37>
+  {
+    static constexpr LatticeType Type = LatticeType::D2Q37;
+
+    static constexpr int dimD = 2;
+    static constexpr int dimQ = 37;
+
+    #pragma omp declare simd
+    DEVICE HOST
+    static inline constexpr MathVector<unsigned int, 3> halo() {
+      return MathVector<unsigned int, 3>({3, 3, 0});
+    }
+
+    static constexpr T inv_cs2 = (T)3;
+    static constexpr T cs2 = (T)1/inv_cs2;
+
+    #pragma omp declare simd
+    DEVICE HOST
+    static inline constexpr MathVector<MathVector<T, dimD>, dimQ> celerity() {
+      return
+        {
+          MathVector<T, dimD>{{(T)0, (T)0}},
+          MathVector<T, dimD>{{(T)-1, (T)1}},
+          MathVector<T, dimD>{{(T)-1, (T)0}},
+          MathVector<T, dimD>{{(T)-1, (T)-1}},
+          MathVector<T, dimD>{{(T)0, (T)-1}},
+          MathVector<T, dimD>{{(T)1, (T)-1}},
+          MathVector<T, dimD>{{(T)1, (T)0}},
+          MathVector<T, dimD>{{(T)1, (T)1}},
+          MathVector<T, dimD>{{(T)0, (T)1}},
+          MathVector<T, dimD>{{(T)0, (T)0}},
+          MathVector<T, dimD>{{(T)-1, (T)1}},
+          MathVector<T, dimD>{{(T)-1, (T)0}},
+          MathVector<T, dimD>{{(T)-1, (T)-1}},
+          MathVector<T, dimD>{{(T)0, (T)-1}},
+          MathVector<T, dimD>{{(T)1, (T)-1}},
+          MathVector<T, dimD>{{(T)1, (T)0}},
+          MathVector<T, dimD>{{(T)1, (T)1}},
+          MathVector<T, dimD>{{(T)0, (T)1}},
+          MathVector<T, dimD>{{(T)0, (T)0}},
+          MathVector<T, dimD>{{(T)-1, (T)1}},
+          MathVector<T, dimD>{{(T)-1, (T)0}},
+          MathVector<T, dimD>{{(T)-1, (T)-1}},
+          MathVector<T, dimD>{{(T)0, (T)-1}},
+          MathVector<T, dimD>{{(T)1, (T)-1}},
+          MathVector<T, dimD>{{(T)1, (T)0}},
+          MathVector<T, dimD>{{(T)1, (T)1}},
+          MathVector<T, dimD>{{(T)0, (T)1}},
+          MathVector<T, dimD>{{(T)0, (T)0}},
+          MathVector<T, dimD>{{(T)-1, (T)1}},
+          MathVector<T, dimD>{{(T)-1, (T)0}},
+          MathVector<T, dimD>{{(T)-1, (T)-1}},
+          MathVector<T, dimD>{{(T)0, (T)-1}},
+          MathVector<T, dimD>{{(T)1, (T)-1}},
+          MathVector<T, dimD>{{(T)1, (T)0}},
+          MathVector<T, dimD>{{(T)1, (T)1}},
+          MathVector<T, dimD>{{(T)0, (T)1}},
+          MathVector<T, dimD>{{(T)0, (T)1}}
+        };
+    }
+
+    #pragma omp declare simd
+    DEVICE HOST
+    static inline constexpr MathVector<T, dimQ> weight() {
+      return
+        MathVector<T, dimQ>({
+          (T)4/(T)9, (T)1/(T)36, (T)1/(T)9,
+            (T)1/(T)36, (T)1/(T)9, (T)1/(T)36,
+            (T)1/(T)9, (T)1/(T)36, (T)1/(T)9,
+          (T)4/(T)9, (T)1/(T)36, (T)1/(T)9,
+            (T)1/(T)36, (T)1/(T)9, (T)1/(T)36,
+            (T)1/(T)9, (T)1/(T)36, (T)1/(T)9,
+          (T)4/(T)9, (T)1/(T)36, (T)1/(T)9,
+            (T)1/(T)36, (T)1/(T)9, (T)1/(T)36,
+            (T)1/(T)9, (T)1/(T)36, (T)1/(T)9,
+          (T)4/(T)9, (T)1/(T)36, (T)1/(T)9,
+            (T)1/(T)36, (T)1/(T)9, (T)1/(T)36,
+            (T)1/(T)9, (T)1/(T)36, (T)1/(T)9,
+            (T)1/(T)9
+            });
+    }
+
+  };
+
+
   template <class T>
   struct Lattice<T, LatticeType::D3Q15>
   {
