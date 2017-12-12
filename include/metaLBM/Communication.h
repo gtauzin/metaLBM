@@ -11,7 +11,6 @@
 #include "Domain.h"
 #include "Boundary.h"
 #include "Computation.h"
-//#include "Computation.cuh"
 
 namespace lbm {
 

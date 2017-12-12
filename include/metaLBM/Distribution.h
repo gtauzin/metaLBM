@@ -8,6 +8,7 @@
 #include "Field.h"
 #include "Domain.h"
 #include "Lattice.h"
+#include "DynamicArray.cuh"
 
 namespace lbm {
 
@@ -31,14 +32,14 @@ namespace lbm {
     Distribution(const std::string& fieldName_in)
       : Field<T, L::dimQ, Architecture::CPU, true>(fieldName_in)
       , haloArrayHost(hD::volume()*L::dimQ)
-      , haloArrayDevice()
+      , haloArrayDevice(hD::volume()*L::dimQ)
     {}
 
     Distribution(const std::string& fieldName_in,
                  const DynamicArray<T, Architecture::CPU>& globalArray_in)
       : Field<T, L::dimQ, Architecture::CPU, true>(fieldName_in, globalArray_in)
       , haloArrayHost(hD::volume()*L::dimQ)
-      , haloArrayDevice()
+      , haloArrayDevice(hD::volume()*L::dimQ)
     {}
 
     DEVICE HOST
@@ -116,7 +117,7 @@ namespace lbm {
   template <class T>
   class Distribution<T, Architecture::GPU>
     : public Field<T, L::dimQ, Architecture::GPU, true> {
-  protected:
+  private:
     using Field<T, L::dimQ, Architecture::GPU, true>::localArrayHost;
     using Field<T, L::dimQ, Architecture::GPU, true>::localArrayDevice;
 

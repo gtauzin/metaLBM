@@ -14,7 +14,6 @@
 #include "Boundary.h"
 #include "Communication.h"
 #include "Computation.h"
-//#include "Computation.cuh"
 
 
 namespace lbm {

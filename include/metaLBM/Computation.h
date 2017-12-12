@@ -44,6 +44,8 @@ namespace lbm {
             Callback function) {
     SCOREP_INSTRUMENT_ON("Computation<Callback>::Do")
 
+    std::cout << "Do running!" << std::endl;
+
     MathVector<unsigned int, 3> iP;
     #pragma omp parallel for schedule(static) num_threads(NTHREADS)
     for(iP[d::X] = start[d::X]; iP[d::X] < end[d::X]; ++iP[d::X]) {

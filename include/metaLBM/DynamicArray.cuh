@@ -10,6 +10,8 @@
 
 namespace lbm {
 
+  #ifdef __NVCC__
+
   template<typename U>
   GLOBAL
   void initKernel(U * dArrayPtr, const U value, const unsigned int numberElements) {
@@ -19,6 +21,8 @@ namespace lbm {
       dArrayPtr[idx] = value;
     }
   }
+
+  #endif
 
   template<class U>
   class DynamicArray<U, Architecture::GPU>
@@ -43,11 +47,12 @@ namespace lbm {
     {
       CUDA_CALL( cudaMalloc((void**)&dArrayPtr, numberElements*sizeof(U)); )
 
+      #ifdef __NVCC__
       dim3 dimBlock(128, 1, 1);
       dim3 dimGrid(numberElements/128, 1, 1);
 
       initKernel<<<dimBlock, dimGrid >>>(dArrayPtr, value_in, numberElements);
-
+      #endif
     }
 
     DynamicArray(const DynamicArray<U, Architecture::CPU>& dArray_in)

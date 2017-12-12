@@ -12,7 +12,7 @@
 #include "metaLBM/Lattice.h"
 #include "metaLBM/Commons.h"
 #include "metaLBM/MathVector.h"
-#include "metaLBM/Computation.h"
+#include "metaLBM/DynamicArray.cuh"
 #include "metaLBM/Computation.cuh"
 
 namespace lbm {
