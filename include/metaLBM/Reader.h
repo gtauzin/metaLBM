@@ -68,7 +68,7 @@ namespace lbm {
 
     inline DynamicArray<T, Architecture::CPU> readArray(const std::string& fieldName,
                                                         const unsigned int iteration) {
-      SCOREP_INSTRUMENT_ON("Reader<T, NumberComponents, ReaderType::VTR>::readArray")
+      INSTRUMENT_ON("Reader<T, NumberComponents, ReaderType::VTR>::readArray",3)
 
       DynamicArray<T, Architecture::CPU> arrayR(gD::volume());
 

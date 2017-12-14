@@ -67,7 +67,7 @@ namespace lbm {
     {}
 
     void compute() {
-      SCOREP_INSTRUMENT_ON("Routine<T>::compute")
+      INSTRUMENT_ON("Routine<T>::compute",1)
 
       printInputs();
 
@@ -143,7 +143,7 @@ namespace lbm {
     }
 
     void initializeLocalFields() {
-      SCOREP_INSTRUMENT_ON("Routine<T>::initializeLocalFields")
+      INSTRUMENT_ON("Routine<T>::initializeLocalFields",2)
 
       communication.sendGlobalToLocal(densityField.globalArray(),
                                       densityField.localHostArray(),
@@ -179,6 +179,8 @@ namespace lbm {
     }
 
     void writeFields(const int iteration) {
+      INSTRUMENT_ON("Routine<T>::writeFields",2)
+
       if(writer.getIsWritten(iteration)) {
         writer.openFile(iteration);
 

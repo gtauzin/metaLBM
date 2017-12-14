@@ -24,9 +24,9 @@ namespace lbm {
             const MathVector<unsigned int, 3> end,
             const MathVector<unsigned int, 3> length,
             Callback function) {
-      SCOREP_INSTRUMENT_ON("Computation<Callback>::Do")
+      INSTRUMENT_OFF("Computation<Architecture::CPU, 2>::Do<Callback>",1)
 
-      MathVector<unsigned int, 3> iP;
+        MathVector<unsigned int, 3> iP{{0}};
       #pragma omp parallel for schedule(static) num_threads(NTHREADS)
       #pragma omp simd
       for(iP[d::X] = start[d::X]; iP[d::X] < end[d::X]; ++iP[d::X]) {
@@ -42,11 +42,9 @@ namespace lbm {
             const MathVector<unsigned int, 3> end,
             const MathVector<unsigned int, 3> length,
             Callback function) {
-    SCOREP_INSTRUMENT_ON("Computation<Callback>::Do")
+    INSTRUMENT_OFF("Computation<Architecture::CPU, 2>::Do<Callback>",2)
 
-    std::cout << "Do running!" << std::endl;
-
-    MathVector<unsigned int, 3> iP;
+    MathVector<unsigned int, 3> iP{{0}};
     #pragma omp parallel for schedule(static) num_threads(NTHREADS)
     for(iP[d::X] = start[d::X]; iP[d::X] < end[d::X]; ++iP[d::X]) {
       #pragma omp simd
@@ -64,9 +62,9 @@ namespace lbm {
             const MathVector<unsigned int, 3> end,
             const MathVector<unsigned int, 3> length,
             Callback function) {
-    SCOREP_INSTRUMENT_ON("Computation<Callback>::Do")
+    INSTRUMENT_OFF("Computation<Architecture::CPU, 2>::Do<Callback>",3)
 
-    MathVector<unsigned int, 3> iP;
+      MathVector<unsigned int, 3> iP{{0}};
     #pragma omp parallel for schedule(static) num_threads(NTHREADS)
     for(iP[d::X] = start[d::X]; iP[d::X] < end[d::X]; ++iP[d::X]) {
       for(iP[d::Y] = start[d::Y]; iP[d::Y] < end[d::Y]; ++iP[d::Y]) {

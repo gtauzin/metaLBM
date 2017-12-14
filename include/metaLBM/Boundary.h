@@ -23,7 +23,7 @@ namespace lbm {
     DEVICE HOST
     inline void applyX(T * RESTRICT f,
                        const MathVector<unsigned int, 3>& iP) {
-      SCOREP_INSTRUMENT_ON("Boundary<T, boundaryType, algorithmType>::applyX")
+      INSTRUMENT_ON("Boundary<T, boundaryType, algorithmType>::applyX",5)
 
       iP_Origin =  MathVector<unsigned int, 3>({L::halo()[d::X], iP[d::Y], iP[d::Z]});
       iP_Destination =  MathVector<unsigned int, 3>({L::halo()[d::X] + lD::length()[d::X], iP[d::Y], iP[d::Z]});
@@ -45,7 +45,7 @@ namespace lbm {
     DEVICE HOST
     inline void applyY(T * RESTRICT f,
                        const MathVector<unsigned int, 3>& iP) {
-      SCOREP_INSTRUMENT_ON("Boundary<T, boundaryType, algorithmType>::applyY")
+      INSTRUMENT_ON("Boundary<T, boundaryType, algorithmType>::applyY",5)
 
       iP_Origin =  MathVector<unsigned int, 3>({iP[d::X], L::halo()[d::Y], iP[d::Z]});
       iP_Destination =  MathVector<unsigned int, 3>({iP[d::X], L::halo()[d::Y] + lD::length()[d::Y], iP[d::Z]});
@@ -67,7 +67,7 @@ namespace lbm {
     DEVICE HOST
     inline void applyZ(T * RESTRICT f,
                        const MathVector<unsigned int, 3>& iP) {
-      SCOREP_INSTRUMENT_ON("Boundary<T, boundaryType, algorithmType>::applyZ")
+      INSTRUMENT_ON("Boundary<T, boundaryType, algorithmType>::applyZ",5)
 
       iP_Origin =  MathVector<unsigned int, 3>({iP[d::X], iP[d::Y], L::halo()[d::Z]});
       iP_Destination =  MathVector<unsigned int, 3>({iP[d::X], iP[d::Y],

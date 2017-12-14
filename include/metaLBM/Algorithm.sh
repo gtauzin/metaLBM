@@ -81,7 +81,7 @@ namespace lbm {
 
     DEVICE HOST
     void storeLocalFields(const MathVector<unsigned int, 3>& iP) {
-      SCOREP_INSTRUMENT_OFF("Algorithm<T, AlgorithmType::Pull>::storeLocalFields")
+      INSTRUMENT_OFF("Algorithm<T, AlgorithmType::Pull>::storeLocalFields",4)
 
       const unsigned int indexLocal = hD::getIndexLocal(iP);
 
@@ -171,7 +171,7 @@ namespace lbm {
 
     HOST
     void iterate() {
-      SCOREP_INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate")
+      INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate",2)
 
       f_Previous.swapHalo(f_Next);
       communication.setHaloComputedData(f_Previous.haloComputedData());

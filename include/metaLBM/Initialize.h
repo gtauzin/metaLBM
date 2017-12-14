@@ -18,7 +18,7 @@ namespace lbm {
 
   template<class T>
     DynamicArray<T, Architecture::CPU> initGlobalDensity() {
-    SCOREP_INSTRUMENT_ON("initGlobalDensity<T>")
+    INSTRUMENT_ON("initGlobalDensity<T>",2)
 
       Field<T, 1, Architecture::CPU, true> densityFieldR("density", initDensityValue);
 
@@ -45,7 +45,7 @@ namespace lbm {
 
   template<class T>
   DynamicArray<T, Architecture::CPU> initGlobalVelocity() {
-    SCOREP_INSTRUMENT_ON("initGlobalVelocity<T>")
+    INSTRUMENT_ON("initGlobalVelocity<T>",2)
 
     MathVector<T, L::dimD> initVelocityVectorProjected{{ (T) 0 }};
     initVelocityVectorProjected = Project<T, L::dimD>::Do(initVelocityVector);
@@ -67,7 +67,7 @@ namespace lbm {
 
   template<class T>
   DynamicArray<T, Architecture::CPU> initGlobalAlpha() {
-    SCOREP_INSTRUMENT_ON("initGlobalAlpha<T>")
+    INSTRUMENT_ON("initGlobalAlpha<T>",2)
 
     Field<T, 1, Architecture::CPU, true> alphaFieldR("alpha", (T) 2);
     return alphaFieldR.globalArray();
@@ -76,7 +76,7 @@ namespace lbm {
   template<class T>
   DynamicArray<T, Architecture::CPU> initGlobalDistributionStart(const Field<T, 1, Architecture::CPU, true>& densityField,
                                                                  const Field<T, L::dimD, Architecture::CPU, true>& velocityField) {
-    SCOREP_INSTRUMENT_ON("initGlobalDistributionStart<T>")
+    INSTRUMENT_ON("initGlobalDistributionStart<T>",2)
 
     DynamicArray<T, Architecture::CPU> distributionR(gD::volume()*L::dimQ);
 
@@ -103,7 +103,7 @@ namespace lbm {
 
   template<class T>
   DynamicArray<T, Architecture::CPU> initGlobalDistributionRestart() {
-    SCOREP_INSTRUMENT_ON("initGlobalDistributionRestart<T>")
+    INSTRUMENT_ON("initGlobalDistributionRestart<T>",2)
 
     Reader<T, L::dimQ, ReaderType::VTR> reader(prefix);
     return reader.readArray("distribution", startIteration);
@@ -113,7 +113,7 @@ namespace lbm {
   template<class T>
     DynamicArray<T, Architecture::CPU> initGlobalDistribution(const Field<T, 1, Architecture::CPU, true>& densityField,
                                                               const Field<T, L::dimD, Architecture::CPU, true>& velocityField) {
-    SCOREP_INSTRUMENT_ON("initGlobalDistribution<T>")
+    INSTRUMENT_ON("initGlobalDistribution<T>",2)
 
     if(startIteration == 0) {
       return initGlobalDistributionStart<T>(densityField, velocityField);

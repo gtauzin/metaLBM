@@ -21,7 +21,7 @@ namespace lbm {
     DEVICE HOST
     inline void calculateMoments(const T * RESTRICT f,
                                  const MathVector<unsigned int, 3>& iP) {
-      SCOREP_INSTRUMENT_OFF("Moment<T>::calculateMoments")
+      INSTRUMENT_OFF("Moment<T>::calculateMoments",4)
 
       calculateDensity(f, iP);
       calculateVelocity(f, iP, density);
@@ -43,7 +43,7 @@ namespace lbm {
     DEVICE HOST
     inline void calculateDensity(const T * RESTRICT f,
                                const MathVector<unsigned int, 3>& iP) {
-      SCOREP_INSTRUMENT_OFF("Moment<T>::calculateDensity")
+      INSTRUMENT_OFF("Moment<T>::calculateDensity",5)
 
       density = f[hD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)];
 
@@ -57,7 +57,7 @@ namespace lbm {
     inline void calculateVelocity(const T * RESTRICT f,
                                   const MathVector<unsigned int, 3>& iP,
                                   const T density_in) {
-       SCOREP_INSTRUMENT_OFF("Moment<T>::calculateVelocity")
+      INSTRUMENT_OFF("Moment<T>::calculateVelocity",5)
 
        velocity = L::celerity()[0]
         * f[hD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)];
@@ -74,7 +74,7 @@ namespace lbm {
     DEVICE HOST
     inline T calculateEntropy(const T * RESTRICT f,
                             const MathVector<unsigned int, 3>& iP) {
-      SCOREP_INSTRUMENT_OFF("Moment<T>::calculateEntropy")
+      INSTRUMENT_OFF("Moment<T>::calculateEntropy",5)
 
       entropy = f[hD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)]
         * log(f[hD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)]

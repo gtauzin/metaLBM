@@ -31,8 +31,9 @@ find_package(RapidXML REQUIRED)
 target_link_libraries(metalbm INTERFACE RapidXML::RapidXML)
 
 find_package(NVSHMEM)
-target_link_libraries(metalbm INTERFACE NVSHMEM::NVSHMEM)
-
+if(NVSHMEM_FOUND)
+  target_link_libraries(metalbm INTERFACE NVSHMEM::NVSHMEM)
+endif()
 
 #find_package(HDF5 REQUIRED)
 #target_link_libraries(metalbm INTERFACE HDF5::HDF5)
@@ -46,15 +47,21 @@ target_link_libraries(metalbm INTERFACE MPI::MPI_CXX)
 #    target_link_libraries(metalbm INTERFACE OpenMP::OpenMP_CXX)
 #endif()
 
-option(PROFILE_SCOREP "Enabling manual instrumentation with Score-P" OFF)
-if(PROFILE_SCOREP)
+option(USE_SCOREP "Enabling manual instrumentation with Score-P" OFF)
+if(USE_SCOREP)
   find_package(Scorep)
   if(SCOREP_FOUND)
         include_directories(${SCOREP_INCLUDE_DIRS})
-        add_definitions(-DPROFILE_SCOREP)
+        add_definitions(-DUSE_SCOREP)
     else()
         message("Score-P was not found!")
     endif()
+endif()
+
+# if CUDA presente?
+option(USE_NVTX "Enabling manual instrumentation with NVTX" OFF)
+if(USE_NVTX)
+  add_definitions(-DUSE_NVTX)
 endif()
 
 #find_package(FFTW) # TODO:

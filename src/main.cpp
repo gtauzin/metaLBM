@@ -24,7 +24,7 @@ namespace lbm {
 using namespace lbm;
 
 int main(int argc, char* argv[]) {
-  //  SCOREP_INSTRUMENT_ON("main")
+  INSTRUMENT_ON("main",0)
 
   MPI_Init(&argc, &argv);
 
@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
   MPI_Get_processor_name(hostname, &hostnameLength);
 
   Routine<dataT, arch> routine(rankMPI, sizeMPI,
-                                            std::string(hostname));
+                               std::string(hostname));
 
   routine.compute();
 

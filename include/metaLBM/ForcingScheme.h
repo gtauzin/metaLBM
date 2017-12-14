@@ -47,7 +47,7 @@ namespace lbm {
     DEVICE HOST
     inline void setVariables(const MathVector<T, L::dimD>& force,
                              const T density_in, const MathVector<T, L::dimD>& velocity_in) {
-      SCOREP_INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::Generic>::setVariables")
+      INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::Generic>::setVariables",5)
 
       setDensity(density_in);
       setVelocity(velocity_in);
@@ -56,7 +56,7 @@ namespace lbm {
     #pragma omp declare simd
     DEVICE HOST
     inline MathVector<T, L::dimD> calculateHydrodynamicVelocity(const MathVector<T, L::dimD>& force) const {
-      SCOREP_INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::Generic>::calculateHydrodynamicVelocity")
+      INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::Generic>::calculateHydrodynamicVelocity",5)
 
       return velocity + 0.5/density * force;
     }
@@ -84,7 +84,7 @@ namespace lbm {
     #pragma omp declare simd
     DEVICE HOST
     inline MathVector<T, L::dimD> calculateEquilibriumVelocity(const MathVector<T, L::dimD>& force) const {
-      SCOREP_INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::Guo>::calculateEquilibriumVelocity")
+      INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::Guo>::calculateEquilibriumVelocity",5)
 
       return velocity + 0.5/density * force;
     }
@@ -93,7 +93,7 @@ namespace lbm {
     DEVICE HOST
     inline T calculateCollisionSource(const MathVector<T, L::dimD>& force,
                                 const unsigned int iQ) const {
-      SCOREP_INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::Guo>::calculateCollisionSource")
+      INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::Guo>::calculateCollisionSource",5)
 
       T celerity_iQDotVelocity = L::celerity()[iQ].dot(velocity);
 
@@ -127,7 +127,7 @@ namespace lbm {
     #pragma omp declare simd
     DEVICE HOST
     inline MathVector<T, L::dimD> calculateEquilibriumVelocity(const MathVector<T, L::dimD>& force) const {
-      SCOREP_INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::ShanChen>::calculateEquilibriumVelocity")
+      INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::ShanChen>::calculateEquilibriumVelocity",5)
 
       return velocity + tau/density * force;
     }
@@ -137,7 +137,7 @@ namespace lbm {
     DEVICE HOST
     inline T calculateCollisionSource(const MathVector<T, L::dimD>& force,
                                 const unsigned int iQ) const {
-      SCOREP_INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::ShanChen>::calculateCollisionSource")
+      INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::ShanChen>::calculateCollisionSource",5)
 
       return 0.0;
     }
@@ -171,7 +171,7 @@ namespace lbm {
     DEVICE HOST
     inline void setVariables(const MathVector<T, L::dimD>& force,
                              const T density_in, const MathVector<T, L::dimD>& velocity_in) {
-      SCOREP_INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::ExactDifferenceMethod>::setVariables")
+      INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::ExactDifferenceMethod>::setVariables",5)
 
       setDensity(density_in);
       setVelocity(velocity_in);
@@ -184,7 +184,7 @@ namespace lbm {
     #pragma omp declare simd
     DEVICE HOST
     inline MathVector<T, L::dimD> calculateEquilibriumVelocity(const MathVector<T, L::dimD>& force) const {
-      SCOREP_INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::ExactDifferenceMethod>::calculateEquilibriumVelocity")
+      INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::ExactDifferenceMethod>::calculateEquilibriumVelocity",5)
 
       return velocity;
     }
@@ -193,7 +193,7 @@ namespace lbm {
     DEVICE HOST
     inline T calculateCollisionSource(const MathVector<T, L::dimD>& force,
                                       const unsigned int iQ) const {
-      SCOREP_INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::ExactDifferenceMethod>::calculateCollisionSource")
+      INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::ExactDifferenceMethod>::calculateCollisionSource",5)
 
       return deltaEquilibrium.calculate(iQ)
           - equilibrium.calculate(iQ);

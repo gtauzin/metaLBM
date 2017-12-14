@@ -10,7 +10,7 @@
 namespace lbm {
   typedef DATA_TYPE dataT;
 
-  constexpr LatticeType latticeT = LatticeType::D3Q27;
+  constexpr LatticeType latticeT = LatticeType::D2Q9;
   constexpr int lengthX_g = 16;
   constexpr int lengthY_g = 16;
   constexpr int lengthZ_g = 16;
@@ -39,13 +39,13 @@ namespace lbm {
   constexpr CollisionType collisionT = CollisionType::BGK;
   constexpr EquilibriumType equilibriumT = EquilibriumType::Incompressible;
 
-  constexpr InitDensityType initDensityT = InitDensityType::Homogeneous;
+  constexpr InitDensityType initDensityT = InitDensityType::Peak;
   constexpr dataT initDensityValue = 1.0;
   constexpr InitVelocityType initVelocityT = InitVelocityType::Homogeneous;
   constexpr MathVector<dataT, 3> initVelocityVector = { {0.005, 0.002, 0.0} };
 
   constexpr ForcingSchemeType forcingSchemeT = ForcingSchemeType::ExactDifferenceMethod;
-  constexpr ForceType forceT = ForceType::Constant;
+  constexpr ForceType forceT = ForceType::Kolmogorov;
 
   constexpr MathVector<dataT, 3> forceAmplitude = { {0.01, 0.01, 0.0} };
   constexpr MathVector<dataT, 3> forceWaveLength = { {8.0, 16.0, 0.0} };

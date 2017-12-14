@@ -64,7 +64,7 @@ namespace lbm {
             const MathVector<unsigned int, 3> end,
             const MathVector<unsigned int, 3> length,
             Callback function){
-      SCOREP_INSTRUMENT_OFF("Computation<Architecture::GPU, 1>::Do<Callback>")
+      INSTRUMENT_OFF("Computation<Architecture::GPU, 1>::Do<Callback>",3)
 
 
         std::cout << "Do parameters: " << start << end << length << std::endl;
@@ -86,7 +86,7 @@ namespace lbm {
             const MathVector<unsigned int, 3> end,
             const MathVector<unsigned int, 3> length,
             Callback function){
-      SCOREP_INSTRUMENT_OFF("Computation<Architecture::GPU, 2>::Do<Callback>")
+      INSTRUMENT_OFF("Computation<Architecture::GPU, 2>::Do<Callback>",3)
 
       dim3 dimBlock(128, 1, 1);
       dim3 dimGrid((127+length[d::Y])/128, length[d::X], 1);
@@ -108,7 +108,7 @@ namespace lbm {
             const MathVector<unsigned int, 3> end,
             const MathVector<unsigned int, 3> length,
             Callback function){
-      SCOREP_INSTRUMENT_OFF("Computation<Architecture::GPU, 3>::Do<Callback>")
+      INSTRUMENT_OFF("Computation<Architecture::GPU, 3>::Do<Callback>",3)
 
       dim3 dimBlock(128, 1, 1);
       dim3 dimGrid((127+length[d::Z])/128, length[d::Y], length[d::X]);

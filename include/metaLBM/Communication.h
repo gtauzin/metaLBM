@@ -74,7 +74,7 @@ namespace lbm {
                            DynamicArray<T, Architecture::CPU>& localHostArray,
                            DynamicArray<T, Architecture::GPU>& localDeviceArray,
                            unsigned int numberComponents) {
-      SCOREP_INSTRUMENT_ON("Communication<6>::sendGlobalToLocal")
+      INSTRUMENT_ON("Communication<6>::sendGlobalToLocal",3)
 
       MPI_Scatter(globalArray.data(), numberComponents*lD::volume(), MPI_DOUBLE,
                   localHostArray.data(), numberComponents*lD::volume(), MPI_DOUBLE,
@@ -88,7 +88,7 @@ namespace lbm {
                            DynamicArray<T, Architecture::CPU>& localHostArray,
                            DynamicArray<T, Architecture::CPU>& globalArray,
                            unsigned int numberComponents) {
-      SCOREP_INSTRUMENT_ON("Communication<6>::sendLocalToGlobal")
+      INSTRUMENT_ON("Communication<6>::sendLocalToGlobal",3)
 
       localDeviceArray.copyTo(localHostArray);
 
@@ -140,7 +140,7 @@ namespace lbm {
   protected:
     DEVICE HOST
     void sendAndReceiveHaloX(T * RESTRICT haloDistributionPtr) {
-      SCOREP_INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloX")
+      INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloX",4)
 
       for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
           sendToRightBeginX = hMLD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X]+lD::length()[d::X]-1,
@@ -250,7 +250,7 @@ namespace lbm {
   protected:
     HOST
     void sendAndReceiveHaloX(T * haloDistributionPtr) {
-      SCOREP_INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloX")
+      INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloX",4)
 
       MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginX, sizeStripeX,
                 MPI_DOUBLE, leftXRankMPI, 17, MPI_COMM_WORLD, &requestMPI[0]);
@@ -373,7 +373,7 @@ namespace lbm {
 
     HOST
     inline void periodic(T * haloDistributionPtr) {
-      SCOREP_INSTRUMENT_ON("Communication<6>::periodic")
+      INSTRUMENT_ON("Communication<6>::periodic",3)
 
       sendAndReceiveHaloX(haloDistributionPtr);
     }
@@ -426,7 +426,7 @@ namespace lbm {
 
     HOST
     inline void periodic(T * haloDistributionPtr) {
-      SCOREP_INSTRUMENT_ON("Communication<6>::periodic")
+      INSTRUMENT_ON("Communication<6>::periodic",3)
 
         //record event (compute_done) in default stream (0)
         //launch local periodic boundary kernel in default stream (0)
@@ -499,7 +499,7 @@ namespace lbm {
 
     HOST
     inline void periodic(T * haloDistributionPtr) {
-      SCOREP_INSTRUMENT_ON("Communication<6>::periodic")
+      INSTRUMENT_ON("Communication<6>::periodic",3)
 
       Computation<arch, L::dimD>().Do(startZ,
                                       endZ,

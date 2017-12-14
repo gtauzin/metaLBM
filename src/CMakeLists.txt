@@ -5,5 +5,5 @@ target_link_libraries(cpulbm PRIVATE metalbm)
 add_executable(gpulbm main_mpi.cu)
 target_link_libraries(gpulbm PRIVATE metalbm)
 
-add_executable(gpulbm main_shmem.cu)
+add_executable(nvshmemlbm main_shmem.cu)
 target_link_libraries(gpulbm PRIVATE metalbm)
