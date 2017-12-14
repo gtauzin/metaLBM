@@ -67,7 +67,7 @@ namespace lbm {
 
   template<class T>
   class Force<T, ForceType::Sinusoidal> : public Force<T, ForceType::Generic> {
-  private:
+  protected:
     using Force<T, ForceType::Generic>::force;
     using Force<T, ForceType::Generic>::amplitude;
     MathVector<T, L::dimD> waveLength;

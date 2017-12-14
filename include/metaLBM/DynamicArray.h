@@ -92,7 +92,7 @@ namespace lbm {
       for(unsigned int i = 0; i < numberElements; ++i) dArrayPtr[i] = value_in;
     }
 
-    DynamicArray(const DynamicArray& dArray_in)
+  DynamicArray(const DynamicArray<U, Architecture::CPU>& dArray_in)
       : DynamicArray<U, Architecture::Generic>(dArray_in.size())
     {
       dArrayPtr = (U*)malloc(dArray_in.size()*sizeof(U));

@@ -66,8 +66,10 @@ namespace lbm {
             Callback function){
       SCOREP_INSTRUMENT_OFF("Computation<Architecture::GPU, 1>::Do<Callback>")
 
+
+        std::cout << "Do parameters: " << start << end << length << std::endl;
       dim3 dimBlock(128, 1, 1);
-      dim3 dimGrid(length[d::X]/128, 1, 1);
+      dim3 dimGrid((127+length[d::X])/128, 1, 1);
       //CUDA_CALL(
       kernel_1D<Callback><<<dimBlock, dimGrid >>>(start, end, function);
       //)
@@ -87,7 +89,7 @@ namespace lbm {
       SCOREP_INSTRUMENT_OFF("Computation<Architecture::GPU, 2>::Do<Callback>")
 
       dim3 dimBlock(128, 1, 1);
-      dim3 dimGrid(length[d::Y]/128, length[d::X], 1);
+      dim3 dimGrid((127+length[d::Y])/128, length[d::X], 1);
       //      CUDA_CALL(
       kernel_2D<<<dimBlock, dimGrid>>>(start, end, function);
                 //)
@@ -109,7 +111,7 @@ namespace lbm {
       SCOREP_INSTRUMENT_OFF("Computation<Architecture::GPU, 3>::Do<Callback>")
 
       dim3 dimBlock(128, 1, 1);
-      dim3 dimGrid(length[d::Z]/128, length[d::Y], length[d::X]);
+      dim3 dimGrid((127+length[d::Z])/128, length[d::Y], length[d::X]);
       //CUDA_CALL(
       kernel_3D<Callback><<<dimBlock, dimGrid>>>(start, end, function);
                 //)

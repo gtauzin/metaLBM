@@ -141,7 +141,7 @@ namespace lbm {
           const MathVector<T, NumberComponents>& vector_in)
       : globalArrayHost(gD::volume()*NumberComponents)
       , localArrayHost(lD::volume()*NumberComponents)
-      , localArrayDevice()
+      , localArrayDevice(lD::volume()*NumberComponents)
       , fieldName(fieldName_in)
     {
       MathVector<unsigned int, 3> iP;
@@ -159,7 +159,7 @@ namespace lbm {
           const T& value_in = (T) 0)
       : globalArrayHost(gD::volume()*NumberComponents)
       , localArrayHost(lD::volume()*NumberComponents)
-      , localArrayDevice()
+      , localArrayDevice(lD::volume()*NumberComponents)
       , fieldName(fieldName_in)
     {
       for(unsigned int i = 0; i < gD::volume(); ++i) {
@@ -171,7 +171,7 @@ namespace lbm {
           const DynamicArray<T, Architecture::CPU>& globalArrayHost_in)
       : globalArrayHost(globalArrayHost_in)
       , localArrayHost(lD::volume()*NumberComponents)
-      , localArrayDevice()
+      , localArrayDevice(lD::volume()*NumberComponents)
       , fieldName(fieldName_in)
     {}
 
@@ -218,6 +218,11 @@ namespace lbm {
       return vectorR;
     }
 
+    DEVICE HOST
+    T * RESTRICT localComputedData() {
+      return localArrayHost.data();
+    }
+
     DynamicArray<T, Architecture::CPU>& localHostArray() {
       return localArrayHost;
     }
@@ -250,7 +255,10 @@ namespace lbm {
                    MemoryLayout::Generic, NumberComponents> lNCD;
 
   protected:
-    DynamicArray<T, Architecture::GPU> localArrayDevice;
+    using Field<T, NumberComponents, Architecture::CPU, true>::localArrayDevice;
+
+    using Field<T, NumberComponents, Architecture::CPU, true>::globalArrayHost;
+    using Field<T, NumberComponents, Architecture::CPU, true>::localArrayHost;
 
   public:
     static constexpr unsigned int numberComponents = NumberComponents;
@@ -261,20 +269,17 @@ namespace lbm {
     Field(const std::string& fieldName_in,
           const MathVector<T, NumberComponents>& vector_in)
       : Field<T, NumberComponents, Architecture::CPU, true>(fieldName_in, vector_in)
-      , localArrayDevice(lD::volume()*NumberComponents)
     {}
 
     Field(const std::string& fieldName_in,
           const T& value_in = (T) 0)
       : Field<T, NumberComponents, Architecture::CPU, true>(fieldName_in, value_in)
-      , localArrayDevice(lD::volume()*NumberComponents)
     {}
 
     Field(const std::string& fieldName_in,
           const DynamicArray<T, Architecture::CPU>& globalArrayHost_in)
       : Field<T, NumberComponents, Architecture::CPU, true>(fieldName_in,
                                                             globalArrayHost_in)
-      , localArrayDevice(lD::volume()*NumberComponents)
     {}
 
     using Field<T, NumberComponents, Architecture::CPU, true>::globalData;
@@ -286,6 +291,11 @@ namespace lbm {
     using Field<T, NumberComponents, Architecture::CPU, true>::getGlobalVector;
 
     using Field<T, NumberComponents, Architecture::CPU, true>::localHostArray;
+
+    DEVICE HOST
+    T * RESTRICT localComputedData() {
+      return localArrayDevice.data();
+    }
 
     DynamicArray<T, Architecture::GPU>& localDeviceArray() {
       return localArrayDevice;

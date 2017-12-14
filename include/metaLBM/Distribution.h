@@ -8,6 +8,7 @@
 #include "Field.h"
 #include "Domain.h"
 #include "Lattice.h"
+#include "DynamicArray.cuh"
 
 namespace lbm {
 
@@ -31,20 +32,20 @@ namespace lbm {
     Distribution(const std::string& fieldName_in)
       : Field<T, L::dimQ, Architecture::CPU, true>(fieldName_in)
       , haloArrayHost(hD::volume()*L::dimQ)
-      , haloArrayDevice()
+      , haloArrayDevice(hD::volume()*L::dimQ)
     {}
 
     Distribution(const std::string& fieldName_in,
                  const DynamicArray<T, Architecture::CPU>& globalArray_in)
       : Field<T, L::dimQ, Architecture::CPU, true>(fieldName_in, globalArray_in)
       , haloArrayHost(hD::volume()*L::dimQ)
-      , haloArrayDevice()
+      , haloArrayDevice(hD::volume()*L::dimQ)
     {}
 
-    DEVICE HOST
-    void swapHalo(Distribution<T, Architecture::CPU>& distribution_in) {
-      haloArrayHost.swap(distribution_in.haloHostArray());
-    }
+    /* DEVICE HOST */
+    /* void swapHalo(Distribution<T, Architecture::CPU>& distribution_in) { */
+    /*   haloArrayHost.swap(distribution_in.haloHostArray()); */
+    /* } */
 
     DynamicArray<T, Architecture::CPU>& haloHostArray() {
       return haloArrayHost;
@@ -116,7 +117,7 @@ namespace lbm {
   template <class T>
   class Distribution<T, Architecture::GPU>
     : public Field<T, L::dimQ, Architecture::GPU, true> {
-  protected:
+  private:
     using Field<T, L::dimQ, Architecture::GPU, true>::localArrayHost;
     using Field<T, L::dimQ, Architecture::GPU, true>::localArrayDevice;
 
@@ -186,6 +187,8 @@ namespace lbm {
         }
       }
     }
+
+    // TODO use Computation.cuh
 
     void unpackLocal() {
       MathVector<unsigned int, 3> iP;
