@@ -40,13 +40,13 @@ int main(int argc, char* argv[]) {
   MPI_Comm localComm;
   MPI_Info info;
 
-  MPI_Info_create(&info);
-  MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, rankMPI[d::X],
-                      info, &localComm);
+  //MPI_Info_create(&info);
+  //MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, rankMPI[d::X],
+  //info, &localComm);
 
   int localRank = 0;
 
-  MPI_Comm_rank(localComm, &localRank);
+//MPI_Comm_rank(localComm, &localRank);
 
   std::cout << "Local rank: " << localRank << std::endl;
   int numberDevices = 0;

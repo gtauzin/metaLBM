@@ -12,8 +12,8 @@ add_custom_target(tests
 
 # Custom test functions
 function(metaLBM_add_test targetName targetFile numProcs)
-    add_executable(${targetName} ${targetFile})
-    target_link_libraries(${targetName}
+         add_executable(${targetName} ${targetFile})
+         target_link_libraries(${targetName}
             metalbm
             Boost::system
             Boost::filesystem

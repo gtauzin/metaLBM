@@ -28,6 +28,10 @@ target_include_directories(metalbm INTERFACE
 find_package(RapidXML REQUIRED)
 target_link_libraries(metalbm INTERFACE RapidXML::RapidXML)
 
+find_package(NVSHMEM)
+target_link_libraries(metalbm INTERFACE NVSHMEM::NVSHMEM)
+
+
 #find_package(HDF5 REQUIRED)
 #target_link_libraries(metalbm INTERFACE HDF5::HDF5)
 

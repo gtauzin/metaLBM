@@ -7,8 +7,6 @@
 
 namespace lbm {
 
-  //#ifdef __CUDA_ARCH__
-
   template<typename Callback>
   GLOBAL
   void kernel_1D(const MathVector<unsigned int, 3> start,
@@ -120,25 +118,6 @@ namespace lbm {
     }
 
   };
-
-  //#endif
-
-  // template GLOBAL void kernel_1D(const unsigned int *, const unsigned int *,
-  //                              lbm::Algorithm<double, (lbm::AlgorithmType)1, (lbm::Architecture)2>);
-
-
-  // template void lbm::Computation<(lbm::Architecture)2, 1u>::Do<lbm::Algorithm<double, (lbm::AlgorithmType)1, (lbm::Architecture)2> >(unsigned int const*, unsigned int const*, unsigned int const*, lbm::Algorithm<double, (lbm::AlgorithmType)1, (lbm::Architecture)2>);
-
-  // template GLOBAL void kernel_1D(const unsigned int *, const unsigned int *,
-  //                                lbm::Algorithm<double, (lbm::AlgorithmType)1, (lbm::Architecture)2>);
-
-
-  // Computation<Architecture::GPU, 1> aa;
-
-  // template void Computation<Architecture::GPU, 1>::Do<Algorithm<double, AlgorithmType::Pull, Architecture::GPU> >(unsigned int const*, unsigned int const*, unsigned int const*, Algorithm<double, AlgorithmType::Pull, Architecture::GPU>);
-  // template GLOBAL void kernel_1D<lbm::Algorithm<double, (lbm::AlgorithmType)1, (lbm::Architecture)2>>(const unsigned int *, const unsigned int *,
-  //                                lbm::Algorithm<double, (lbm::AlgorithmType)1, (lbm::Architecture)2>);
-
 
 }
 
