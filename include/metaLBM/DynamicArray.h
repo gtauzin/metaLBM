@@ -36,6 +36,11 @@ namespace lbm {
       return dArrayPtr[i];
     }
 
+    HOST DEVICE
+    void operator()(const MathVector<unsigned int, 3>& iP, const U value) {
+      dArrayPtr[iP[0]] = value;
+    }
+
     DEVICE HOST
     U * RESTRICT data() {
       return dArrayPtr;
@@ -44,14 +49,6 @@ namespace lbm {
     DEVICE HOST
     const U * RESTRICT data() const {
       return dArrayPtr;
-    }
-
-    DEVICE HOST
-    void swap(DynamicArray& other) {
-      DynamicArray temp = *this;
-      *this = other;
-      other = temp;
-      //std::swap(*this, other);
     }
 
     DEVICE HOST
@@ -73,27 +70,37 @@ namespace lbm {
   private:
     using DynamicArray<U, Architecture::Generic>::numberElements;
     using DynamicArray<U, Architecture::Generic>::dArrayPtr;
+    Computation<Architecture::CPU, 1> computation;
 
   public:
     using DynamicArray<U, Architecture::Generic>::operator[];
+    using DynamicArray<U, Architecture::Generic>::operator();
     using DynamicArray<U, Architecture::Generic>::data;
     using DynamicArray<U, Architecture::Generic>::size;
-    using DynamicArray<U, Architecture::Generic>::swap;
 
     DynamicArray()
       : DynamicArray<U, Architecture::Generic>()
+      , computation(MathVector<unsigned int, 3>{{0}},
+                    MathVector<unsigned int, 3>{{numberElements}})
     {}
 
     DynamicArray(const unsigned int numberElements_in,
                  const U& value_in = (U) 0)
       : DynamicArray<U, Architecture::Generic>(numberElements_in)
+      , computation(MathVector<unsigned int, 3>{{0}},
+                    MathVector<unsigned int, 3>{{numberElements}})
+
     {
       dArrayPtr = (U*)malloc(numberElements*sizeof(U));
-      for(unsigned int i = 0; i < numberElements; ++i) dArrayPtr[i] = value_in;
+
+      computation.Do(*this, value_in);
     }
 
   DynamicArray(const DynamicArray<U, Architecture::CPU>& dArray_in)
-      : DynamicArray<U, Architecture::Generic>(dArray_in.size())
+    : DynamicArray<U, Architecture::Generic>(dArray_in.size())
+    , computation(MathVector<unsigned int, 3>{{0}},
+                  MathVector<unsigned int, 3>{{numberElements}})
+
     {
       dArrayPtr = (U*)malloc(dArray_in.size()*sizeof(U));
       copyFrom(dArray_in);

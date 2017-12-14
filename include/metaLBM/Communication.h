@@ -390,6 +390,16 @@ namespace lbm {
                       memoryLayout, PartitionningType::OneD, 2>
     : public Communication<T, latticeType, AlgorithmType::Pull,
                            memoryLayout, PartitionningType::OneD, 1> {
+  protected:
+    Computation_ computationY;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        memoryLayout, PartitionningType::OneD, 1>::haloComputedData;
+
+  private:
+
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        memoryLayout, PartitionningType::OneD, 1>::applyY;
+
   public:
     HOST
     Communication(const MathVector<int, 3>& rankMPI_in,
@@ -400,10 +410,9 @@ namespace lbm {
                       memoryLayout, PartitionningType::OneD, 1>(rankMPI_in, sizeMPI_in,
                                                                 processorName_in,
                                                                 haloComputedData_in)
-      , startY(hD::start())
-      , endY(MathVector<unsigned int, 3>({hD::end()[d::X],
-              hD::start()[d::Y]+1, hD::end()[d::Z]}))
-      , lengthY(endY-startY)
+      , computationY(hD::start(),
+                     MathVector<unsigned int, 3>{hD::end()[d::X],
+                           hD::start()[d::Y]+1, hD::end()[d::Z]})
     {}
 
     using Communication<T, latticeType, AlgorithmType::Pull,
@@ -430,10 +439,7 @@ namespace lbm {
 
         //record event (compute_done) in default stream (0)
         //launch local periodic boundary kernel in default stream (0)
-        Computation<arch, L::dimD>().Do(startY,
-                                        endY,
-                                        lengthY,
-                                        *this);
+        computationY.Do(*this);
 
       //wait for compute to be done -> synchronize event compute_done
 
@@ -441,19 +447,6 @@ namespace lbm {
                     memoryLayout, PartitionningType::OneD, 1>::periodic(haloDistributionPtr);
 
     }
-
-  protected:
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::OneD, 1>::haloComputedData;
-
-  private:
-    const MathVector<unsigned int, 3> startY;
-    const MathVector<unsigned int, 3> endY;
-    const MathVector<unsigned int, 3> lengthY;
-
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::OneD, 1>::applyY;
-
   };
 
 
@@ -463,6 +456,12 @@ namespace lbm {
                       memoryLayout, PartitionningType::OneD, 3>
     : public Communication<T, latticeType, AlgorithmType::Pull,
                            memoryLayout, PartitionningType::OneD, 2> {
+  private:
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        memoryLayout, PartitionningType::OneD, 2>::haloComputedData;
+    using Communication<T, latticeType, AlgorithmType::Pull,
+                        memoryLayout, PartitionningType::OneD, 2>::applyZ;
+    Computation_ computationZ;
   public:
     HOST
     Communication(const MathVector<int, 3>& rankMPI_in,
@@ -473,10 +472,9 @@ namespace lbm {
                       memoryLayout, PartitionningType::OneD, 2>(rankMPI_in, sizeMPI_in,
                                                                 processorName_in,
                                                                 haloComputedData_in)
-      , startZ(hD::start())
-      , endZ(MathVector<unsigned int, 3>({hD::end()[d::X],
-              hD::end()[d::Y], hD::start()[d::Z]+1}))
-      , lengthZ(endZ-startZ)
+      , computationZ(hD::start(),
+                     MathVector<unsigned int, 3>{hD::end()[d::X],
+                         hD::end()[d::Y], hD::start()[d::Z]+1})
     {}
 
     using Communication<T, latticeType, AlgorithmType::Pull,
@@ -501,24 +499,12 @@ namespace lbm {
     inline void periodic(T * haloDistributionPtr) {
       INSTRUMENT_ON("Communication<6>::periodic",3)
 
-      Computation<arch, L::dimD>().Do(startZ,
-                                      endZ,
-                                      lengthZ,
-                                      *this);
+      computationZ.Do(*this);
 
       Communication<T, latticeType, AlgorithmType::Pull,
                     memoryLayout, PartitionningType::OneD, 2>::periodic(haloDistributionPtr);
 
     }
-
-  private:
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::OneD, 2>::haloComputedData;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::OneD, 2>::applyZ;
-    const MathVector<unsigned int, 3> startZ;
-    const MathVector<unsigned int, 3> endZ;
-    const MathVector<unsigned int, 3> lengthZ;
   };
 
 

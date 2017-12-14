@@ -7,20 +7,26 @@
 namespace lbm {
 
   template<>
-  struct Computation<Architecture::SHMEM, 1>
+  class Computation<Architecture::SHMEM, 1>
   : public Computation<Architecture::GPU, 1> {
+  public:
+    using Computation<Architecture::GPU, 1>::Computation;
     using Computation<Architecture::GPU, 1>::Do;
   };
 
   template<>
-  struct Computation<Architecture::SHMEM, 2>
+  class Computation<Architecture::SHMEM, 2>
   : public Computation<Architecture::GPU, 2> {
+  public:
+    using Computation<Architecture::GPU, 2>::Computation;
     using Computation<Architecture::GPU, 2>::Do;
   };
 
   template<>
-  struct Computation<Architecture::SHMEM, 3>
+  class Computation<Architecture::SHMEM, 3>
   : public Computation<Architecture::GPU, 3> {
+  public:
+    using Computation<Architecture::GPU, 3>::Computation;
     using Computation<Architecture::GPU, 3>::Do;
   };
 

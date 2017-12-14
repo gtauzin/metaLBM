@@ -7,11 +7,11 @@
 
 namespace lbm {
 
-  template<typename Callback>
+  template<typename Callback, typename... Arguments>
   GLOBAL
   void kernel_1D(const MathVector<unsigned int, 3> start,
                  const MathVector<unsigned int, 3> end,
-                 Callback function) {
+                 Callback function, const Arguments&... arguments) {
 
     MathVector<unsigned int, 3> iP = {blockIdx.x*blockDim.x + threadIdx.x,
                                       start[d::Y], start[d::Z]};
@@ -19,15 +19,15 @@ namespace lbm {
     // delete if and make sure that this we choose blocks so that we are always
     // in the right case
     if(iP[0] >= start[d::X] && iP[0] < end[d::X]) {
-        function(iP);
+      function(iP, arguments...);
     }
   }
 
-  template<typename Callback>
+  template<typename Callback, typename... Arguments>
   GLOBAL
   void kernel_2D(const MathVector<unsigned int, 3> start,
-              const MathVector<unsigned int, 3> end,
-              Callback function) {
+                 const MathVector<unsigned int, 3> end,
+                 Callback function, const Arguments&... arguments) {
 
     MathVector<unsigned int, 3> iP = {blockIdx.y*blockDim.y + threadIdx.y,
                                       blockIdx.x*blockDim.x + threadIdx.x,
@@ -35,15 +35,15 @@ namespace lbm {
 
     if(iP[1] >= start[d::X] && iP[1] < end[d::X]
        && iP[0] >= start[d::Y] && iP[0] < end[d::Y]) {
-      function(iP);
+      function(iP, arguments...);
     }
   }
 
-  template<typename Callback>
+  template<typename Callback, typename... Arguments>
   GLOBAL
   void kernel_3D(const MathVector<unsigned int, 3> start,
                  const MathVector<unsigned int, 3> end,
-                 Callback function) {
+                 Callback function, const Arguments&... arguments) {
 
     MathVector<unsigned int, 3> iP = {blockIdx.z*blockDim.z + threadIdx.z,
                                       blockIdx.y*blockDim.y + threadIdx.y,
@@ -52,46 +52,55 @@ namespace lbm {
     if(iP[2] >= start[d::X] && iP[2] < end[d::X]
        && iP[1] >= start[d::Y] && iP[1] < end[d::Y]
        && iP[0] >= start[d::Z] && iP[0] < end[d::Z]) {
-      function(iP);
+      function(iP, arguments);
     }
   }
 
 
-  template<>
-  struct Computation<Architecture::GPU, 1> {
-    template<typename Callback>
-    void Do(const MathVector<unsigned int, 3> start,
-            const MathVector<unsigned int, 3> end,
-            const MathVector<unsigned int, 3> length,
-            Callback function){
+ template<>
+  class Computation<Architecture::CPU, 1>
+    : public Computation<Architecture::Generic, 0> {
+  private:
+   using Computation<Architecture::Generic, 1>::start;
+   using Computation<Architecture::Generic, 1>::end;
+   using Computation<Architecture::Generic, 1>::length;
+
+  public:
+   using Computation<Architecture::Generic, 1>::Computation;
+
+    template<typename Callback, typename... Arguments>
+    void Do(Callback function, const Arguments&... arguments) {
       INSTRUMENT_OFF("Computation<Architecture::GPU, 1>::Do<Callback>",3)
 
-
-        std::cout << "Do parameters: " << start << end << length << std::endl;
       dim3 dimBlock(128, 1, 1);
       dim3 dimGrid((127+length[d::X])/128, 1, 1);
       //CUDA_CALL(
-      kernel_1D<Callback><<<dimBlock, dimGrid >>>(start, end, function);
+      kernel_1D<Callback><<<dimBlock, dimGrid >>>(start, end, function, arguments...);
       //)
 
       CUDA_CALL( cudaDeviceSynchronize(); )
     }
-
   };
 
-  template<>
-  struct Computation<Architecture::GPU, 2> {
-    template<typename Callback>
-    void Do(const MathVector<unsigned int, 3> start,
-            const MathVector<unsigned int, 3> end,
-            const MathVector<unsigned int, 3> length,
-            Callback function){
+ template<>
+  class Computation<Architecture::CPU, 2>
+    : public Computation<Architecture::Generic, 0> {
+  private:
+   using Computation<Architecture::Generic, 2>::start;
+   using Computation<Architecture::Generic, 2>::end;
+   using Computation<Architecture::Generic, 2>::length;
+
+  public:
+   using Computation<Architecture::Generic, 2>::Computation;
+
+    template<typename Callback, typename... Arguments>
+    void Do(Callback function, const Arguments&... arguments) {
       INSTRUMENT_OFF("Computation<Architecture::GPU, 2>::Do<Callback>",3)
 
       dim3 dimBlock(128, 1, 1);
       dim3 dimGrid((127+length[d::Y])/128, length[d::X], 1);
       //      CUDA_CALL(
-      kernel_2D<<<dimBlock, dimGrid>>>(start, end, function);
+      kernel_2D<<<dimBlock, dimGrid>>>(start, end, function, arguments...);
                 //)
 
       CUDA_CALL( cudaDeviceSynchronize(); )
@@ -99,21 +108,25 @@ namespace lbm {
 
   };
 
+ template<>
+  class Computation<Architecture::GPU, 3>
+    : public Computation<Architecture::Generic, 0> {
+  private:
+   using Computation<Architecture::Generic, 3>::start;
+   using Computation<Architecture::Generic, 3>::end;
+   using Computation<Architecture::Generic, 3>::length;
 
+  public:
+   using Computation<Architecture::Generic, 3>::Computation;
 
-  template<>
-  struct Computation<Architecture::GPU, 3> {
-    template<typename Callback>
-    void Do(const MathVector<unsigned int, 3> start,
-            const MathVector<unsigned int, 3> end,
-            const MathVector<unsigned int, 3> length,
-            Callback function){
+    template<typename Callback, typename... Arguments>
+    void Do(Callback function, const Arguments&... arguments) {
       INSTRUMENT_OFF("Computation<Architecture::GPU, 3>::Do<Callback>",3)
 
       dim3 dimBlock(128, 1, 1);
       dim3 dimGrid((127+length[d::Z])/128, length[d::Y], length[d::X]);
       //CUDA_CALL(
-      kernel_3D<Callback><<<dimBlock, dimGrid>>>(start, end, function);
+      kernel_3D<Callback><<<dimBlock, dimGrid>>>(start, end, function, arguments...);
                 //)
 
       CUDA_CALL( cudaDeviceSynchronize(); )

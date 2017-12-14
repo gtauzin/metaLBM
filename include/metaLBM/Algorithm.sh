@@ -43,15 +43,13 @@ namespace lbm {
     Moment<T> moment;
     Boundary_ boundary;
 
+    Computation<architecture, L::dimD> computation;
+
     std::chrono::duration<double> dtComputation;
     std::chrono::duration<double> dtCommunication;
     std::chrono::duration<double> dtTotal;
 
     bool isWritten;
-
-    MathVector<unsigned int, 3> startIterate;
-    MathVector<unsigned int, 3> endIterate;
-    MathVector<unsigned int, 3> lengthIterate;
 
     Algorithm(Communication_& communication_in,
               Field<T, 1, architecture, writeDensity>& densityField_in,
@@ -70,13 +68,12 @@ namespace lbm {
       , collision(relaxationTime, forceAmplitude, forceWaveLength)
       , moment()
       , boundary()
+      , computation(lD::start()+L::halo(),
+                    lD::end()+L::halo())
       , dtComputation()
       , dtCommunication()
       , dtTotal()
       , isWritten()
-      , startIterate(lD::start()+L::halo())
-      , endIterate(lD::end()+L::halo())
-      , lengthIterate(lD::length())
     {}
 
     DEVICE HOST
@@ -185,10 +182,7 @@ namespace lbm {
 
       auto t1 = std::chrono::high_resolution_clock::now();
 
-      Computation<architecture, L::dimD>().Do(startIterate,
-                                              endIterate,
-                                              lengthIterate,
-                                              *this);
+      computation.Do(*this);
 
       auto t2 = std::chrono::high_resolution_clock::now();
 
