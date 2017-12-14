@@ -15,8 +15,8 @@
 namespace lbm {
 
   template<class T, LatticeType latticeType, AlgorithmType algorithmType,
-           MemoryLayout memoryLayout,
-           PartitionningType partitionningType, unsigned int Dimension>
+           MemoryLayout memoryLayout, PartitionningType partitionningType,
+           unsigned int Dimension>
   class Communication {};
 
 
@@ -29,6 +29,8 @@ namespace lbm {
     const MathVector<int, 3> sizeMPI;
     const std::string processorName;
 
+
+    // TODO: Should be passed, not instanciated
     T * RESTRICT haloComputedData;
 
     const unsigned int rightXRankMPI;
@@ -137,11 +139,8 @@ namespace lbm {
                            MemoryLayout::Generic, PartitionningType::Generic, 0> {
   protected:
     DEVICE HOST
-    void sendAndReceiveHaloX(DynamicArray<T, Architecture::GPU>& haloDeviceArray,
-                             DynamicArray<T, Architecture::CPU>& haloHostArray) {
+    void sendAndReceiveHaloX(T * RESTRICT haloDistributionPtr) {
       SCOREP_INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloX")
-
-      haloDeviceArray.copyTo(haloHostArray);
 
       for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
           sendToRightBeginX = hMLD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X]+lD::length()[d::X]-1,
@@ -156,24 +155,21 @@ namespace lbm {
                   hMLD::start()[d::Y], hMLD::start()[d::Z]}), iQ);
 
 
-          MPI_Irecv(haloHostArray.data()+receivedFromLeftBeginX, sizeStripeX,
+          MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginX, sizeStripeX,
                     MPI_DOUBLE, leftXRankMPI, 17, MPI_COMM_WORLD, &requestMPI[0]);
 
-          MPI_Irecv(haloHostArray.data()+receivedFromRightBeginX, sizeStripeX,
+          MPI_Irecv(haloDistributionPtr+receivedFromRightBeginX, sizeStripeX,
                     MPI_DOUBLE, rightXRankMPI, 23, MPI_COMM_WORLD, &requestMPI[1]);
 
-          MPI_Isend(haloHostArray.data()+sendToRightBeginX, sizeStripeX,
+          MPI_Isend(haloDistributionPtr+sendToRightBeginX, sizeStripeX,
                     MPI_DOUBLE, rightXRankMPI, 17, MPI_COMM_WORLD, &requestMPI[2]);
 
-          MPI_Isend(haloHostArray.data()+sendToLeftBeginX, sizeStripeX,
+          MPI_Isend(haloDistributionPtr+sendToLeftBeginX, sizeStripeX,
                     MPI_DOUBLE, leftXRankMPI, 23, MPI_COMM_WORLD, &requestMPI[3]);
 
           MPI_Waitall(4, requestMPI, statusMPI);
 
         }
-
-        haloDeviceArray.copyFrom(haloHostArray);
-
     }
 
     using Communication<T, latticeType, AlgorithmType::Pull,
@@ -253,29 +249,24 @@ namespace lbm {
                            MemoryLayout::Generic, PartitionningType::Generic, 0> {
   protected:
     HOST
-    void sendAndReceiveHaloX(DynamicArray<T, Architecture::GPU>& haloDeviceArray,
-                             DynamicArray<T, Architecture::CPU>& haloHostArray) {
+    void sendAndReceiveHaloX(T * haloDistributionPtr) {
       SCOREP_INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloX")
 
-      haloDeviceArray.copyTo(haloHostArray);
-
-      MPI_Irecv(haloHostArray.data()+receivedFromLeftBeginX, sizeStripeX,
+      MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginX, sizeStripeX,
                 MPI_DOUBLE, leftXRankMPI, 17, MPI_COMM_WORLD, &requestMPI[0]);
 
-      MPI_Irecv(haloHostArray.data()+receivedFromRightBeginX, sizeStripeX,
+      MPI_Irecv(haloDistributionPtr+receivedFromRightBeginX, sizeStripeX,
                 MPI_DOUBLE, rightXRankMPI, 23, MPI_COMM_WORLD, &requestMPI[1]);
 
-      MPI_Isend(haloHostArray.data()+sendToRightBeginX, sizeStripeX,
+      MPI_Isend(haloDistributionPtr+sendToRightBeginX, sizeStripeX,
                 MPI_DOUBLE, rightXRankMPI, 17, MPI_COMM_WORLD, &requestMPI[2]);
 
-      MPI_Isend(haloHostArray.data()+sendToLeftBeginX, sizeStripeX,
+      MPI_Isend(haloDistributionPtr+sendToLeftBeginX, sizeStripeX,
                 MPI_DOUBLE, leftXRankMPI, 23, MPI_COMM_WORLD, &requestMPI[3]);
 
       MPI_Waitall(4, requestMPI, statusMPI);
-
-      haloDeviceArray.copyFrom(haloHostArray);
-
     }
+
     using Communication<T, latticeType, AlgorithmType::Pull,
                         MemoryLayout::Generic, PartitionningType::Generic,
                         0>::haloComputedData;
@@ -381,11 +372,10 @@ namespace lbm {
                         memoryLayout, PartitionningType::OneD, 0>::setHaloComputedData;
 
     HOST
-    inline void periodic(DynamicArray<T, Architecture::GPU>& haloDeviceArray,
-                         DynamicArray<T, Architecture::CPU>& haloHostArray) {
+    inline void periodic(T * haloDistributionPtr) {
       SCOREP_INSTRUMENT_ON("Communication<6>::periodic")
 
-      sendAndReceiveHaloX(haloDeviceArray, haloHostArray);
+      sendAndReceiveHaloX(haloDistributionPtr);
     }
 
   private:
@@ -435,8 +425,7 @@ namespace lbm {
     }
 
     HOST
-    inline void periodic(DynamicArray<T, Architecture::GPU>& haloDeviceArray,
-                         DynamicArray<T, Architecture::CPU>& haloHostArray) {
+    inline void periodic(T * haloDistributionPtr) {
       SCOREP_INSTRUMENT_ON("Communication<6>::periodic")
 
         //record event (compute_done) in default stream (0)
@@ -449,8 +438,7 @@ namespace lbm {
       //wait for compute to be done -> synchronize event compute_done
 
       Communication<T, latticeType, AlgorithmType::Pull,
-                    memoryLayout, PartitionningType::OneD, 1>::periodic(haloDeviceArray,
-                                                                        haloHostArray);
+                    memoryLayout, PartitionningType::OneD, 1>::periodic(haloDistributionPtr);
 
     }
 
@@ -510,8 +498,7 @@ namespace lbm {
     }
 
     HOST
-    inline void periodic(DynamicArray<T, Architecture::GPU>& haloDeviceArray,
-                         DynamicArray<T, Architecture::CPU>& haloHostArray) {
+    inline void periodic(T * haloDistributionPtr) {
       SCOREP_INSTRUMENT_ON("Communication<6>::periodic")
 
       Computation<arch, L::dimD>().Do(startZ,
@@ -520,8 +507,7 @@ namespace lbm {
                                       *this);
 
       Communication<T, latticeType, AlgorithmType::Pull,
-                    memoryLayout, PartitionningType::OneD, 2>::periodic(haloDeviceArray,
-                                                                        haloHostArray);
+                    memoryLayout, PartitionningType::OneD, 2>::periodic(haloDistributionPtr);
 
     }
 

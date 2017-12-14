@@ -42,16 +42,19 @@ namespace lbm {
     {}
 
     DynamicArray(const unsigned int numberElements_in,
-                 const U& value_in = (U) 0)
+                 const U value_in = (U) 0)
       : DynamicArray<U, Architecture::Generic>(numberElements_in)
     {
       CUDA_CALL( cudaMalloc((void**)&dArrayPtr, numberElements*sizeof(U)); )
 
       #ifdef __NVCC__
       dim3 dimBlock(128, 1, 1);
-      dim3 dimGrid(numberElements/128, 1, 1);
+      dim3 dimGrid((127+numberElements)/128, 1, 1);
 
       initKernel<<<dimBlock, dimGrid >>>(dArrayPtr, value_in, numberElements);
+
+      CUDA_CALL( cudaDeviceSynchronize(); )
+
       #endif
     }
 
@@ -63,12 +66,12 @@ namespace lbm {
     }
 
 
-    DynamicArray(const DynamicArray<U, Architecture::GPU>& dArray_in)
+    DynamicArray(DynamicArray<U, Architecture::GPU>& dArray_in)
       : DynamicArray<U, Architecture::Generic>(dArray_in.size())
     {
       CUDA_CALL( cudaMalloc((void**)&dArrayPtr, numberElements*sizeof(U)); )
       copyFrom(dArray_in);
-  }
+    }
 
     ~DynamicArray(){
       if(dArrayPtr) {
@@ -101,7 +104,6 @@ namespace lbm {
     void clear() {
       numberElements = 0;
       CUDA_CALL( cudaFree(dArrayPtr) );
-      CUDA_CALL_ERROR( cudaMalloc(&dArrayPtr, numberElements*sizeof(U)) );
     }
   };
 

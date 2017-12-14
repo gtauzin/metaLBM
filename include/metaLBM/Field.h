@@ -218,6 +218,11 @@ namespace lbm {
       return vectorR;
     }
 
+    DEVICE HOST
+    T * RESTRICT localComputedData() {
+      return localArrayHost.data();
+    }
+
     DynamicArray<T, Architecture::CPU>& localHostArray() {
       return localArrayHost;
     }
@@ -286,6 +291,11 @@ namespace lbm {
     using Field<T, NumberComponents, Architecture::CPU, true>::getGlobalVector;
 
     using Field<T, NumberComponents, Architecture::CPU, true>::localHostArray;
+
+    DEVICE HOST
+    T * RESTRICT localComputedData() {
+      return localArrayDevice.data();
+    }
 
     DynamicArray<T, Architecture::GPU>& localDeviceArray() {
       return localArrayDevice;

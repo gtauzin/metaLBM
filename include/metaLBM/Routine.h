@@ -54,8 +54,8 @@ namespace lbm {
                                                              velocityField))
       , communication(rankMPI_in, sizeMPI_in, processorName_in,
                       f_Next.haloComputedData())
-      , algorithm(communication, densityField, velocityField, forceField, alphaField,
-                  f_Previous, f_Next)
+      , algorithm(densityField, velocityField, forceField, alphaField,
+                  f_Previous, f_Next, communication)
       , writer(prefix, rankMPI_in)
       , initialMass(0.0)
       , finalMass(0.0)
@@ -167,12 +167,14 @@ namespace lbm {
                                       f_Previous.localDeviceArray(),
                                       f_Previous.numberComponents);
       f_Previous.unpackLocal();
+      f_Previous.haloDeviceArray().copyFrom(f_Previous.haloHostArray());
 
       communication.sendGlobalToLocal(f_Next.globalArray(),
                                       f_Next.localHostArray(),
                                       f_Next.localDeviceArray(),
                                       f_Next.numberComponents);
       f_Next.unpackLocal();
+      f_Next.haloDeviceArray().copyFrom(f_Next.haloHostArray());
 
     }
 

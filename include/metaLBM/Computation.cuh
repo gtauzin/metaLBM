@@ -68,8 +68,10 @@ namespace lbm {
             Callback function){
       SCOREP_INSTRUMENT_OFF("Computation<Architecture::GPU, 1>::Do<Callback>")
 
+
+        std::cout << "Do parameters: " << start << end << length << std::endl;
       dim3 dimBlock(128, 1, 1);
-      dim3 dimGrid(length[d::X]/128, 1, 1);
+      dim3 dimGrid((127+length[d::X])/128, 1, 1);
       //CUDA_CALL(
       kernel_1D<Callback><<<dimBlock, dimGrid >>>(start, end, function);
       //)
@@ -89,7 +91,7 @@ namespace lbm {
       SCOREP_INSTRUMENT_OFF("Computation<Architecture::GPU, 2>::Do<Callback>")
 
       dim3 dimBlock(128, 1, 1);
-      dim3 dimGrid(length[d::Y]/128, length[d::X], 1);
+      dim3 dimGrid((127+length[d::Y])/128, length[d::X], 1);
       //      CUDA_CALL(
       kernel_2D<<<dimBlock, dimGrid>>>(start, end, function);
                 //)
@@ -111,7 +113,7 @@ namespace lbm {
       SCOREP_INSTRUMENT_OFF("Computation<Architecture::GPU, 3>::Do<Callback>")
 
       dim3 dimBlock(128, 1, 1);
-      dim3 dimGrid(length[d::Z]/128, length[d::Y], length[d::X]);
+      dim3 dimGrid((127+length[d::Z])/128, length[d::Y], length[d::X]);
       //CUDA_CALL(
       kernel_3D<Callback><<<dimBlock, dimGrid>>>(start, end, function);
                 //)
@@ -122,23 +124,6 @@ namespace lbm {
   };
 
   //#endif
-
-  // template GLOBAL void kernel_1D(const unsigned int *, const unsigned int *,
-  //                              lbm::Algorithm<double, (lbm::AlgorithmType)1, (lbm::Architecture)2>);
-
-
-  // template void lbm::Computation<(lbm::Architecture)2, 1u>::Do<lbm::Algorithm<double, (lbm::AlgorithmType)1, (lbm::Architecture)2> >(unsigned int const*, unsigned int const*, unsigned int const*, lbm::Algorithm<double, (lbm::AlgorithmType)1, (lbm::Architecture)2>);
-
-  // template GLOBAL void kernel_1D(const unsigned int *, const unsigned int *,
-  //                                lbm::Algorithm<double, (lbm::AlgorithmType)1, (lbm::Architecture)2>);
-
-
-  // Computation<Architecture::GPU, 1> aa;
-
-  // template void Computation<Architecture::GPU, 1>::Do<Algorithm<double, AlgorithmType::Pull, Architecture::GPU> >(unsigned int const*, unsigned int const*, unsigned int const*, Algorithm<double, AlgorithmType::Pull, Architecture::GPU>);
-  // template GLOBAL void kernel_1D<lbm::Algorithm<double, (lbm::AlgorithmType)1, (lbm::Architecture)2>>(const unsigned int *, const unsigned int *,
-  //                                lbm::Algorithm<double, (lbm::AlgorithmType)1, (lbm::Architecture)2>);
-
 
 }
 

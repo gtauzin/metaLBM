@@ -1,3 +1,4 @@
+include_directories("${PROJECT_SOURCE_DIR}/example")
 add_executable(example_constexpr GlobalConstexpr.cu)
 target_link_libraries(example_constexpr PRIVATE metalbm)
 set_target_properties(example_constexpr PROPERTIES CUDA_SEPARABLE_COMPILATION ON)

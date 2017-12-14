@@ -42,10 +42,10 @@ namespace lbm {
       , haloArrayDevice(hD::volume()*L::dimQ)
     {}
 
-    DEVICE HOST
-    void swapHalo(Distribution<T, Architecture::CPU>& distribution_in) {
-      haloArrayHost.swap(distribution_in.haloHostArray());
-    }
+    /* DEVICE HOST */
+    /* void swapHalo(Distribution<T, Architecture::CPU>& distribution_in) { */
+    /*   haloArrayHost.swap(distribution_in.haloHostArray()); */
+    /* } */
 
     DynamicArray<T, Architecture::CPU>& haloHostArray() {
       return haloArrayHost;
@@ -187,6 +187,8 @@ namespace lbm {
         }
       }
     }
+
+    // TODO use Computation.cuh
 
     void unpackLocal() {
       MathVector<unsigned int, 3> iP;

@@ -43,8 +43,8 @@ namespace lbm {
       return
         {
           MathVector<T, dimD>{{(T)0}},
-            MathVector<T, dimD>{{(T)-1}},
-              MathVector<T, dimD>{{(T)1}}
+          MathVector<T, dimD>{{(T)-1}},
+          MathVector<T, dimD>{{(T)1}}
         };
     }
 
