@@ -20,7 +20,7 @@
 
 namespace lbm {
 
-  template<class T, AlgorithmType, Architecture architecture>
+  template<class T, AlgorithmType algorithmType, Architecture architecture>
   class Algorithm {
   public:
     HOST DEVICE
@@ -40,12 +40,13 @@ namespace lbm {
     T * RESTRICT haloDistribution_Previous_Ptr;
     T * RESTRICT haloDistribution_Next_Ptr;
 
-    Communication_ communication;
+    Communication<T, latticeT, algorithmT, memoryL,
+                  partitionningT, L::dimD> communication;
     Collision_ collision;
     Moment<T> moment;
-    Boundary_ boundary;
 
-    Computation_ computation;
+    Computation_ computationLocal;
+    Computation_ computationHalo;
 
     std::chrono::duration<double> dtComputation;
     std::chrono::duration<double> dtCommunication;
@@ -59,7 +60,8 @@ namespace lbm {
               Field<T, 1, architecture, writeDensity>& alphaField_in,
               Distribution<T, architecture>& f_Previous_in,
               Distribution<T, architecture>& f_Next_in,
-              Communication_& communication_in)
+              Communication<T, latticeT, algorithmT, memoryL,
+              partitionningT, L::dimD>& communication_in)
       : localDensity_Ptr(densityField_in.localComputedData())
       , localVelocity_Ptr(velocityField_in.localComputedData())
       , localForce_Ptr(forceField_in.localComputedData())
@@ -69,9 +71,10 @@ namespace lbm {
       , communication(communication_in)
       , collision(relaxationTime, forceAmplitude, forceWaveLength)
       , moment()
-      , boundary()
-      , computation(lD::start()+L::halo(),
+      , computationLocal(lD::start()+L::halo(),
                     lD::end()+L::halo())
+      , computationHalo(hD::start(),
+                        hD::end())
       , dtComputation()
       , dtCommunication()
       , dtTotal()
@@ -123,8 +126,8 @@ namespace lbm {
     using Algorithm<T, AlgorithmType::Generic, architecture>::communication;
     using Algorithm<T, AlgorithmType::Generic, architecture>::collision;
     using Algorithm<T, AlgorithmType::Generic, architecture>::moment;
-    using Algorithm<T, AlgorithmType::Generic, architecture>::boundary;
-    using Algorithm<T, AlgorithmType::Generic, architecture>::computation;
+    using Algorithm<T, AlgorithmType::Generic, architecture>::computationLocal;
+    using Algorithm<T, AlgorithmType::Generic, architecture>::computationHalo;
 
     using Algorithm<T, AlgorithmType::Generic, architecture>::dtComputation;
     using Algorithm<T, AlgorithmType::Generic, architecture>::dtCommunication;
@@ -134,6 +137,9 @@ namespace lbm {
 
     using Algorithm<T, AlgorithmType::Generic, architecture>::storeLocalFields;
 
+    typedef Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
+                     partitionningT, L::dimD> PeriodicBoundary;
+
   public:
     Algorithm(Field<T, 1, architecture, writeDensity>& densityField_in,
               Field<T, L::dimD, architecture, writeVelocity>& velocityField_in,
@@ -141,7 +147,8 @@ namespace lbm {
               Field<T, 1, architecture, writeDensity>& alphaField_in,
               Distribution<T, architecture>& f_Previous_in,
               Distribution<T, architecture>& f_Next_in,
-              Communication_& communication_in)
+              Communication<T, latticeT, algorithmT, memoryL,
+              partitionningT, L::dimD>& communication_in)
       : Algorithm<T, AlgorithmType::Generic, architecture>(densityField_in, velocityField_in,
                                                            forceField_in, alphaField_in,
                                                            f_Previous_in, f_Next_in,
@@ -174,17 +181,20 @@ namespace lbm {
       INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate",2)
 
       std::swap(haloDistribution_Previous_Ptr, haloDistribution_Next_Ptr);
-      communication.setHaloComputedData(haloDistribution_Previous_Ptr);
+
       //force.update(iteration);
 
       auto t0 = std::chrono::high_resolution_clock::now();
-      communication.periodic(haloDistribution_Previous_Ptr);
+
+      communication.communicateHalos(haloDistribution_Previous_Ptr);
+      computationHalo.Do((&PeriodicBoundary::apply),
+                         haloDistribution_Previous_Ptr);
 
       //boundary.apply(f_Previous.haloData());
 
       auto t1 = std::chrono::high_resolution_clock::now();
 
-      computation.Do(*this);
+      computationLocal.Do(*this);
 
       auto t2 = std::chrono::high_resolution_clock::now();
 

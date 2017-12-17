@@ -61,6 +61,13 @@ namespace lbm {
       return haloArrayDevice;
     }
 
+    /* void packLocal(const MathVector<unsigned int, 3>& iP) { */
+    /*   for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) { */
+    /*     localArrayHost[hD::getIndexLocal(iP, iQ)] */
+    /*       = haloArrayHost[hD::getIndex(iP, iQ)]; */
+    /*   } */
+    /* } */
+
     void packLocal() {
       MathVector<unsigned int, 3> iP;
 
@@ -82,6 +89,7 @@ namespace lbm {
         }
       }
     }
+
 
     void unpackLocal() {
       MathVector<unsigned int, 3> iP;

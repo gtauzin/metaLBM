@@ -386,6 +386,7 @@ namespace lbm {
 
   };
 
+
   template <unsigned int NumberComponents>
   struct Domain<DomainType::BufferX, PartitionningType::Generic,
                 MemoryLayout::Generic, NumberComponents>

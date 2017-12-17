@@ -27,7 +27,8 @@ namespace lbm {
 
     Distribution<T, architecture> f_Previous;
     Distribution<T, architecture> f_Next;
-    Communication_ communication;
+    Communication<T, latticeT, algorithmT,
+                  memoryL, partitionningT, L::dimD> communication;
     Algorithm<dataT, algorithmT, arch> algorithm;
 
     Writer_ writer;
@@ -52,8 +53,7 @@ namespace lbm {
                                                                      velocityField))
       , f_Next("nextDistribution", initGlobalDistribution<T>(densityField,
                                                              velocityField))
-      , communication(rankMPI_in, sizeMPI_in, processorName_in,
-                      f_Next.haloComputedData())
+      , communication(rankMPI_in, sizeMPI_in, processorName_in)
       , algorithm(densityField, velocityField, forceField, alphaField,
                   f_Previous, f_Next, communication)
       , writer(prefix, rankMPI_in)
@@ -80,8 +80,9 @@ namespace lbm {
 
       for(int iteration = startIteration+1; iteration <= endIteration; ++iteration) {
         algorithm.setIsWritten(writer.getIsWritten(iteration));
+        // what is this set(get(itration))????
         algorithm.iterate();
-
+        // Do must be here in routine! calling the iterate from the algorithm member
         writeFields(iteration);
 
         communicationTime += algorithm.getCommunicationTime();
