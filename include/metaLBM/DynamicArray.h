@@ -87,8 +87,8 @@ namespace lbm {
     DynamicArray(const unsigned int numberElements_in,
                  const U& value_in = (U) 0)
       : DynamicArray<U, Architecture::Generic>(numberElements_in)
-      , computation(MathVector<unsigned int, 3>{{0}},
-                    MathVector<unsigned int, 3>{{numberElements}})
+      , computation(MathVector<unsigned int, 3>({0, 0, 0}),
+                    MathVector<unsigned int, 3>({numberElements, 0, 0}))
 
     {
       dArrayPtr = (U*)malloc(numberElements*sizeof(U));

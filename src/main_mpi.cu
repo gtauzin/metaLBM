@@ -5,6 +5,7 @@
 #define NTHREADS 1
 #define NPROCS 1
 #define _AOS
+#define USE_PTX
 #define DATA_TYPE double
 
 
@@ -12,8 +13,8 @@
 #include "metaLBM/Lattice.h"
 #include "metaLBM/Commons.h"
 #include "metaLBM/MathVector.h"
-#include "metaLBM/DynamicArray.cuh"
 #include "metaLBM/Computation.cuh"
+#include "metaLBM/DynamicArray.cuh"
 
 namespace lbm {
   constexpr Architecture arch = Architecture::GPU;
@@ -40,13 +41,13 @@ int main(int argc, char* argv[]) {
   MPI_Comm localComm;
   MPI_Info info;
 
-  //MPI_Info_create(&info);
-  //MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, rankMPI[d::X],
-  //info, &localComm);
+  MPI_Info_create(&info);
+  MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, rankMPI[d::X],
+                      info, &localComm);
 
   int localRank = 0;
 
-//MPI_Comm_rank(localComm, &localRank);
+  MPI_Comm_rank(localComm, &localRank);
 
   std::cout << "Local rank: " << localRank << std::endl;
   int numberDevices = 0;

@@ -52,14 +52,14 @@ namespace lbm {
     if(iP[2] >= start[d::X] && iP[2] < end[d::X]
        && iP[1] >= start[d::Y] && iP[1] < end[d::Y]
        && iP[0] >= start[d::Z] && iP[0] < end[d::Z]) {
-      function(iP, arguments);
+      function(iP, arguments...);
     }
   }
 
 
  template<>
-  class Computation<Architecture::CPU, 1>
-    : public Computation<Architecture::Generic, 0> {
+  class Computation<Architecture::GPU, 1>
+    : public Computation<Architecture::Generic, 1> {
   private:
    using Computation<Architecture::Generic, 1>::start;
    using Computation<Architecture::Generic, 1>::end;
@@ -83,8 +83,8 @@ namespace lbm {
   };
 
  template<>
-  class Computation<Architecture::CPU, 2>
-    : public Computation<Architecture::Generic, 0> {
+  class Computation<Architecture::GPU, 2>
+    : public Computation<Architecture::Generic, 2> {
   private:
    using Computation<Architecture::Generic, 2>::start;
    using Computation<Architecture::Generic, 2>::end;
@@ -110,7 +110,7 @@ namespace lbm {
 
  template<>
   class Computation<Architecture::GPU, 3>
-    : public Computation<Architecture::Generic, 0> {
+    : public Computation<Architecture::Generic, 3> {
   private:
    using Computation<Architecture::Generic, 3>::start;
    using Computation<Architecture::Generic, 3>::end;

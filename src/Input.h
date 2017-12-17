@@ -32,7 +32,7 @@ namespace lbm {
   }
 
   constexpr AlgorithmType algorithmT = AlgorithmType::Pull;
-  constexpr PartitionningType partitionningT = PartitionningType::TwoD;
+  constexpr PartitionningType partitionningT = PartitionningType::OneD;
   constexpr MemoryLayout memoryL = MemoryLayout::SoA;
 
   constexpr dataT relaxationTime = 0.65;

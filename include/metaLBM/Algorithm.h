@@ -45,8 +45,8 @@ namespace lbm {
     Collision_ collision;
     Moment<T> moment;
 
-    Computation_ computationLocal;
-    Computation_ computationHalo;
+    Computation<architecture, L::dimD> computationLocal;
+    Computation<architecture, L::dimD> computationHalo;
 
     std::chrono::duration<double> dtComputation;
     std::chrono::duration<double> dtCommunication;

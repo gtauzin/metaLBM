@@ -20,7 +20,7 @@
   #define DEVICE __device__
   #define CONSTANT __constant__
   #define GLOBAL __global__
-  #define RESTRICT __restrict__
+  #define RESTRICT //__restrict__
 
   #ifdef USE_NVTX
     #include <nvToolsExt.h>

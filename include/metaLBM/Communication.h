@@ -377,7 +377,7 @@ namespace lbm {
 
 
   public:
-    DEVICE HOST
+    HOST
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
                   const std::string& processorName_in)
