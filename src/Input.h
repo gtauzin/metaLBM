@@ -11,12 +11,12 @@ namespace lbm {
   typedef DATA_TYPE dataT;
 
   constexpr LatticeType latticeT = LatticeType::D2Q9;
-  constexpr int lengthX_g = 16;
-  constexpr int lengthY_g = 16;
+  constexpr int lengthX_g = 64;
+  constexpr int lengthY_g = 64;
   constexpr int lengthZ_g = 16;
 
   constexpr unsigned int startIteration = 0;
-  constexpr unsigned int endIteration = 10;
+  constexpr unsigned int endIteration = 20;
   constexpr unsigned int writeStep = 1;//endIteration+1;
   constexpr unsigned int successiveWriteStep = 2;
   constexpr unsigned int backupStep = endIteration+1;
@@ -32,14 +32,14 @@ namespace lbm {
   }
 
   constexpr AlgorithmType algorithmT = AlgorithmType::Pull;
-  constexpr PartitionningType partitionningT = PartitionningType::OneD;
+  constexpr PartitionningType partitionningT = PartitionningType::Serial;
   constexpr MemoryLayout memoryL = MemoryLayout::SoA;
 
   constexpr dataT relaxationTime = 0.65;
   constexpr CollisionType collisionT = CollisionType::BGK;
   constexpr EquilibriumType equilibriumT = EquilibriumType::Incompressible;
 
-  constexpr InitDensityType initDensityT = InitDensityType::Peak;
+  constexpr InitDensityType initDensityT = InitDensityType::Homogeneous;
   constexpr dataT initDensityValue = 1.0;
   constexpr InitVelocityType initVelocityT = InitVelocityType::Homogeneous;
   constexpr MathVector<dataT, 3> initVelocityVector = { {0.0, 0.0, 0.0} };
@@ -47,7 +47,7 @@ namespace lbm {
   constexpr ForcingSchemeType forcingSchemeT = ForcingSchemeType::ExactDifferenceMethod;
   constexpr ForceType forceT = ForceType::Kolmogorov;
 
-  constexpr MathVector<dataT, 3> forceAmplitude = { {0.0, 0.0, 0.0} };
+  constexpr MathVector<dataT, 3> forceAmplitude = { {0.000001, 0.000001, 0.0} };
   constexpr MathVector<dataT, 3> forceWaveLength = { {8.0, 16.0, 0.0} };
   constexpr int minWavenumber = 0;
   constexpr int maxWavenumber = 0;

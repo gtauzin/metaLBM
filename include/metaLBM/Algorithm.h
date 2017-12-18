@@ -137,8 +137,8 @@ namespace lbm {
 
     using Algorithm<T, AlgorithmType::Generic, architecture>::storeLocalFields;
 
-    typedef Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                     partitionningT, L::dimD> PeriodicBoundary;
+    Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
+                     partitionningT, L::dimD> periodicBoundary;
 
   public:
     Algorithm(Field<T, 1, architecture, writeDensity>& densityField_in,
@@ -187,7 +187,9 @@ namespace lbm {
       auto t0 = std::chrono::high_resolution_clock::now();
 
       communication.communicateHalos(haloDistribution_Previous_Ptr);
-      computationHalo.Do((&PeriodicBoundary::apply),
+      // computationHalo.Do((&PeriodicBoundary::apply),
+      //                   haloDistribution_Previous_Ptr);
+      computationHalo.Do(periodicBoundary,
                          haloDistribution_Previous_Ptr);
 
       //boundary.apply(f_Previous.haloData());

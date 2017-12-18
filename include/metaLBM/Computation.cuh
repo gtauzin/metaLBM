@@ -1,6 +1,8 @@
 #ifndef COMPUTATION_CUH
 #define COMPUTATION_CUH
 
+#include <stdio.h>
+
 #include "Computation.h"
 #include "Commons.h"
 #include "Options.h"
@@ -11,7 +13,7 @@ namespace lbm {
   GLOBAL
   void kernel_1D(const MathVector<unsigned int, 3> start,
                  const MathVector<unsigned int, 3> end,
-                 Callback function, const Arguments&... arguments) {
+                 Callback function, const Arguments... arguments) {
 
     MathVector<unsigned int, 3> iP = {blockIdx.x*blockDim.x + threadIdx.x,
                                       start[d::Y], start[d::Z]};
@@ -27,7 +29,7 @@ namespace lbm {
   GLOBAL
   void kernel_2D(const MathVector<unsigned int, 3> start,
                  const MathVector<unsigned int, 3> end,
-                 Callback function, const Arguments&... arguments) {
+                 Callback function, const Arguments... arguments) {
 
     MathVector<unsigned int, 3> iP = {blockIdx.y*blockDim.y + threadIdx.y,
                                       blockIdx.x*blockDim.x + threadIdx.x,
@@ -43,7 +45,7 @@ namespace lbm {
   GLOBAL
   void kernel_3D(const MathVector<unsigned int, 3> start,
                  const MathVector<unsigned int, 3> end,
-                 Callback function, const Arguments&... arguments) {
+                 Callback function, const Arguments... arguments) {
 
     MathVector<unsigned int, 3> iP = {blockIdx.z*blockDim.z + threadIdx.z,
                                       blockIdx.y*blockDim.y + threadIdx.y,

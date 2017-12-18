@@ -19,7 +19,7 @@ namespace lbm {
   public:
     #pragma omp simd
     DEVICE HOST
-    static inline void applyX(const MathVector<unsigned int, 3>& iP,
+    inline void applyX(const MathVector<unsigned int, 3>& iP,
                               T * RESTRICT f) {
       INSTRUMENT_ON("Boundary<T, boundaryType, algorithmType>::applyX",5)
 
@@ -42,7 +42,7 @@ namespace lbm {
 
     #pragma omp simd
     DEVICE HOST
-    static inline void applyY(const MathVector<unsigned int, 3>& iP,
+    inline void applyY(const MathVector<unsigned int, 3>& iP,
                               T * RESTRICT f) {
       INSTRUMENT_ON("Boundary<T, boundaryType, algorithmType>::applyY",5)
 
@@ -66,7 +66,7 @@ namespace lbm {
 
     #pragma omp simd
     DEVICE HOST
-    static inline void applyZ(const MathVector<unsigned int, 3>& iP,
+    inline void applyZ(const MathVector<unsigned int, 3>& iP,
                               T * RESTRICT f) {
       INSTRUMENT_ON("Boundary<T, boundaryType, algorithmType>::applyZ",5)
 
@@ -103,7 +103,7 @@ namespace lbm {
   public:
 #pragma omp simd
     DEVICE HOST
-    static inline void apply(const MathVector<unsigned int, 3>& iP,
+    inline void operator()(const MathVector<unsigned int, 3>& iP,
                              T * RESTRICT f) {
       applyX(iP, f);
     }
@@ -117,7 +117,7 @@ namespace lbm {
   public:
 #pragma omp simd
     DEVICE HOST
-    static inline void apply(const MathVector<unsigned int, 3>& iP,
+    inline void operator()(const MathVector<unsigned int, 3>& iP,
                              T * RESTRICT f) {
     }
   };
@@ -144,7 +144,7 @@ namespace lbm {
   public:
 #pragma omp simd
     DEVICE HOST
-    static inline void apply(const MathVector<unsigned int, 3>& iP,
+    inline void operator()(const MathVector<unsigned int, 3>& iP,
                              T * RESTRICT f) {
       applyY(iP, f);
       applyX(iP, f);
@@ -163,9 +163,9 @@ namespace lbm {
   public:
 #pragma omp simd
     DEVICE HOST
-    static inline void apply(const MathVector<unsigned int, 3>& iP,
+    inline void operator()(const MathVector<unsigned int, 3>& iP,
                              T * RESTRICT f) {
-      applyY(iP, f);
+      //applyY(iP, f);
     }
   };
 
@@ -177,7 +177,7 @@ namespace lbm {
   public:
 #pragma omp simd
     DEVICE HOST
-    static inline void apply(const MathVector<unsigned int, 3>& iP,
+    inline void operator()(const MathVector<unsigned int, 3>& iP,
                              T * RESTRICT f) {
     }
   };
@@ -199,7 +199,7 @@ namespace lbm {
   public:
 #pragma omp simd
     DEVICE HOST
-    static inline void apply(const MathVector<unsigned int, 3>& iP,
+    inline void operator()(const MathVector<unsigned int, 3>& iP,
                              T * RESTRICT f) {
       applyX(iP, f);
       applyY(iP, f);
@@ -221,7 +221,7 @@ namespace lbm {
   public:
 #pragma omp simd
     DEVICE HOST
-    static inline void apply(const MathVector<unsigned int, 3>& iP,
+    inline void operator()(const MathVector<unsigned int, 3>& iP,
                              T * RESTRICT f) {
       applyY(iP, f);
       applyZ(iP, f);
@@ -240,7 +240,7 @@ namespace lbm {
   public:
 #pragma omp simd
     DEVICE HOST
-    static inline void apply(const MathVector<unsigned int, 3>& iP,
+    inline void operator()(const MathVector<unsigned int, 3>& iP,
                              T * RESTRICT f) {
       applyZ(iP, f);
     }
@@ -254,7 +254,7 @@ namespace lbm {
   public:
 #pragma omp simd
     DEVICE HOST
-    static inline void apply(const MathVector<unsigned int, 3>& iP,
+    inline void operator()(const MathVector<unsigned int, 3>& iP,
                              T * RESTRICT f) {
     }
   };
