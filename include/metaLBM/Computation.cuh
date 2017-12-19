@@ -71,14 +71,12 @@ namespace lbm {
    using Computation<Architecture::Generic, 1>::Computation;
 
     template<typename Callback, typename... Arguments>
-    void Do(Callback function, const Arguments&... arguments) {
+    void Do(Callback function, const Arguments... arguments) {
       INSTRUMENT_OFF("Computation<Architecture::GPU, 1>::Do<Callback>",3)
 
       dim3 dimBlock(128, 1, 1);
-      dim3 dimGrid((127+length[d::X])/128, 1, 1);
-      //CUDA_CALL(
+      dim3 dimGrid((127+end[d::X])/128, 1, 1);
       kernel_1D<Callback><<<dimBlock, dimGrid >>>(start, end, function, arguments...);
-      //)
 
       CUDA_CALL( cudaDeviceSynchronize(); )
     }
@@ -96,14 +94,12 @@ namespace lbm {
    using Computation<Architecture::Generic, 2>::Computation;
 
     template<typename Callback, typename... Arguments>
-    void Do(Callback function, const Arguments&... arguments) {
+    void Do(Callback function, const Arguments... arguments) {
       INSTRUMENT_OFF("Computation<Architecture::GPU, 2>::Do<Callback>",3)
 
       dim3 dimBlock(128, 1, 1);
-      dim3 dimGrid((127+length[d::Y])/128, length[d::X], 1);
-      //      CUDA_CALL(
+      dim3 dimGrid((127+end[d::Y])/128, end[d::X], 1);
       kernel_2D<<<dimBlock, dimGrid>>>(start, end, function, arguments...);
-                //)
 
       CUDA_CALL( cudaDeviceSynchronize(); )
     }
@@ -122,14 +118,12 @@ namespace lbm {
    using Computation<Architecture::Generic, 3>::Computation;
 
     template<typename Callback, typename... Arguments>
-    void Do(Callback function, const Arguments&... arguments) {
+    void Do(Callback function, const Arguments... arguments) {
       INSTRUMENT_OFF("Computation<Architecture::GPU, 3>::Do<Callback>",3)
 
       dim3 dimBlock(128, 1, 1);
-      dim3 dimGrid((127+length[d::Z])/128, length[d::Y], length[d::X]);
-      //CUDA_CALL(
+      dim3 dimGrid((127+end[d::Z])/128, end[d::Y], end[d::X]);
       kernel_3D<Callback><<<dimBlock, dimGrid>>>(start, end, function, arguments...);
-                //)
 
       CUDA_CALL( cudaDeviceSynchronize(); )
     }

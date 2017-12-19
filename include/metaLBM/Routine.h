@@ -183,8 +183,6 @@ namespace lbm {
       INSTRUMENT_ON("Routine<T>::writeFields",2)
 
       if(writer.getIsWritten(iteration)) {
-        writer.openFile(iteration);
-
         if(writer.getIsSerial()) {
           communication.sendLocalToGlobal(densityField.localDeviceArray(),
                                           densityField.localHostArray(),
@@ -204,12 +202,15 @@ namespace lbm {
                                           forceField.numberComponents);
         }
 
-        writer.writeField(densityField);
-        writer.writeField(velocityField);
-        writer.writeField(alphaField);
-        writer.writeField(forceField);
+        writer.openFile(iteration);
+
+        //        writer.writeField(densityField);
+        //        writer.writeField(velocityField);
+        //        writer.writeField(alphaField);
+        //        writer.writeField(forceField);
 
         if(iteration%backupStep == 0) {
+
           f_Previous.packLocal();
 
           if(writer.getIsSerial()) {
@@ -219,7 +220,7 @@ namespace lbm {
                                             f_Previous.numberComponents);
           }
 
-          writer.writeField(f_Previous);
+          //          writer.writeField(f_Previous);
         }
 
         writer.closeFile();

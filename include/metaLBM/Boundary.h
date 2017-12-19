@@ -21,7 +21,7 @@ namespace lbm {
     DEVICE HOST
     inline void applyX(const MathVector<unsigned int, 3>& iP,
                               T * RESTRICT f) {
-      INSTRUMENT_ON("Boundary<T, boundaryType, algorithmType>::applyX",5)
+      INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyX",5)
 
         MathVector<unsigned int, 3> iP_Origin = {L::halo()[d::X], iP[d::Y], iP[d::Z]};
       MathVector<unsigned int, 3> iP_Destination = {L::halo()[d::X] + lD::length()[d::X],
@@ -44,7 +44,7 @@ namespace lbm {
     DEVICE HOST
     inline void applyY(const MathVector<unsigned int, 3>& iP,
                               T * RESTRICT f) {
-      INSTRUMENT_ON("Boundary<T, boundaryType, algorithmType>::applyY",5)
+      INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyY",5)
 
       MathVector<unsigned int, 3> iP_Origin = {iP[d::X], L::halo()[d::Y], iP[d::Z]};
       MathVector<unsigned int, 3> iP_Destination = {iP[d::X],
@@ -68,7 +68,7 @@ namespace lbm {
     DEVICE HOST
     inline void applyZ(const MathVector<unsigned int, 3>& iP,
                               T * RESTRICT f) {
-      INSTRUMENT_ON("Boundary<T, boundaryType, algorithmType>::applyZ",5)
+      INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyZ",5)
 
         MathVector<unsigned int, 3> iP_Origin = {iP[d::X], iP[d::Y], L::halo()[d::Z]};
       MathVector<unsigned int, 3>iP_Destination = {iP[d::X], iP[d::Y],
@@ -165,7 +165,7 @@ namespace lbm {
     DEVICE HOST
     inline void operator()(const MathVector<unsigned int, 3>& iP,
                              T * RESTRICT f) {
-      //applyY(iP, f);
+      applyY(iP, f);
     }
   };
 
