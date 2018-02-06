@@ -27,25 +27,33 @@ target_include_directories(metalbm INTERFACE
   "$<BUILD_INTERFACE:${metaLBM_SOURCE_DIR}/include>"
   $<INSTALL_INTERFACE:include>)
 
+find_package(MPI REQUIRED)
+target_link_libraries(metalbm INTERFACE MPI::MPI_CXX)
+
+find_package(HDF5 REQUIRED COMPONENTS CXX)
+target_link_libraries(metalbm INTERFACE hdf5_cpp)
+
+find_package(OpenMP)
+if (OpenMP_CXX_FOUND)
+   target_link_libraries(metalbm INTERFACE OpenMP::OpenMP_CXX)
+endif()
+
 find_package(RapidXML REQUIRED)
 target_link_libraries(metalbm INTERFACE RapidXML::RapidXML)
+
+find_package(FFTW REQUIRED)
+target_link_libraries(metalbm INTERFACE FFTW::FFTW)
 
 find_package(NVSHMEM)
 if(NVSHMEM_FOUND)
   target_link_libraries(metalbm INTERFACE NVSHMEM::NVSHMEM)
 endif()
 
-#find_package(HDF5 REQUIRED)
-#target_link_libraries(metalbm INTERFACE HDF5::HDF5)
-
-find_package(MPI REQUIRED)
-target_link_libraries(metalbm INTERFACE MPI::MPI_CXX)
-
-
-#find_package(OpenMP)
-#if (OpenMP_CXX_FOUND)
-#    target_link_libraries(metalbm INTERFACE OpenMP::OpenMP_CXX)
-#endif()
+#find_package(HDF5)
+set(HDF5_FOUND false)
+if(HDF5_FOUND)
+  target_link_libraries(metalbm INTERFACE HDF5::HDF5)
+endif()
 
 option(USE_SCOREP "Enabling manual instrumentation with Score-P" OFF)
 if(USE_SCOREP)
@@ -58,13 +66,12 @@ if(USE_SCOREP)
     endif()
 endif()
 
-# if CUDA presente?
+# if CUDA present?
 option(USE_NVTX "Enabling manual instrumentation with NVTX" OFF)
 if(USE_NVTX)
   add_definitions(-DUSE_NVTX)
 endif()
 
-#find_package(FFTW) # TODO:
 
 # Build Targets
 enable_testing()
