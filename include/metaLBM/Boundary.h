@@ -17,7 +17,6 @@ namespace lbm {
   class Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
                  PartitionningType::Generic, Dimension> {
   public:
-    #pragma omp simd
     DEVICE HOST
     inline void applyX(const MathVector<unsigned int, 3>& iP,
                               T * RESTRICT f) {
@@ -40,7 +39,6 @@ namespace lbm {
         }
     }
 
-    #pragma omp simd
     DEVICE HOST
     inline void applyY(const MathVector<unsigned int, 3>& iP,
                               T * RESTRICT f) {
@@ -64,7 +62,6 @@ namespace lbm {
       }
     }
 
-    #pragma omp simd
     DEVICE HOST
     inline void applyZ(const MathVector<unsigned int, 3>& iP,
                               T * RESTRICT f) {
@@ -101,7 +98,6 @@ namespace lbm {
     using Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
                    PartitionningType::Generic, 0>::applyX;
   public:
-#pragma omp simd
     DEVICE HOST
     inline void operator()(const MathVector<unsigned int, 3>& iP,
                              T * RESTRICT f) {
@@ -115,7 +111,6 @@ namespace lbm {
     : public Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
                       PartitionningType::Generic, 0> {
   public:
-#pragma omp simd
     DEVICE HOST
     inline void operator()(const MathVector<unsigned int, 3>& iP,
                              T * RESTRICT f) {
@@ -142,7 +137,6 @@ namespace lbm {
                    PartitionningType::Generic, 0>::applyY;
 
   public:
-#pragma omp simd
     DEVICE HOST
     inline void operator()(const MathVector<unsigned int, 3>& iP,
                              T * RESTRICT f) {
@@ -161,11 +155,10 @@ namespace lbm {
                    PartitionningType::Generic, 0>::applyY;
 
   public:
-#pragma omp simd
     DEVICE HOST
     inline void operator()(const MathVector<unsigned int, 3>& iP,
                              T * RESTRICT f) {
-      //applyY(iP, f);
+      applyY(iP, f);
     }
   };
 
@@ -175,7 +168,6 @@ namespace lbm {
     : public Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
                       PartitionningType::Generic, 0> {
   public:
-#pragma omp simd
     DEVICE HOST
     inline void operator()(const MathVector<unsigned int, 3>& iP,
                              T * RESTRICT f) {
@@ -197,7 +189,6 @@ namespace lbm {
                    PartitionningType::Generic, 0>::applyZ;
 
   public:
-#pragma omp simd
     DEVICE HOST
     inline void operator()(const MathVector<unsigned int, 3>& iP,
                              T * RESTRICT f) {
@@ -219,7 +210,6 @@ namespace lbm {
                    PartitionningType::Generic, 0>::applyZ;
 
   public:
-#pragma omp simd
     DEVICE HOST
     inline void operator()(const MathVector<unsigned int, 3>& iP,
                              T * RESTRICT f) {
@@ -238,7 +228,6 @@ namespace lbm {
                    PartitionningType::Generic, 0>::applyZ;
 
   public:
-#pragma omp simd
     DEVICE HOST
     inline void operator()(const MathVector<unsigned int, 3>& iP,
                              T * RESTRICT f) {
@@ -252,7 +241,6 @@ namespace lbm {
     : public Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
                       PartitionningType::Generic, 0> {
   public:
-#pragma omp simd
     DEVICE HOST
     inline void operator()(const MathVector<unsigned int, 3>& iP,
                              T * RESTRICT f) {

@@ -55,7 +55,7 @@
   #define CUDA_CALL(call)
 
   #define HOST
-  #define DEVICE
+  #define DEVICE //#pragma omp declare simd
   #define CONSTANT
   #define GLOBAL
   #define RESTRICT __restrict__

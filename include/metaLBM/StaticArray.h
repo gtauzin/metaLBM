@@ -12,7 +12,6 @@ namespace lbm {
   public:
     U sArray[Size];
 
-    #pragma omp declare simd
     DEVICE HOST
     StaticArray<U, Size>& operator=(const StaticArray<U, Size> other){
       for(unsigned int i = 0; i < Size; ++i) {
@@ -22,7 +21,6 @@ namespace lbm {
       return *this;
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     StaticArray<U, Size>& operator=(const U other[Size]){
       for(unsigned int i = 0; i < Size; ++i) {
@@ -32,13 +30,11 @@ namespace lbm {
       return *this;
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     U& operator[] (int i) {
       return sArray[i];
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     const U& operator[] (int i) const {
       return sArray[i];
@@ -55,7 +51,6 @@ namespace lbm {
     }
 
 
-    #pragma omp declare simd
     DEVICE HOST
     static constexpr unsigned int size() {
       return Size;
@@ -73,7 +68,6 @@ namespace lbm {
   }
 
   template<class U, unsigned int Size>
-  #pragma omp declare simd
   DEVICE HOST
   bool operator==(StaticArray<U, Size> const &lhs,
                   StaticArray<U, Size> const &rhs) {

@@ -50,8 +50,9 @@ namespace lbm {
 
       MathVector<unsigned int, 3> iP{{0}};
       #pragma omp parallel for schedule(static) num_threads(NTHREADS)
-      #pragma omp simd
-      for(iP[d::X] = start[d::X]; iP[d::X] < end[d::X]; ++iP[d::X]) {
+      //#pragma omp simd
+      for(unsigned int iX = start[d::X]; iX < end[d::X]; ++iX) {
+        iP[d::X] = iX;
         function(iP, arguments...);
       }
     }
@@ -72,11 +73,14 @@ namespace lbm {
     void Do(Callback function, const Arguments&... arguments) {
     INSTRUMENT_OFF("Computation<Architecture::CPU, 2>::Do<Callback>",2)
 
-    MathVector<unsigned int, 3> iP{{0}};
-    #pragma omp parallel for schedule(static) num_threads(NTHREADS)
-    for(iP[d::X] = start[d::X]; iP[d::X] < end[d::X]; ++iP[d::X]) {
-      #pragma omp simd
-      for(iP[d::Y] = start[d::Y]; iP[d::Y] < end[d::Y]; ++iP[d::Y]) {
+#pragma omp parallel for schedule(static) num_threads(NTHREADS) private(function)
+    for(unsigned int iX = start[d::X]; iX < end[d::X]; ++iX) {
+      //#pragma omp simd
+      for(unsigned int iY = start[d::Y]; iY < end[d::Y]; ++iY) {
+        MathVector<unsigned int, 3> iP{{0}};
+        iP[d::X] = iX;
+        iP[d::Y] = iY;
+        //std::cout << "iP: " << iP << " iX, iY: " << iX << ", " << iY << std::endl;
         function(iP, arguments...);
       }
     }
@@ -100,11 +104,15 @@ namespace lbm {
 
       MathVector<unsigned int, 3> iP{{0}};
     #pragma omp parallel for schedule(static) num_threads(NTHREADS)
-    for(iP[d::X] = start[d::X]; iP[d::X] < end[d::X]; ++iP[d::X]) {
-      for(iP[d::Y] = start[d::Y]; iP[d::Y] < end[d::Y]; ++iP[d::Y]) {
-        #pragma omp simd
-        for(iP[d::Z] = start[d::Z]; iP[d::Z] < end[d::Z]; ++iP[d::Z]) {
-          function(iP, arguments...);
+      for(unsigned int iX = start[d::X]; iX < end[d::X]; ++iX) {
+        iP[d::X] = iX;
+      //#pragma omp simd
+        for(unsigned int iY = start[d::Y]; iY < end[d::Y]; ++iY) {
+          iP[d::Y] = iY;
+        //#pragma omp simd
+          for(unsigned int iZ = start[d::Z]; iZ < end[d::Z]; ++iZ) {
+            iP[d::Z] = iZ;
+            function(iP, arguments...);
           }
         }
       }

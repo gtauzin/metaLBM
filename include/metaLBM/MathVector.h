@@ -15,13 +15,11 @@ namespace lbm {
   public:
     StaticArray<U, NumberComponents> sArray;
 
-    #pragma omp declare simd
     DEVICE HOST
     U& operator[] (int i) {
       return sArray[i];
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     const U& operator[] (int i) const {
       return sArray[i];
@@ -37,21 +35,18 @@ namespace lbm {
       return sArray.data();
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     MathVector<U, NumberComponents>& operator=(const MathVector<U, NumberComponents> other){
       sArray = other.sArray;
       return *this;
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     MathVector<U, NumberComponents>& operator=(const U other[NumberComponents]){
       sArray = other;
       return *this;
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     inline U sum() {
       U sumR = 0;
@@ -62,7 +57,6 @@ namespace lbm {
       return sumR;
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     inline U dot(const MathVector<U, NumberComponents>& other){
       U dotR = 0;
@@ -73,7 +67,6 @@ namespace lbm {
       return dotR;
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     inline U norm2() const {
       U norm2R = 0;
@@ -111,7 +104,6 @@ namespace lbm {
 
 
   template<class U, unsigned int NumberComponents>
-  #pragma omp declare simd
   DEVICE HOST
   bool operator==(MathVector<U, NumberComponents> const &lhs,
                   MathVector<U, NumberComponents> const &rhs) {
@@ -120,7 +112,6 @@ namespace lbm {
 
 
   template<class U, unsigned int NumberComponents>
-  #pragma omp declare simd
   DEVICE HOST
   MathVector<U, NumberComponents>& operator+=(MathVector<U, NumberComponents>& lhs,
                                               const MathVector<U, NumberComponents>& rhs)
@@ -133,7 +124,6 @@ namespace lbm {
   }
 
   template<class U, unsigned int NumberComponents>
-  #pragma omp declare simd
   DEVICE HOST
   MathVector<U, NumberComponents> operator+(const MathVector<U, NumberComponents>& mV_a,
                                             const MathVector<U, NumberComponents>& mV_b)
@@ -147,7 +137,6 @@ namespace lbm {
 
 
   template<class U, unsigned int NumberComponents>
-  #pragma omp declare simd
   DEVICE HOST
   MathVector<U, NumberComponents>& operator*=(MathVector<U, NumberComponents>& mV,
                                               const U factor) {
@@ -159,7 +148,6 @@ namespace lbm {
   }
 
   template<class U, class V, unsigned int NumberComponents>
-  #pragma omp declare simd
   DEVICE HOST
   MathVector<U, NumberComponents> operator*(const MathVector<U, NumberComponents>& mV,
                                             const V factor)
@@ -173,7 +161,6 @@ namespace lbm {
   }
 
   template<class U, class V, unsigned int NumberComponents>
-  #pragma omp declare simd
   DEVICE HOST
   MathVector<U, NumberComponents> operator*(const V factor,
                                             const MathVector<U, NumberComponents>& mV)
@@ -188,7 +175,6 @@ namespace lbm {
 
 
   template<class U, unsigned int NumberComponents>
-  #pragma omp declare simd
   DEVICE HOST
   MathVector<U, NumberComponents>& operator/=(MathVector<U, NumberComponents>& mV,
                                               const U factor)
@@ -201,7 +187,6 @@ namespace lbm {
   }
 
   template<class U, unsigned int NumberComponents>
-  #pragma omp declare simd
   DEVICE HOST
   MathVector<U, NumberComponents> operator/(const MathVector<U, NumberComponents>& mV,
                                             const U factor)
@@ -215,7 +200,6 @@ namespace lbm {
   }
 
   template<class U, unsigned int NumberComponents>
-  #pragma omp declare simd
   DEVICE HOST
   MathVector<U, NumberComponents>& operator-=(MathVector<U, NumberComponents>& lhs,
                                               const MathVector<U, NumberComponents>& rhs)
@@ -228,7 +212,6 @@ namespace lbm {
   }
 
   template<class U, unsigned int NumberComponents>
-  #pragma omp declare simd
   DEVICE HOST
   MathVector<U, NumberComponents> operator-(const MathVector<U, NumberComponents>& mV_a,
                                             const MathVector<U, NumberComponents>& mV_b)
@@ -242,7 +225,6 @@ namespace lbm {
   }
 
   template<unsigned int NumberComponents>
-  #pragma omp declare simd
   DEVICE HOST
   MathVector<unsigned int, NumberComponents> operator-(const MathVector<unsigned int, NumberComponents>& mV_a,
                                                        const MathVector<unsigned int, NumberComponents>& mV_b)
@@ -256,7 +238,6 @@ namespace lbm {
   }
 
   template<class U, unsigned int NumberComponents>
-  #pragma omp declare simd
   DEVICE HOST
   MathVector<unsigned int, NumberComponents> operator-(const MathVector<unsigned int, NumberComponents>& mV_a,
                                                        const MathVector<U, NumberComponents>& mV_b)
@@ -270,7 +251,6 @@ namespace lbm {
   }
 
   template<class U, unsigned int NumberComponents>
-  #pragma omp declare simd
   DEVICE HOST
   MathVector<unsigned int, NumberComponents> operator-(const MathVector<U, NumberComponents>& mV_a,
                                                        const MathVector<unsigned int, NumberComponents>& mV_b)
@@ -283,7 +263,6 @@ namespace lbm {
     return mV_result;
   }
 
-  #pragma omp declare simd
   DEVICE HOST
   MathVector<unsigned int, 3> operator-(const MathVector<unsigned int, 3>& mV_a,
                                         const MathVector<unsigned int, 3>& mV_b)
@@ -292,7 +271,6 @@ namespace lbm {
   }
 
   template<unsigned int NumberComponents>
-  #pragma omp declare simd
   DEVICE HOST
   MathVector<unsigned int, 3> operator-(const MathVector<unsigned int, 3>& mV_a,
                                         const MathVector<unsigned int, NumberComponents>& mV_b)
@@ -306,7 +284,6 @@ namespace lbm {
   }
 
   template<unsigned int NumberComponents>
-  #pragma omp declare simd
   DEVICE HOST
   MathVector<unsigned int, 3> operator-(const MathVector<unsigned int, NumberComponents>& mV_a,
                                         const MathVector<unsigned int, 3>& mV_b)
@@ -322,7 +299,6 @@ namespace lbm {
 
   template<class T, unsigned int Dimension>
   struct Project {
-    #pragma omp declare simd
     DEVICE HOST
     static inline MathVector<T, Dimension> Do(const MathVector<T, 3>& mV) {
 
@@ -338,7 +314,6 @@ namespace lbm {
 
   template<class T, unsigned int Dimension>
   struct ProjectAndLeave1 {
-    #pragma omp declare simd
     DEVICE HOST
     static inline MathVector<T, 3> Do(const MathVector<T, 3>& mV) {
 
@@ -351,7 +326,6 @@ namespace lbm {
     return mVProjected;
     }
   };
-
 
 }
 

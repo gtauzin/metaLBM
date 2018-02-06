@@ -11,13 +11,13 @@ namespace lbm {
   typedef DATA_TYPE dataT;
 
   constexpr LatticeType latticeT = LatticeType::D2Q9;
-  constexpr int lengthX_g = 64;
-  constexpr int lengthY_g = 64;
+  constexpr int lengthX_g = 16;
+  constexpr int lengthY_g = 16;
   constexpr int lengthZ_g = 16;
 
   constexpr unsigned int startIteration = 0;
-  constexpr unsigned int endIteration = 20;
-  constexpr unsigned int writeStep = 1;//endIteration+1;
+  constexpr unsigned int endIteration = 100;
+  constexpr unsigned int writeStep = 1;
   constexpr unsigned int successiveWriteStep = 2;
   constexpr unsigned int backupStep = endIteration+1;
 
@@ -32,8 +32,8 @@ namespace lbm {
   }
 
   constexpr AlgorithmType algorithmT = AlgorithmType::Pull;
-  constexpr PartitionningType partitionningT = PartitionningType::Serial;
-  constexpr MemoryLayout memoryL = MemoryLayout::SoA;
+  constexpr PartitionningType partitionningT = PartitionningType::OneD;
+  constexpr MemoryLayout memoryL = MemoryLayout::AoS;
 
   constexpr dataT relaxationTime = 0.65;
   constexpr CollisionType collisionT = CollisionType::BGK;

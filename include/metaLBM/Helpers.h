@@ -11,7 +11,6 @@ namespace lbm {
   template<int Begin, int End, int Step = 1>
   struct UnrolledFor {
     template<typename F>
-    #pragma omp declare simd
     DEVICE HOST
     static void Do (F f) {
       f(Begin);
@@ -22,14 +21,12 @@ namespace lbm {
   template<int End>
   struct UnrolledFor<End, End> {
     template<typename F>
-    #pragma omp declare simd
     DEVICE HOST
     static void Do (F f) {
     }
   };
 
   template <class T>
-  #pragma omp declare simd
   DEVICE HOST
   inline T PowerBase(T arg, int power) {
     if(power == 1) {
@@ -48,7 +45,6 @@ namespace lbm {
   template <class T, int power>
   class Power {
   public:
-    #pragma omp declare simd
     DEVICE HOST
     static inline T Do(const T arg) {
       return (T) pow(arg, power);
@@ -58,7 +54,6 @@ namespace lbm {
   template <class T>
   class Power<T, 0> {
   public:
-    #pragma omp declare simd
     DEVICE HOST
     static inline T Do(const T arg) {
       return (T) 1;
@@ -68,7 +63,6 @@ namespace lbm {
   template <class T>
   class Power<T, 1> {
   public:
-    #pragma omp declare simd
     DEVICE HOST
     static inline T Do(const T arg) {
       return (T) arg;
@@ -78,7 +72,6 @@ namespace lbm {
   template <class T>
   class Power<T, 2> {
   public:
-    #pragma omp declare simd
     DEVICE HOST
     static inline T Do(const T arg) {
       return (T) arg*arg;
@@ -88,7 +81,6 @@ namespace lbm {
   template <class T>
   class Power<T, 3> {
   public:
-    #pragma omp declare simd
     DEVICE HOST
     static inline T Do(const T arg) {
       return (T) arg*arg*arg;
@@ -98,7 +90,6 @@ namespace lbm {
   template <class T>
   class Power<T, 4> {
   public:
-    #pragma omp declare simd
     DEVICE HOST
     static inline T Do(const T arg) {
       return (T) arg*arg*arg*arg;
@@ -108,7 +99,6 @@ namespace lbm {
   template <class T>
   class Power<T, -1> {
   public:
-    #pragma omp declare simd
     DEVICE HOST
     static inline T Do(const T arg) {
       return (T) 1.0/arg;
@@ -119,7 +109,6 @@ namespace lbm {
   template <class T>
   struct RootFinderFunctor {
   public:
-    #pragma omp declare simd
     DEVICE HOST
     RootFinderFunctor(){};
 
@@ -129,7 +118,6 @@ namespace lbm {
 
   };
 
-#pragma omp declare simd
   template <class T>
   inline bool NewtonRaphsonSolver(std::shared_ptr<RootFinderFunctor<T>> functor,
                                   const T tolerance, const int iterationMax,
@@ -161,7 +149,6 @@ namespace lbm {
 
   }
 
-#pragma omp declare simd
   template <class T>
   inline bool Bisection_NewtonRaphsonSolver(std::shared_ptr<RootFinderFunctor<T>> functor,
                                             const T tolerance, const int iterationMax,
