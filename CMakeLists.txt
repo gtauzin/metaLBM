@@ -30,12 +30,15 @@ target_include_directories(metalbm INTERFACE
 find_package(MPI REQUIRED)
 target_link_libraries(metalbm INTERFACE MPI::MPI_CXX)
 
-find_package(HDF5 REQUIRED COMPONENTS CXX)
-target_link_libraries(metalbm INTERFACE hdf5_cpp)
+find_package(HDF5 REQUIRED)
+if (HDF5_FOUND)
+  target_link_libraries(metalbm INTERFACE HDF5::HDF5)
+  add_definitions(-DUSE_HDF5)
+endif()
 
 find_package(OpenMP)
 if (OpenMP_CXX_FOUND)
-   target_link_libraries(metalbm INTERFACE OpenMP::OpenMP_CXX)
+  target_link_libraries(metalbm INTERFACE OpenMP::OpenMP_CXX)
 endif()
 
 find_package(RapidXML REQUIRED)
