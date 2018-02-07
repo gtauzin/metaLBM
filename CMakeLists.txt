@@ -30,15 +30,16 @@ target_include_directories(metalbm INTERFACE
 find_package(MPI REQUIRED)
 target_link_libraries(metalbm INTERFACE MPI::MPI_CXX)
 
-find_package(HDF5 REQUIRED)
-if (HDF5_FOUND)
-  target_link_libraries(metalbm INTERFACE HDF5::HDF5)
-  add_definitions(-DUSE_HDF5)
-endif()
 
 find_package(OpenMP)
 if (OpenMP_CXX_FOUND)
   target_link_libraries(metalbm INTERFACE OpenMP::OpenMP_CXX)
+endif()
+
+find_package(HDF5 REQUIRED)
+if (HDF5_FOUND)
+  target_link_libraries(metalbm INTERFACE HDF5::HDF5)
+  add_definitions(-DUSE_HDF5)
 endif()
 
 find_package(RapidXML REQUIRED)
@@ -50,12 +51,7 @@ target_link_libraries(metalbm INTERFACE FFTW::FFTW)
 find_package(NVSHMEM)
 if(NVSHMEM_FOUND)
   target_link_libraries(metalbm INTERFACE NVSHMEM::NVSHMEM)
-endif()
-
-#find_package(HDF5)
-set(HDF5_FOUND false)
-if(HDF5_FOUND)
-  target_link_libraries(metalbm INTERFACE HDF5::HDF5)
+  add_definitions(-DUSE_NVSHMEM)
 endif()
 
 option(USE_SCOREP "Enabling manual instrumentation with Score-P" OFF)
@@ -73,6 +69,7 @@ endif()
 option(USE_NVTX "Enabling manual instrumentation with NVTX" OFF)
 if(USE_NVTX)
   add_definitions(-DUSE_NVTX)
+  set( CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -lnvToolsExt" )
 endif()
 
 

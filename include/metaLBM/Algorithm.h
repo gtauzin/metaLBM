@@ -187,8 +187,6 @@ namespace lbm {
       auto t0 = std::chrono::high_resolution_clock::now();
 
       communication.communicateHalos(haloDistribution_Previous_Ptr);
-      // computationHalo.Do((&PeriodicBoundary::apply),
-      //                   haloDistribution_Previous_Ptr);
       computationHalo.Do(periodicBoundary,
                          haloDistribution_Previous_Ptr);
 

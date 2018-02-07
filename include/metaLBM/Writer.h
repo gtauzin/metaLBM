@@ -191,7 +191,7 @@ namespace lbm {
     }
 
     template<unsigned int NumberComponents>
-      void writeField(const Field<T, NumberComponents, Architecture::CPU, true> field) {
+    void writeField(const Field<T, NumberComponents, Architecture::CPU, true> field) {
       INSTRUMENT_ON("Writer<T, WriterType::VTR, writerFileFromat>::writeField<NumberComponents>",3)
 
       file << "\t\t\t<DataArray type=\"Float32\" "
@@ -229,6 +229,8 @@ namespace lbm {
 
 
     void writeHeader() {
+      INSTRUMENT_ON("Writer<T, WriterType::VTR, WriterFileFormat::Generic>::writeHeader",2)
+
       file << "<?xml version=\"1.0\"?>\n";
       file << "<VTKFile type=\"RectilinearGrid\" version=\"0.1\" "
            << "byte_order=\"LittleEndian\">\n";
@@ -244,8 +246,10 @@ namespace lbm {
     }
 
     void writeFooter() {
-      file << "\t\t</PointData>\n" // << "\t\t<CellData />\n"
-           << "\t\t<Coordinates>\n";
+      INSTRUMENT_ON("Writer<T, WriterType::VTR, WriterFileFormat::Generic>::writeFooter",2)
+
+      file << "\t\t</PointData>\n" << "\t\t<CellData />\n" << "\t\t<Coordinates>\n";
+
       file << "\t\t\t<DataArray type=\"Float32\" "
            << "Name=\"" << "X" << "\" "
            << "format=\"" + fileFormat + "\">\n";

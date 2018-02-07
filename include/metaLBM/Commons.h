@@ -26,11 +26,12 @@
     #include <nvToolsExt.h>
 
     class Tracer {
-      static const uint_32_t colors[] = { 0x0000ff00, 0x000000ff, 0x00ffff00, 0x00ff00ff,
+      static constexpr int numberColors = 7;
+      const uint32_t colors[numberColors] = { 0x0000ff00, 0x000000ff, 0x00ffff00, 0x00ff00ff,
                                           0x0000ffff, 0x00ff0000, 0x00ffffff };
-      static const int numberColors = sizeof(colors)/sizeof(uint32_t);
 
     public:
+      //HOST DEVICE
       Tracer(const char* name, int colorID) {
         nvtxEventAttributes_t eventAttribute = {0};
         eventAttribute.version = NVTX_VERSION;
@@ -42,6 +43,7 @@
         nvtxRangePushEx(&eventAttribute);
       }
 
+      //HOST DEVICE
       ~Tracer() {
         nvtxRangePop();
       }
