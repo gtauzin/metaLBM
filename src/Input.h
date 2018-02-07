@@ -54,7 +54,7 @@ namespace lbm {
 
   constexpr BoundaryType boundaryT = BoundaryType::Generic;
 
-  constexpr WriterType writerT = WriterType::VTR;
+  constexpr WriterType writerT = WriterType::HDF5;
   constexpr auto prefix = "test_serial";
   constexpr WriterFileFormat writerFileFormatT = WriterFileFormat::ascii;
 

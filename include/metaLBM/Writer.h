@@ -6,7 +6,7 @@
 #include <fstream>
 #include <sstream>
 
-#ifdef HDF5_FOUND
+#ifdef USE_HDF5
   #include <hdf5.h>
 #endif
 
@@ -280,7 +280,7 @@ namespace lbm {
   };
 
 
-  #ifdef HDF5_FOUND
+  #ifdef USE_HDF5
   template <class T, WriterFileFormat writerFileFormat>
     class Writer<T, WriterType::HDF5, writerFileFormat>
     : public Writer<T, WriterType::Generic, writerFileFormat> {
@@ -350,7 +350,7 @@ namespace lbm {
 
   };
 
-#endif // HDF5_FOUND
+#endif // USE_HDF5
 
   typedef Writer<dataT, writerT, writerFileFormatT> Writer_;
 
