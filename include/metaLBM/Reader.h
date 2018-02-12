@@ -14,11 +14,13 @@
 
 namespace lbm {
 
-  template<class T, unsigned int NumberComponents, ReaderType readerType>
+  template<class T, unsigned int NumberComponents, InputOutput inputOutput,
+           InputOutputType inputOutputType, InputOutputDataFormat inputOutputDataFormat>
   class Reader {};
 
   template<class T, unsigned int NumberComponents>
-    class Reader<T, NumberComponents, ReaderType::Generic> {
+  class Reader<T, NumberComponents, InputOutput::Generic, InputOutputType::Generic,
+               InputOutputDataFormat::Generic> {
   protected:
     const std::string readFolder;
     const std::string readerFolder;
@@ -54,21 +56,25 @@ namespace lbm {
 
 
   template <class T, unsigned int NumberComponents>
-    class Reader<T, NumberComponents, ReaderType::VTR>
-    : public Reader<T, NumberComponents, ReaderType::Generic> {
+  class Reader<T, NumberComponents, InputOutput::VTR, InputOutputType::Serial,
+               InputOutputDataFormat::ascii>
+    : public Reader<T, NumberComponents, InputOutput::Generic, InputOutputType::Generic,
+                    InputOutputDataFormat::Generic> {
   private:
-    using Reader<T, NumberComponents,ReaderType::Generic>::getFileName;
+    using Reader<T, NumberComponents, InputOutput::Generic, InputOutputType::Generic,
+                 InputOutputDataFormat::Generic>::getFileName;
     typedef Domain<DomainType::Global, partitionningT,
                    MemoryLayout::Generic, NumberComponents> gNCD;
 
   public:
     Reader(const std::string& filePrefix_in)
-      : Reader<T, NumberComponents,ReaderType::Generic>("outputVTR/", filePrefix_in, ".vtr")
+      : Reader<T, NumberComponents, InputOutput::Generic, InputOutputType::Generic,
+               InputOutputDataFormat::Generic>("outputVTR/", filePrefix_in, ".vtr")
     {}
 
     inline DynamicArray<T, Architecture::CPU> readArray(const std::string& fieldName,
                                                         const unsigned int iteration) {
-      INSTRUMENT_ON("Reader<T, NumberComponents, ReaderType::VTR>::readArray",3)
+      INSTRUMENT_ON("Reader<T, NumberComponents, InputOutput::VTR>::readArray",3)
 
       DynamicArray<T, Architecture::CPU> arrayR(gD::volume());
 

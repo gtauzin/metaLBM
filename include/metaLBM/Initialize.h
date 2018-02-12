@@ -17,7 +17,7 @@
 namespace lbm {
 
   template<class T>
-    DynamicArray<T, Architecture::CPU> initGlobalDensity() {
+  DynamicArray<T, Architecture::CPU> initGlobalDensity() {
     INSTRUMENT_ON("initGlobalDensity<T>",2)
 
       Field<T, 1, Architecture::CPU, true> densityFieldR("density", initDensityValue);
@@ -105,7 +105,7 @@ namespace lbm {
   DynamicArray<T, Architecture::CPU> initGlobalDistributionRestart() {
     INSTRUMENT_ON("initGlobalDistributionRestart<T>",2)
 
-    Reader<T, L::dimQ, ReaderType::VTR> reader(prefix);
+      Reader<T, L::dimQ, inputOutput, inputOutputType, inputOutputDataFormat> reader(prefix);
     return reader.readArray("distribution", startIteration);
   }
 

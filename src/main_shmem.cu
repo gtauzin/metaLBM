@@ -66,7 +66,7 @@ int main(int argc, char* argv[]) {
   MPI_Info_free(&info_MPI);
 
 
-  Routine<dataT, Architecture::SHMEM> routine(rank_MPI, size_MPI,
+  Routine<dataT, Architecture::SHMEM, inputOutputType> routine(rank_MPI, size_MPI,
                                               std::string(processorName_MPI));
 
   routine.compute();

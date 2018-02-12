@@ -29,14 +29,13 @@ namespace lbm {
       ForcedBNR_ELBM, GenericMRT};
 
   enum class ForcingSchemeType {Generic, None, Guo, ShanChen, ExactDifferenceMethod};
-  enum class ForceType {Generic, None, Constant, Sinusoidal, Kolmogorov,
-      Turbulent, TurbulentTime, WavenumbersTime};
+  enum class ForceType {Generic, None, Constant, Sinusoidal, Kolmogorov, Shell};
 
   enum class BoundaryType {Generic, None, Periodic, BounceBack_Halfway, Entropic};
 
-  enum class ReaderType {Generic, None, VTR, HDF5};
-  enum class WriterType {Generic, None, VTR, HDF5};
-  enum class WriterFileFormat {Generic, ascii, binary};
+  enum class InputOutput {Generic, None, VTR, HDF5};
+  enum class InputOutputDataFormat {Generic, ascii, binary};
+  enum class InputOutputType {Generic, Serial, Parallel};
 
 }
 

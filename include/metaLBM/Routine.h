@@ -17,9 +17,12 @@
 
 namespace lbm {
 
+  template<class T, Architecture architecture, InputOutputType inputOutputType>
+  class Routine {};
+
   template<class T, Architecture architecture>
-  class Routine {
-  private:
+  class Routine<T, architecture, InputOutputType::Generic> {
+  protected:
     Field<T, 1, architecture, writeDensity> densityField;
     Field<T, L::dimD, architecture, writeVelocity> velocityField;
     Field<T, L::dimD, architecture, writeDensity> forceField;
@@ -66,39 +69,8 @@ namespace lbm {
       , totalTime(0.0)
     {}
 
-    void compute() {
-      INSTRUMENT_ON("Routine<T>::compute",1)
 
-      printInputs();
-
-      initializeLocalFields();
-
-      writeFields(startIteration);
-
-      initialMass = communication.reduce(densityField.localDeviceArray(),
-                                         densityField.localHostArray());
-
-      for(int iteration = startIteration+1; iteration <= endIteration; ++iteration) {
-        algorithm.setIsWritten(writer.getIsWritten(iteration));
-        // what is this set(get(itration))????
-        algorithm.iterate();
-        // Do must be here in routine! calling the iterate from the algorithm member
-        writeFields(iteration);
-
-        communicationTime += algorithm.getCommunicationTime();
-        computationTime += algorithm.getComputationTime();
-        totalTime += algorithm.getTotalTime();
-      }
-
-
-      finalMass = communication.reduce(densityField.localDeviceArray(),
-                                       densityField.localHostArray());
-
-      differenceMass = fabs(initialMass-finalMass)/initialMass;
-      printOutputs();
-    }
-
-  private:
+  protected:
     void printInputs() {
 
       communication.printInputs();
@@ -143,6 +115,72 @@ namespace lbm {
       }
     }
 
+  };
+
+
+  template<class T, Architecture architecture>
+  class Routine<T, architecture, InputOutputType::Serial>
+    : public Routine<T, architecture, InputOutputType::Generic> {
+  private:
+    using Routine<T, architecture, InputOutputType::Generic>::densityField;
+    using Routine<T, architecture, InputOutputType::Generic>::velocityField;
+    using Routine<T, architecture, InputOutputType::Generic>::forceField;
+    using Routine<T, architecture, InputOutputType::Generic>::alphaField;
+
+    using Routine<T, architecture, InputOutputType::Generic>::f_Previous;
+    using Routine<T, architecture, InputOutputType::Generic>::f_Next;
+    using Routine<T, architecture, InputOutputType::Generic>::communication;
+
+    using Routine<T, architecture, InputOutputType::Generic>::algorithm;
+    using Routine<T, architecture, InputOutputType::Generic>:: initialMass;
+    using Routine<T, architecture, InputOutputType::Generic>:: finalMass;
+    using Routine<T, architecture, InputOutputType::Generic>:: differenceMass;
+    using Routine<T, architecture, InputOutputType::Generic>:: computationTime;
+    using Routine<T, architecture, InputOutputType::Generic>:: communicationTime;
+    using Routine<T, architecture, InputOutputType::Generic>:: writeTime;
+    using Routine<T, architecture, InputOutputType::Generic>:: totalTime;
+
+    using Routine<T, architecture, InputOutputType::Generic>::writer;
+
+  public:
+    using Routine<T, architecture, InputOutputType::Generic>::Routine;
+
+    void compute() {
+      INSTRUMENT_ON("Routine<T>::compute",1)
+
+      printInputs();
+
+      initializeLocalFields();
+
+      writeFields(startIteration);
+
+      initialMass = communication.reduce(densityField.localDeviceArray(),
+                                         densityField.localHostArray());
+
+      for(int iteration = startIteration+1; iteration <= endIteration; ++iteration) {
+        algorithm.setIsWritten(writer.getIsWritten(iteration));
+        // what is this set(get(itration))????
+        algorithm.iterate();
+
+        writeFields(iteration);
+
+        communicationTime += algorithm.getCommunicationTime();
+        computationTime += algorithm.getComputationTime();
+        totalTime += algorithm.getTotalTime();
+      }
+
+
+      finalMass = communication.reduce(densityField.localDeviceArray(),
+                                       densityField.localHostArray());
+
+      differenceMass = fabs(initialMass-finalMass)/initialMass;
+      printOutputs();
+    }
+
+  protected:
+    using Routine<T, architecture, InputOutputType::Generic>::printInputs;
+    using Routine<T, architecture, InputOutputType::Generic>::printOutputs;
+
     void initializeLocalFields() {
       INSTRUMENT_ON("Routine<T>::initializeLocalFields",2)
 
@@ -150,8 +188,6 @@ namespace lbm {
                                       densityField.localHostArray(),
                                       densityField.localDeviceArray(),
                                       densityField.numberComponents);
-
-      //std::cout << "before: " << velocityField.getGlobalVector
 
       communication.sendGlobalToLocal(velocityField.globalArray(),
                                       velocityField.localHostArray(),
@@ -183,7 +219,6 @@ namespace lbm {
       INSTRUMENT_ON("Routine<T>::writeFields",2)
 
       if(writer.getIsWritten(iteration)) {
-        if(writer.getIsSerial()) {
           communication.sendLocalToGlobal(densityField.localDeviceArray(),
                                           densityField.localHostArray(),
                                           densityField.globalArray(),
@@ -200,27 +235,122 @@ namespace lbm {
                                           forceField.localHostArray(),
                                           forceField.globalArray(),
                                           forceField.numberComponents);
-        }
 
         writer.openFile(iteration);
 
-        //        writer.writeField(densityField);
-        //        writer.writeField(velocityField);
-        //        writer.writeField(alphaField);
-        //        writer.writeField(forceField);
+        writer.writeField(densityField);
+        writer.writeField(velocityField);
+        writer.writeField(alphaField);
+        writer.writeField(forceField);
 
-        if(iteration%backupStep == 0) {
+      if(writer.getIsBackedUp(iteration)) {
+
+          f_Previous.packLocal();
+          communication.sendLocalToGlobal(f_Previous.localDeviceArray(),
+                                          f_Previous.localHostArray(),
+                                          f_Previous.globalArray(),
+                                          f_Previous.numberComponents);
+
+          writer.writeField(f_Previous);
+        }
+
+        writer.closeFile();
+      }
+    }
+
+  };
+
+
+  template<class T, Architecture architecture>
+  class Routine<T, architecture, InputOutputType::Parallel>
+    : public Routine<T, architecture, InputOutputType::Generic> {
+  private:
+    using Routine<T, architecture, InputOutputType::Generic>::densityField;
+    using Routine<T, architecture, InputOutputType::Generic>::velocityField;
+    using Routine<T, architecture, InputOutputType::Generic>::forceField;
+    using Routine<T, architecture, InputOutputType::Generic>::alphaField;
+
+    using Routine<T, architecture, InputOutputType::Generic>::f_Previous;
+    using Routine<T, architecture, InputOutputType::Generic>::f_Next;
+    using Routine<T, architecture, InputOutputType::Generic>::communication;
+
+    using Routine<T, architecture, InputOutputType::Generic>::algorithm;
+    using Routine<T, architecture, InputOutputType::Generic>:: initialMass;
+    using Routine<T, architecture, InputOutputType::Generic>:: finalMass;
+    using Routine<T, architecture, InputOutputType::Generic>:: differenceMass;
+    using Routine<T, architecture, InputOutputType::Generic>:: computationTime;
+    using Routine<T, architecture, InputOutputType::Generic>:: communicationTime;
+    using Routine<T, architecture, InputOutputType::Generic>:: writeTime;
+    using Routine<T, architecture, InputOutputType::Generic>:: totalTime;
+
+    using Routine<T, architecture, InputOutputType::Generic>::writer;
+
+  public:
+    using Routine<T, architecture, InputOutputType::Generic>::Routine;
+
+    void compute() {
+      INSTRUMENT_ON("Routine<T>::compute",1)
+
+      printInputs();
+
+      initializeLocalFields();
+
+      writeFields(startIteration);
+
+      initialMass = communication.reduce(densityField.localDeviceArray(),
+                                         densityField.localHostArray());
+
+      for(int iteration = startIteration+1; iteration <= endIteration; ++iteration) {
+        algorithm.setIsWritten(writer.getIsWritten(iteration));
+        // what is this set(get(itration))????
+        algorithm.iterate();
+
+        writeFields(iteration);
+
+        communicationTime += algorithm.getCommunicationTime();
+        computationTime += algorithm.getComputationTime();
+        totalTime += algorithm.getTotalTime();
+      }
+
+
+      finalMass = communication.reduce(densityField.localDeviceArray(),
+                                       densityField.localHostArray());
+
+      differenceMass = fabs(initialMass-finalMass)/initialMass;
+      printOutputs();
+    }
+
+  protected:
+    using Routine<T, architecture, InputOutputType::Generic>::printInputs;
+    using Routine<T, architecture, InputOutputType::Generic>::printOutputs;
+
+    void initializeLocalFields() {
+      INSTRUMENT_ON("Routine<T>::initializeLocalFields",2)
+
+      f_Previous.unpackLocal();
+      f_Previous.haloDeviceArray().copyFrom(f_Previous.haloHostArray());
+
+      f_Next.unpackLocal();
+      f_Next.haloDeviceArray().copyFrom(f_Next.haloHostArray());
+
+    }
+
+    void writeFields(const int iteration) {
+      INSTRUMENT_ON("Routine<T>::writeFields",2)
+
+      if(writer.getIsWritten(iteration)) {
+        writer.openFile(iteration);
+
+        writer.writeField(densityField);
+        writer.writeField(velocityField);
+        writer.writeField(alphaField);
+        writer.writeField(forceField);
+
+      if(writer.getIsBackedUp(iteration)) {
 
           f_Previous.packLocal();
 
-          if(writer.getIsSerial()) {
-            communication.sendLocalToGlobal(f_Previous.localDeviceArray(),
-                                            f_Previous.localHostArray(),
-                                            f_Previous.globalArray(),
-                                            f_Previous.numberComponents);
-          }
-
-          //          writer.writeField(f_Previous);
+          writer.writeField(f_Previous);
         }
 
         writer.closeFile();

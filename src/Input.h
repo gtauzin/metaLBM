@@ -11,15 +11,15 @@ namespace lbm {
   typedef DATA_TYPE dataT;
 
   constexpr LatticeType latticeT = LatticeType::D2Q9;
-  constexpr int lengthX_g = 16;
-  constexpr int lengthY_g = 16;
+  constexpr int lengthX_g = 4;
+  constexpr int lengthY_g = 4;
   constexpr int lengthZ_g = 16;
 
   constexpr unsigned int startIteration = 0;
   constexpr unsigned int endIteration = 100;
   constexpr unsigned int writeStep = 1;
   constexpr unsigned int successiveWriteStep = 2;
-  constexpr unsigned int backupStep = endIteration+1;
+  constexpr unsigned int backUpStep = endIteration+1;
 
   DEVICE HOST
   constexpr MathVector<unsigned int, 3> length_g() {
@@ -49,14 +49,16 @@ namespace lbm {
 
   constexpr MathVector<dataT, 3> forceAmplitude = { {0.000001, 0.000001, 0.0} };
   constexpr MathVector<dataT, 3> forceWaveLength = { {8.0, 16.0, 0.0} };
-  constexpr int minWavenumber = 0;
-  constexpr int maxWavenumber = 0;
+  constexpr int minWavenumber = 1;
+  constexpr int maxWavenumber = 2;
 
   constexpr BoundaryType boundaryT = BoundaryType::Generic;
 
-  constexpr WriterType writerT = WriterType::HDF5;
+  constexpr InputOutput inputOutput = InputOutput::VTR;
+  constexpr InputOutputType inputOutputType = InputOutputType::Serial;
+  constexpr InputOutputDataFormat inputOutputDataFormat = InputOutputDataFormat::ascii;
   constexpr auto prefix = "test_serial";
-  constexpr WriterFileFormat writerFileFormatT = WriterFileFormat::ascii;
+
 
   constexpr bool writeDensity = 1;
   constexpr bool writeVelocity = 1;

@@ -32,12 +32,13 @@ target_link_libraries(metalbm INTERFACE MPI::MPI_CXX)
 
 
 find_package(OpenMP)
-if (OpenMP_CXX_FOUND)
-  target_link_libraries(metalbm INTERFACE OpenMP::OpenMP_CXX)
+if(OpenMP_CXX_FOUND)
+  message(STATUS "OpenMP has been found but remain deactivated.")
+  #target_link_libraries(metalbm INTERFACE OpenMP::OpenMP_CXX)
 endif()
 
 find_package(HDF5 REQUIRED)
-if (HDF5_FOUND)
+if(HDF5_FOUND)
   target_link_libraries(metalbm INTERFACE HDF5::HDF5)
   add_definitions(-DUSE_HDF5)
 endif()

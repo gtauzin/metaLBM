@@ -118,6 +118,38 @@ namespace lbm {
 
   };
 
+
+  template<class T>
+  class Force<T, ForceType::Shell> : public Force<T, ForceType::Generic> {
+  protected:
+    using Force<T, ForceType::Generic>::force;
+    using Force<T, ForceType::Generic>::amplitude;
+
+  public:
+    Force(const MathVector<T, 3>& amplitude_in,
+          const MathVector<T, 3>& waveLength_in)
+      : Force<T, ForceType::Generic>(amplitude_in)
+      , kMin(minWavenumber)
+      , kMax(maxWavenumber)
+    {
+      for(unsigned int iD = 0; iD < L::dimD; ++iD) {
+        waveLength[iD] =  waveLength_in[iD];
+      }
+    }
+
+    #pragma omp declare simd
+    DEVICE HOST
+    inline void setForce(const MathVector<unsigned int, 3>& iP){
+      for(unsigned int iD = 0; iD < L::dimD; ++iD) {
+        force[iD] = amplitude[iD] * sin(iP[iD]*2*M_PI/waveLength[iD]);
+      }
+    }
+
+    using Force<T, ForceType::Generic>::getForce;
+
+  };
+
+
   /* template<class T, unsigned int NumberForces> */
   /* class Forces { */
   /* private: */

@@ -60,8 +60,8 @@ int main(int argc, char* argv[]) {
 
 
 
-  Routine<dataT, arch> routine(rankMPI, sizeMPI,
-                               std::string(hostname));
+  Routine<dataT, arch, inputOutputType> routine(rankMPI, sizeMPI,
+                                                std::string(hostname));
 
   routine.compute();
 
