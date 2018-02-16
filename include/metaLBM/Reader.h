@@ -119,6 +119,67 @@ namespace lbm {
 
   };
 
+
+  template <class T, unsigned int NumberComponents,
+            InputOutputDataFormat inputOutputDataFormat>
+    class Reader<T, NumberComponents, InputOutput::HDF5, InputOutputType::Serial,
+                 inputOutputDataFormat>
+    : public Reader<T, NumberComponents, InputOutput::Generic, InputOutputType::Generic,
+                    InputOutputDataFormat::Generic> {
+  private:
+    using Reader<T, NumberComponents, InputOutput::Generic, InputOutputType::Generic,
+                 InputOutputDataFormat::Generic>::getFileName;
+    typedef Domain<DomainType::Global, partitionningT,
+                   MemoryLayout::Generic, NumberComponents> gNCD;
+
+  public:
+    Reader(const std::string& filePrefix_in)
+      : Reader<T, NumberComponents, InputOutput::Generic, InputOutputType::Generic,
+               InputOutputDataFormat::Generic>("outputHDF5/", filePrefix_in, ".h5")
+    {}
+
+    inline DynamicArray<T, Architecture::CPU> readArray(const std::string& fieldName,
+                                                        const unsigned int iteration) {
+      INSTRUMENT_ON("Reader<T, NumberComponents, InputOutput::VTR>::readArray",3)
+
+      DynamicArray<T, Architecture::CPU> arrayR(gD::volume());
+
+      return arrayR;
+    }
+
+  };
+
+
+  template <class T, unsigned int NumberComponents,
+            InputOutputDataFormat inputOutputDataFormat>
+    class Reader<T, NumberComponents, InputOutput::HDF5, InputOutputType::Parallel,
+                 inputOutputDataFormat>
+    : public Reader<T, NumberComponents, InputOutput::Generic, InputOutputType::Generic,
+                    InputOutputDataFormat::Generic> {
+  private:
+    using Reader<T, NumberComponents, InputOutput::Generic, InputOutputType::Generic,
+                 InputOutputDataFormat::Generic>::getFileName;
+    typedef Domain<DomainType::Global, partitionningT,
+                   MemoryLayout::Generic, NumberComponents> gNCD;
+
+  public:
+    Reader(const std::string& filePrefix_in)
+      : Reader<T, NumberComponents, InputOutput::Generic, InputOutputType::Generic,
+               InputOutputDataFormat::Generic>("outputHDF5/", filePrefix_in, ".h5")
+    {}
+
+    inline DynamicArray<T, Architecture::CPU> readArray(const std::string& fieldName,
+                                                        const unsigned int iteration) {
+      INSTRUMENT_ON("Reader<T, NumberComponents, InputOutput::VTR>::readArray",3)
+
+      DynamicArray<T, Architecture::CPU> arrayR(gD::volume());
+
+      return arrayR;
+    }
+
+  };
+
+
 }
 
 

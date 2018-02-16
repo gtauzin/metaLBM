@@ -53,7 +53,7 @@ namespace lbm {
     }
 
 
-    DynamicArray(DynamicArray<U, Architecture::GPU>& dArray_in)
+    DynamicArray(const DynamicArray<U, Architecture::GPU>& dArray_in)
       : DynamicArray<U, Architecture::Generic>(dArray_in.size())
       , computation(MathVector<unsigned int, 3>{{0}},
                     MathVector<unsigned int, 3>{{numberElements}})

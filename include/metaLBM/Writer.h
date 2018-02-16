@@ -55,19 +55,13 @@ namespace lbm {
     {}
 
     std::string getFileName(const unsigned int iteration) {
-      if(rankMPI[d::X] == 0) {
-        std::ostringstream number;
+      std::ostringstream number;
 
-        number << iteration;
-        std::string fileName =  writeFolder + writerFolder
-          + filePrefix + "-" + number.str() + fileExtension;
+      number << iteration;
+      std::string fileName =  writeFolder + writerFolder
+        + filePrefix + "-" + number.str() + fileExtension;
 
-        return fileName;
-      }
-
-      else {
-        return "/dev/null";
-      }
+      return fileName;
     }
 
   public:
@@ -102,6 +96,8 @@ namespace lbm {
 
     using Writer<T, InputOutput::Generic, InputOutputType::Generic,
                  InputOutputDataFormat::Generic>::getIsWritten;
+    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
+                 InputOutputDataFormat::Generic>::getIsBackedUp;
 
   protected:
     using Writer<T, InputOutput::Generic, InputOutputType::Generic,
@@ -113,8 +109,7 @@ namespace lbm {
     using Writer<T, InputOutput::Generic, InputOutputType::Generic,
                  InputOutputDataFormat::Generic>::getFileName;
 
-    inline void open(const unsigned int iteration) {
-      std::string fileName = getFileName(iteration);
+    inline void open(const std::string& fileName) {
       file.open(fileName, std::ofstream::out | std::ofstream::trunc);
 
       if(!file) {
@@ -151,7 +146,8 @@ namespace lbm {
 
     using Writer<T, InputOutput::Generic, InputOutputType::Generic,
                  InputOutputDataFormat::Generic>::getIsWritten;
-
+    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
+                 InputOutputDataFormat::Generic>::getIsBackedUp;
 
   protected:
     using Writer<T, InputOutput::Generic, InputOutputType::Generic,
@@ -189,16 +185,20 @@ namespace lbm {
 
     using Writer<T, InputOutput::Generic, InputOutputType::Generic,
                  inputOutputDataFormat>::getIsWritten;
-
-    inline bool getIsSerial() {
-      return true;
-    }
+    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
+                 inputOutputDataFormat>::getIsBackedUp;
 
     inline void openFile(const unsigned int iteration) {
-      open(iteration);
-      writeHeader();
-    }
+      std::string fileName = "/dev/null";
 
+      if(rankMPI[d::X] == 0) {
+        fileName = getFileName(iteration);
+      }
+
+      open(fileName);
+      writeHeader();
+
+    }
 
     inline void closeFile() {
       writeFooter();
@@ -206,7 +206,8 @@ namespace lbm {
     }
 
     template<unsigned int NumberComponents>
-    void writeField(const Field<T, NumberComponents, Architecture::CPU, true> field) {
+      void writeField(const Field<T, NumberComponents, DomainType::Global,
+                      Architecture::CPU, true> field) {
       INSTRUMENT_ON("Writer<T, InputOutput::VTR, writerFileFromat>::writeField<NumberComponents>",3)
 
       file << "<DataArray type=\"Float32\" "
@@ -228,8 +229,9 @@ namespace lbm {
       file << "</DataArray>\n";
     }
 
-    template<unsigned int NumberComponents>
-    void writeField(const Field<T, NumberComponents, Architecture::CPU, false> field) {
+    template<unsigned int NumberComponents, DomainType initDomainType>
+      void writeField(const Field<T, NumberComponents, initDomainType,
+                      Architecture::CPU, false> field) {
     }
 
 
@@ -241,6 +243,8 @@ namespace lbm {
     using Writer<T, InputOutput::Generic, InputOutputType::Generic,
                  inputOutputDataFormat>::rankMPI;
 
+    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
+                 inputOutputDataFormat>::getFileName;
     using Writer<T, InputOutput::Generic, InputOutputType::Generic,
                  inputOutputDataFormat>::open;
     using Writer<T, InputOutput::Generic, InputOutputType::Generic,
@@ -303,66 +307,74 @@ namespace lbm {
   #ifdef USE_HDF5
   template <class T, InputOutputDataFormat inputOutputDataFormat>
   class Writer<T, InputOutput::HDF5, InputOutputType::Serial, inputOutputDataFormat>
-    : public Writer<T, InputOutput::Generic, InputOutputType::Serial, inputOutputDataFormat> {
+    : public Writer<T, InputOutput::Generic, InputOutputType::Generic,
+                    inputOutputDataFormat> {
   public:
     Writer(const std::string& filePrefix_in,
            const MathVector<int, 3> rankMPI_in)
-      : Writer<T, InputOutput::Generic,  InputOutputType::Serial,
+      : Writer<T, InputOutput::Generic,  InputOutputType::Generic,
                inputOutputDataFormat>("outputHDF5/", filePrefix_in,
                                       ".h5", rankMPI_in)
     {}
 
-    inline bool getIsSerial() {
-      return true;
-    }
-
-    using Writer<T, InputOutput::Generic, InputOutputType::Serial,
+    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
                  inputOutputDataFormat>::getIsWritten;
+    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
+                 inputOutputDataFormat>::getIsBackedUp;
 
     inline void openFile(const unsigned int iteration) {
-      open(iteration);
+      if(rankMPI[d::X] == 0) {
+        std::string fileName = getFileName(iteration);
+        open(fileName);
+      }
     }
 
 
     inline void closeFile() {
-      statusHDF5 = H5Gclose(groupHDF5);
-      statusHDF5 = H5Fclose(fileHDF5);
+      if(rankMPI[d::X] == 0) {
+        // statusHDF5 = H5Gclose(groupHDF5);
+        statusHDF5 = H5Fclose(fileHDF5);
+      }
     }
 
     template<unsigned int NumberComponents>
-    void writeField(Field<T, NumberComponents, Architecture::CPU, true> field) {
-      // TODO: Need to create a data compound
-      /* hid_t hdf5_pop_type = H5Tcreate (H5T_COMPOUND, sizeof (trivel)); */
-      /* H5Tinsert (hdf5_pop_type, "x", HOFFSET (trivel, x), H5_TYPE_IN_USE); */
-      /* H5Tinsert (hdf5_pop_type, "y", HOFFSET (trivel, y), H5_TYPE_IN_USE); */
-      /* H5Tinsert (hdf5_pop_type, "z", HOFFSET (trivel, z), H5_TYPE_IN_USE); */
+      void writeField(Field<T, NumberComponents, DomainType::Global,
+                      Architecture::CPU, true> field) {
+      if(rankMPI[d::X] == 0) {
 
-      propertyListHDF5 = H5Pcreate(H5P_DATASET_CREATE);
-      dataSpaceHDF5 = H5Screate_simple(L::dimD, field.globalArray().size(), NULL);
-      dataSetHDF5 = H5Dcreate2(groupHDF5, field.fieldName.c_str(),
-                               H5T_NATIVE_DOUBLE, dataSpaceHDF5, H5P_DEFAULT,
-                               propertyListHDF5, H5P_DEFAULT);
+        propertyListHDF5 = H5Pcreate(H5P_DATASET_XFER);
+        dataSpaceHDF5 = H5Screate_simple(L::dimD,
+                                         Project<hsize_t,
+                                         unsigned int, L::dimD>::Do(gD::length()).data(),
+                                         NULL);
 
-      statusHDF5 = H5Dwrite(dataSetHDF5, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-                            field.globalData());
+        for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+          dataSetHDF5 = H5Dcreate2(fileHDF5, (field.fieldName+std::to_string(iC)).c_str(),
+                                   H5T_NATIVE_DOUBLE, dataSpaceHDF5, H5P_DEFAULT,
+                                   H5P_DEFAULT, H5P_DEFAULT);
 
-      statusHDF5 = H5Dclose(dataSetHDF5);
-      statusHDF5 = H5Sclose(dataSpaceHDF5);
-      statusHDF5 = H5Pclose(propertyListHDF5);
+          statusHDF5 = H5Dwrite(dataSetHDF5, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL,
+                                propertyListHDF5,
+                                field.globalData()+ iC*gD::volume());
+          statusHDF5 = H5Dclose(dataSetHDF5);
+        }
 
+        statusHDF5 = H5Sclose(dataSpaceHDF5);
+        statusHDF5 = H5Pclose(propertyListHDF5);
+      }
     }
 
-    template<unsigned int NumberComponents>
-    void writeField(Field<T, NumberComponents, Architecture::CPU, false> field) {
+    template<unsigned int NumberComponents, DomainType initDomainType>
+      void writeField(Field<T, NumberComponents, initDomainType,
+                      Architecture::CPU, false> field) {
     }
 
-
-  private:
-    using Writer<T, InputOutput::Generic, InputOutputType::Serial,
+  protected:
+    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
                  inputOutputDataFormat>::fileFormat;
-    using Writer<T, InputOutput::Generic, InputOutputType::Serial,
+    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
                  inputOutputDataFormat>::rankMPI;
-    using Writer<T, InputOutput::Generic, InputOutputType::Serial,
+    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
                  inputOutputDataFormat>::getFileName;
 
     hid_t fileHDF5;
@@ -373,16 +385,130 @@ namespace lbm {
     hid_t dataSpaceHDF5;
     hid_t propertyListHDF5;
 
-    inline void open(const unsigned int iteration) {
-      std::string fileName = getFileName(iteration);
-      fileHDF5 = H5Fcreate(fileName.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-      groupHDF5 = H5Gcreate2(fileHDF5, "/field", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  private:
+    inline void open(const std::string& fileName) {
+      propertyListHDF5 = H5Pcreate(H5P_FILE_ACCESS);
+      fileHDF5 = H5Fcreate(fileName.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT,
+                           propertyListHDF5);
+      H5Pclose(propertyListHDF5);
+
+      // groupHDF5 = H5Gcreate2(fileHDF5, "/field", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
       if(!fileHDF5) {
         std::cout << "Could not open file " << fileName << std::endl;
       }
+    }
+
+  };
+
+
+  template <class T, InputOutputDataFormat inputOutputDataFormat>
+  class Writer<T, InputOutput::HDF5, InputOutputType::Parallel, inputOutputDataFormat>
+    : public Writer<T, InputOutput::HDF5, InputOutputType::Serial, inputOutputDataFormat> {
+  public:
+    using Writer<T, InputOutput::HDF5, InputOutputType::Serial,
+                 inputOutputDataFormat>::Writer;
+
+    using Writer<T, InputOutput::HDF5, InputOutputType::Serial,
+                 inputOutputDataFormat>::getIsWritten;
+    using Writer<T, InputOutput::HDF5, InputOutputType::Serial,
+                 inputOutputDataFormat>::getIsBackedUp;
+
+    inline void openFile(const unsigned int iteration) {
+      std::string fileName = getFileName(iteration);
+      open(fileName);
+    }
+
+    inline void closeFile() {
+      // statusHDF5 = H5Gclose(groupHDF5);
+      statusHDF5 = H5Fclose(fileHDF5);
+    }
+
+    template<unsigned int NumberComponents>
+      void writeField(Field<T, NumberComponents, DomainType::Local,
+                      Architecture::CPU, true> field) {
+
+      for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+        fileSpaceHDF5 = H5Screate_simple(L::dimD,
+                                         Project<hsize_t,
+                                         unsigned int, L::dimD>::Do(gD::length()).data(),
+                                         NULL);
+
+        dataSetHDF5 = H5Dcreate2(fileHDF5, (field.fieldName+std::to_string(iC)).c_str(),
+                                 H5T_NATIVE_DOUBLE, fileSpaceHDF5, H5P_DEFAULT,
+                                 H5P_DEFAULT, H5P_DEFAULT);
+
+        statusHDF5 = H5Sclose(fileSpaceHDF5);
+
+        dataSpaceHDF5 = H5Screate_simple(L::dimD,
+                                        Project<hsize_t,
+                                        unsigned int, L::dimD>::Do(lD::length()).data(),
+                                        NULL);
+
+        fileSpaceHDF5 = H5Dget_space(dataSetHDF5);
+
+        H5Sselect_hyperslab(fileSpaceHDF5, H5S_SELECT_SET,
+                            Project<hsize_t,
+                            unsigned int, L::dimD>::Do(gD::offset(rankMPI)).data(), NULL,
+                            Project<hsize_t,
+                            unsigned int, L::dimD>::Do(lD::length()).data(), NULL);
+
+        propertyListHDF5 = H5Pcreate(H5P_DATASET_XFER);
+        H5Pset_dxpl_mpio(propertyListHDF5, H5FD_MPIO_COLLECTIVE);
+
+        statusHDF5 = H5Dwrite(dataSetHDF5, H5T_NATIVE_DOUBLE,
+                              dataSpaceHDF5, fileSpaceHDF5, propertyListHDF5,
+                              field.localHostData()+ iC*lD::volume());
+
+        statusHDF5 = H5Dclose(dataSetHDF5);
+        statusHDF5 = H5Sclose(dataSpaceHDF5);
+        statusHDF5 = H5Sclose(fileSpaceHDF5);
+        statusHDF5 = H5Pclose(propertyListHDF5);
+      }
 
     }
+
+    template<unsigned int NumberComponents>
+    void writeField(Field<T, NumberComponents, DomainType::Local,
+                      Architecture::CPU, false> field) {
+    }
+
+    inline void open(const std::string& fileName) {
+      propertyListHDF5 = H5Pcreate(H5P_FILE_ACCESS);
+      H5Pset_fapl_mpio(propertyListHDF5, MPI_COMM_WORLD, MPI_INFO_NULL);
+
+      fileHDF5 = H5Fcreate(fileName.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT,
+                           propertyListHDF5);
+      H5Pclose(propertyListHDF5);
+
+      // groupHDF5 = H5Gcreate2(fileHDF5, "/field", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+      if(!fileHDF5) {
+        std::cout << "Could not open file " << fileName << std::endl;
+      }
+    }
+
+  private:
+    using Writer<T, InputOutput::HDF5, InputOutputType::Serial,
+                 inputOutputDataFormat>::fileFormat;
+    using Writer<T, InputOutput::HDF5, InputOutputType::Serial,
+                 inputOutputDataFormat>::rankMPI;
+    using Writer<T, InputOutput::HDF5, InputOutputType::Serial,
+                 inputOutputDataFormat>::getFileName;
+
+    using Writer<T, InputOutput::HDF5, InputOutputType::Serial,
+                 inputOutputDataFormat>::fileHDF5;
+    using Writer<T, InputOutput::HDF5, InputOutputType::Serial,
+                 inputOutputDataFormat>::statusHDF5;
+    //using Writer<T, InputOutput::HDF5, InputOutputType::Serial,
+    //inputOutputDataFormat>::groupHDF5;
+    using Writer<T, InputOutput::HDF5, InputOutputType::Serial,
+                 inputOutputDataFormat>::dataSetHDF5;
+    using Writer<T, InputOutput::HDF5, InputOutputType::Serial,
+                 inputOutputDataFormat>::dataSpaceHDF5;
+    hid_t fileSpaceHDF5;
+    using Writer<T, InputOutput::HDF5, InputOutputType::Serial,
+                 inputOutputDataFormat>::propertyListHDF5;
 
   };
 

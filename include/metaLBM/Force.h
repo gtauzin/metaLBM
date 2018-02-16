@@ -124,6 +124,8 @@ namespace lbm {
   protected:
     using Force<T, ForceType::Generic>::force;
     using Force<T, ForceType::Generic>::amplitude;
+    const unsigned int kMin;
+    const unsigned int kMax;
 
   public:
     Force(const MathVector<T, 3>& amplitude_in,
@@ -131,17 +133,13 @@ namespace lbm {
       : Force<T, ForceType::Generic>(amplitude_in)
       , kMin(minWavenumber)
       , kMax(maxWavenumber)
-    {
-      for(unsigned int iD = 0; iD < L::dimD; ++iD) {
-        waveLength[iD] =  waveLength_in[iD];
-      }
-    }
+    {}
 
     #pragma omp declare simd
     DEVICE HOST
     inline void setForce(const MathVector<unsigned int, 3>& iP){
       for(unsigned int iD = 0; iD < L::dimD; ++iD) {
-        force[iD] = amplitude[iD] * sin(iP[iD]*2*M_PI/waveLength[iD]);
+        //force[iD] = amplitude[iD] * sin(iP[iD]*2*M_PI/waveLength[iD]);
       }
     }
 

@@ -23,16 +23,8 @@ namespace lbm {
   template<class T, Architecture architecture>
   class Routine<T, architecture, InputOutputType::Generic> {
   protected:
-    Field<T, 1, architecture, writeDensity> densityField;
-    Field<T, L::dimD, architecture, writeVelocity> velocityField;
-    Field<T, L::dimD, architecture, writeDensity> forceField;
-    Field<T, 1, architecture, writeDensity> alphaField;
-
-    Distribution<T, architecture> f_Previous;
-    Distribution<T, architecture> f_Next;
     Communication<T, latticeT, algorithmT,
                   memoryL, partitionningT, L::dimD> communication;
-    Algorithm<dataT, algorithmT, arch> algorithm;
 
     Writer_ writer;
 
@@ -48,17 +40,7 @@ namespace lbm {
     Routine(const MathVector<int, 3>& rankMPI_in,
             const MathVector<int, 3>& sizeMPI_in,
             const std::string& processorName_in)
-      : densityField("density", initGlobalDensity<T>())
-      , velocityField("velocity", initGlobalVelocity<T>())
-      , forceField("force")
-      , alphaField("alpha", initGlobalAlpha<T>())
-      , f_Previous("previousDistribution", initGlobalDistribution<T>(densityField,
-                                                                     velocityField))
-      , f_Next("nextDistribution", initGlobalDistribution<T>(densityField,
-                                                             velocityField))
-      , communication(rankMPI_in, sizeMPI_in, processorName_in)
-      , algorithm(densityField, velocityField, forceField, alphaField,
-                  f_Previous, f_Next, communication)
+      : communication(rankMPI_in, sizeMPI_in, processorName_in)
       , writer(prefix, rankMPI_in)
       , initialMass(0.0)
       , finalMass(0.0)
@@ -107,7 +89,6 @@ namespace lbm {
         const double mlups = (gD::volume() * 1e-6)/(totalTime / (endIteration-startIteration+1));
 
         std::cout << "MLUPS           : " << mlups << std::endl
-                  << "Correct mass    : " << densityField.localHostArray().size() << std::endl
                   << "Initial mass    : " << initialMass << std::endl
                   << "Final mass      : " << finalMass << std::endl
                   << "% mass diff.    : " << differenceMass << std::endl
@@ -122,16 +103,16 @@ namespace lbm {
   class Routine<T, architecture, InputOutputType::Serial>
     : public Routine<T, architecture, InputOutputType::Generic> {
   private:
-    using Routine<T, architecture, InputOutputType::Generic>::densityField;
-    using Routine<T, architecture, InputOutputType::Generic>::velocityField;
-    using Routine<T, architecture, InputOutputType::Generic>::forceField;
-    using Routine<T, architecture, InputOutputType::Generic>::alphaField;
+    Field<T, 1, DomainType::Global, architecture, writeDensity> densityField;
+    Field<T, L::dimD, DomainType::Global, architecture, writeVelocity> velocityField;
+    Field<T, L::dimD, DomainType::Global, architecture, writeDensity> forceField;
+    Field<T, 1, DomainType::Global, architecture, writeDensity> alphaField;
 
-    using Routine<T, architecture, InputOutputType::Generic>::f_Previous;
-    using Routine<T, architecture, InputOutputType::Generic>::f_Next;
+    Distribution<T, DomainType::Global, architecture> f_Previous;
+    Distribution<T, DomainType::Global, architecture> f_Next;
+    Algorithm<dataT, algorithmT, DomainType::Global, arch> algorithm;
+
     using Routine<T, architecture, InputOutputType::Generic>::communication;
-
-    using Routine<T, architecture, InputOutputType::Generic>::algorithm;
     using Routine<T, architecture, InputOutputType::Generic>:: initialMass;
     using Routine<T, architecture, InputOutputType::Generic>:: finalMass;
     using Routine<T, architecture, InputOutputType::Generic>:: differenceMass;
@@ -143,7 +124,22 @@ namespace lbm {
     using Routine<T, architecture, InputOutputType::Generic>::writer;
 
   public:
-    using Routine<T, architecture, InputOutputType::Generic>::Routine;
+    Routine(const MathVector<int, 3>& rankMPI_in,
+            const MathVector<int, 3>& sizeMPI_in,
+            const std::string& processorName_in)
+      :  Routine<T, architecture, InputOutputType::Generic>(rankMPI_in, sizeMPI_in,
+                                                            processorName_in)
+      , densityField(initGlobalDensity<T>())
+      , velocityField(initGlobalVelocity<T>())
+      , forceField("force")
+      , alphaField(initGlobalAlpha<T>())
+      , f_Previous("previousDistribution", initGlobalDistribution<T>(densityField,
+                                                                     velocityField))
+      , f_Next("nextDistribution", initGlobalDistribution<T>(densityField,
+                                                            velocityField))
+      , algorithm(densityField, velocityField, forceField, alphaField,
+                  f_Previous, f_Next, communication)
+    {}
 
     void compute() {
       INSTRUMENT_ON("Routine<T>::compute",1)
@@ -245,16 +241,16 @@ namespace lbm {
 
       if(writer.getIsBackedUp(iteration)) {
 
-          f_Previous.packLocal();
-          communication.sendLocalToGlobal(f_Previous.localDeviceArray(),
-                                          f_Previous.localHostArray(),
-                                          f_Previous.globalArray(),
-                                          f_Previous.numberComponents);
+        f_Previous.packLocal();
+        communication.sendLocalToGlobal(f_Previous.localDeviceArray(),
+                                        f_Previous.localHostArray(),
+                                        f_Previous.globalArray(),
+                                        f_Previous.numberComponents);
 
-          writer.writeField(f_Previous);
-        }
+        writer.writeField(f_Previous);
+      }
 
-        writer.closeFile();
+      writer.closeFile();
       }
     }
 
@@ -265,16 +261,16 @@ namespace lbm {
   class Routine<T, architecture, InputOutputType::Parallel>
     : public Routine<T, architecture, InputOutputType::Generic> {
   private:
-    using Routine<T, architecture, InputOutputType::Generic>::densityField;
-    using Routine<T, architecture, InputOutputType::Generic>::velocityField;
-    using Routine<T, architecture, InputOutputType::Generic>::forceField;
-    using Routine<T, architecture, InputOutputType::Generic>::alphaField;
+    Field<T, 1, DomainType::Local, architecture, writeDensity> densityField;
+    Field<T, L::dimD, DomainType::Local, architecture, writeVelocity> velocityField;
+    Field<T, L::dimD, DomainType::Local, architecture, writeDensity> forceField;
+    Field<T, 1, DomainType::Local, architecture, writeDensity> alphaField;
 
-    using Routine<T, architecture, InputOutputType::Generic>::f_Previous;
-    using Routine<T, architecture, InputOutputType::Generic>::f_Next;
+    Distribution<T, DomainType::Local, architecture> f_Previous;
+    Distribution<T, DomainType::Local, architecture> f_Next;
+    Algorithm<dataT, algorithmT, DomainType::Local, arch> algorithm;
+
     using Routine<T, architecture, InputOutputType::Generic>::communication;
-
-    using Routine<T, architecture, InputOutputType::Generic>::algorithm;
     using Routine<T, architecture, InputOutputType::Generic>:: initialMass;
     using Routine<T, architecture, InputOutputType::Generic>:: finalMass;
     using Routine<T, architecture, InputOutputType::Generic>:: differenceMass;
@@ -286,7 +282,22 @@ namespace lbm {
     using Routine<T, architecture, InputOutputType::Generic>::writer;
 
   public:
-    using Routine<T, architecture, InputOutputType::Generic>::Routine;
+    Routine(const MathVector<int, 3>& rankMPI_in,
+            const MathVector<int, 3>& sizeMPI_in,
+            const std::string& processorName_in)
+      :  Routine<T, architecture, InputOutputType::Generic>(rankMPI_in, sizeMPI_in,
+                                                            processorName_in)
+      , densityField(initLocalDensity<T>())
+      , velocityField(initLocalVelocity<T>())
+      , forceField("force")
+      , alphaField(initLocalAlpha<T>())
+      , f_Previous("previousDistribution", initLocalDistribution<T>(densityField,
+                                                                     velocityField))
+      , f_Next("nextDistribution", initLocalDistribution<T>(densityField,
+                                                             velocityField))
+      , algorithm(densityField, velocityField, forceField, alphaField,
+                  f_Previous, f_Next, communication)
+    {}
 
     void compute() {
       INSTRUMENT_ON("Routine<T>::compute",1)

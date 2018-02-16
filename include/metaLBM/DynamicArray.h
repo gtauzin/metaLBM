@@ -91,7 +91,10 @@ namespace lbm {
                     MathVector<unsigned int, 3>({numberElements, 0, 0}))
 
     {
-      dArrayPtr = (U*)malloc(numberElements*sizeof(U));
+      std::cout << "numberElements: " << numberElements << std::endl;
+      std::cout << "dArrayPtr before: " << dArrayPtr << std::endl;
+      dArrayPtr = (U*)malloc(numberElements_in*sizeof(U));
+      std::cout << "dArrayPtr after: " << dArrayPtr << std::endl;
 
       computation.Do(*this, value_in);
     }

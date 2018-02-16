@@ -12,32 +12,33 @@
 
 namespace lbm {
 
-  template <class T, Architecture architecture>
+  template <class T, DomainType initDomainType, Architecture architecture>
     class Distribution {};
 
-  template <class T>
-  class Distribution<T, Architecture::CPU>
-    : public Field<T, L::dimQ, Architecture::CPU, true> {
+  template <class T, DomainType initDomainType>
+  class Distribution<T, initDomainType, Architecture::CPU>
+    : public Field<T, L::dimQ, initDomainType, Architecture::CPU, true> {
   protected:
-    using Field<T, L::dimQ, Architecture::CPU, true>::localArrayHost;
-    using Field<T, L::dimQ, Architecture::CPU, true>::localArrayDevice;
+    using Field<T, L::dimQ, initDomainType, Architecture::CPU, true>::localArrayHost;
+    using Field<T, L::dimQ, initDomainType, Architecture::CPU, true>::localArrayDevice;
 
     DynamicArray<T, Architecture::CPU> haloArrayHost;
     DynamicArray<T, Architecture::GPU> haloArrayDevice;
 
   public:
-    using Field<T, L::dimQ, Architecture::CPU, true>::globalArray;
-    using Field<T, L::dimQ, Architecture::CPU, true>::setGlobalField;
+    using Field<T, L::dimQ, initDomainType, Architecture::CPU, true>::globalArray;
+    using Field<T, L::dimQ, initDomainType, Architecture::CPU, true>::setGlobalField;
 
     Distribution(const std::string& fieldName_in)
-      : Field<T, L::dimQ, Architecture::CPU, true>(fieldName_in)
+      : Field<T, L::dimQ, initDomainType, Architecture::CPU, true>(fieldName_in)
       , haloArrayHost(hD::volume()*L::dimQ)
       , haloArrayDevice(hD::volume()*L::dimQ)
     {}
 
     Distribution(const std::string& fieldName_in,
                  const DynamicArray<T, Architecture::CPU>& globalArray_in)
-      : Field<T, L::dimQ, Architecture::CPU, true>(fieldName_in, globalArray_in)
+      : Field<T, L::dimQ, initDomainType,
+              Architecture::CPU, true>(fieldName_in, globalArray_in)
       , haloArrayHost(hD::volume()*L::dimQ)
       , haloArrayDevice(hD::volume()*L::dimQ)
     {}
@@ -117,37 +118,33 @@ namespace lbm {
   };
 
 
-  template <class T>
-  class Distribution<T, Architecture::GPU>
-    : public Field<T, L::dimQ, Architecture::GPU, true> {
+  template <class T, DomainType initDomainType>
+    class Distribution<T, initDomainType, Architecture::GPU>
+    : public Field<T, L::dimQ, initDomainType, Architecture::GPU, true> {
   private:
-    using Field<T, L::dimQ, Architecture::GPU, true>::localArrayHost;
-    using Field<T, L::dimQ, Architecture::GPU, true>::localArrayDevice;
+    using Field<T, L::dimQ, initDomainType, Architecture::GPU, true>::localArrayHost;
+    using Field<T, L::dimQ, initDomainType, Architecture::GPU, true>::localArrayDevice;
 
     DynamicArray<T, Architecture::CPU> haloArrayHost;
     DynamicArray<T, Architecture::GPU> haloArrayDevice;
 
   public:
-    using Field<T, L::dimQ, Architecture::GPU, true>::globalArray;
-    using Field<T, L::dimQ, Architecture::GPU, true>::setGlobalField;
+    using Field<T, L::dimQ, initDomainType, Architecture::GPU, true>::globalArray;
+    using Field<T, L::dimQ, initDomainType, Architecture::GPU, true>::setGlobalField;
 
     Distribution(const std::string& fieldName_in)
-      : Field<T, L::dimQ, Architecture::GPU, true>(fieldName_in)
+      : Field<T, L::dimQ, initDomainType, Architecture::GPU, true>(fieldName_in)
       , haloArrayHost(hD::volume()*L::dimQ)
       , haloArrayDevice(hD::volume()*L::dimQ)
       {}
 
     Distribution(const std::string& fieldName_in,
                  const DynamicArray<T, Architecture::CPU>& globalArray_in)
-      : Field<T, L::dimQ, Architecture::GPU, true>(fieldName_in, globalArray_in)
+      : Field<T, L::dimQ, initDomainType,
+              Architecture::GPU, true>(fieldName_in, globalArray_in)
       , haloArrayHost(hD::volume()*L::dimQ)
       , haloArrayDevice(hD::volume()*L::dimQ)
       {}
-
-    DEVICE HOST
-    void swapHalo(Distribution<T, Architecture::GPU>& distribution_in) {
-      haloArrayDevice.swap(distribution_in.haloDeviceArray());
-    }
 
     DynamicArray<T, Architecture::CPU>& haloHostArray() {
       return haloArrayHost;

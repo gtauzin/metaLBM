@@ -11,15 +11,15 @@ namespace lbm {
   typedef DATA_TYPE dataT;
 
   constexpr LatticeType latticeT = LatticeType::D2Q9;
-  constexpr int lengthX_g = 4;
-  constexpr int lengthY_g = 4;
+  constexpr int lengthX_g = 2;
+  constexpr int lengthY_g = 2;
   constexpr int lengthZ_g = 16;
 
   constexpr unsigned int startIteration = 0;
-  constexpr unsigned int endIteration = 100;
+  constexpr unsigned int endIteration = 2;
   constexpr unsigned int writeStep = 1;
   constexpr unsigned int successiveWriteStep = 2;
-  constexpr unsigned int backUpStep = endIteration+1;
+  constexpr unsigned int backUpStep = 1;
 
   DEVICE HOST
   constexpr MathVector<unsigned int, 3> length_g() {
@@ -54,9 +54,9 @@ namespace lbm {
 
   constexpr BoundaryType boundaryT = BoundaryType::Generic;
 
-  constexpr InputOutput inputOutput = InputOutput::VTR;
-  constexpr InputOutputType inputOutputType = InputOutputType::Serial;
-  constexpr InputOutputDataFormat inputOutputDataFormat = InputOutputDataFormat::ascii;
+  constexpr InputOutput inputOutput = InputOutput::HDF5;
+  constexpr InputOutputType inputOutputType = InputOutputType::Parallel;
+  constexpr InputOutputDataFormat inputOutputDataFormat = InputOutputDataFormat::binary;
   constexpr auto prefix = "test_serial";
 
 

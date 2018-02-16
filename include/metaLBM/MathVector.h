@@ -297,10 +297,10 @@ namespace lbm {
   }
 
 
-  template<class T, unsigned int Dimension>
+  template<class T, class U, unsigned int Dimension>
   struct Project {
     DEVICE HOST
-    static inline MathVector<T, Dimension> Do(const MathVector<T, 3>& mV) {
+    static inline MathVector<T, Dimension> Do(const MathVector<U, 3>& mV) {
 
       MathVector<T, Dimension> mVProjected{{ (T) 0 }};
 
@@ -311,6 +311,7 @@ namespace lbm {
     return mVProjected;
     }
   };
+
 
   template<class T, unsigned int Dimension>
   struct ProjectAndLeave1 {
