@@ -10,16 +10,16 @@
 namespace lbm {
   typedef DATA_TYPE dataT;
 
-  constexpr LatticeType latticeT = LatticeType::D2Q9;
-  constexpr int lengthX_g = 2;
-  constexpr int lengthY_g = 2;
-  constexpr int lengthZ_g = 16;
+  constexpr LatticeType latticeT = LatticeType::D3Q27;
+  constexpr int lengthX_g = 64;
+  constexpr int lengthY_g = 64;
+  constexpr int lengthZ_g = 64;
 
   constexpr unsigned int startIteration = 0;
-  constexpr unsigned int endIteration = 2;
+  constexpr unsigned int endIteration = 10;
   constexpr unsigned int writeStep = 1;
   constexpr unsigned int successiveWriteStep = 2;
-  constexpr unsigned int backUpStep = 1;
+  constexpr unsigned int backUpStep = 100;
 
   DEVICE HOST
   constexpr MathVector<unsigned int, 3> length_g() {
@@ -48,9 +48,9 @@ namespace lbm {
   constexpr ForceType forceT = ForceType::Kolmogorov;
 
   constexpr MathVector<dataT, 3> forceAmplitude = { {0.000001, 0.000001, 0.0} };
-  constexpr MathVector<dataT, 3> forceWaveLength = { {8.0, 16.0, 0.0} };
-  constexpr int minWavenumber = 1;
-  constexpr int maxWavenumber = 2;
+  constexpr MathVector<dataT, 3> forceWaveLength = { {32.0, 32.0, 0.0} };
+  constexpr int forcekMin = 1;
+  constexpr int forcekMax = 2;
 
   constexpr BoundaryType boundaryT = BoundaryType::Generic;
 

@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.9 FATAL_ERROR)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 project(metaLBM VERSION 0.0.1 LANGUAGES C CXX)
-add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
+#add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
 
 # Check for CUDA support
 include(CheckLanguage)
@@ -46,8 +46,13 @@ endif()
 find_package(RapidXML REQUIRED)
 target_link_libraries(metalbm INTERFACE RapidXML::RapidXML)
 
-find_package(FFTW REQUIRED)
-target_link_libraries(metalbm INTERFACE FFTW::FFTW)
+find_package(FFTW)
+#if(FFTW_FOUND)
+if(false)
+  target_link_libraries(metalbm INTERFACE FFTW::FFTW)
+  add_definitions(-DUSE_FFTW)
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lm -pthread" )
+endif()
 
 find_package(NVSHMEM)
 if(NVSHMEM_FOUND)

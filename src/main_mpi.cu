@@ -1,13 +1,16 @@
-#include <mpi.h>
-#include <iostream>
-#include <string>
-
 #define NTHREADS 1
 #define NPROCS 1
 #define _AOS
 #define USE_PTX
 #define DATA_TYPE double
 
+#include <mpi.h>
+#include <iostream>
+#include <string>
+
+#ifdef USE_FFTW
+  #include <fftw3-mpi.h>
+#endif
 
 #include "Input.h"
 #include "metaLBM/Lattice.h"
@@ -27,6 +30,9 @@ int main(int argc, char* argv[]) {
   INSTRUMENT_ON("main",0)
 
   MPI_Init(&argc, &argv);
+  #ifdef USE_FFTW
+  fftw_mpi_init();
+  #endif
 
   MathVector<int, 3> sizeMPI{1, 1, 1};
   MPI_Comm_size(MPI_COMM_WORLD, &sizeMPI[d::X]);
@@ -66,6 +72,7 @@ int main(int argc, char* argv[]) {
   routine.compute();
 
   MPI_Finalize();
+  cudaDeviceReset();
 
   return EXIT_SUCCESS;
 }
