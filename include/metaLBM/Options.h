@@ -12,7 +12,8 @@ namespace lbm {
 
   enum class PartitionningType {Generic, Serial, OneD, TwoD, ThreeD};
 
-  enum class DomainType {Generic, Global, Local, Halo, BufferX};
+  enum class DomainType {Generic, GlobalSpace, LocalSpace, HaloSpace, BufferXSpace,
+      GlobalFourier, LocalFourier};
 
   enum class Architecture {Generic, CPU, GPU, NVSHMEM};
 
@@ -29,11 +30,15 @@ namespace lbm {
       ForcedBNR_ELBM, GenericMRT};
 
   enum class ForcingSchemeType {Generic, None, Guo, ShanChen, ExactDifferenceMethod};
-  enum class ForceType {Generic, None, Constant, Sinusoidal, Kolmogorov, Shell};
+  enum class ForceType {None, Generic, GenericTimeIndependent, GenericTimeDependent,
+      Constant, Sinusoidal, Kolmogorov, ConstantShell, Time};
 
   enum class BoundaryType {Generic, None, Periodic, BounceBack_Halfway, Entropic};
 
-  enum class InputOutput {Generic, None, VTR, HDF5};
+  enum class AnalyzerType {Generic, FFT, TotalEnergy,
+      TotalEnstrophy, EnergySpectrum};
+
+  enum class InputOutput {Generic, None, DAT, VTR, HDF5, XDMF};
   enum class InputOutputDataFormat {Generic, ascii, binary};
   enum class InputOutputType {Generic, Serial, Parallel};
 

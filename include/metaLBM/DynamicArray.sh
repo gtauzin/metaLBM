@@ -5,20 +5,11 @@
 #include <stdlib.h>
 
 #include "DynamicArray.h"
+#include "Computation.sh"
 #include "Commons.h"
 #include "Options.h"
 
 namespace lbm {
-
-  // template<typename U>
-  // GLOBAL
-  // void initKernel(U * dArrayPtr, const U value, const unsigned int numberElements) {
-  //   unsigned int idx = blockIdx.x*blockDim.x + threadIdx.x;
-
-  //   if(idx < numberElements) {
-  //     dArrayPtr[idx] = value;
-  //   }
-  // }
 
   template<class U>
   class DynamicArray<U, Architecture::GPU>
@@ -49,14 +40,7 @@ namespace lbm {
 
     {
       CUDA_CALL( cudaMalloc((void**)&dArrayPtr, numberElements*sizeof(U)); )
-
       computation.Do(*this, value_in);
-
-      // dim3 dimBlock(128, 1, 1);
-      // dim3 dimGrid(numberElements/128, 1, 1);
-
-      // initKernel<<<dimBlock, dimGrid >>>(dArrayPtr, value_in, numberElements);
-
     }
 
     DynamicArray(const DynamicArray<U, Architecture::CPU>& dArray_in)
@@ -105,12 +89,6 @@ namespace lbm {
                             cudaMemcpyDeviceToDevice); )
     }
 
-    DEVICE HOST
-    void clear() {
-      numberElements = 0;
-      CUDA_CALL( cudaFree(dArrayPtr) );
-      CUDA_CALL_ERROR( cudaMalloc(&dArrayPtr, numberElements*sizeof(U)) );
-    }
   };
 
 }

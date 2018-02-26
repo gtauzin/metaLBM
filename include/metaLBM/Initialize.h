@@ -11,16 +11,17 @@
 #include "DynamicArray.cuh"
 #include "MathVector.h"
 #include "Field.h"
+#include "Force.h"
 #include "Equilibrium.h"
 #include "Reader.h"
 
 namespace lbm {
 
   template<class T>
-  Field<T, 1, DomainType::Global, Architecture::CPU, true> initGlobalDensity() {
+  Field<T, 1, DomainType::GlobalSpace, Architecture::CPU, true> initGlobalDensity() {
     INSTRUMENT_ON("initGlobalDensity<T>",2)
 
-      Field<T, 1, DomainType::Global, Architecture::CPU, true> densityFieldR("density", initDensityValue);
+      Field<T, 1, DomainType::GlobalSpace, Architecture::CPU, true> densityFieldR("density", initDensityValue);
 
     switch(initDensityT){
     case InitDensityType::Homogeneous: {
@@ -30,10 +31,10 @@ namespace lbm {
       const T densityPeakValue = 3.0 * initDensityValue;
       MathVector<unsigned int, 3> center;
 
-      center[d::X] = static_cast<unsigned int>((gD::length()[d::X]-1)* (T) 0.4);
-      center[d::Y] = static_cast<unsigned int>((gD::length()[d::Y]-1)* (T) 0.3);
-      center[d::Z] = static_cast<unsigned int>((gD::length()[d::Z]-1)* (T) 0.2);
-      densityFieldR.setGlobalValue(gD::getIndex(center), densityPeakValue);
+      center[d::X] = static_cast<unsigned int>((gSD::length()[d::X]-1)* (T) 0.4);
+      center[d::Y] = static_cast<unsigned int>((gSD::length()[d::Y]-1)* (T) 0.3);
+      center[d::Z] = static_cast<unsigned int>((gSD::length()[d::Z]-1)* (T) 0.2);
+      densityFieldR.setGlobalValue(gSD::getIndex(center), densityPeakValue);
       break;
     }
     default: {
@@ -44,13 +45,13 @@ namespace lbm {
   }
 
   template<class T>
-  Field<T, L::dimD, DomainType::Global, Architecture::CPU, true> initGlobalVelocity() {
+  Field<T, L::dimD, DomainType::GlobalSpace, Architecture::CPU, true> initGlobalVelocity() {
     INSTRUMENT_ON("initGlobalVelocity<T>",2)
 
     MathVector<T, L::dimD> initVelocityVectorProjected{{ (T) 0 }};
     initVelocityVectorProjected = Project<T, T, L::dimD>::Do(initVelocityVector);
 
-    Field<T, L::dimD, DomainType::Global, Architecture::CPU, true> velocityFieldR("velocity",
+    Field<T, L::dimD, DomainType::GlobalSpace, Architecture::CPU, true> velocityFieldR("velocity",
                                            initVelocityVectorProjected);
 
     switch(initVelocityT){
@@ -66,25 +67,25 @@ namespace lbm {
   }
 
   template<class T>
-  Field<T, 1, DomainType::Global, Architecture::CPU, true> initGlobalAlpha() {
+  Field<T, 1, DomainType::GlobalSpace, Architecture::CPU, true> initGlobalAlpha() {
     INSTRUMENT_ON("initGlobalAlpha<T>",2)
 
-    Field<T, 1, DomainType::Global, Architecture::CPU, true> alphaFieldR("alpha", (T) 2);
+    Field<T, 1, DomainType::GlobalSpace, Architecture::CPU, true> alphaFieldR("alpha", (T) 2);
     return alphaFieldR;
   }
 
   template<class T>
-  DynamicArray<T, Architecture::CPU> initGlobalDistributionStart(const Field<T, 1, DomainType::Global, Architecture::CPU, true>& densityField,
-                                                                 const Field<T, L::dimD, DomainType::Global, Architecture::CPU, true>& velocityField) {
+  DynamicArray<T, Architecture::CPU> initGlobalDistributionStart(const Field<T, 1, DomainType::GlobalSpace, Architecture::CPU, true>& densityField,
+                                                                 const Field<T, L::dimD, DomainType::GlobalSpace, Architecture::CPU, true>& velocityField) {
     INSTRUMENT_ON("initGlobalDistributionStart<T>",2)
 
-    DynamicArray<T, Architecture::CPU> distributionR(L::dimQ*gD::volume());
+    DynamicArray<T, Architecture::CPU> distributionR(L::dimQ*gSD::volume());
 
     Equilibrium_ equilibrium;
     MathVector<unsigned int, 3> iP;
-    for(unsigned int iZ = gD::start()[d::Z]; iZ < gD::end()[d::Z]; iZ++) {
-      for(unsigned int iY = gD::start()[d::Y]; iY < gD::end()[d::Y]; iY++) {
-        for(unsigned int iX = gD::start()[d::X]; iX < gD::end()[d::X]; iX++) {
+    for(unsigned int iZ = gSD::start()[d::Z]; iZ < gSD::end()[d::Z]; iZ++) {
+      for(unsigned int iY = gSD::start()[d::Y]; iY < gSD::end()[d::Y]; iY++) {
+        for(unsigned int iX = gSD::start()[d::X]; iX < gSD::end()[d::X]; iX++) {
           iP =  MathVector<unsigned int, 3>({iX, iY, iZ});
 
           equilibrium.setVariables(densityField.getGlobalValue(iP),
@@ -92,7 +93,7 @@ namespace lbm {
 
 
           for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
-            distributionR[gQD::getIndex(MathVector<unsigned int, 3>({iX, iY, iZ}), iQ)]
+            distributionR[gSQD::getIndex(MathVector<unsigned int, 3>({iX, iY, iZ}), iQ)]
               = equilibrium.calculate(iQ);
           }
         }
@@ -111,8 +112,8 @@ namespace lbm {
 
 
   template<class T>
-    DynamicArray<T, Architecture::CPU> initGlobalDistribution(const Field<T, 1, DomainType::Global, Architecture::CPU, true>& densityField,
-                                                              const Field<T, L::dimD, DomainType::Global, Architecture::CPU, true>& velocityField) {
+    DynamicArray<T, Architecture::CPU> initGlobalDistribution(const Field<T, 1, DomainType::GlobalSpace, Architecture::CPU, true>& densityField,
+                                                              const Field<T, L::dimD, DomainType::GlobalSpace, Architecture::CPU, true>& velocityField) {
     INSTRUMENT_ON("initGlobalDistribution<T>",2)
 
     if(startIteration == 0) {
@@ -127,10 +128,10 @@ namespace lbm {
 
 
   template<class T>
-  Field<T, 1, DomainType::Local, Architecture::CPU, true> initLocalDensity() {
+  Field<T, 1, DomainType::LocalSpace, Architecture::CPU, true> initLocalDensity() {
     INSTRUMENT_ON("initLocalDensity<T>",2)
 
-      Field<T, 1, DomainType::Local,
+      Field<T, 1, DomainType::LocalSpace,
             Architecture::CPU, true> densityFieldR("density", initDensityValue);
 
     switch(initDensityT){
@@ -141,10 +142,10 @@ namespace lbm {
       const T densityPeakValue = 3.0 * initDensityValue;
       MathVector<unsigned int, 3> center;
 
-      center[d::X] = static_cast<unsigned int>((gD::length()[d::X]-1)* (T) 0.4);
-      center[d::Y] = static_cast<unsigned int>((gD::length()[d::Y]-1)* (T) 0.3);
-      center[d::Z] = static_cast<unsigned int>((gD::length()[d::Z]-1)* (T) 0.2);
-      densityFieldR.setLocalValue(gD::getIndex(center), densityPeakValue);
+      center[d::X] = static_cast<unsigned int>((gSD::length()[d::X]-1)* (T) 0.4);
+      center[d::Y] = static_cast<unsigned int>((gSD::length()[d::Y]-1)* (T) 0.3);
+      center[d::Z] = static_cast<unsigned int>((gSD::length()[d::Z]-1)* (T) 0.2);
+      densityFieldR.setLocalValue(gSD::getIndex(center), densityPeakValue);
       break;
     }
     default: {
@@ -155,13 +156,13 @@ namespace lbm {
   }
 
   template<class T>
-  Field<T, L::dimD, DomainType::Local, Architecture::CPU, true> initLocalVelocity() {
+  Field<T, L::dimD, DomainType::LocalSpace, Architecture::CPU, true> initLocalVelocity() {
     INSTRUMENT_ON("initLocalVelocity<T>",2)
 
     MathVector<T, L::dimD> initVelocityVectorProjected{{ (T) 0 }};
     initVelocityVectorProjected = Project<T, T, L::dimD>::Do(initVelocityVector);
 
-    Field<T, L::dimD, DomainType::Local,
+    Field<T, L::dimD, DomainType::LocalSpace,
           Architecture::CPU, true> velocityFieldR("velocity",
                                                   initVelocityVectorProjected);
 
@@ -177,33 +178,65 @@ namespace lbm {
     return velocityFieldR;
   }
 
+
   template<class T>
-  Field<T, 1, DomainType::Local, Architecture::CPU, true> initLocalAlpha() {
+  Field<T, L::dimD, DomainType::LocalSpace,
+        Architecture::CPU, true> initLocalForce(const MathVector<int, 3>& rankMPI) {
+    INSTRUMENT_ON("initLocalForce<T>",2)
+    Field<T, L::dimD, DomainType::LocalSpace,
+            Architecture::CPU, true> forceFieldR("force", forceAmplitude);
+    Force<T, forceT> force;
+    MathVector<unsigned int, 3> iP;
+    for(unsigned int iZ = lSD::start()[d::Z]; iZ < lSD::end()[d::Z]; iZ++) {
+      for(unsigned int iY = lSD::start()[d::Y]; iY < lSD::end()[d::Y]; iY++) {
+        for(unsigned int iX = lSD::start()[d::X]; iX < lSD::end()[d::X]; iX++) {
+          iP =  MathVector<unsigned int, 3>({iX, iY, iZ});
+          force.setForce(iP, gSD::offset(rankMPI));
+          forceFieldR.setLocalVector(lSD::getIndex(iP), force.getForce());
+        }
+      }
+    }
+
+    if(forceT == ForceType::ConstantShell) {
+
+
+    }
+
+    else {
+      std::cout << "Wrong type of force initialization.";
+    }
+    return forceFieldR;
+  }
+
+
+
+  template<class T>
+  Field<T, 1, DomainType::LocalSpace, Architecture::CPU, true> initLocalAlpha() {
     INSTRUMENT_ON("initLocalAlpha<T>",2)
 
-    Field<T, 1, DomainType::Local, Architecture::CPU, true> alphaFieldR("alpha", (T) 2);
+    Field<T, 1, DomainType::LocalSpace, Architecture::CPU, true> alphaFieldR("alpha", (T) 2);
     return alphaFieldR;
   }
 
   template<class T>
-  DynamicArray<T, Architecture::CPU> initLocalDistributionStart(const Field<T, 1, DomainType::Local, Architecture::CPU, true>& densityField,
-                                                                const Field<T, L::dimD, DomainType::Local, Architecture::CPU, true>& velocityField) {
+  DynamicArray<T, Architecture::CPU> initLocalDistributionStart(const Field<T, 1, DomainType::LocalSpace, Architecture::CPU, true>& densityField,
+                                                                const Field<T, L::dimD, DomainType::LocalSpace, Architecture::CPU, true>& velocityField) {
     INSTRUMENT_ON("initLocalDistributionStart<T>",2)
 
-    DynamicArray<T, Architecture::CPU> distributionR(L::dimQ * lD::volume());
+    DynamicArray<T, Architecture::CPU> distributionR(L::dimQ * lSD::volume());
 
     Equilibrium_ equilibrium;
     MathVector<unsigned int, 3> iP;
-    for(unsigned int iZ = lD::start()[d::Z]; iZ < lD::end()[d::Z]; iZ++) {
-      for(unsigned int iY = lD::start()[d::Y]; iY < lD::end()[d::Y]; iY++) {
-        for(unsigned int iX = lD::start()[d::X]; iX < lD::end()[d::X]; iX++) {
+    for(unsigned int iZ = lSD::start()[d::Z]; iZ < lSD::end()[d::Z]; iZ++) {
+      for(unsigned int iY = lSD::start()[d::Y]; iY < lSD::end()[d::Y]; iY++) {
+        for(unsigned int iX = lSD::start()[d::X]; iX < lSD::end()[d::X]; iX++) {
           iP =  MathVector<unsigned int, 3>({iX, iY, iZ});
 
           equilibrium.setVariables(densityField.getLocalHostValue(iP),
                                    velocityField.getLocalHostVector(iP));
 
           for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
-            distributionR[lD::getIndex(iP, iQ)] = equilibrium.calculate(iQ);
+            distributionR[lSD::getIndex(iP, iQ)] = equilibrium.calculate(iQ);
           }
         }
       }
@@ -221,8 +254,8 @@ namespace lbm {
 
 
   template<class T>
-    DynamicArray<T, Architecture::CPU> initLocalDistribution(const Field<T, 1, DomainType::Local, Architecture::CPU, true>& densityField,
-                                                             const Field<T, L::dimD, DomainType::Local, Architecture::CPU, true>& velocityField) {
+    DynamicArray<T, Architecture::CPU> initLocalDistribution(const Field<T, 1, DomainType::LocalSpace, Architecture::CPU, true>& densityField,
+                                                             const Field<T, L::dimD, DomainType::LocalSpace, Architecture::CPU, true>& velocityField) {
     INSTRUMENT_ON("initLocalDistribution<T>",2)
 
     if(startIteration == 0) {

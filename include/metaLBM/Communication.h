@@ -16,13 +16,14 @@ namespace lbm {
 
   template<class T, LatticeType latticeType, AlgorithmType algorithmType,
            MemoryLayout memoryLayout, PartitionningType partitionningType,
-           unsigned int Dimension>
+           Architecture architecture, unsigned int Dimension>
   class Communication {};
 
 
-  template<class T, LatticeType latticeType>
+  template<class T, LatticeType latticeType, Architecture architecture>
   class Communication<T, latticeType, AlgorithmType::Pull,
-                      MemoryLayout::Generic, PartitionningType::Generic, 0> {
+                      MemoryLayout::Generic, PartitionningType::Generic,
+                      architecture, 0> {
   protected:
     const MathVector<int, 3> rankMPI;
     const MathVector<int, 3> sizeMPI;
@@ -83,9 +84,9 @@ namespace lbm {
                            unsigned int numberComponents) {
       INSTRUMENT_ON("Communication<6>::sendGlobalToLocal",3)
 
-      MPI_Scatter(globalArray.data(), numberComponents*lD::volume(), MPI_DOUBLE,
-                  localHostArray.data(), numberComponents*lD::volume(), MPI_DOUBLE,
-                  0, MPI_COMM_WORLD);
+        MPI_Scatter(globalArray.data(), numberComponents*lSD::volume(), MPI_DOUBLE,
+                    localHostArray.data(), numberComponents*lSD::volume(), MPI_DOUBLE,
+                    0, MPI_COMM_WORLD);
 
       localDeviceArray.copyFrom(localHostArray);
     }
@@ -97,10 +98,10 @@ namespace lbm {
                            unsigned int numberComponents) {
       INSTRUMENT_ON("Communication<6>::sendLocalToGlobal",3)
 
-      localDeviceArray.copyTo(localHostArray);
+        localDeviceArray.copyTo(localHostArray);
 
-      MPI_Gather(localHostArray.data(), numberComponents*lD::volume(), MPI_DOUBLE,
-                 globalArray.data(), numberComponents*lD::volume(), MPI_DOUBLE,
+      MPI_Gather(localHostArray.data(), numberComponents*lSD::volume(), MPI_DOUBLE,
+                 globalArray.data(), numberComponents*lSD::volume(), MPI_DOUBLE,
                  0, MPI_COMM_WORLD);
     }
 
@@ -111,34 +112,26 @@ namespace lbm {
       localDeviceArray.copyTo(localHostArray);
 
       T localSum = (T) 0;
-      for(unsigned int iZ = lD::start()[d::Z]; iZ < lD::end()[d::Z]; ++iZ) {
-        for(unsigned int iY = lD::start()[d::Y]; iY < lD::end()[d::Y]; ++iY) {
-          for(unsigned int iX = lD::start()[d::X]; iX < lD::end()[d::X]; ++iX) {
+      for(unsigned int iZ = lSD::start()[d::Z]; iZ < lSD::end()[d::Z]; ++iZ) {
+        for(unsigned int iY = lSD::start()[d::Y]; iY < lSD::end()[d::Y]; ++iY) {
+          for(unsigned int iX = lSD::start()[d::X]; iX < lSD::end()[d::X]; ++iX) {
             localSum
-              += localHostArray[lD::getIndex(MathVector<unsigned int, 3>({iX, iY, iZ}))];
+              += localHostArray[lSD::getIndex(MathVector<unsigned int, 3>({iX, iY, iZ}))];
           }
         }
       }
 
-
-      MPI_Barrier(MPI_COMM_WORLD);
-
-      T globalSum = (T) 0;
-      MPI_Reduce(&localSum, &globalSum, 1, MPI_DOUBLE,
-                 MPI_SUM, 0, MPI_COMM_WORLD);
-
-      MPI_Barrier(MPI_COMM_WORLD);
-
-      return globalSum;
+      return localSum;
     }
   };
 
 
 
   template<class T, LatticeType latticeType, MemoryLayout memoryLayout,
-           unsigned int Dimension>
+           Architecture architecture, unsigned int Dimension>
   class Communication<T, latticeType, AlgorithmType::Pull,
-                      memoryLayout, PartitionningType::Serial, Dimension> {
+                      memoryLayout, PartitionningType::Serial,
+                      architecture, Dimension> {
   public:
     HOST
     Communication(const MathVector<int, 3>& rankMPI_in,
@@ -162,7 +155,7 @@ namespace lbm {
                            unsigned int numberComponents) {
       INSTRUMENT_ON("Communication<6>::sendGlobalToLocal",3)
 
-      localHostArray.copyFrom(globalArray);
+        localHostArray.copyFrom(globalArray);
       localDeviceArray.copyFrom(localHostArray);
     }
 
@@ -173,14 +166,14 @@ namespace lbm {
                            unsigned int numberComponents) {
       INSTRUMENT_ON("Communication<6>::sendLocalToGlobal",3)
 
-      localDeviceArray.copyTo(localHostArray);
+        localDeviceArray.copyTo(localHostArray);
       localHostArray.copyTo(globalArray);
     }
 
     HOST
     inline void communicateHalos(T * haloDistributionPtr) {
       INSTRUMENT_ON("Communication<6>::communicateHalos",3)
-    }
+        }
 
     HOST
     T reduce(const DynamicArray<T, Architecture::GPU>& localDeviceArray,
@@ -189,11 +182,11 @@ namespace lbm {
       localDeviceArray.copyTo(localHostArray);
 
       T localSum = (T) 0;
-      for(unsigned int iZ = lD::start()[d::Z]; iZ < lD::end()[d::Z]; ++iZ) {
-        for(unsigned int iY = lD::start()[d::Y]; iY < lD::end()[d::Y]; ++iY) {
-          for(unsigned int iX = lD::start()[d::X]; iX < lD::end()[d::X]; ++iX) {
+      for(unsigned int iZ = lSD::start()[d::Z]; iZ < lSD::end()[d::Z]; ++iZ) {
+        for(unsigned int iY = lSD::start()[d::Y]; iY < lSD::end()[d::Y]; ++iY) {
+          for(unsigned int iX = lSD::start()[d::X]; iX < lSD::end()[d::X]; ++iX) {
             localSum
-              += localHostArray[lD::getIndex(MathVector<unsigned int, 3>({iX, iY, iZ}))];
+              += localHostArray[lSD::getIndex(MathVector<unsigned int, 3>({iX, iY, iZ}))];
           }
         }
       }
@@ -202,55 +195,57 @@ namespace lbm {
     }
   };
 
-  template<class T, LatticeType latticeType>
-    class Communication<T, latticeType, AlgorithmType::Pull,
-                      MemoryLayout::SoA, PartitionningType::Generic, 0>
+  template<class T, LatticeType latticeType, Architecture architecture>
+  class Communication<T, latticeType, AlgorithmType::Pull,
+                      MemoryLayout::SoA, PartitionningType::Generic,
+                      architecture, 0>
     : public Communication<T, latticeType, AlgorithmType::Pull,
-                           MemoryLayout::Generic, PartitionningType::Generic, 0> {
-      private:
+                           MemoryLayout::Generic, PartitionningType::Generic,
+                           architecture, 0> {
+  private:
   private:
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::rightXRankMPI;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::rightXRankMPI;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::leftXRankMPI;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::leftXRankMPI;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::statusXMPI;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::statusXMPI;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::requestXMPI;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::requestXMPI;
 
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::rightYRankMPI;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::rightYRankMPI;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::leftYRankMPI;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::leftYRankMPI;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::statusYMPI;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::statusYMPI;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::requestYMPI;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::requestYMPI;
 
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::rightZRankMPI;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::rightZRankMPI;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::leftZRankMPI;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::leftZRankMPI;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::statusZMPI;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::statusZMPI;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::requestZMPI;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::requestZMPI;
 
 
-    typedef Domain<DomainType::Halo, PartitionningType::Generic,
-                   MemoryLayout::SoA, L::dimQ> hMLD;
+    typedef Domain<DomainType::HaloSpace, PartitionningType::Generic,
+                   MemoryLayout::SoA, L::dimQ> hMLSD;
 
     unsigned int sizeStripeX;
     unsigned int sendToRightBeginX;
@@ -275,17 +270,17 @@ namespace lbm {
     void sendAndReceiveHaloX(T * RESTRICT haloDistributionPtr) {
       INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloX",4)
 
-      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
-          sendToRightBeginX = hMLD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X]+lD::length()[d::X]-1,
-                hMLD::start()[d::Y], hMLD::start()[d::Z]}), iQ);
-          receivedFromLeftBeginX = hMLD::getIndex(MathVector<unsigned int, 3>({0,
-                hMLD::start()[d::Y], hMLD::start()[d::Z]}), iQ);
+        for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+          sendToRightBeginX = hMLSD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X]+lSD::length()[d::X]-1,
+                  hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
+          receivedFromLeftBeginX = hMLSD::getIndex(MathVector<unsigned int, 3>({0,
+                  hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
-          sendToLeftBeginX = hMLD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X],
-                hMLD::start()[d::Y], hMLD::start()[d::Z]}), iQ);
+          sendToLeftBeginX = hMLSD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X],
+                  hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
-          receivedFromRightBeginX = hMLD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X]+lD::length()[d::X],
-                  hMLD::start()[d::Y], hMLD::start()[d::Z]}), iQ);
+          receivedFromRightBeginX = hMLSD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X]+lSD::length()[d::X],
+                  hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
           MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginX, sizeStripeX,
                     MPI_DOUBLE, leftXRankMPI, 17, MPI_COMM_WORLD, &requestXMPI[0]);
@@ -310,33 +305,33 @@ namespace lbm {
         //TODO - PACK AND UNPACK
 
 
-      // for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
-      //     sendToRightBeginY = hMLD::getIndex(MathVector<unsigned int, 3>({hMLD::start()[d::X],
-      //             L::halo()[d::Y]+lD::length()[d::Y]-1,
-      //             hMLD::start()[d::Z]}), iQ);
-      //     receivedFromLeftBeginY = hMLD::getIndex(MathVector<unsigned int, 3>({hMLD::start()[d::X], 0, hMLD::start()[d::Z]}), iQ);
+        // for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+        //     sendToRightBeginY = hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X],
+        //             L::halo()[d::Y]+lSD::length()[d::Y]-1,
+        //             hMLSD::start()[d::Z]}), iQ);
+        //     receivedFromLeftBeginY = hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X], 0, hMLSD::start()[d::Z]}), iQ);
 
-      //     sendToLeftBeginY = hMLD::getIndex(MathVector<unsigned int, 3>({hMLD::start()[d::X],
-      //             L::halo()[d::Y], hMLD::start()[d::Z]}), iQ);
+        //     sendToLeftBeginY = hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X],
+        //             L::halo()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
-      //     receivedFromRightBeginY = hMLD::getIndex(MathVector<unsigned int, 3>({hMLD::start()[d::X], L::halo()[d::Y]+lD::length()[d::Y], hMLD::start()[d::Z]}), iQ);
+        //     receivedFromRightBeginY = hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X], L::halo()[d::Y]+lSD::length()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
 
-      //     MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginY, sizeStripeY,
-      //               MPI_DOUBLE, leftYRankMPI, 17, MPI_COMM_WORLD, &requestYMPI[0]);
+        //     MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginY, sizeStripeY,
+        //               MPI_DOUBLE, leftYRankMPI, 17, MPI_COMM_WORLD, &requestYMPI[0]);
 
-      //     MPI_Irecv(haloDistributionPtr+receivedFromRightBeginY, sizeStripeY,
-      //               MPI_DOUBLE, rightYRankMPI, 23, MPI_COMM_WORLD, &requestYMPI[1]);
+        //     MPI_Irecv(haloDistributionPtr+receivedFromRightBeginY, sizeStripeY,
+        //               MPI_DOUBLE, rightYRankMPI, 23, MPI_COMM_WORLD, &requestYMPI[1]);
 
-      //     MPI_Isend(haloDistributionPtr+sendToRightBeginY, sizeStripeY,
-      //               MPI_DOUBLE, rightYRankMPI, 17, MPI_COMM_WORLD, &requestYMPI[2]);
+        //     MPI_Isend(haloDistributionPtr+sendToRightBeginY, sizeStripeY,
+        //               MPI_DOUBLE, rightYRankMPI, 17, MPI_COMM_WORLD, &requestYMPI[2]);
 
-      //     MPI_Isend(haloDistributionPtr+sendToLeftBeginY, sizeStripeY,
-      //               MPI_DOUBLE, leftYRankMPI, 23, MPI_COMM_WORLD, &requestYMPI[3]);
+        //     MPI_Isend(haloDistributionPtr+sendToLeftBeginY, sizeStripeY,
+        //               MPI_DOUBLE, leftYRankMPI, 23, MPI_COMM_WORLD, &requestYMPI[3]);
 
-      //     MPI_Waitall(4, requestYMPI, statusYMPI);
-      //   }
-    }
+        //     MPI_Waitall(4, requestYMPI, statusYMPI);
+        //   }
+        }
 
     HOST
     void sendAndReceiveHaloZ(T * RESTRICT haloDistributionPtr) {
@@ -344,35 +339,35 @@ namespace lbm {
 
         //TODO: PACK AND UNPACK
 
-      // for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
-      //     sendToRightBeginZ = hMLD::getIndex(MathVector<unsigned int, 3>({hMLD::start()[d::X],
-      //             hMLD::start()[d::Y],
-      //             L::halo()[d::Z]+lD::length()[d::Z]-1}), iQ);
+        // for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+        //     sendToRightBeginZ = hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X],
+        //             hMLSD::start()[d::Y],
+        //             L::halo()[d::Z]+lSD::length()[d::Z]-1}), iQ);
 
-      //     receivedFromLeftBeginZ = hMLD::getIndex(MathVector<unsigned int, 3>({hMLD::start()[d::X],
-      //             hMLD::start()[d::Y], 0}), iQ);
+        //     receivedFromLeftBeginZ = hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X],
+        //             hMLSD::start()[d::Y], 0}), iQ);
 
-      //     sendToLeftBeginZ = hMLD::getIndex(MathVector<unsigned int, 3>({hMLD::start()[d::X],
-      //             hMLD::start()[d::Y], L::halo()[d::Z]}), iQ);
+        //     sendToLeftBeginZ = hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X],
+        //             hMLSD::start()[d::Y], L::halo()[d::Z]}), iQ);
 
-      //     receivedFromRightBeginZ = hMLD::getIndex(MathVector<unsigned int, 3>({hMLD::start()[d::X], hMLD::start()[d::Y], L::halo()[d::Z]+lD::length()[d::Z]}), iQ);
+        //     receivedFromRightBeginZ = hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X], hMLSD::start()[d::Y], L::halo()[d::Z]+lSD::length()[d::Z]}), iQ);
 
 
-      //     MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginZ, sizeStripeZ,
-      //               MPI_DOUBLE, leftZRankMPI, 17, MPI_COMM_WORLD, &requestZMPI[0]);
+        //     MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginZ, sizeStripeZ,
+        //               MPI_DOUBLE, leftZRankMPI, 17, MPI_COMM_WORLD, &requestZMPI[0]);
 
-      //     MPI_Irecv(haloDistributionPtr+receivedFromRightBeginZ, sizeStripeZ,
-      //               MPI_DOUBLE, rightZRankMPI, 23, MPI_COMM_WORLD, &requestZMPI[1]);
+        //     MPI_Irecv(haloDistributionPtr+receivedFromRightBeginZ, sizeStripeZ,
+        //               MPI_DOUBLE, rightZRankMPI, 23, MPI_COMM_WORLD, &requestZMPI[1]);
 
-      //     MPI_Isend(haloDistributionPtr+sendToRightBeginZ, sizeStripeZ,
-      //               MPI_DOUBLE, rightZRankMPI, 17, MPI_COMM_WORLD, &requestZMPI[2]);
+        //     MPI_Isend(haloDistributionPtr+sendToRightBeginZ, sizeStripeZ,
+        //               MPI_DOUBLE, rightZRankMPI, 17, MPI_COMM_WORLD, &requestZMPI[2]);
 
-      //     MPI_Isend(haloDistributionPtr+sendToLeftBeginZ, sizeStripeZ,
-      //               MPI_DOUBLE, leftZRankMPI, 23, MPI_COMM_WORLD, &requestZMPI[3]);
+        //     MPI_Isend(haloDistributionPtr+sendToLeftBeginZ, sizeStripeZ,
+        //               MPI_DOUBLE, leftZRankMPI, 23, MPI_COMM_WORLD, &requestZMPI[3]);
 
-      //     MPI_Waitall(4, requestZMPI, statusZMPI);
-      //   }
-    }
+        //     MPI_Waitall(4, requestZMPI, statusZMPI);
+        //   }
+        }
 
 
 
@@ -382,20 +377,20 @@ namespace lbm {
                   const MathVector<int, 3>& sizeMPI_in,
                   const std::string& processorName_in)
       : Communication<T, latticeType, AlgorithmType::Pull,
-                      MemoryLayout::Generic,
-                      PartitionningType::Generic, 0>(rankMPI_in, sizeMPI_in,
-                                                     processorName_in)
-      , sizeStripeX(hMLD::volume()/hMLD::length()[d::X])
+                      MemoryLayout::Generic, PartitionningType::Generic,
+                      architecture, 0>(rankMPI_in, sizeMPI_in,
+                                         processorName_in)
+      , sizeStripeX(hMLSD::volume()/hMLSD::length()[d::X])
       , sendToRightBeginX(0)
       , receivedFromLeftBeginX(0)
       , sendToLeftBeginX(0)
       , receivedFromRightBeginX(0)
-      , sizeStripeY(hMLD::volume()/hMLD::length()[d::Y])
+      , sizeStripeY(hMLSD::volume()/hMLSD::length()[d::Y])
       , sendToRightBeginY(0)
       , receivedFromLeftBeginY(0)
       , sendToLeftBeginY(0)
       , receivedFromRightBeginY(0)
-      , sizeStripeZ(hMLD::volume()/hMLD::length()[d::Z])
+      , sizeStripeZ(hMLSD::volume()/hMLSD::length()[d::Z])
       , sendToRightBeginZ(0)
       , receivedFromLeftBeginZ(0)
       , sendToLeftBeginZ(0)
@@ -404,71 +399,72 @@ namespace lbm {
     {}
 
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::printInputs;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::printInputs;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::getRankMPI;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::getRankMPI;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::sendGlobalToLocal;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::sendGlobalToLocal;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::sendLocalToGlobal;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::sendLocalToGlobal;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::reduce;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::reduce;
   };
 
 
-  template<class T, LatticeType latticeType>
+  template<class T, LatticeType latticeType, Architecture architecture>
   class Communication<T, latticeType, AlgorithmType::Pull,
-                      MemoryLayout::AoS, PartitionningType::Generic, 0>
+                      MemoryLayout::AoS, PartitionningType::Generic, architecture, 0>
     : public Communication<T, latticeType, AlgorithmType::Pull,
-                           MemoryLayout::Generic, PartitionningType::Generic, 0> {
+                           MemoryLayout::Generic, PartitionningType::Generic,
+                           architecture, 0> {
   private:
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::rightXRankMPI;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::rightXRankMPI;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::leftXRankMPI;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::leftXRankMPI;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::statusXMPI;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::statusXMPI;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::requestXMPI;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::requestXMPI;
 
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::rightYRankMPI;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::rightYRankMPI;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::leftYRankMPI;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::leftYRankMPI;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::statusYMPI;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::statusYMPI;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::requestYMPI;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::requestYMPI;
 
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::rightZRankMPI;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::rightZRankMPI;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::leftZRankMPI;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::leftZRankMPI;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::statusZMPI;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::statusZMPI;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::requestZMPI;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::requestZMPI;
 
 
-    typedef Domain<DomainType::Halo, PartitionningType::Generic,
-                   MemoryLayout::AoS, L::dimQ> hMLD;
+    typedef Domain<DomainType::HaloSpace, PartitionningType::Generic,
+                   MemoryLayout::AoS, L::dimQ> hMLSD;
 
     unsigned int sizeStripeX;
     unsigned int sendToRightBeginX;
@@ -494,64 +490,64 @@ namespace lbm {
                   const MathVector<int, 3>& sizeMPI_in,
                   const std::string& processorName_in)
       : Communication<T, latticeType, AlgorithmType::Pull,
-                      MemoryLayout::Generic,
-                      PartitionningType::Generic, 0>(rankMPI_in, sizeMPI_in,
-                                                     processorName_in)
-      , sizeStripeX(L::dimQ*hMLD::volume()*L::halo()[d::X]/hMLD::length()[d::X])
-      , sendToRightBeginX(hMLD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X]+lD::length()[d::X]-1,
-                hMLD::start()[d::Y], hMLD::start()[d::Z]}), 0))
-      , receivedFromLeftBeginX(hMLD::getIndex(MathVector<unsigned int, 3>({0,
-                hMLD::start()[d::Y], hMLD::start()[d::Z]}), 0))
-      , sendToLeftBeginX(hMLD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X],
-                hMLD::start()[d::Y], hMLD::start()[d::Z]}), 0))
-      , receivedFromRightBeginX(hMLD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X]+lD::length()[d::X],
-                hMLD::start()[d::Y], hMLD::start()[d::Z]}), 0))
-      , sizeStripeY(L::dimQ*hMLD::volume()*L::halo()[d::Y]/hMLD::length()[d::Y])
+      MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>(rankMPI_in, sizeMPI_in,
+                                         processorName_in)
+      , sizeStripeX(L::dimQ*hMLSD::volume()*L::halo()[d::X]/hMLSD::length()[d::X])
+      , sendToRightBeginX(hMLSD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X]+lSD::length()[d::X]-1,
+                hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), 0))
+      , receivedFromLeftBeginX(hMLSD::getIndex(MathVector<unsigned int, 3>({0,
+                hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), 0))
+      , sendToLeftBeginX(hMLSD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X],
+                hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), 0))
+      , receivedFromRightBeginX(hMLSD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X]+lSD::length()[d::X],
+                hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), 0))
+      , sizeStripeY(L::dimQ*hMLSD::volume()*L::halo()[d::Y]/hMLSD::length()[d::Y])
 
-      , sendToRightBeginY(hMLD::getIndex(MathVector<unsigned int, 3>({hMLD::start()[d::X], L::halo()[d::Y]+lD::length()[d::Y]-1, hMLD::start()[d::Z]}), 0))
+      , sendToRightBeginY(hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X], L::halo()[d::Y]+lSD::length()[d::Y]-1, hMLSD::start()[d::Z]}), 0))
 
-      , receivedFromLeftBeginY(hMLD::getIndex(MathVector<unsigned int, 3>({hMLD::start()[d::X],
-                0, hMLD::start()[d::Z]}), 0))
-      , sendToLeftBeginY(hMLD::getIndex(MathVector<unsigned int, 3>({hMLD::start()[d::X],
-                L::halo()[d::Y], hMLD::start()[d::Z]}), 0))
-      , receivedFromRightBeginY(hMLD::getIndex(MathVector<unsigned int, 3>({hMLD::start()[d::X], L::halo()[d::Y]+lD::length()[d::Y], hMLD::start()[d::Z]}), 0))
+      , receivedFromLeftBeginY(hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X],
+                0, hMLSD::start()[d::Z]}), 0))
+      , sendToLeftBeginY(hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X],
+                L::halo()[d::Y], hMLSD::start()[d::Z]}), 0))
+      , receivedFromRightBeginY(hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X], L::halo()[d::Y]+lSD::length()[d::Y], hMLSD::start()[d::Z]}), 0))
 
 
-      , sizeStripeZ(L::dimQ*hMLD::volume()*L::halo()[d::Z]/hMLD::length()[d::Z])
+      , sizeStripeZ(L::dimQ*hMLSD::volume()*L::halo()[d::Z]/hMLSD::length()[d::Z])
 
-      , sendToRightBeginZ(hMLD::getIndex(MathVector<unsigned int, 3>({hMLD::start()[d::X], hMLD::start()[d::Y], L::halo()[d::Z]+lD::length()[d::Z]-1}), 0))
+      , sendToRightBeginZ(hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X], hMLSD::start()[d::Y], L::halo()[d::Z]+lSD::length()[d::Z]-1}), 0))
 
-      , receivedFromLeftBeginZ(hMLD::getIndex(MathVector<unsigned int, 3>({hMLD::start()[d::X],
-                hMLD::start()[d::Y], 0}), 0))
-      , sendToLeftBeginZ(hMLD::getIndex(MathVector<unsigned int, 3>({hMLD::start()[d::X],
-                hMLD::start()[d::Y], L::halo()[d::Z]}), 0))
-      , receivedFromRightBeginZ(hMLD::getIndex(MathVector<unsigned int, 3>({hMLD::start()[d::X], hMLD::start()[d::Y], L::halo()[d::Z]+lD::length()[d::Z]}), 0))
+      , receivedFromLeftBeginZ(hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X],
+                hMLSD::start()[d::Y], 0}), 0))
+      , sendToLeftBeginZ(hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X],
+                hMLSD::start()[d::Y], L::halo()[d::Z]}), 0))
+      , receivedFromRightBeginZ(hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X], hMLSD::start()[d::Y], L::halo()[d::Z]+lSD::length()[d::Z]}), 0))
 
     {}
 
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::printInputs;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::printInputs;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::getRankMPI;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::getRankMPI;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::sendGlobalToLocal;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::sendGlobalToLocal;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::sendLocalToGlobal;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::sendLocalToGlobal;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic,
-                        PartitionningType::Generic, 0>::reduce;
+                        MemoryLayout::Generic, PartitionningType::Generic,
+                        architecture, 0>::reduce;
 
-protected:
+  protected:
     HOST
     void sendAndReceiveHaloX(T * haloDistributionPtr) {
       INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloX",4)
 
       MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginX, sizeStripeX,
-                MPI_DOUBLE, leftXRankMPI, 17, MPI_COMM_WORLD, &requestXMPI[0]);
+                  MPI_DOUBLE, leftXRankMPI, 17, MPI_COMM_WORLD, &requestXMPI[0]);
 
       MPI_Irecv(haloDistributionPtr+receivedFromRightBeginX, sizeStripeX,
                 MPI_DOUBLE, rightXRankMPI, 23, MPI_COMM_WORLD, &requestXMPI[1]);
@@ -570,7 +566,7 @@ protected:
       INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloY",4)
 
       MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginY, sizeStripeY,
-                MPI_DOUBLE, leftYRankMPI, 17, MPI_COMM_WORLD, &requestYMPI[0]);
+                  MPI_DOUBLE, leftYRankMPI, 17, MPI_COMM_WORLD, &requestYMPI[0]);
 
       MPI_Irecv(haloDistributionPtr+receivedFromRightBeginY, sizeStripeY,
                 MPI_DOUBLE, rightYRankMPI, 23, MPI_COMM_WORLD, &requestYMPI[1]);
@@ -588,8 +584,8 @@ protected:
     void sendAndReceiveHaloZ(T * haloDistributionPtr) {
       INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloZ",4)
 
-      MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginZ, sizeStripeZ,
-                MPI_DOUBLE, leftZRankMPI, 17, MPI_COMM_WORLD, &requestZMPI[0]);
+        MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginZ, sizeStripeZ,
+                  MPI_DOUBLE, leftZRankMPI, 17, MPI_COMM_WORLD, &requestZMPI[0]);
 
       MPI_Irecv(haloDistributionPtr+receivedFromRightBeginZ, sizeStripeZ,
                 MPI_DOUBLE, rightZRankMPI, 23, MPI_COMM_WORLD, &requestZMPI[1]);
@@ -606,100 +602,122 @@ protected:
 
 
   template<class T, LatticeType latticeType,
-           MemoryLayout memoryLayout, unsigned int Dimension>
+           MemoryLayout memoryLayout, Architecture architecture, unsigned int Dimension>
   class Communication<T, latticeType, AlgorithmType::Pull,
-                      memoryLayout, PartitionningType::OneD, Dimension>
+                      memoryLayout, PartitionningType::OneD,  architecture, Dimension>
     : public Communication<T, latticeType, AlgorithmType::Pull,
-                           memoryLayout, PartitionningType::Generic, 0> {
+                           memoryLayout, PartitionningType::Generic,
+                           architecture, 0> {
   public:
     HOST
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
                   const std::string& processorName_in)
       : Communication<T, latticeType, AlgorithmType::Pull,
-                      memoryLayout, PartitionningType::Generic, 0>(rankMPI_in, sizeMPI_in,
-                                                                processorName_in)
+                      memoryLayout, PartitionningType::Generic,
+                      architecture, 0>(rankMPI_in, sizeMPI_in,
+                                       processorName_in)
     {}
 
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::printInputs;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::printInputs;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::getRankMPI;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::getRankMPI;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::sendGlobalToLocal;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::sendGlobalToLocal;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::sendLocalToGlobal;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::sendLocalToGlobal;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::reduce;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::reduce;
 
     HOST
     inline void communicateHalos(T * haloDistributionPtr) {
       INSTRUMENT_ON("Communication<6>::communicateHalos",3)
-      sendAndReceiveHaloX(haloDistributionPtr);
+        sendAndReceiveHaloX(haloDistributionPtr);
     }
 
   private:
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::sendAndReceiveHaloX;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::sendAndReceiveHaloX;
   };
 
-  template<class T, LatticeType latticeType,
-           MemoryLayout memoryLayout, unsigned int Dimension>
+  template<class T, LatticeType latticeType, MemoryLayout memoryLayout,
+           Architecture architecture, unsigned int Dimension>
   class Communication<T, latticeType, AlgorithmType::Pull,
-                      memoryLayout, PartitionningType::TwoD, Dimension>
+                      memoryLayout, PartitionningType::TwoD, architecture, Dimension>
     : public Communication<T, latticeType, AlgorithmType::Pull,
-                           memoryLayout, PartitionningType::Generic, 0> {
+                           memoryLayout, PartitionningType::Generic, architecture, 0> {
   public:
     HOST
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
                   const std::string& processorName_in)
       : Communication<T, latticeType, AlgorithmType::Pull,
-                      memoryLayout, PartitionningType::Generic, 0>(rankMPI_in, sizeMPI_in,
-                                                                processorName_in)
+                      memoryLayout, PartitionningType::Generic,
+                      architecture, 0>(rankMPI_in, sizeMPI_in,
+                                       processorName_in)
     {}
 
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::printInputs;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::printInputs;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::getRankMPI;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::getRankMPI;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::sendGlobalToLocal;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::sendGlobalToLocal;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::sendLocalToGlobal;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::sendLocalToGlobal;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::reduce;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::reduce;
 
   private:
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::sendAndReceiveHaloX;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::sendAndReceiveHaloX;
   };
 
-  template<class T, LatticeType latticeType, MemoryLayout memoryLayout>
+  template<class T, LatticeType latticeType, MemoryLayout memoryLayout,
+           Architecture architecture>
   class Communication<T, latticeType, AlgorithmType::Pull,
-                      memoryLayout, PartitionningType::TwoD, 2>
+                      memoryLayout, PartitionningType::TwoD, architecture, 2>
     : public Communication<T, latticeType, AlgorithmType::Pull,
-                           memoryLayout, PartitionningType::Generic, 0> {
+                           memoryLayout, PartitionningType::Generic, architecture, 0> {
   public:
     HOST
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
                   const std::string& processorName_in)
       : Communication<T, latticeType, AlgorithmType::Pull,
-                      memoryLayout, PartitionningType::Generic, 0>(rankMPI_in, sizeMPI_in,
-                                                                processorName_in)
+                      memoryLayout, PartitionningType::Generic,
+                      architecture, 0>(rankMPI_in, sizeMPI_in,
+                                       processorName_in)
     {}
 
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::printInputs;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::printInputs;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::getRankMPI;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::getRankMPI;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::sendGlobalToLocal;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::sendGlobalToLocal;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::sendLocalToGlobal;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::sendLocalToGlobal;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::reduce;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::reduce;
 
     HOST
     inline void communicateHalos(T * haloDistributionPtr) {
@@ -711,104 +729,130 @@ protected:
 
   private:
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::sendAndReceiveHaloX;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::sendAndReceiveHaloX;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::sendAndReceiveHaloY;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::sendAndReceiveHaloY;
   };
 
-  template<class T, LatticeType latticeType, MemoryLayout memoryLayout>
+  template<class T, LatticeType latticeType, MemoryLayout memoryLayout,
+           Architecture architecture>
   class Communication<T, latticeType, AlgorithmType::Pull,
-                      memoryLayout, PartitionningType::TwoD, 3>
+                      memoryLayout, PartitionningType::TwoD, architecture, 3>
     : public Communication<T, latticeType, AlgorithmType::Pull,
-                           memoryLayout, PartitionningType::TwoD, 2> {
+                           memoryLayout, PartitionningType::TwoD, architecture, 2> {
   public:
     HOST
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
                   const std::string& processorName_in)
       : Communication<T, latticeType, AlgorithmType::Pull,
-                      memoryLayout, PartitionningType::TwoD, 2>(rankMPI_in, sizeMPI_in,
-                                                                processorName_in)
+                      memoryLayout, PartitionningType::TwoD,
+                      architecture, 2>(rankMPI_in, sizeMPI_in,
+                                       processorName_in)
     {}
 
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::TwoD, 2>::printInputs;
+                        memoryLayout, PartitionningType::TwoD,
+                        architecture, 2>::printInputs;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::TwoD, 2>::getRankMPI;
+                        memoryLayout, PartitionningType::TwoD,
+                        architecture, 2>::getRankMPI;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::TwoD, 2>::sendGlobalToLocal;
+                        memoryLayout, PartitionningType::TwoD,
+                        architecture, 2>::sendGlobalToLocal;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::TwoD, 2>::sendLocalToGlobal;
+                        memoryLayout, PartitionningType::TwoD,
+                        architecture, 2>::sendLocalToGlobal;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::TwoD, 2>::reduce;
+                        memoryLayout, PartitionningType::TwoD,
+                        architecture, 2>::reduce;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::TwoD, 2>::communicateHalos;
+                        memoryLayout, PartitionningType::TwoD,
+                        architecture, 2>::communicateHalos;
 
   private:
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::TwoD, 2>::sendAndReceiveHaloX;
+                        memoryLayout, PartitionningType::TwoD,
+                        architecture, 2>::sendAndReceiveHaloX;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::TwoD, 2>::sendAndReceiveHaloY;
+                        memoryLayout, PartitionningType::TwoD,
+                        architecture, 2>::sendAndReceiveHaloY;
   };
 
 
   template<class T, LatticeType latticeType,
-           MemoryLayout memoryLayout, unsigned int Dimension>
+           MemoryLayout memoryLayout, unsigned int Dimension, Architecture architecture>
   class Communication<T, latticeType, AlgorithmType::Pull,
-                      memoryLayout, PartitionningType::ThreeD, Dimension>
+                      memoryLayout, PartitionningType::ThreeD, architecture, Dimension>
     : public Communication<T, latticeType, AlgorithmType::Pull,
-                           memoryLayout, PartitionningType::Generic, 0> {
+                           memoryLayout, PartitionningType::Generic, architecture, 0> {
   public:
     HOST
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
                   const std::string& processorName_in)
       : Communication<T, latticeType, AlgorithmType::Pull,
-                      memoryLayout, PartitionningType::Generic, 0>(rankMPI_in, sizeMPI_in,
-                                                                processorName_in)
+                      memoryLayout, PartitionningType::Generic,
+      architecture, 0>(rankMPI_in, sizeMPI_in,
+                       processorName_in)
     {}
 
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::printInputs;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::printInputs;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::getRankMPI;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::getRankMPI;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::sendGlobalToLocal;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::sendGlobalToLocal;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::sendLocalToGlobal;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::sendLocalToGlobal;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::reduce;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::reduce;
 
   private:
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::sendAndReceiveHaloX;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::sendAndReceiveHaloX;
   };
 
-  template<class T, LatticeType latticeType, MemoryLayout memoryLayout>
+  template<class T, LatticeType latticeType, MemoryLayout memoryLayout,
+           Architecture architecture>
   class Communication<T, latticeType, AlgorithmType::Pull,
-                      memoryLayout, PartitionningType::ThreeD, 3>
+                      memoryLayout, PartitionningType::ThreeD, architecture, 3>
     : public Communication<T, latticeType, AlgorithmType::Pull,
-                           memoryLayout, PartitionningType::Generic, 0> {
+                           memoryLayout, PartitionningType::Generic, architecture, 0> {
   public:
     HOST
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
                   const std::string& processorName_in)
       : Communication<T, latticeType, AlgorithmType::Pull,
-                      memoryLayout, PartitionningType::Generic, 0>(rankMPI_in, sizeMPI_in,
-                                                                processorName_in)
+                      memoryLayout, PartitionningType::Generic,
+                      architecture, 0>(rankMPI_in, sizeMPI_in,
+                                       processorName_in)
     {}
 
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::printInputs;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::printInputs;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::getRankMPI;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::getRankMPI;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::sendGlobalToLocal;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::sendGlobalToLocal;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::sendLocalToGlobal;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::sendLocalToGlobal;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::reduce;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::reduce;
 
     HOST
     inline void communicateHalos(T * haloDistributionPtr) {
@@ -821,11 +865,14 @@ protected:
 
   private:
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::sendAndReceiveHaloX;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::sendAndReceiveHaloX;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::sendAndReceiveHaloY;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::sendAndReceiveHaloY;
     using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic, 0>::sendAndReceiveHaloZ;
+                        memoryLayout, PartitionningType::Generic,
+                        architecture, 0>::sendAndReceiveHaloZ;
   };
 
 }

@@ -7,6 +7,14 @@
 #include "Commons.h"
 #include "Options.h"
 
+#ifdef USE_FFTW
+  #define MALLOC fftw_malloc
+  #define FREE fftw_free
+#else
+  #define MALLOC malloc
+  #define FREE free
+#endif
+
 namespace lbm {
 
   template<class U, Architecture architecture>
@@ -91,10 +99,7 @@ namespace lbm {
                     MathVector<unsigned int, 3>({numberElements, 0, 0}))
 
     {
-      std::cout << "numberElements: " << numberElements << std::endl;
-      std::cout << "dArrayPtr before: " << dArrayPtr << std::endl;
-      dArrayPtr = (U*)malloc(numberElements_in*sizeof(U));
-      std::cout << "dArrayPtr after: " << dArrayPtr << std::endl;
+      dArrayPtr = (U*)MALLOC(numberElements_in*sizeof(U));
 
       computation.Do(*this, value_in);
     }
@@ -109,9 +114,9 @@ namespace lbm {
       copyFrom(dArray_in);
     }
 
-    ~DynamicArray(){
+    ~DynamicArray() {
       if(dArrayPtr) {
-        free(dArrayPtr);
+        FREE(dArrayPtr);
         dArrayPtr = NULL;
       }
     }
@@ -124,10 +129,6 @@ namespace lbm {
       memcpy(other.data(), dArrayPtr, numberElements*sizeof(U));
     }
 
-    void clear() {
-      numberElements = 0;
-      dArrayPtr = (U*)realloc(dArrayPtr, numberElements*sizeof(U));
-    }
   };
 
   template<class U, Architecture architecture>

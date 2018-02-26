@@ -31,16 +31,16 @@ namespace lbm {
 
     Distribution(const std::string& fieldName_in)
       : Field<T, L::dimQ, initDomainType, Architecture::CPU, true>(fieldName_in)
-      , haloArrayHost(hD::volume()*L::dimQ)
-      , haloArrayDevice(hD::volume()*L::dimQ)
+      , haloArrayHost(hSD::volume()*L::dimQ)
+      , haloArrayDevice(hSD::volume()*L::dimQ)
     {}
 
     Distribution(const std::string& fieldName_in,
                  const DynamicArray<T, Architecture::CPU>& globalArray_in)
       : Field<T, L::dimQ, initDomainType,
               Architecture::CPU, true>(fieldName_in, globalArray_in)
-      , haloArrayHost(hD::volume()*L::dimQ)
-      , haloArrayDevice(hD::volume()*L::dimQ)
+      , haloArrayHost(hSD::volume()*L::dimQ)
+      , haloArrayDevice(hSD::volume()*L::dimQ)
     {}
 
     DynamicArray<T, Architecture::CPU>& haloHostArray() {
@@ -64,8 +64,8 @@ namespace lbm {
 
     /* void packLocal(const MathVector<unsigned int, 3>& iP) { */
     /*   for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) { */
-    /*     localArrayHost[hD::getIndexLocal(iP, iQ)] */
-    /*       = haloArrayHost[hD::getIndex(iP, iQ)]; */
+    /*     localArrayHost[hSD::getIndexLocal(iP, iQ)] */
+    /*       = haloArrayHost[hSD::getIndex(iP, iQ)]; */
     /*   } */
     /* } */
 
@@ -73,18 +73,18 @@ namespace lbm {
       MathVector<unsigned int, 3> iP;
 
       #pragma omp parallel for schedule(static) num_threads(NTHREADS)
-      for(unsigned int iZ = lD::start()[d::Z]+L::halo()[d::Z];
-          iZ < lD::end()[d::Z]+L::halo()[d::Z]; ++iZ) {
-        for(unsigned int iY = lD::start()[d::Y]+L::halo()[d::Y];
-            iY < lD::end()[d::Y]+L::halo()[d::Y]; ++iY) {
+      for(unsigned int iZ = lSD::start()[d::Z]+L::halo()[d::Z];
+          iZ < lSD::end()[d::Z]+L::halo()[d::Z]; ++iZ) {
+        for(unsigned int iY = lSD::start()[d::Y]+L::halo()[d::Y];
+            iY < lSD::end()[d::Y]+L::halo()[d::Y]; ++iY) {
          #pragma omp simd
-          for(unsigned int iX = lD::start()[d::X]+L::halo()[d::X];
-              iX < lD::end()[d::X]+L::halo()[d::X]; ++iX) {
+          for(unsigned int iX = lSD::start()[d::X]+L::halo()[d::X];
+              iX < lSD::end()[d::X]+L::halo()[d::X]; ++iX) {
             iP =  MathVector<unsigned int, 3>({iX, iY, iZ});
 
             for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
-                localArrayHost[hD::getIndexLocal(iP, iQ)]
-                    = haloArrayHost[hD::getIndex(iP, iQ)];
+                localArrayHost[hSD::getIndexLocal(iP, iQ)]
+                    = haloArrayHost[hSD::getIndex(iP, iQ)];
             }
           }
         }
@@ -96,18 +96,18 @@ namespace lbm {
       MathVector<unsigned int, 3> iP;
 
       #pragma omp parallel for schedule(static) num_threads(NTHREADS)
-      for(unsigned int iZ = lD::start()[d::Z]+L::halo()[d::Z];
-          iZ < lD::end()[d::Z]+L::halo()[d::Z]; ++iZ) {
-        for(unsigned int iY = lD::start()[d::Y]+L::halo()[d::Y];
-            iY < lD::end()[d::Y]+L::halo()[d::Y]; ++iY) {
+      for(unsigned int iZ = lSD::start()[d::Z]+L::halo()[d::Z];
+          iZ < lSD::end()[d::Z]+L::halo()[d::Z]; ++iZ) {
+        for(unsigned int iY = lSD::start()[d::Y]+L::halo()[d::Y];
+            iY < lSD::end()[d::Y]+L::halo()[d::Y]; ++iY) {
          #pragma omp simd
-          for(unsigned int iX = lD::start()[d::X]+L::halo()[d::X];
-              iX < lD::end()[d::X]+L::halo()[d::X]; ++iX) {
+          for(unsigned int iX = lSD::start()[d::X]+L::halo()[d::X];
+              iX < lSD::end()[d::X]+L::halo()[d::X]; ++iX) {
             iP =  MathVector<unsigned int, 3>({iX, iY, iZ});
 
             for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
-              haloArrayHost[hD::getIndex(iP, iQ)]
-                  = localArrayHost[lD::getIndex(iP-L::halo(), iQ)];
+              haloArrayHost[hSD::getIndex(iP, iQ)]
+                  = localArrayHost[lSD::getIndex(iP-L::halo(), iQ)];
             }
 
           }
@@ -134,16 +134,16 @@ namespace lbm {
 
     Distribution(const std::string& fieldName_in)
       : Field<T, L::dimQ, initDomainType, Architecture::GPU, true>(fieldName_in)
-      , haloArrayHost(hD::volume()*L::dimQ)
-      , haloArrayDevice(hD::volume()*L::dimQ)
+      , haloArrayHost(hSD::volume()*L::dimQ)
+      , haloArrayDevice(hSD::volume()*L::dimQ)
       {}
 
     Distribution(const std::string& fieldName_in,
                  const DynamicArray<T, Architecture::CPU>& globalArray_in)
       : Field<T, L::dimQ, initDomainType,
               Architecture::GPU, true>(fieldName_in, globalArray_in)
-      , haloArrayHost(hD::volume()*L::dimQ)
-      , haloArrayDevice(hD::volume()*L::dimQ)
+      , haloArrayHost(hSD::volume()*L::dimQ)
+      , haloArrayDevice(hSD::volume()*L::dimQ)
       {}
 
     DynamicArray<T, Architecture::CPU>& haloHostArray() {
@@ -170,18 +170,18 @@ namespace lbm {
       MathVector<unsigned int, 3> iP;
 
       #pragma omp parallel for schedule(static) num_threads(NTHREADS)
-      for(unsigned int iZ = lD::start()[d::Z]+L::halo()[d::Z];
-          iZ < lD::end()[d::Z]+L::halo()[d::Z]; ++iZ) {
-        for(unsigned int iY = lD::start()[d::Y]+L::halo()[d::Y];
-            iY < lD::end()[d::Y]+L::halo()[d::Y]; ++iY) {
+      for(unsigned int iZ = lSD::start()[d::Z]+L::halo()[d::Z];
+          iZ < lSD::end()[d::Z]+L::halo()[d::Z]; ++iZ) {
+        for(unsigned int iY = lSD::start()[d::Y]+L::halo()[d::Y];
+            iY < lSD::end()[d::Y]+L::halo()[d::Y]; ++iY) {
          #pragma omp simd
-          for(unsigned int iX = lD::start()[d::X]+L::halo()[d::X];
-              iX < lD::end()[d::X]+L::halo()[d::X]; ++iX) {
+          for(unsigned int iX = lSD::start()[d::X]+L::halo()[d::X];
+              iX < lSD::end()[d::X]+L::halo()[d::X]; ++iX) {
             iP = MathVector<unsigned int, 3>({iX, iY, iZ});
 
             for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
-                localArrayHost[hD::getIndexLocal(iP, iQ)]
-                    = haloArrayHost[hD::getIndex(iP, iQ)];
+                localArrayHost[hSD::getIndexLocal(iP, iQ)]
+                    = haloArrayHost[hSD::getIndex(iP, iQ)];
             }
           }
         }
@@ -194,18 +194,18 @@ namespace lbm {
       MathVector<unsigned int, 3> iP;
 
       #pragma omp parallel for schedule(static) num_threads(NTHREADS)
-      for(unsigned int iZ = lD::start()[d::Z]+L::halo()[d::Z];
-          iZ < lD::end()[d::Z]+L::halo()[d::Z]; ++iZ) {
-        for(unsigned int iY = lD::start()[d::Y]+L::halo()[d::Y];
-            iY < lD::end()[d::Y]+L::halo()[d::Y]; ++iY) {
+      for(unsigned int iZ = lSD::start()[d::Z]+L::halo()[d::Z];
+          iZ < lSD::end()[d::Z]+L::halo()[d::Z]; ++iZ) {
+        for(unsigned int iY = lSD::start()[d::Y]+L::halo()[d::Y];
+            iY < lSD::end()[d::Y]+L::halo()[d::Y]; ++iY) {
          #pragma omp simd
-          for(unsigned int iX = lD::start()[d::X]+L::halo()[d::X];
-              iX < lD::end()[d::X]+L::halo()[d::X]; ++iX) {
+          for(unsigned int iX = lSD::start()[d::X]+L::halo()[d::X];
+              iX < lSD::end()[d::X]+L::halo()[d::X]; ++iX) {
             iP = MathVector<unsigned int, 3>({iX, iY, iZ});
 
             for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
-              haloArrayHost[hD::getIndex(iP, iQ)]
-                  = localArrayHost[lD::getIndex(iP-L::halo(), iQ)];
+              haloArrayHost[hSD::getIndex(iP, iQ)]
+                  = localArrayHost[lSD::getIndex(iP-L::halo(), iQ)];
             }
 
           }

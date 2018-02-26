@@ -328,6 +328,55 @@ namespace lbm {
     }
   };
 
+
+  template<class T, unsigned int Dimension>
+  struct ProjectAndLeave0 {
+    DEVICE HOST
+    static inline MathVector<T, 3> Do(const MathVector<T, 3>& mV) {
+
+      MathVector<T, 3> mVProjected = { (T) 0, (T) 0, (T) 0};
+
+      for(unsigned int iD = 0; iD < Dimension; ++iD) {
+          mVProjected[iD] = mV[iD];
+      }
+
+    return mVProjected;
+    }
+  };
+
+  template<class T, unsigned int Dimension>
+  struct ProjectAndLeaveHalfAnd1 {
+    DEVICE HOST
+    static inline MathVector<T, 3> Do(const MathVector<T, 3>& mV) {
+
+      MathVector<T, 3> mVProjected = { (T) 1, (T) 1, (T) 1};
+
+      for(unsigned int iD = 0; iD < Dimension-1; ++iD) {
+          mVProjected[iD] = mV[iD];
+      }
+      mVProjected[Dimension-1] = mV[Dimension-1]/((T) 2);
+
+    return mVProjected;
+    }
+  };
+
+
+  template<class T, class U, unsigned int NumberComponents>
+  struct Cast {
+    DEVICE HOST
+    static inline MathVector<U, NumberComponents> Do(const MathVector<T, NumberComponents>& mV) {
+
+      MathVector<U, NumberComponents> mVCasted = {{(U) 0}};
+
+      for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+        mVCasted[iC] = (U) mV[iC];
+      }
+
+    return mVCasted;
+    }
+  };
+
+
 }
 
 #endif // MATHVECTOR_H

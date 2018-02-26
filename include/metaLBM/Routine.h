@@ -24,7 +24,7 @@ namespace lbm {
   class Routine<T, architecture, InputOutputType::Generic> {
   protected:
     Communication<T, latticeT, algorithmT,
-                  memoryL, partitionningT, L::dimD> communication;
+      memoryL, partitionningT, architecture, L::dimD> communication;
 
     Writer_ writer;
 
@@ -61,11 +61,11 @@ namespace lbm {
         std::cout.precision(15);
         std::cout << "-------------------OPTIONS-------------------" << std::endl
                   << "Lattice         : D" << L::dimD << "Q" << L::dimQ << std::endl
-                  << "Global lengths  : " << gD::length() << std::endl
-                  << "Global memory   : " << gD::volume()*sizeof(dataT) << "B" << std::endl
+                  << "Global lengths  : " << gSD::length() << std::endl
+                  << "Global memory   : " << gSD::volume()*sizeof(dataT) << "B" << std::endl
                   << "----------------------------------------------" << std::endl
-                  << "Local lengths   : " << lD::length() << std::endl
-                  << "Local memory    : " << lD::volume()*sizeof(dataT) << "B" << std::endl
+                  << "Local lengths   : " << lSD::length() << std::endl
+                  << "Local memory    : " << lSD::volume()*sizeof(dataT) << "B" << std::endl
                   << "----------------------------------------------" << std::endl
                   << "NPROCS          : " << NPROCS << "" << std::endl
                   << "NTHREADS        : " << NTHREADS << "" << std::endl
@@ -86,7 +86,7 @@ namespace lbm {
                   << "Comp time       : " << computationTime << " s" << std::endl
                   << "Comm time       : " << communicationTime << " s" << std::endl;
 
-        const double mlups = (gD::volume() * 1e-6)/(totalTime / (endIteration-startIteration+1));
+        const double mlups = (gSD::volume() * 1e-6)/(totalTime / (endIteration-startIteration+1));
 
         std::cout << "MLUPS           : " << mlups << std::endl
                   << "Initial mass    : " << initialMass << std::endl
@@ -103,14 +103,14 @@ namespace lbm {
   class Routine<T, architecture, InputOutputType::Serial>
     : public Routine<T, architecture, InputOutputType::Generic> {
   private:
-    Field<T, 1, DomainType::Global, architecture, writeDensity> densityField;
-    Field<T, L::dimD, DomainType::Global, architecture, writeVelocity> velocityField;
-    Field<T, L::dimD, DomainType::Global, architecture, writeDensity> forceField;
-    Field<T, 1, DomainType::Global, architecture, writeDensity> alphaField;
+    Field<T, 1, DomainType::GlobalSpace, architecture, writeDensity> densityField;
+    Field<T, L::dimD, DomainType::GlobalSpace, architecture, writeVelocity> velocityField;
+    Field<T, L::dimD, DomainType::GlobalSpace, architecture, writeDensity> forceField;
+    Field<T, 1, DomainType::GlobalSpace, architecture, writeDensity> alphaField;
 
-    Distribution<T, DomainType::Global, architecture> f_Previous;
-    Distribution<T, DomainType::Global, architecture> f_Next;
-    Algorithm<dataT, algorithmT, DomainType::Global, arch> algorithm;
+    Distribution<T, DomainType::GlobalSpace, architecture> f_Previous;
+    Distribution<T, DomainType::GlobalSpace, architecture> f_Next;
+    Algorithm<dataT, algorithmT, DomainType::GlobalSpace, arch> algorithm;
 
     using Routine<T, architecture, InputOutputType::Generic>::communication;
     using Routine<T, architecture, InputOutputType::Generic>:: initialMass;
@@ -156,7 +156,7 @@ namespace lbm {
       for(int iteration = startIteration+1; iteration <= endIteration; ++iteration) {
         algorithm.setIsWritten(writer.getIsWritten(iteration));
         // what is this set(get(itration))????
-        algorithm.iterate();
+        algorithm.iterate(iteration);
 
         writeFields(iteration);
 
@@ -261,14 +261,14 @@ namespace lbm {
   class Routine<T, architecture, InputOutputType::Parallel>
     : public Routine<T, architecture, InputOutputType::Generic> {
   private:
-    Field<T, 1, DomainType::Local, architecture, writeDensity> densityField;
-    Field<T, L::dimD, DomainType::Local, architecture, writeVelocity> velocityField;
-    Field<T, L::dimD, DomainType::Local, architecture, writeDensity> forceField;
-    Field<T, 1, DomainType::Local, architecture, writeDensity> alphaField;
+    Field<T, 1, DomainType::LocalSpace, architecture, writeDensity> densityField;
+    Field<T, L::dimD, DomainType::LocalSpace, architecture, writeVelocity> velocityField;
+    Field<T, L::dimD, DomainType::LocalSpace, architecture, writeDensity> forceField;
+    Field<T, 1, DomainType::LocalSpace, architecture, writeDensity> alphaField;
 
-    Distribution<T, DomainType::Local, architecture> f_Previous;
-    Distribution<T, DomainType::Local, architecture> f_Next;
-    Algorithm<dataT, algorithmT, DomainType::Local, arch> algorithm;
+    Distribution<T, DomainType::LocalSpace, architecture> f_Previous;
+    Distribution<T, DomainType::LocalSpace, architecture> f_Next;
+    Algorithm<dataT, algorithmT, DomainType::LocalSpace, arch> algorithm;
 
     using Routine<T, architecture, InputOutputType::Generic>::communication;
     using Routine<T, architecture, InputOutputType::Generic>:: initialMass;
@@ -314,7 +314,7 @@ namespace lbm {
       for(int iteration = startIteration+1; iteration <= endIteration; ++iteration) {
         algorithm.setIsWritten(writer.getIsWritten(iteration));
         // what is this set(get(itration))????
-        algorithm.iterate();
+        algorithm.iterate(iteration);
 
         writeFields(iteration);
 

@@ -5,7 +5,6 @@
 #include <stdlib.h>
 
 #include "DynamicArray.h"
-//#include "Computation.cuh"
 #include "Commons.h"
 #include "Options.h"
 
@@ -89,11 +88,6 @@ namespace lbm {
                             cudaMemcpyDeviceToDevice); )
     }
 
-    DEVICE HOST
-    void clear() {
-      numberElements = 0;
-      CUDA_CALL( cudaFree(dArrayPtr) );
-    }
   };
 
 }

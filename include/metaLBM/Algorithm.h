@@ -21,7 +21,7 @@
 namespace lbm {
 
   template<class T, AlgorithmType algorithmType, DomainType initDomainType,
-           Architecture architecture>
+    Architecture architecture>
   class Algorithm {
   public:
     HOST DEVICE
@@ -29,7 +29,8 @@ namespace lbm {
   };
 
 
-  template<class T, DomainType initDomainType, Architecture architecture>
+  template<class T, DomainType initDomainType,
+           Architecture architecture>
   class Algorithm<T, AlgorithmType::Generic, initDomainType, architecture> {
   protected:
 
@@ -42,7 +43,7 @@ namespace lbm {
     T * RESTRICT haloDistribution_Next_Ptr;
 
     Communication<T, latticeT, algorithmT, memoryL,
-                  partitionningT, L::dimD> communication;
+                  partitionningT, architecture, L::dimD> communication;
     Collision_ collision;
     Moment<T> moment;
 
@@ -62,7 +63,7 @@ namespace lbm {
               Distribution<T, initDomainType, architecture>& f_Previous_in,
               Distribution<T, initDomainType, architecture>& f_Next_in,
               Communication<T, latticeT, algorithmT, memoryL,
-              partitionningT, L::dimD>& communication_in)
+              partitionningT, architecture, L::dimD>& communication_in)
       : localDensity_Ptr(densityField_in.localComputedData())
       , localVelocity_Ptr(velocityField_in.localComputedData())
       , localForce_Ptr(forceField_in.localComputedData())
@@ -70,12 +71,12 @@ namespace lbm {
       , haloDistribution_Previous_Ptr(f_Previous_in.haloComputedData())
       , haloDistribution_Next_Ptr(f_Next_in.haloComputedData())
       , communication(communication_in)
-      , collision(relaxationTime, forceAmplitude, forceWaveLength)
+      , collision(relaxationTime, forceAmplitude, forceWaveLength, forcekMin, forcekMax)
       , moment()
-      , computationLocal(lD::start()+L::halo(),
-                    lD::end()+L::halo())
-      , computationHalo(hD::start(),
-                        hD::end())
+      , computationLocal(lSD::start()+L::halo(),
+                    lSD::end()+L::halo())
+      , computationHalo(hSD::start(),
+                        hSD::end())
       , dtComputation()
       , dtCommunication()
       , dtTotal()
@@ -86,14 +87,14 @@ namespace lbm {
     void storeLocalFields(const MathVector<unsigned int, 3>& iP) {
       INSTRUMENT_OFF("Algorithm<T, AlgorithmType::Pull>::storeLocalFields",4)
 
-      const unsigned int indexLocal = hD::getIndexLocal(iP);
+      const unsigned int indexLocal = hSD::getIndexLocal(iP);
 
       localDensity_Ptr[indexLocal] = moment.getDensity();
       localAlpha_Ptr[indexLocal] = collision.getAlpha();
 
       for(unsigned int iD = 0; iD < L::dimD; ++iD) {
-        localVelocity_Ptr[lDD::getIndex(indexLocal, iD)] = collision.getHydrodynamicVelocity()[iD];
-        localForce_Ptr[lDD::getIndex(indexLocal, iD)] = collision.getForce()[iD];
+        localVelocity_Ptr[lSDD::getIndex(indexLocal, iD)] = collision.getHydrodynamicVelocity()[iD];
+        localForce_Ptr[lSDD::getIndex(indexLocal, iD)] = collision.getForce()[iD];
       }
 
     }
@@ -112,7 +113,9 @@ namespace lbm {
     }
   };
 
-  template<class T, Architecture architecture, DomainType initDomainType>
+
+  template<class T, DomainType initDomainType,
+           Architecture architecture>
     class Algorithm<T, AlgorithmType::Pull, initDomainType, architecture>
     : public Algorithm<T, AlgorithmType::Generic, initDomainType, architecture> {
   private:
@@ -148,7 +151,7 @@ namespace lbm {
               Distribution<T, initDomainType, architecture>& f_Previous_in,
               Distribution<T, initDomainType, architecture>& f_Next_in,
               Communication<T, latticeT, algorithmT, memoryL,
-              partitionningT, L::dimD>& communication_in)
+              partitionningT, architecture, L::dimD>& communication_in)
       : Algorithm<T, AlgorithmType::Generic, initDomainType,
                   architecture>(densityField_in, velocityField_in,
                                 forceField_in, alphaField_in,
@@ -160,12 +163,12 @@ namespace lbm {
     void operator()(const MathVector<unsigned int, 3>& iP) {
       moment.calculateMoments(haloDistribution_Previous_Ptr, iP);
 
-      collision.setForce(iP+gD::offset(communication.getRankMPI()));
+      collision.setForce(localForce_Ptr, iP, gSD::offset(communication.getRankMPI()));
       collision.setVariables(haloDistribution_Previous_Ptr, iP,
                              moment.getDensity(), moment.getVelocity());
 
       for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
-        haloDistribution_Next_Ptr[hD::getIndex(iP, iQ)] =
+        haloDistribution_Next_Ptr[hSD::getIndex(iP, iQ)] =
                             collision.calculate(haloDistribution_Previous_Ptr,
                                                 iP-uiL::celerity()[iQ], iQ);
       }
@@ -178,12 +181,12 @@ namespace lbm {
     }
 
     HOST
-    void iterate() {
+    void iterate(const unsigned int iteration) {
       INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate",2)
 
       std::swap(haloDistribution_Previous_Ptr, haloDistribution_Next_Ptr);
 
-      //force.update(iteration);
+      collision.update(iteration);
 
       auto t0 = std::chrono::high_resolution_clock::now();
 

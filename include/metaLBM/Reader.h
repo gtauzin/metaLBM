@@ -63,7 +63,7 @@ namespace lbm {
   private:
     using Reader<T, NumberComponents, InputOutput::Generic, InputOutputType::Generic,
                  InputOutputDataFormat::Generic>::getFileName;
-    typedef Domain<DomainType::Global, partitionningT,
+    typedef Domain<DomainType::GlobalSpace, partitionningT,
                    MemoryLayout::Generic, NumberComponents> gNCD;
 
   public:
@@ -76,7 +76,7 @@ namespace lbm {
                                                         const unsigned int iteration) {
       INSTRUMENT_ON("Reader<T, NumberComponents, InputOutput::VTR>::readArray",3)
 
-      DynamicArray<T, Architecture::CPU> arrayR(gD::volume());
+      DynamicArray<T, Architecture::CPU> arrayR(gSD::volume());
 
       std::string fileName = getFileName(iteration);
       rapidxml::file<> xmlFile(fileName.c_str());
@@ -90,14 +90,14 @@ namespace lbm {
       std::string line;
       std::getline(file, line);
 
-      for(unsigned int index = 0; index < gD::volume(); ++index) {
+      for(unsigned int index = 0; index < gSD::volume(); ++index) {
         MathVector<unsigned int, 3> iP;
 
         unsigned int indexTemporary = index;
-        iP[d::X] = indexTemporary%gD::length()[d::X];
-        indexTemporary = (indexTemporary-iP[d::X])/gD::length()[d::X];
-        iP[d::Y] = indexTemporary%gD::length()[d::Y];
-        indexTemporary = (indexTemporary-iP[d::Y])/gD::length()[d::Y];
+        iP[d::X] = indexTemporary%gSD::length()[d::X];
+        indexTemporary = (indexTemporary-iP[d::X])/gSD::length()[d::X];
+        iP[d::Y] = indexTemporary%gSD::length()[d::Y];
+        indexTemporary = (indexTemporary-iP[d::Y])/gSD::length()[d::Y];
         iP[d::Z] = indexTemporary;
 
         std::getline(file, line);
@@ -129,7 +129,7 @@ namespace lbm {
   private:
     using Reader<T, NumberComponents, InputOutput::Generic, InputOutputType::Generic,
                  InputOutputDataFormat::Generic>::getFileName;
-    typedef Domain<DomainType::Global, partitionningT,
+    typedef Domain<DomainType::GlobalSpace, partitionningT,
                    MemoryLayout::Generic, NumberComponents> gNCD;
 
   public:
@@ -142,7 +142,7 @@ namespace lbm {
                                                         const unsigned int iteration) {
       INSTRUMENT_ON("Reader<T, NumberComponents, InputOutput::VTR>::readArray",3)
 
-      DynamicArray<T, Architecture::CPU> arrayR(gD::volume());
+      DynamicArray<T, Architecture::CPU> arrayR(gSD::volume());
 
       return arrayR;
     }
@@ -159,7 +159,7 @@ namespace lbm {
   private:
     using Reader<T, NumberComponents, InputOutput::Generic, InputOutputType::Generic,
                  InputOutputDataFormat::Generic>::getFileName;
-    typedef Domain<DomainType::Global, partitionningT,
+    typedef Domain<DomainType::GlobalSpace, partitionningT,
                    MemoryLayout::Generic, NumberComponents> gNCD;
 
   public:
@@ -172,7 +172,7 @@ namespace lbm {
                                                         const unsigned int iteration) {
       INSTRUMENT_ON("Reader<T, NumberComponents, InputOutput::VTR>::readArray",3)
 
-      DynamicArray<T, Architecture::CPU> arrayR(gD::volume());
+      DynamicArray<T, Architecture::CPU> arrayR(gSD::volume());
 
       return arrayR;
     }

@@ -128,8 +128,8 @@ namespace lbm {
 
     Field(const std::string& fieldName_in)
       : fieldName(fieldName_in)
-      , localArrayDevice(lD::volume()*NumberComponents)
-      , localArrayHost(lD::volume()*NumberComponents)
+      , localArrayDevice(lSD::volume()*NumberComponents)
+      , localArrayHost(lSD::volume()*NumberComponents)
     {}
 
     DynamicArray<T, Architecture::CPU>& localHostArray() {
@@ -154,7 +154,7 @@ namespace lbm {
 
 
   template <class T, unsigned int NumberComponents>
-  class Field<T, NumberComponents, DomainType::Global, Architecture::Generic, true>
+  class Field<T, NumberComponents, DomainType::GlobalSpace, Architecture::Generic, true>
     : public Field<T, NumberComponents, DomainType::Generic, Architecture::Generic, true> {
   public:
     using Field<T, NumberComponents, DomainType::Generic,
@@ -169,12 +169,12 @@ namespace lbm {
           const MathVector<T, NumberComponents>& vector_in)
       : Field<T, NumberComponents, DomainType::Generic,
               Architecture::Generic, true>(fieldName_in)
-      , globalArrayHost(gD::volume()*NumberComponents)
+      , globalArrayHost(gSD::volume()*NumberComponents)
     {
       MathVector<unsigned int, 3> iP;
-      for(unsigned int iZ = gD::start()[d::Z]; iZ < gD::end()[d::Z]; iZ++) {
-        for(unsigned int iY = gD::start()[d::Y]; iY < gD::end()[d::Y]; iY++) {
-          for(unsigned int iX = gD::start()[d::X]; iX < gD::end()[d::X]; iX++) {
+      for(unsigned int iZ = gSD::start()[d::Z]; iZ < gSD::end()[d::Z]; iZ++) {
+        for(unsigned int iY = gSD::start()[d::Y]; iY < gSD::end()[d::Y]; iY++) {
+          for(unsigned int iX = gSD::start()[d::X]; iX < gSD::end()[d::X]; iX++) {
             iP =  MathVector<unsigned int, 3>({iX, iY, iZ});
             setGlobalVector(iP, vector_in);
           }
@@ -186,9 +186,9 @@ namespace lbm {
           const T& value_in = (T) 0)
       : Field<T, NumberComponents, DomainType::Generic,
               Architecture::Generic, true>(fieldName_in)
-      , globalArrayHost(gD::volume()*NumberComponents)
+      , globalArrayHost(gSD::volume()*NumberComponents)
     {
-      for(unsigned int i = 0; i < gD::volume(); ++i) {
+      for(unsigned int i = 0; i < gSD::volume(); ++i) {
         setGlobalValue(i, value_in);
       }
     }
@@ -197,7 +197,7 @@ namespace lbm {
           const DynamicArray<T, Architecture::CPU>& globalArrayHost_in)
       : Field<T, NumberComponents, DomainType::Generic,
               Architecture::Generic, true>(fieldName_in)
-      , globalArrayHost(gD::volume()*NumberComponents)
+      , globalArrayHost(gSD::volume()*NumberComponents)
       {
       globalArrayHost.copyFrom(globalArrayHost_in);
     }
@@ -205,7 +205,7 @@ namespace lbm {
   protected:
     DynamicArray<T, Architecture::CPU> globalArrayHost;
 
-    typedef Domain<DomainType::Global, partitionningT,
+    typedef Domain<DomainType::GlobalSpace, partitionningT,
                    MemoryLayout::Generic, NumberComponents> gNCD;
 
     using Field<T, NumberComponents, DomainType::Generic,
@@ -270,7 +270,7 @@ namespace lbm {
 
 
   template <class T, unsigned int NumberComponents>
-  class Field<T, NumberComponents, DomainType::Local, Architecture::Generic, true>
+  class Field<T, NumberComponents, DomainType::LocalSpace, Architecture::Generic, true>
     : public Field<T, NumberComponents, DomainType::Generic, Architecture::Generic, true> {
   public:
     using Field<T, NumberComponents, DomainType::Generic,
@@ -288,9 +288,9 @@ namespace lbm {
       , globalArrayHost()
     {
       MathVector<unsigned int, 3> iP;
-      for(unsigned int iZ = lD::start()[d::Z]; iZ < lD::end()[d::Z]; ++iZ) {
-        for(unsigned int iY = lD::start()[d::Y]; iY < lD::end()[d::Y]; ++iY) {
-          for(unsigned int iX = lD::start()[d::X]; iX < lD::end()[d::X]; ++iX) {
+      for(unsigned int iZ = lSD::start()[d::Z]; iZ < lSD::end()[d::Z]; ++iZ) {
+        for(unsigned int iY = lSD::start()[d::Y]; iY < lSD::end()[d::Y]; ++iY) {
+          for(unsigned int iX = lSD::start()[d::X]; iX < lSD::end()[d::X]; ++iX) {
             iP =  MathVector<unsigned int, 3>({iX, iY, iZ});
             for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
               setLocalHostValue(iP, value_in, iC);
@@ -307,9 +307,9 @@ namespace lbm {
       , globalArrayHost()
     {
       MathVector<unsigned int, 3> iP;
-      for(unsigned int iZ = lD::start()[d::Z]; iZ < lD::end()[d::Z]; ++iZ) {
-        for(unsigned int iY = lD::start()[d::Y]; iY < lD::end()[d::Y]; ++iY) {
-          for(unsigned int iX = lD::start()[d::X]; iX < lD::end()[d::X]; ++iX) {
+      for(unsigned int iZ = lSD::start()[d::Z]; iZ < lSD::end()[d::Z]; ++iZ) {
+        for(unsigned int iY = lSD::start()[d::Y]; iY < lSD::end()[d::Y]; ++iY) {
+          for(unsigned int iX = lSD::start()[d::X]; iX < lSD::end()[d::X]; ++iX) {
             iP =  MathVector<unsigned int, 3>({iX, iY, iZ});
             setLocalHostVector(iP, vector_in);
           }
@@ -348,7 +348,7 @@ namespace lbm {
     DEVICE HOST
       T getLocalHostValue(const MathVector<unsigned int, 3>& iP,
                           const unsigned int iC = 0) const {
-      return localArrayHost[lD::getIndex(iP, iC)];
+      return localArrayHost[lSD::getIndex(iP, iC)];
     }
 
     DEVICE HOST
@@ -399,7 +399,7 @@ namespace lbm {
     void setLocalHostValue(const MathVector<unsigned int, 3>& iP,
                            const T value,
                            const unsigned int iC) {
-      localArrayHost[lD::getIndex(iP, iC)] = value;
+      localArrayHost[lSD::getIndex(iP, iC)] = value;
     }
 
     DEVICE HOST
@@ -473,7 +473,7 @@ namespace lbm {
     void setLocalValue(const unsigned int index,
                        const T value,
                        const unsigned int iC = 0) {
-      localArrayHost[lD::getIndex(index, iC)] = value;
+      localArrayHost[lSD::getIndex(index, iC)] = value;
     }
 
     DEVICE HOST
@@ -545,7 +545,7 @@ namespace lbm {
     void setLocalValue(const unsigned int index,
                        const T value,
                        const unsigned int iC = 0) {
-      localArrayDevice[lD::getIndex(index, iC)] = value;
+      localArrayDevice[lSD::getIndex(index, iC)] = value;
     }
 
     DEVICE HOST

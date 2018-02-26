@@ -45,10 +45,10 @@ namespace lbm {
                                const MathVector<unsigned int, 3>& iP) {
       INSTRUMENT_OFF("Moment<T>::calculateDensity",5)
 
-      density = f[hD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)];
+      density = f[hSD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)];
 
       for(unsigned int iQ = 1; iQ < L::dimQ; ++iQ) {
-        density += f[hD::getIndex(iP-uiL::celerity()[iQ], iQ)];
+        density += f[hSD::getIndex(iP-uiL::celerity()[iQ], iQ)];
       }
     }
 
@@ -60,11 +60,11 @@ namespace lbm {
       INSTRUMENT_OFF("Moment<T>::calculateVelocity",5)
 
        velocity = L::celerity()[0]
-        * f[hD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)];
+        * f[hSD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)];
 
        for(unsigned int iQ = 1; iQ < L::dimQ; ++iQ) {
          velocity += L::celerity()[iQ]
-           * f[hD::getIndex(iP-uiL::celerity()[iQ], iQ)];
+           * f[hSD::getIndex(iP-uiL::celerity()[iQ], iQ)];
        }
 
       velocity /= density_in;
@@ -76,12 +76,12 @@ namespace lbm {
                             const MathVector<unsigned int, 3>& iP) {
       INSTRUMENT_OFF("Moment<T>::calculateEntropy",5)
 
-      entropy = f[hD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)]
-        * log(f[hD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)]
+      entropy = f[hSD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)]
+        * log(f[hSD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)]
               /L::weight()[0]);
 
       for(unsigned int iQ = 1; iQ < L::dimQ; ++iQ) {
-        int indexPop_iQ = hD::getIndex(iP-uiL::celerity()[iQ], iQ);
+        int indexPop_iQ = hSD::getIndex(iP-uiL::celerity()[iQ], iQ);
         entropy += f[indexPop_iQ]
           * log(f[indexPop_iQ]/L::weight()[iQ]);
       }
