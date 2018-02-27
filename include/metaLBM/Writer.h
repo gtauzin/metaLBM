@@ -677,6 +677,29 @@ namespace lbm {
     }
 
 
+    template<DomainType initDomainType, Architecture architecture>
+    void writeDistribution(const Distribution<T, initDomainType,
+                           architecture> distribution) {
+      INSTRUMENT_ON("Writer<T, InputOutput::VTR, writerFileFromat>::writeField<NumberComponents>",3)
+
+        for(unsigned int iC = 0; iC < L::dimQ; ++iC) {
+          file << "<Attribute Name=\"" << distribution.fieldName+std::to_string(iC) << "\" "
+               << "AttributeType=\"Scalar\" Center=\"Node\">\n";
+          file << "<DataItem Dimensions=\""
+               << gSD::length()[d::X];
+
+          for(unsigned int iD = 1; iD < L::dimD; ++iD) {
+            file << " " << gSD::length()[iD];
+          }
+          file << "\" ";
+          file << "NumberType=\"Double\" Precision=\"8\" Format=\"HDF\">\n";
+          file << fileNameHDF5 << ":/" << distribution.fieldName+std::to_string(iC) << "\n";
+          file << "</DataItem>\n";
+          file << "</Attribute>\n";
+        }
+    }
+
+
   private:
     using Writer<T, InputOutput::Generic, InputOutputType::Generic,
                  inputOutputDataFormat>::file;

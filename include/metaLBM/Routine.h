@@ -368,7 +368,7 @@ namespace lbm {
 
           f_Previous.packLocal();
 
-          writer.writeField(f_Previous);
+          //writer.writeField(f_Previous);
         }
 
         writer.closeFile();

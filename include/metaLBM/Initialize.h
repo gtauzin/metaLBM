@@ -21,7 +21,7 @@ namespace lbm {
   Field<T, 1, DomainType::GlobalSpace, architecture, true> initGlobalDensity() {
     INSTRUMENT_ON("initGlobalDensity<T>",2)
 
-      Field<T, 1, DomainType::GlobalSpace, architecture::CPU, true> densityFieldR("density", initDensityValue);
+      Field<T, 1, DomainType::GlobalSpace, architecture, true> densityFieldR("density", initDensityValue);
 
     switch(initDensityT){
     case InitDensityType::Homogeneous: {

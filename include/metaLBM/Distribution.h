@@ -26,6 +26,7 @@ namespace lbm {
     DynamicArray<T, Architecture::GPU> haloArrayDevice;
 
   public:
+    using Field<T, L::dimQ, initDomainType, Architecture::CPU, true>::fieldName;
     using Field<T, L::dimQ, initDomainType, Architecture::CPU, true>::globalArray;
     using Field<T, L::dimQ, initDomainType, Architecture::CPU, true>::setGlobalField;
 
