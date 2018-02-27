@@ -10,12 +10,13 @@
 namespace lbm {
 
   template<class T, BoundaryType boundaryType, AlgorithmType algorithmType,
-           PartitionningType partitionningType, unsigned int Dimension>
+    PartitionningType partitionningType, Implementation implementation,
+    unsigned int Dimension>
   class Boundary {};
 
   template<class T, unsigned int Dimension>
   class Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                 PartitionningType::Generic, Dimension> {
+                 PartitionningType::Generic, Implementation::Generic, Dimension> {
   public:
     DEVICE HOST
     inline void applyX(const MathVector<unsigned int, 3>& iP,
@@ -89,14 +90,14 @@ namespace lbm {
   // class Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
   //                partitionningType, 1> {};
 
-  template<class T>
+  template<class T, PartitionningType partitionningType>
   class Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                 PartitionningType::Serial, 1>
+                 partitionningType, Implementation::Serial, 1>
     : public Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                      PartitionningType::Generic, 1> {
+                      PartitionningType::Generic, Implementation::Generic, 1> {
   private:
     using Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                   PartitionningType::Generic, 0>::applyX;
+                   partitionningType, Implementation::Generic, 1>::applyX;
   public:
     DEVICE HOST
     inline void operator()(const MathVector<unsigned int, 3>& iP,
@@ -107,9 +108,9 @@ namespace lbm {
 
   template<class T>
   class Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                 PartitionningType::OneD, 1>
+                 PartitionningType::OneD, Implementation::MPI, 1>
     : public Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                      PartitionningType::Generic, 0> {
+                      PartitionningType::Generic, Implementation::Generic, 1> {
   public:
     DEVICE HOST
     inline void operator()(const MathVector<unsigned int, 3>& iP,
@@ -125,16 +126,16 @@ namespace lbm {
   //                     PartitionningType::Generic, 0> {
   // };
 
-  template<class T>
+  template<class T, PartitionningType partitionningType>
   class Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                 PartitionningType::Serial, 2>
+                 partitionningType, Implementation::Serial, 2>
     : public Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                      PartitionningType::Generic, 0> {
+                      PartitionningType::Generic, Implementation::Generic, 2> {
   private:
     using Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                   PartitionningType::Generic, 0>::applyX;
+                   PartitionningType::Generic, Implementation::Generic, 2>::applyX;
     using Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                   PartitionningType::Generic, 0>::applyY;
+                   PartitionningType::Generic, Implementation::Generic, 2>::applyY;
 
   public:
     DEVICE HOST
@@ -147,12 +148,12 @@ namespace lbm {
 
   template<class T>
   class Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                 PartitionningType::OneD, 2>
-    : public Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                      PartitionningType::Generic, 0> {
+                 PartitionningType::OneD, Implementation::MPI, 2>
+ : public Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
+                      PartitionningType::Generic, Implementation::Generic, 2> {
   private:
     using Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                   PartitionningType::Generic, 0>::applyY;
+                   PartitionningType::Generic, Implementation::Generic, 2>::applyY;
 
   public:
     DEVICE HOST
@@ -164,9 +165,9 @@ namespace lbm {
 
   template<class T>
   class Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                 PartitionningType::TwoD, 2>
+                 PartitionningType::TwoD, Implementation::MPI, 2>
     : public Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                      PartitionningType::Generic, 0> {
+                      PartitionningType::Generic, Implementation::Generic, 2> {
   public:
     DEVICE HOST
     inline void operator()(const MathVector<unsigned int, 3>& iP,
@@ -175,18 +176,18 @@ namespace lbm {
   };
 
 
-  template<class T>
+  template<class T, PartitionningType partitionningType>
   class Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                 PartitionningType::Serial, 3>
+                 partitionningType, Implementation::Serial, 3>
     : public Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                      PartitionningType::Generic, 0> {
+                      PartitionningType::Generic, Implementation::Generic, 3> {
   private:
     using Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                   PartitionningType::Generic, 0>::applyX;
+                   PartitionningType::Generic, Implementation::Generic, 3>::applyX;
     using Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                   PartitionningType::Generic, 0>::applyY;
+                   PartitionningType::Generic, Implementation::Generic, 3>::applyY;
     using Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                   PartitionningType::Generic, 0>::applyZ;
+                   PartitionningType::Generic, Implementation::Generic, 3>::applyZ;
 
   public:
     DEVICE HOST
@@ -200,14 +201,14 @@ namespace lbm {
 
   template<class T>
   class Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                 PartitionningType::OneD, 3>
+                 PartitionningType::OneD, Implementation::MPI, 3>
     : public Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                      PartitionningType::Generic, 0> {
+                      PartitionningType::Generic, Implementation::Generic, 3> {
   private:
     using Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                   PartitionningType::Generic, 0>::applyY;
+                   PartitionningType::Generic, Implementation::Generic, 3>::applyY;
     using Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                   PartitionningType::Generic, 0>::applyZ;
+                   PartitionningType::Generic, Implementation::Generic, 3>::applyZ;
 
   public:
     DEVICE HOST
@@ -220,12 +221,12 @@ namespace lbm {
 
   template<class T>
   class Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                 PartitionningType::TwoD, 3>
+                 PartitionningType::TwoD, Implementation::MPI, 3>
     : public Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                      PartitionningType::Generic, 0> {
+                      PartitionningType::Generic, Implementation::Generic, 3> {
   private:
     using Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                   PartitionningType::Generic, 0>::applyZ;
+                   PartitionningType::Generic, Implementation::Generic, 3>::applyZ;
 
   public:
     DEVICE HOST
@@ -235,11 +236,12 @@ namespace lbm {
     }
   };
 
+
   template<class T>
   class Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                 PartitionningType::ThreeD, 3>
+                 PartitionningType::ThreeD, Implementation::MPI, 3>
     : public Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                      PartitionningType::Generic, 0> {
+                      PartitionningType::Generic, Implementation::Generic, 3> {
   public:
     DEVICE HOST
     inline void operator()(const MathVector<unsigned int, 3>& iP,
@@ -248,13 +250,12 @@ namespace lbm {
   };
 
 
-
-
-  template<class T, AlgorithmType algorithmType>
+  template<class T, AlgorithmType algorithmType, PartitionningType partitionningType,
+           Implementation implementation, unsigned int Dimension>
   class Boundary<T, BoundaryType::BounceBack_Halfway, algorithmType,
-                 PartitionningType::Generic, 0>
+                 partitionningType, implementation, Dimension>
     : public Boundary<T, BoundaryType::Generic, algorithmType,
-                      PartitionningType::Generic, 0> {
+                      PartitionningType::Generic, Implementation::Generic, Dimension> {
   protected:
 
   public:
@@ -262,11 +263,13 @@ namespace lbm {
 
   };
 
-  template<class T, AlgorithmType algorithmType>
+
+  template<class T, AlgorithmType algorithmType, PartitionningType partitionningType,
+           Implementation implementation, unsigned int Dimension>
   class Boundary<T, BoundaryType::Entropic, algorithmType,
-                 PartitionningType::Generic, 0>
+                 partitionningType, implementation, Dimension>
     : public Boundary<T, BoundaryType::Generic, algorithmType,
-                      PartitionningType::Generic, 0> {
+                      PartitionningType::Generic, Implementation::Generic, Dimension> {
   protected:
 
   public:

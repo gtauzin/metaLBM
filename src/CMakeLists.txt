@@ -2,8 +2,5 @@ include_directories("${PROJECT_SOURCE_DIR}/src")
 add_executable(cpulbm main.cpp)
 target_link_libraries(cpulbm PRIVATE metalbm)
 
-add_executable(gpulbm main_mpi.cu)
-target_link_libraries(gpulbm PRIVATE metalbm)
-
-add_executable(nvshmemlbm main_shmem.cu)
+add_executable(gpulbm main.cu)
 target_link_libraries(gpulbm PRIVATE metalbm)

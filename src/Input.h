@@ -33,6 +33,7 @@ namespace lbm {
 
   constexpr AlgorithmType algorithmT = AlgorithmType::Pull;
   constexpr PartitionningType partitionningT = PartitionningType::OneD;
+  constexpr Implementation implementationT = Implementation::MPI;
   constexpr MemoryLayout memoryL = MemoryLayout::SoA;
 
   constexpr dataT relaxationTime = 0.65;

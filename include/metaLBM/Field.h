@@ -489,52 +489,52 @@ namespace lbm {
 
   template <class T, unsigned int NumberComponents, DomainType initDomainType>
   class Field<T, NumberComponents, initDomainType, Architecture::GPU, true>
-    : public Field<T, NumberComponents, initDomainType, Architecture::CPU, true> {
+    : public Field<T, NumberComponents, initDomainType, Architecture::Generic, true> {
   protected:
     using Field<T, NumberComponents, initDomainType,
-                Architecture::CPU, true>::localArrayDevice;
+                Architecture::Generic, true>::localArrayDevice;
 
     using Field<T, NumberComponents, initDomainType,
-                Architecture::CPU, true>::globalArrayHost;
+                Architecture::Generic, true>::globalArrayHost;
     using Field<T, NumberComponents, initDomainType,
-                Architecture::CPU, true>::localArrayHost;
+                Architecture::Generic, true>::localArrayHost;
 
   public:
     using Field<T, NumberComponents, initDomainType,
-                Architecture::CPU, true>::numberComponents;
+                Architecture::Generic, true>::numberComponents;
     using Field<T, NumberComponents, initDomainType,
-                Architecture::CPU, true>::IsWritten;
+                Architecture::Generic, true>::IsWritten;
 
     using Field<T, NumberComponents, initDomainType,
-                Architecture::CPU, true>::fieldName;
+                Architecture::Generic, true>::fieldName;
 
     using Field<T, NumberComponents, initDomainType,
-                Architecture::CPU, true>::Field;
+                Architecture::Generic, true>::Field;
 
     using Field<T, NumberComponents, initDomainType,
-                Architecture::CPU, true>::globalData;
+                Architecture::Generic, true>::globalData;
     using Field<T, NumberComponents, initDomainType,
-                Architecture::CPU, true>::globalArray;
+                Architecture::Generic, true>::globalArray;
     using Field<T, NumberComponents, initDomainType,
-                Architecture::CPU, true>::setGlobalField;
+                Architecture::Generic, true>::setGlobalField;
     using Field<T, NumberComponents, initDomainType,
-                Architecture::CPU, true>::setGlobalValue;
+                Architecture::Generic, true>::setGlobalValue;
     using Field<T, NumberComponents, initDomainType,
-                Architecture::CPU, true>::setGlobalVector;
+                Architecture::Generic, true>::setGlobalVector;
     using Field<T, NumberComponents, initDomainType,
-                Architecture::CPU, true>::getGlobalValue;
+                Architecture::Generic, true>::getGlobalValue;
     using Field<T, NumberComponents, initDomainType,
-                Architecture::CPU, true>::getGlobalVector;
+                Architecture::Generic, true>::getGlobalVector;
 
     using Field<T, NumberComponents, initDomainType,
-                Architecture::CPU, true>::localHostArray;
+                Architecture::Generic, true>::localHostArray;
     using Field<T, NumberComponents, initDomainType,
-                Architecture::CPU, true>::localDeviceArray;
+                Architecture::Generic, true>::localDeviceArray;
 
     using Field<T, NumberComponents, initDomainType,
-                Architecture::CPU, true>::localHostData;
+                Architecture::Generic, true>::localHostData;
     using Field<T, NumberComponents, initDomainType,
-                Architecture::CPU, true>::localDeviceData;
+                Architecture::Generic, true>::localDeviceData;
 
     DEVICE HOST
     T * RESTRICT localComputedData() {

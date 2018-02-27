@@ -21,7 +21,7 @@
 namespace lbm {
 
   template<class T, AlgorithmType algorithmType, DomainType initDomainType,
-    Architecture architecture>
+    Architecture architecture, Implementation implementation>
   class Algorithm {
   public:
     HOST DEVICE
@@ -30,8 +30,9 @@ namespace lbm {
 
 
   template<class T, DomainType initDomainType,
-           Architecture architecture>
-  class Algorithm<T, AlgorithmType::Generic, initDomainType, architecture> {
+           Architecture architecture, Implementation implementation>
+    class Algorithm<T, AlgorithmType::Generic, initDomainType,
+    architecture, implementation> {
   protected:
 
     T * RESTRICT localDensity_Ptr;
@@ -43,7 +44,7 @@ namespace lbm {
     T * RESTRICT haloDistribution_Next_Ptr;
 
     Communication<T, latticeT, algorithmT, memoryL,
-                  partitionningT, architecture, L::dimD> communication;
+                  partitionningT, implementation, L::dimD> communication;
     Collision_ collision;
     Moment<T> moment;
 
@@ -63,7 +64,7 @@ namespace lbm {
               Distribution<T, initDomainType, architecture>& f_Previous_in,
               Distribution<T, initDomainType, architecture>& f_Next_in,
               Communication<T, latticeT, algorithmT, memoryL,
-              partitionningT, architecture, L::dimD>& communication_in)
+              partitionningT, implementation, L::dimD>& communication_in)
       : localDensity_Ptr(densityField_in.localComputedData())
       , localVelocity_Ptr(velocityField_in.localComputedData())
       , localForce_Ptr(forceField_in.localComputedData())
@@ -115,33 +116,35 @@ namespace lbm {
 
 
   template<class T, DomainType initDomainType,
-           Architecture architecture>
-    class Algorithm<T, AlgorithmType::Pull, initDomainType, architecture>
-    : public Algorithm<T, AlgorithmType::Generic, initDomainType, architecture> {
+           Architecture architecture, Implementation implementation>
+    class Algorithm<T, AlgorithmType::Pull, initDomainType,
+                    architecture, implementation>
+    : public Algorithm<T, AlgorithmType::Generic, initDomainType,
+                       architecture, implementation> {
   private:
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture>::localDensity_Ptr;
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture>::localVelocity_Ptr;
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture>::localForce_Ptr;
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture>::localAlpha_Ptr;
+    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::localDensity_Ptr;
+    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::localVelocity_Ptr;
+    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::localForce_Ptr;
+    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::localAlpha_Ptr;
 
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture>::haloDistribution_Previous_Ptr;
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture>::haloDistribution_Next_Ptr;
+    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::haloDistribution_Previous_Ptr;
+    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::haloDistribution_Next_Ptr;
 
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture>::communication;
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture>::collision;
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture>::moment;
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture>::computationLocal;
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture>::computationHalo;
+    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::communication;
+    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::collision;
+    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::moment;
+    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::computationLocal;
+    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::computationHalo;
 
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture>::dtComputation;
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture>::dtCommunication;
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture>::dtTotal;
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture>::isWritten;
+    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::dtComputation;
+    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::dtCommunication;
+    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::dtTotal;
+    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::isWritten;
 
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture>::storeLocalFields;
+    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::storeLocalFields;
 
     Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                     partitionningT, L::dimD> periodicBoundary;
+             partitionningT, implementation, L::dimD> periodicBoundary;
 
   public:
     Algorithm(Field<T, 1, initDomainType, architecture, writeDensity>& densityField_in,
@@ -151,12 +154,12 @@ namespace lbm {
               Distribution<T, initDomainType, architecture>& f_Previous_in,
               Distribution<T, initDomainType, architecture>& f_Next_in,
               Communication<T, latticeT, algorithmT, memoryL,
-              partitionningT, architecture, L::dimD>& communication_in)
+              partitionningT, implementation, L::dimD>& communication_in)
       : Algorithm<T, AlgorithmType::Generic, initDomainType,
-                  architecture>(densityField_in, velocityField_in,
-                                forceField_in, alphaField_in,
-                                f_Previous_in, f_Next_in,
-                                communication_in)
+                  architecture, implementation>(densityField_in, velocityField_in,
+                                                forceField_in, alphaField_in,
+                                                f_Previous_in, f_Next_in,
+                                                communication_in)
     {}
 
     HOST DEVICE
@@ -208,11 +211,11 @@ namespace lbm {
     }
 
     using Algorithm<T, AlgorithmType::Generic, initDomainType,
-                    architecture>::getCommunicationTime;
+                    architecture, implementation>::getCommunicationTime;
     using Algorithm<T, AlgorithmType::Generic, initDomainType,
-                    architecture>::getComputationTime;
+                    architecture, implementation>::getComputationTime;
     using Algorithm<T, AlgorithmType::Generic, initDomainType,
-                    architecture>::getTotalTime;
+                    architecture, implementation>::getTotalTime;
   };
 
 }

@@ -17,14 +17,15 @@
 
 namespace lbm {
 
-  template<class T, Architecture architecture, InputOutputType inputOutputType>
+  template<class T, Architecture architecture, Implementation implementation,
+           InputOutputType inputOutputType>
   class Routine {};
 
-  template<class T, Architecture architecture>
-  class Routine<T, architecture, InputOutputType::Generic> {
+  template<class T, Architecture architecture, Implementation implementation>
+  class Routine<T, architecture, implementation, InputOutputType::Generic> {
   protected:
     Communication<T, latticeT, algorithmT,
-      memoryL, partitionningT, architecture, L::dimD> communication;
+      memoryL, partitionningT, implementation, L::dimD> communication;
 
     Writer_ writer;
 
@@ -99,9 +100,9 @@ namespace lbm {
   };
 
 
-  template<class T, Architecture architecture>
-  class Routine<T, architecture, InputOutputType::Serial>
-    : public Routine<T, architecture, InputOutputType::Generic> {
+  template<class T, Architecture architecture, Implementation implementation>
+  class Routine<T, architecture, implementation, InputOutputType::Serial>
+    : public Routine<T, architecture, implementation, InputOutputType::Generic> {
   private:
     Field<T, 1, DomainType::GlobalSpace, architecture, writeDensity> densityField;
     Field<T, L::dimD, DomainType::GlobalSpace, architecture, writeVelocity> velocityField;
@@ -110,25 +111,26 @@ namespace lbm {
 
     Distribution<T, DomainType::GlobalSpace, architecture> f_Previous;
     Distribution<T, DomainType::GlobalSpace, architecture> f_Next;
-    Algorithm<dataT, algorithmT, DomainType::GlobalSpace, arch> algorithm;
+    Algorithm<dataT, algorithmT, DomainType::GlobalSpace, arch, implementation> algorithm;
 
-    using Routine<T, architecture, InputOutputType::Generic>::communication;
-    using Routine<T, architecture, InputOutputType::Generic>:: initialMass;
-    using Routine<T, architecture, InputOutputType::Generic>:: finalMass;
-    using Routine<T, architecture, InputOutputType::Generic>:: differenceMass;
-    using Routine<T, architecture, InputOutputType::Generic>:: computationTime;
-    using Routine<T, architecture, InputOutputType::Generic>:: communicationTime;
-    using Routine<T, architecture, InputOutputType::Generic>:: writeTime;
-    using Routine<T, architecture, InputOutputType::Generic>:: totalTime;
+    using Routine<T, architecture, implementation, InputOutputType::Generic>::communication;
+    using Routine<T, architecture, implementation, InputOutputType::Generic>:: initialMass;
+    using Routine<T, architecture, implementation, InputOutputType::Generic>:: finalMass;
+    using Routine<T, architecture, implementation, InputOutputType::Generic>:: differenceMass;
+    using Routine<T, architecture, implementation, InputOutputType::Generic>:: computationTime;
+    using Routine<T, architecture, implementation, InputOutputType::Generic>:: communicationTime;
+    using Routine<T, architecture, implementation, InputOutputType::Generic>:: writeTime;
+    using Routine<T, architecture, implementation, InputOutputType::Generic>:: totalTime;
 
-    using Routine<T, architecture, InputOutputType::Generic>::writer;
+    using Routine<T, architecture, implementation, InputOutputType::Generic>::writer;
 
   public:
     Routine(const MathVector<int, 3>& rankMPI_in,
             const MathVector<int, 3>& sizeMPI_in,
             const std::string& processorName_in)
-      :  Routine<T, architecture, InputOutputType::Generic>(rankMPI_in, sizeMPI_in,
-                                                            processorName_in)
+      :  Routine<T, architecture, implementation,
+                 InputOutputType::Generic>(rankMPI_in, sizeMPI_in,
+                                           processorName_in)
       , densityField(initGlobalDensity<T>())
       , velocityField(initGlobalVelocity<T>())
       , forceField("force")
@@ -174,8 +176,8 @@ namespace lbm {
     }
 
   protected:
-    using Routine<T, architecture, InputOutputType::Generic>::printInputs;
-    using Routine<T, architecture, InputOutputType::Generic>::printOutputs;
+    using Routine<T, architecture, implementation, InputOutputType::Generic>::printInputs;
+    using Routine<T, architecture, implementation, InputOutputType::Generic>::printOutputs;
 
     void initializeLocalFields() {
       INSTRUMENT_ON("Routine<T>::initializeLocalFields",2)
@@ -257,9 +259,9 @@ namespace lbm {
   };
 
 
-  template<class T, Architecture architecture>
-  class Routine<T, architecture, InputOutputType::Parallel>
-    : public Routine<T, architecture, InputOutputType::Generic> {
+  template<class T, Architecture architecture, Implementation implementation>
+  class Routine<T, architecture, implementation, InputOutputType::Parallel>
+    : public Routine<T, architecture, implementation, InputOutputType::Generic> {
   private:
     Field<T, 1, DomainType::LocalSpace, architecture, writeDensity> densityField;
     Field<T, L::dimD, DomainType::LocalSpace, architecture, writeVelocity> velocityField;
@@ -268,25 +270,26 @@ namespace lbm {
 
     Distribution<T, DomainType::LocalSpace, architecture> f_Previous;
     Distribution<T, DomainType::LocalSpace, architecture> f_Next;
-    Algorithm<dataT, algorithmT, DomainType::LocalSpace, arch> algorithm;
+    Algorithm<dataT, algorithmT, DomainType::LocalSpace, arch, implementation> algorithm;
 
-    using Routine<T, architecture, InputOutputType::Generic>::communication;
-    using Routine<T, architecture, InputOutputType::Generic>:: initialMass;
-    using Routine<T, architecture, InputOutputType::Generic>:: finalMass;
-    using Routine<T, architecture, InputOutputType::Generic>:: differenceMass;
-    using Routine<T, architecture, InputOutputType::Generic>:: computationTime;
-    using Routine<T, architecture, InputOutputType::Generic>:: communicationTime;
-    using Routine<T, architecture, InputOutputType::Generic>:: writeTime;
-    using Routine<T, architecture, InputOutputType::Generic>:: totalTime;
+    using Routine<T, architecture, implementation, InputOutputType::Generic>::communication;
+    using Routine<T, architecture, implementation, InputOutputType::Generic>:: initialMass;
+    using Routine<T, architecture, implementation, InputOutputType::Generic>:: finalMass;
+    using Routine<T, architecture, implementation, InputOutputType::Generic>:: differenceMass;
+    using Routine<T, architecture, implementation, InputOutputType::Generic>:: computationTime;
+    using Routine<T, architecture, implementation, InputOutputType::Generic>:: communicationTime;
+    using Routine<T, architecture, implementation, InputOutputType::Generic>:: writeTime;
+    using Routine<T, architecture, implementation, InputOutputType::Generic>:: totalTime;
 
-    using Routine<T, architecture, InputOutputType::Generic>::writer;
+    using Routine<T, architecture, implementation, InputOutputType::Generic>::writer;
 
   public:
     Routine(const MathVector<int, 3>& rankMPI_in,
             const MathVector<int, 3>& sizeMPI_in,
             const std::string& processorName_in)
-      :  Routine<T, architecture, InputOutputType::Generic>(rankMPI_in, sizeMPI_in,
-                                                            processorName_in)
+      :  Routine<T, architecture, implementation,
+                 InputOutputType::Generic>(rankMPI_in, sizeMPI_in,
+                                           processorName_in)
       , densityField(initLocalDensity<T>())
       , velocityField(initLocalVelocity<T>())
       , forceField("force")
@@ -332,8 +335,8 @@ namespace lbm {
     }
 
   protected:
-    using Routine<T, architecture, InputOutputType::Generic>::printInputs;
-    using Routine<T, architecture, InputOutputType::Generic>::printOutputs;
+    using Routine<T, architecture, implementation, InputOutputType::Generic>::printInputs;
+    using Routine<T, architecture, implementation, InputOutputType::Generic>::printOutputs;
 
     void initializeLocalFields() {
       INSTRUMENT_ON("Routine<T>::initializeLocalFields",2)

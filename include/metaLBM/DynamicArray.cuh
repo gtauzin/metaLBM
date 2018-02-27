@@ -8,6 +8,15 @@
 #include "Commons.h"
 #include "Options.h"
 
+#ifdef USE_NVSHMEM
+  #define MALLOC_GPU shmem_malloc
+  #define FREE_GPU shmem_free
+#else
+  #define MALLOC_GPU cudaMalloc
+  #define FREE_GPU cudaFree
+#endif
+
+
 namespace lbm {
 
   template<class U>
@@ -37,7 +46,7 @@ namespace lbm {
                     MathVector<unsigned int, 3>{{numberElements_in}})
 
     {
-      CUDA_CALL( cudaMalloc((void**)&dArrayPtr, numberElements*sizeof(U)); )
+      CUDA_CALL( MALLOC_GPU((void**)&dArrayPtr, numberElements*sizeof(U)); )
       computation.Do(*this, value_in);
     }
 
@@ -47,7 +56,7 @@ namespace lbm {
                     MathVector<unsigned int, 3>{{numberElements}})
 
     {
-      CUDA_CALL( cudaMalloc((void**)&dArrayPtr, dArray_in.size()*sizeof(U)); )
+      CUDA_CALL( MALLOC_GPU((void**)&dArrayPtr, dArray_in.size()*sizeof(U)); )
       copyFrom(dArray_in);
     }
 
@@ -57,13 +66,13 @@ namespace lbm {
       , computation(MathVector<unsigned int, 3>{{0}},
                     MathVector<unsigned int, 3>{{numberElements}})
     {
-      CUDA_CALL( cudaMalloc((void**)&dArrayPtr, numberElements*sizeof(U)); )
+      CUDA_CALL( MALLOC_GPU((void**)&dArrayPtr, numberElements*sizeof(U)); )
       copyFrom(dArray_in);
     }
 
     ~DynamicArray(){
       if(dArrayPtr) {
-        CUDA_CALL( cudaFree(dArrayPtr); )
+        CUDA_CALL( FREE_GPU(dArrayPtr); )
         dArrayPtr = NULL;
       }
     }

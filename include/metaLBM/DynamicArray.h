@@ -8,11 +8,11 @@
 #include "Options.h"
 
 #ifdef USE_FFTW
-  #define MALLOC fftw_malloc
-  #define FREE fftw_free
+  #define MALLOC_CPU fftw_malloc
+  #define FREE_CPU fftw_free
 #else
-  #define MALLOC malloc
-  #define FREE free
+  #define MALLOC_CPU malloc
+  #define FREE_CPU free
 #endif
 
 namespace lbm {
@@ -99,7 +99,7 @@ namespace lbm {
                     MathVector<unsigned int, 3>({numberElements, 0, 0}))
 
     {
-      dArrayPtr = (U*)MALLOC(numberElements_in*sizeof(U));
+      dArrayPtr = (U*)MALLOC_CPU(numberElements_in*sizeof(U));
 
       computation.Do(*this, value_in);
     }
@@ -110,13 +110,13 @@ namespace lbm {
                   MathVector<unsigned int, 3>{{numberElements}})
 
     {
-      dArrayPtr = (U*)malloc(dArray_in.size()*sizeof(U));
+      dArrayPtr = (U*)MALLOC_CPU(dArray_in.size()*sizeof(U));
       copyFrom(dArray_in);
     }
 
     ~DynamicArray() {
       if(dArrayPtr) {
-        FREE(dArrayPtr);
+        FREE_CPU(dArrayPtr);
         dArrayPtr = NULL;
       }
     }

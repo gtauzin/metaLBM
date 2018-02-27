@@ -9,13 +9,12 @@ namespace lbm {
   enum class LatticeType {Generic, D1Q3, D2Q5, D2Q9, D2Q37, D3Q15, D3Q19, D3Q27};
 
   enum class MemoryLayout {Generic, Default, SoA, AoS};
-
-  enum class PartitionningType {Generic, Serial, OneD, TwoD, ThreeD};
+  enum class Implementation {Generic, Serial, MPI, NVSHMEM_OUT, NVSHMEM_IN};
+  enum class PartitionningType {Generic, OneD, TwoD, ThreeD};
+  enum class Architecture {Generic, CPU, GPU};
 
   enum class DomainType {Generic, GlobalSpace, LocalSpace, HaloSpace, BufferXSpace,
       GlobalFourier, LocalFourier};
-
-  enum class Architecture {Generic, CPU, GPU, NVSHMEM};
 
   enum class AlgorithmType {Generic, Pull};
 
@@ -41,7 +40,6 @@ namespace lbm {
   enum class InputOutput {Generic, None, DAT, VTR, HDF5, XDMF};
   enum class InputOutputDataFormat {Generic, ascii, binary};
   enum class InputOutputType {Generic, Serial, Parallel};
-
 }
 
 #endif // OPTIONS_H

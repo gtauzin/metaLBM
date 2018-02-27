@@ -11,11 +11,12 @@
 #include "Helpers.h"
 
 namespace lbm {
+
   template <class T, ForcingSchemeType forcingSchemeType>
-    class ForcingScheme {};
+  class ForcingScheme {};
 
   template <class T>
-    class ForcingScheme<T, ForcingSchemeType::Generic> {
+  class ForcingScheme<T, ForcingSchemeType::Generic> {
   protected:
     T tau;
     T density;
@@ -63,8 +64,9 @@ namespace lbm {
 
   };
 
+
   template <class T>
-    class ForcingScheme<T, ForcingSchemeType::Guo>
+  class ForcingScheme<T, ForcingSchemeType::Guo>
     : public ForcingScheme<T, ForcingSchemeType::Generic> {
   private:
     using ForcingScheme<T, ForcingSchemeType::Generic>::tau;
@@ -106,8 +108,9 @@ namespace lbm {
 
   };
 
+
   template <class T>
-    class ForcingScheme<T, ForcingSchemeType::ShanChen>
+  class ForcingScheme<T, ForcingSchemeType::ShanChen>
     : public ForcingScheme<T, ForcingSchemeType::Generic> {
   private:
     using ForcingScheme<T, ForcingSchemeType::Generic>::tau;
@@ -132,7 +135,6 @@ namespace lbm {
       return velocity + tau/density * force;
     }
 
-
     #pragma omp declare simd
     DEVICE HOST
     inline T calculateCollisionSource(const MathVector<T, L::dimD>& force,
@@ -141,10 +143,12 @@ namespace lbm {
 
       return 0.0;
     }
+
   };
 
+
   template <class T>
-    class ForcingScheme<T, ForcingSchemeType::ExactDifferenceMethod>
+  class ForcingScheme<T, ForcingSchemeType::ExactDifferenceMethod>
     : public ForcingScheme<T, ForcingSchemeType::Generic> {
   private:
     using ForcingScheme<T, ForcingSchemeType::Generic>::density;
