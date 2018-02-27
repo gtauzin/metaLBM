@@ -131,14 +131,16 @@ namespace lbm {
       :  Routine<T, architecture, implementation,
                  InputOutputType::Generic>(rankMPI_in, sizeMPI_in,
                                            processorName_in)
-      , densityField(initGlobalDensity<T>())
-      , velocityField(initGlobalVelocity<T>())
+      , densityField(initGlobalDensity<T, architecture>())
+      , velocityField(initGlobalVelocity<T, architecture>())
       , forceField("force")
-      , alphaField(initGlobalAlpha<T>())
-      , f_Previous("previousDistribution", initGlobalDistribution<T>(densityField,
-                                                                     velocityField))
-      , f_Next("nextDistribution", initGlobalDistribution<T>(densityField,
-                                                            velocityField))
+      , alphaField(initGlobalAlpha<T, architecture>())
+      , f_Previous("previousDistribution", initGlobalDistribution<T, architecture>
+                   (densityField,
+                    velocityField))
+      , f_Next("nextDistribution", initGlobalDistribution<T, architecture>
+               (densityField,
+                velocityField))
       , algorithm(densityField, velocityField, forceField, alphaField,
                   f_Previous, f_Next, communication)
     {}
@@ -290,14 +292,16 @@ namespace lbm {
       :  Routine<T, architecture, implementation,
                  InputOutputType::Generic>(rankMPI_in, sizeMPI_in,
                                            processorName_in)
-      , densityField(initLocalDensity<T>())
-      , velocityField(initLocalVelocity<T>())
+      , densityField(initLocalDensity<T, architecture>())
+      , velocityField(initLocalVelocity<T, architecture>())
       , forceField("force")
-      , alphaField(initLocalAlpha<T>())
-      , f_Previous("previousDistribution", initLocalDistribution<T>(densityField,
-                                                                     velocityField))
-      , f_Next("nextDistribution", initLocalDistribution<T>(densityField,
-                                                             velocityField))
+      , alphaField(initLocalAlpha<T, architecture>())
+      , f_Previous("previousDistribution",
+                   initLocalDistribution<T, architecture>(densityField,
+                                                          velocityField))
+      , f_Next("nextDistribution", initLocalDistribution<T, architecture>
+               (densityField,
+                velocityField))
       , algorithm(densityField, velocityField, forceField, alphaField,
                   f_Previous, f_Next, communication)
     {}

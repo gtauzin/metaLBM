@@ -17,11 +17,11 @@
 
 namespace lbm {
 
-  template<class T>
-  Field<T, 1, DomainType::GlobalSpace, Architecture::CPU, true> initGlobalDensity() {
+  template<class T, Architecture architecture>
+  Field<T, 1, DomainType::GlobalSpace, architecture, true> initGlobalDensity() {
     INSTRUMENT_ON("initGlobalDensity<T>",2)
 
-      Field<T, 1, DomainType::GlobalSpace, Architecture::CPU, true> densityFieldR("density", initDensityValue);
+      Field<T, 1, DomainType::GlobalSpace, architecture::CPU, true> densityFieldR("density", initDensityValue);
 
     switch(initDensityT){
     case InitDensityType::Homogeneous: {
@@ -44,14 +44,14 @@ namespace lbm {
     return densityFieldR;
   }
 
-  template<class T>
-  Field<T, L::dimD, DomainType::GlobalSpace, Architecture::CPU, true> initGlobalVelocity() {
+  template<class T, Architecture architecture>
+  Field<T, L::dimD, DomainType::GlobalSpace, architecture, true> initGlobalVelocity() {
     INSTRUMENT_ON("initGlobalVelocity<T>",2)
 
     MathVector<T, L::dimD> initVelocityVectorProjected{{ (T) 0 }};
     initVelocityVectorProjected = Project<T, T, L::dimD>::Do(initVelocityVector);
 
-    Field<T, L::dimD, DomainType::GlobalSpace, Architecture::CPU, true> velocityFieldR("velocity",
+    Field<T, L::dimD, DomainType::GlobalSpace, architecture, true> velocityFieldR("velocity",
                                            initVelocityVectorProjected);
 
     switch(initVelocityT){
@@ -66,17 +66,17 @@ namespace lbm {
     return velocityFieldR;
   }
 
-  template<class T>
-  Field<T, 1, DomainType::GlobalSpace, Architecture::CPU, true> initGlobalAlpha() {
+  template<class T, Architecture architecture>
+  Field<T, 1, DomainType::GlobalSpace, architecture, true> initGlobalAlpha() {
     INSTRUMENT_ON("initGlobalAlpha<T>",2)
 
-    Field<T, 1, DomainType::GlobalSpace, Architecture::CPU, true> alphaFieldR("alpha", (T) 2);
+    Field<T, 1, DomainType::GlobalSpace, architecture, true> alphaFieldR("alpha", (T) 2);
     return alphaFieldR;
   }
 
-  template<class T>
-  DynamicArray<T, Architecture::CPU> initGlobalDistributionStart(const Field<T, 1, DomainType::GlobalSpace, Architecture::CPU, true>& densityField,
-                                                                 const Field<T, L::dimD, DomainType::GlobalSpace, Architecture::CPU, true>& velocityField) {
+  template<class T, Architecture architecture>
+  DynamicArray<T, Architecture::CPU> initGlobalDistributionStart(const Field<T, 1, DomainType::GlobalSpace, architecture, true>& densityField,
+                                                                 const Field<T, L::dimD, DomainType::GlobalSpace, architecture, true>& velocityField) {
     INSTRUMENT_ON("initGlobalDistributionStart<T>",2)
 
     DynamicArray<T, Architecture::CPU> distributionR(L::dimQ*gSD::volume());
@@ -111,9 +111,9 @@ namespace lbm {
   }
 
 
-  template<class T>
-    DynamicArray<T, Architecture::CPU> initGlobalDistribution(const Field<T, 1, DomainType::GlobalSpace, Architecture::CPU, true>& densityField,
-                                                              const Field<T, L::dimD, DomainType::GlobalSpace, Architecture::CPU, true>& velocityField) {
+  template<class T, Architecture architecture>
+    DynamicArray<T, Architecture::CPU> initGlobalDistribution(const Field<T, 1, DomainType::GlobalSpace, architecture, true>& densityField,
+                                                              const Field<T, L::dimD, DomainType::GlobalSpace, architecture, true>& velocityField) {
     INSTRUMENT_ON("initGlobalDistribution<T>",2)
 
     if(startIteration == 0) {
@@ -127,12 +127,12 @@ namespace lbm {
 
 
 
-  template<class T>
-  Field<T, 1, DomainType::LocalSpace, Architecture::CPU, true> initLocalDensity() {
+  template<class T, Architecture architecture>
+  Field<T, 1, DomainType::LocalSpace, architecture, true> initLocalDensity() {
     INSTRUMENT_ON("initLocalDensity<T>",2)
 
       Field<T, 1, DomainType::LocalSpace,
-            Architecture::CPU, true> densityFieldR("density", initDensityValue);
+            architecture, true> densityFieldR("density", initDensityValue);
 
     switch(initDensityT){
     case InitDensityType::Homogeneous: {
@@ -155,15 +155,15 @@ namespace lbm {
     return densityFieldR;
   }
 
-  template<class T>
-  Field<T, L::dimD, DomainType::LocalSpace, Architecture::CPU, true> initLocalVelocity() {
+  template<class T, Architecture architecture>
+  Field<T, L::dimD, DomainType::LocalSpace, architecture, true> initLocalVelocity() {
     INSTRUMENT_ON("initLocalVelocity<T>",2)
 
     MathVector<T, L::dimD> initVelocityVectorProjected{{ (T) 0 }};
     initVelocityVectorProjected = Project<T, T, L::dimD>::Do(initVelocityVector);
 
     Field<T, L::dimD, DomainType::LocalSpace,
-          Architecture::CPU, true> velocityFieldR("velocity",
+          architecture, true> velocityFieldR("velocity",
                                                   initVelocityVectorProjected);
 
     switch(initVelocityT){
@@ -179,12 +179,12 @@ namespace lbm {
   }
 
 
-  template<class T>
+  template<class T, Architecture architecture>
   Field<T, L::dimD, DomainType::LocalSpace,
-        Architecture::CPU, true> initLocalForce(const MathVector<int, 3>& rankMPI) {
+        architecture, true> initLocalForce(const MathVector<int, 3>& rankMPI) {
     INSTRUMENT_ON("initLocalForce<T>",2)
     Field<T, L::dimD, DomainType::LocalSpace,
-            Architecture::CPU, true> forceFieldR("force", forceAmplitude);
+            architecture, true> forceFieldR("force", forceAmplitude);
     Force<T, forceT> force;
     MathVector<unsigned int, 3> iP;
     for(unsigned int iZ = lSD::start()[d::Z]; iZ < lSD::end()[d::Z]; iZ++) {
@@ -210,17 +210,17 @@ namespace lbm {
 
 
 
-  template<class T>
-  Field<T, 1, DomainType::LocalSpace, Architecture::CPU, true> initLocalAlpha() {
+  template<class T, Architecture architecture>
+  Field<T, 1, DomainType::LocalSpace, architecture, true> initLocalAlpha() {
     INSTRUMENT_ON("initLocalAlpha<T>",2)
 
-    Field<T, 1, DomainType::LocalSpace, Architecture::CPU, true> alphaFieldR("alpha", (T) 2);
+    Field<T, 1, DomainType::LocalSpace, architecture, true> alphaFieldR("alpha", (T) 2);
     return alphaFieldR;
   }
 
-  template<class T>
-  DynamicArray<T, Architecture::CPU> initLocalDistributionStart(const Field<T, 1, DomainType::LocalSpace, Architecture::CPU, true>& densityField,
-                                                                const Field<T, L::dimD, DomainType::LocalSpace, Architecture::CPU, true>& velocityField) {
+  template<class T, Architecture architecture>
+  DynamicArray<T, Architecture::CPU> initLocalDistributionStart(const Field<T, 1, DomainType::LocalSpace, architecture, true>& densityField,
+                                                                const Field<T, L::dimD, DomainType::LocalSpace, architecture, true>& velocityField) {
     INSTRUMENT_ON("initLocalDistributionStart<T>",2)
 
     DynamicArray<T, Architecture::CPU> distributionR(L::dimQ * lSD::volume());
@@ -253,9 +253,9 @@ namespace lbm {
   }
 
 
-  template<class T>
-    DynamicArray<T, Architecture::CPU> initLocalDistribution(const Field<T, 1, DomainType::LocalSpace, Architecture::CPU, true>& densityField,
-                                                             const Field<T, L::dimD, DomainType::LocalSpace, Architecture::CPU, true>& velocityField) {
+  template<class T, Architecture architecture>
+    DynamicArray<T, Architecture::CPU> initLocalDistribution(const Field<T, 1, DomainType::LocalSpace, architecture, true>& densityField,
+                                                             const Field<T, L::dimD, DomainType::LocalSpace, architecture, true>& velocityField) {
     INSTRUMENT_ON("initLocalDistribution<T>",2)
 
     if(startIteration == 0) {
