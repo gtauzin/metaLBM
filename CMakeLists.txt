@@ -43,7 +43,6 @@ find_package(HDF5 REQUIRED)
 if(HDF5_FOUND)
   target_link_libraries(metalbm INTERFACE HDF5::HDF5)
   add_definitions(-DUSE_HDF5)
-  target_link_libraries(metalbm INTERFACE -lz -ldl)
 endif()
 
 find_package(RapidXML REQUIRED)
@@ -84,7 +83,7 @@ if(USE_SCOREP)
 endif()
 
 # if CUDA present?
-option(USE_NVTX "Enabling manual instrumentation with NVTX" OFF)
+option(USE_NVTX "Enabling manual instrumentation with NVTX" ON)
 if(USE_NVTX)
   set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -lnvToolsExt" )
   add_definitions(-DUSE_NVTX)
