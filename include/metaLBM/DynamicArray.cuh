@@ -44,24 +44,12 @@ namespace lbm {
       : DynamicArray<U, Architecture::Generic>(numberElements_in)
       , computation(MathVector<unsigned int, 3>{{0}},
                     MathVector<unsigned int, 3>{{numberElements_in}})
-
     {
-      CUDA_CALL( MALLOC_GPU((void**)&dArrayPtr, numberElements*sizeof(U)); )
+      CUDA_CALL( MALLOC_GPU((void**)&dArrayPtr, numberElements_in*sizeof(U)); )
       computation.Do(*this, value_in);
     }
 
-    DynamicArray(const DynamicArray<U, Architecture::CPU>& dArray_in)
-      : DynamicArray<U, Architecture::Generic>(dArray_in.size())
-      , computation(MathVector<unsigned int, 3>{{0}},
-                    MathVector<unsigned int, 3>{{numberElements}})
-
-    {
-      CUDA_CALL( MALLOC_GPU((void**)&dArrayPtr, dArray_in.size()*sizeof(U)); )
-      copyFrom(dArray_in);
-    }
-
-
-    DynamicArray(const DynamicArray<U, Architecture::GPU>& dArray_in)
+    DynamicArray(const DynamicArray& dArray_in)
       : DynamicArray<U, Architecture::Generic>(dArray_in.size())
       , computation(MathVector<unsigned int, 3>{{0}},
                     MathVector<unsigned int, 3>{{numberElements}})
@@ -73,7 +61,7 @@ namespace lbm {
     ~DynamicArray(){
       if(dArrayPtr) {
         CUDA_CALL( FREE_GPU(dArrayPtr); )
-        dArrayPtr = NULL;
+	dArrayPtr = NULL;
       }
     }
 

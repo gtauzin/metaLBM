@@ -88,7 +88,7 @@ namespace lbm {
                          const MathVector<unsigned int, 3>& iP,
                          const MathVector<unsigned int, 3>& offset) {
       for(unsigned int iD = 0; iD < L::dimD; ++iD) {
-        force[iD] = localForceArray[lSD::getIndex(iP, iD)];
+        force[iD] = localForceArray[hSD::getIndexLocal(iP, iD)];
       }
     }
 

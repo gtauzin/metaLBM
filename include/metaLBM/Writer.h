@@ -205,7 +205,7 @@ namespace lbm {
 
     template<unsigned int NumberComponents>
     void writeAnalysis(const Field<T, NumberComponents, DomainType::GlobalSpace,
-                       Architecture::CPU, true> field) {
+                       Architecture::CPU, true>& field) {
       INSTRUMENT_ON("Writer<T, InputOutput::VTR, writerFileFromat>::writeField<NumberComponents>",3)
 
       for(unsigned int iZ = gSD::start()[d::Z]; iZ < gSD::end()[d::Z]; iZ++) {
@@ -224,7 +224,7 @@ namespace lbm {
 
     template<unsigned int NumberComponents, DomainType initDomainType>
     void writeField(const Field<T, NumberComponents, initDomainType,
-                    Architecture::CPU, false> field) {
+                    Architecture::CPU, false>& field) {
     }
 
 
@@ -289,9 +289,9 @@ namespace lbm {
       file.close();
     }
 
-    template<unsigned int NumberComponents>
+    template<unsigned int NumberComponents, Architecture architecture>
     void writeField(const Field<T, NumberComponents, DomainType::GlobalSpace,
-                    Architecture::CPU, true> field) {
+                    architecture, true>& field) {
       INSTRUMENT_ON("Writer<T, InputOutput::VTR, writerFileFromat>::writeField<NumberComponents>",3)
 
         file << "<DataArray type=\"Float32\" "
@@ -313,9 +313,9 @@ namespace lbm {
       file << "</DataArray>\n";
     }
 
-    template<unsigned int NumberComponents, DomainType initDomainType>
+    template<unsigned int NumberComponents, DomainType initDomainType, Architecture architecture>
     void writeField(const Field<T, NumberComponents, initDomainType,
-                    Architecture::CPU, false> field) {
+                    architecture, false>& field) {
     }
 
 
@@ -428,7 +428,7 @@ namespace lbm {
 
     template<unsigned int NumberComponents, Architecture architecture>
     void writeField(Field<T, NumberComponents, DomainType::GlobalSpace,
-                    architecture, true> field) {
+                    architecture, true>& field) {
       if(rankMPI[d::X] == 0) {
 
         propertyListHDF5 = H5Pcreate(H5P_DATASET_XFER);
@@ -458,7 +458,7 @@ namespace lbm {
     template<unsigned int NumberComponents, DomainType initDomainType,
              Architecture architecture>
     void writeField(Field<T, NumberComponents, initDomainType,
-                    architecture, false> field) {
+                    architecture, false>& field) {
     }
 
   protected:
@@ -527,7 +527,7 @@ namespace lbm {
 
     template<unsigned int NumberComponents, Architecture architecture>
     void writeField(Field<T, NumberComponents, DomainType::LocalSpace,
-                    architecture, true> field) {
+                    architecture, true>& field) {
 
       for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
         fileSpaceHDF5 = H5Screate_simple(L::dimD,
@@ -575,7 +575,7 @@ namespace lbm {
 
     template<unsigned int NumberComponents, Architecture architecture>
     void writeField(Field<T, NumberComponents, DomainType::LocalSpace,
-                    architecture, false> field) {
+                    architecture, false>& field) {
     }
 
     inline void open(const std::string& fileName) {
@@ -650,7 +650,7 @@ namespace lbm {
     template<unsigned int NumberComponents, DomainType initDomainType,
              Architecture architecture>
     void writeField(const Field<T, NumberComponents, initDomainType,
-                    architecture, true> field) {
+                    architecture, true>& field) {
       INSTRUMENT_ON("Writer<T, InputOutput::VTR, writerFileFromat>::writeField<NumberComponents>",3)
 
         for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
@@ -673,13 +673,13 @@ namespace lbm {
     template<unsigned int NumberComponents, DomainType initDomainType,
              Architecture architecture>
     void writeField(const Field<T, NumberComponents, initDomainType,
-                    architecture, false> field) {
+                    architecture, false>& field) {
     }
 
 
     template<DomainType initDomainType, Architecture architecture>
     void writeDistribution(const Distribution<T, initDomainType,
-                           architecture> distribution) {
+                           architecture>& distribution) {
       INSTRUMENT_ON("Writer<T, InputOutput::VTR, writerFileFromat>::writeField<NumberComponents>",3)
 
         for(unsigned int iC = 0; iC < L::dimQ; ++iC) {

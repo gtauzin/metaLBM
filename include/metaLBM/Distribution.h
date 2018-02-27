@@ -120,9 +120,10 @@ namespace lbm {
 
 
   template <class T, DomainType initDomainType>
-    class Distribution<T, initDomainType, Architecture::GPU>
+  class Distribution<T, initDomainType, Architecture::GPU>
     : public Field<T, L::dimQ, initDomainType, Architecture::GPU, true> {
   private:
+    using Base = Field<T, L::dimQ, initDomainType, Architecture::GPU, true>;
     using Field<T, L::dimQ, initDomainType, Architecture::GPU, true>::localArrayHost;
     using Field<T, L::dimQ, initDomainType, Architecture::GPU, true>::localArrayDevice;
 

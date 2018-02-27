@@ -10,4 +10,4 @@ build*
 doc*
 script/*out*
 script/*err*
-wiki*
+wrap*

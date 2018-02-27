@@ -55,9 +55,9 @@ namespace lbm {
 
   constexpr BoundaryType boundaryT = BoundaryType::Generic;
 
-  constexpr InputOutput inputOutput = InputOutput::HDF5;
-  constexpr InputOutputType inputOutputType = InputOutputType::Parallel;
-  constexpr InputOutputDataFormat inputOutputDataFormat = InputOutputDataFormat::binary;
+  constexpr InputOutput inputOutput = InputOutput::VTR;
+  constexpr InputOutputType inputOutputType = InputOutputType::Serial;
+  constexpr InputOutputDataFormat inputOutputDataFormat = InputOutputDataFormat::ascii;
   constexpr auto prefix = "test_serial";
 
 

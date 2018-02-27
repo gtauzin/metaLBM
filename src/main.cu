@@ -32,8 +32,7 @@ using namespace lbm;
 
 int main(int argc, char* argv[]) {
   INSTRUMENT_ON("main",0)
-
-  MPI_Init(&argc, &argv);
+{
   #ifndef USE_FFTW
     MPI_Init(&argc, &argv);
   #else
@@ -104,6 +103,8 @@ int main(int argc, char* argv[]) {
   routine.compute();
 
   MPI_Finalize();
+  }
+  
   cudaDeviceReset();
 
   return EXIT_SUCCESS;
