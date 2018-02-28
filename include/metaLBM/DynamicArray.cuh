@@ -87,6 +87,64 @@ namespace lbm {
 
   };
 
-}
+ template<class U>
+  class DynamicArray<U, Architecture::GPUPinned>
+    :public DynamicArray<U, Architecture::Generic> {
+  private:
+    using DynamicArray<U, Architecture::Generic>::numberElements;
+    using DynamicArray<U, Architecture::Generic>::dArrayPtr;
+    Computation<Architecture::GPU, 1> computation;
+
+  public:
+    using DynamicArray<U, Architecture::Generic>::operator[];
+    using DynamicArray<U, Architecture::Generic>::operator();
+    using DynamicArray<U, Architecture::Generic>::data;
+    using DynamicArray<U, Architecture::Generic>::size;
+
+    DynamicArray()
+      : DynamicArray<U, Architecture::Generic>()
+      , computation(MathVector<unsigned int, 3>{{0}},
+                    MathVector<unsigned int, 3>{{numberElements}})
+    {}
+
+    DynamicArray(const unsigned int numberElements_in,
+                 const U value_in = (U) 0)
+      : DynamicArray<U, Architecture::Generic>(numberElements_in)
+      , computation(MathVector<unsigned int, 3>{{0}},
+                    MathVector<unsigned int, 3>{{numberElements_in}})
+    {
+      CUDA_CALL( cudaMallocHost((void**)&dArrayPtr, numberElements_in*sizeof(U)); )
+      computation.Do(*this, value_in);
+    }
+
+    DynamicArray(const DynamicArray& dArray_in)
+      : DynamicArray<U, Architecture::Generic>(dArray_in.size())
+      , computation(MathVector<unsigned int, 3>{{0}},
+                    MathVector<unsigned int, 3>{{numberElements}})
+    {
+      CUDA_CALL( cudaMallocHost((void**)&dArrayPtr, numberElements*sizeof(U)); )
+      copyFrom(dArray_in);
+    }
+
+    void copyFrom(const DynamicArray<U, Architecture::GPUPinned>& other) {
+      CUDA_CALL( cudaMemcpy(dArrayPtr, other.data(), other.size()*sizeof(U),
+                            cudaMemcpyHostToHost); )
+    }
+
+    void copyTo(DynamicArray<U, Architecture::GPUPinned>& other) const {
+      CUDA_CALL( cudaMemcpy(other.data(), dArrayPtr, numberElements*sizeof(U),
+                            cudaMemcpyHostToHost); )
+    }
+
+    ~DynamicArray(){
+      if(dArrayPtr) {
+        CUDA_CALL( cudaFreeHost(dArrayPtr); )
+	dArrayPtr = NULL;
+      }
+    }
+
+  }; // end class DynamicArray<U, Architecture::GPUPinned>
+
+} // end namespace lbm
 
 #endif // DYNAMICARRAY_CUH

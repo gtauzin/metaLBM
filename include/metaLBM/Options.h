@@ -11,7 +11,7 @@ namespace lbm {
   enum class MemoryLayout {Generic, Default, SoA, AoS};
   enum class Implementation {Generic, Serial, MPI, NVSHMEM_OUT, NVSHMEM_IN};
   enum class PartitionningType {Generic, OneD, TwoD, ThreeD};
-  enum class Architecture {Generic, CPU, GPU};
+  enum class Architecture {Generic, CPU, GPU, GPUPinned};
 
   enum class DomainType {Generic, GlobalSpace, LocalSpace, HaloSpace, BufferXSpace,
       GlobalFourier, LocalFourier};
