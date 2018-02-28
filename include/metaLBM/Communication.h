@@ -719,19 +719,28 @@ namespace lbm {
           receivedFromRightBeginX = hMLSD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X]+lSD::length()[d::X],
                   hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
-          MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginX, sizeStripeX,
-                    MPI_DOUBLE, leftXRankMPI, 17, MPI_COMM_WORLD, &requestXMPI[0]);
+          /* MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginX, sizeStripeX, */
+          /*           MPI_DOUBLE, leftXRankMPI, 17, MPI_COMM_WORLD, &requestXMPI[0]); */
 
-          MPI_Irecv(haloDistributionPtr+receivedFromRightBeginX, sizeStripeX,
-                    MPI_DOUBLE, rightXRankMPI, 23, MPI_COMM_WORLD, &requestXMPI[1]);
+          /* MPI_Irecv(haloDistributionPtr+receivedFromRightBeginX, sizeStripeX, */
+          /*           MPI_DOUBLE, rightXRankMPI, 23, MPI_COMM_WORLD, &requestXMPI[1]); */
 
-          MPI_Isend(haloDistributionPtr+sendToRightBeginX, sizeStripeX,
-                    MPI_DOUBLE, rightXRankMPI, 17, MPI_COMM_WORLD, &requestXMPI[2]);
+          /* MPI_Isend(haloDistributionPtr+sendToRightBeginX, sizeStripeX, */
+          /*           MPI_DOUBLE, rightXRankMPI, 17, MPI_COMM_WORLD, &requestXMPI[2]); */
 
-          MPI_Isend(haloDistributionPtr+sendToLeftBeginX, sizeStripeX,
-                    MPI_DOUBLE, leftXRankMPI, 23, MPI_COMM_WORLD, &requestXMPI[3]);
+          /* MPI_Isend(haloDistributionPtr+sendToLeftBeginX, sizeStripeX, */
+          /*           MPI_DOUBLE, leftXRankMPI, 23, MPI_COMM_WORLD, &requestXMPI[3]); */
 
-          MPI_Waitall(4, requestXMPI, statusXMPI);
+          /* MPI_Waitall(4, requestXMPI, statusXMPI); */
+
+          shmem_double_put(haloDistributionPtr+receivedFromLeftBeginX,
+                           haloDistributionPtr+sendToRightBeginX,
+                           sizeStripeX, rightXRankMPI);
+          shmem_double_put(haloDistributionPtr+sendToLeftBeginX,
+                           haloDistributionPtr+receivedFromRightBeginX,
+                           sizeStripeX, leftXRankMPI);
+          shmem_barrier_all();
+
         }
     }
 
@@ -893,19 +902,28 @@ namespace lbm {
     void sendAndReceiveHaloX(T * haloDistributionPtr) {
       INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloX",4)
         //TODO: Replace with NVSHMEM directives
-      MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginX, sizeStripeX,
-                  MPI_DOUBLE, leftXRankMPI, 17, MPI_COMM_WORLD, &requestXMPI[0]);
+      /* MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginX, sizeStripeX, */
+      /*             MPI_DOUBLE, leftXRankMPI, 17, MPI_COMM_WORLD, &requestXMPI[0]); */
 
-      MPI_Irecv(haloDistributionPtr+receivedFromRightBeginX, sizeStripeX,
-                MPI_DOUBLE, rightXRankMPI, 23, MPI_COMM_WORLD, &requestXMPI[1]);
+      /* MPI_Irecv(haloDistributionPtr+receivedFromRightBeginX, sizeStripeX, */
+      /*           MPI_DOUBLE, rightXRankMPI, 23, MPI_COMM_WORLD, &requestXMPI[1]); */
 
-      MPI_Isend(haloDistributionPtr+sendToRightBeginX, sizeStripeX,
-                MPI_DOUBLE, rightXRankMPI, 17, MPI_COMM_WORLD, &requestXMPI[2]);
+      /* MPI_Isend(haloDistributionPtr+sendToRightBeginX, sizeStripeX, */
+      /*           MPI_DOUBLE, rightXRankMPI, 17, MPI_COMM_WORLD, &requestXMPI[2]); */
 
-      MPI_Isend(haloDistributionPtr+sendToLeftBeginX, sizeStripeX,
-                MPI_DOUBLE, leftXRankMPI, 23, MPI_COMM_WORLD, &requestXMPI[3]);
+      /* MPI_Isend(haloDistributionPtr+sendToLeftBeginX, sizeStripeX, */
+      /*           MPI_DOUBLE, leftXRankMPI, 23, MPI_COMM_WORLD, &requestXMPI[3]); */
 
-      MPI_Waitall(4, requestXMPI, statusXMPI);
+      /* MPI_Waitall(4, requestXMPI, statusXMPI); */
+
+      shmem_double_put(haloDistributionPtr+receivedFromLeftBeginX,
+                       haloDistributionPtr+sendToRightBeginX,
+                       sizeStripeX, rightXRankMPI);
+      shmem_double_put(haloDistributionPtr+sendToLeftBeginX,
+                       haloDistributionPtr+receivedFromRightBeginX,
+                       sizeStripeX, leftXRankMPI);
+      shmem_barrier_all();
+
     }
 
     using Communication<T, latticeType, AlgorithmType::Pull,

@@ -251,7 +251,7 @@ namespace lbm {
                                         f_Previous.globalArray(),
                                         f_Previous.numberComponents);
 
-        //writer.writeField(f_Previous);
+        writer.writeField(f_Previous);
       }
 
       writer.closeFile();
@@ -368,7 +368,7 @@ namespace lbm {
 
           f_Previous.packLocal();
 
-          //writer.writeField(f_Previous);
+          writer.writeField(f_Previous);
         }
 
         writer.closeFile();

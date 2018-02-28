@@ -116,6 +116,10 @@ namespace lbm {
       }
    }
 
+    using Field<T, L::dimQ, initDomainType, Architecture::CPU, true>::localHostData;
+    using Field<T, L::dimQ, initDomainType, Architecture::CPU, true>::globalData;
+    using Field<T, L::dimQ, initDomainType, Architecture::CPU, true>::getGlobalValue;
+
   };
 
 
@@ -214,6 +218,10 @@ namespace lbm {
         }
       }
    }
+
+    using Field<T, L::dimQ, initDomainType, Architecture::GPU, true>::localHostData;
+    using Field<T, L::dimQ, initDomainType, Architecture::GPU, true>::globalData;
+
 
   };
 

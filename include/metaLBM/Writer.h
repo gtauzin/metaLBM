@@ -318,6 +318,29 @@ namespace lbm {
                     architecture, false>& field) {
     }
 
+    template<Architecture architecture>
+    void writeDistribution(const Distribution<T, DomainType::GlobalSpace,
+                    architecture>& distribution) {
+      INSTRUMENT_ON("Writer<T, InputOutput::VTR, writerFileFromat>::writeDistribution<NumberComponents>",3)
+
+        file << "<DataArray type=\"Float32\" "
+             << "NumberOfComponents=\"" << L::dimQ << "\" "
+             << "Name=\"" << distribution.fieldName << "\" "
+             << "format=\"" + fileFormat + "\">\n";
+      for(unsigned int iZ = gSD::start()[d::Z]; iZ < gSD::end()[d::Z]; iZ++) {
+        for(unsigned int iY = gSD::start()[d::Y]; iY < gSD::end()[d::Y]; iY++) {
+          for(unsigned int iX = gSD::start()[d::X]; iX < gSD::end()[d::X]; iX++) {
+            MathVector<unsigned int, 3> iP = {iX, iY, iZ};
+            for(unsigned int iC = 0; iC < L::dimQ; ++iC) {
+              write(distribution.getGlobalValue(iP, iC));
+              file << " ";
+            }
+            //file << std::endl;
+          }
+        }
+      }
+      file << "</DataArray>\n";
+    }
 
   private:
     using Writer<T, InputOutput::Generic, InputOutputType::Generic,
@@ -429,6 +452,8 @@ namespace lbm {
     template<unsigned int NumberComponents, Architecture architecture>
     void writeField(Field<T, NumberComponents, DomainType::GlobalSpace,
                     architecture, true>& field) {
+      INSTRUMENT_ON("Writer<T, InputOutput::HDF5, writerFileFromat>::writeField<NumberComponents>",3)
+
       if(rankMPI[d::X] == 0) {
 
         propertyListHDF5 = H5Pcreate(H5P_DATASET_XFER);
@@ -455,10 +480,43 @@ namespace lbm {
       }
     }
 
+
+
     template<unsigned int NumberComponents, DomainType initDomainType,
              Architecture architecture>
     void writeField(Field<T, NumberComponents, initDomainType,
                     architecture, false>& field) {
+    }
+
+    template<Architecture architecture>
+    void writeDistribution(Distribution<T, DomainType::GlobalSpace,
+                           architecture>& distribution) {
+      INSTRUMENT_ON("Writer<T, InputOutput::HDF5, writerFileFromat>::writeDistribution<Architecture>",3)
+      if(rankMPI[d::X] == 0) {
+
+        propertyListHDF5 = H5Pcreate(H5P_DATASET_XFER);
+        dataSpaceHDF5 = H5Screate_simple(L::dimD,
+                                         Project<hsize_t,
+                                         unsigned int, L::dimD>::Do(gSD::length()).data(),
+                                         NULL);
+
+        for(unsigned int iC = 0; iC < L::dimQ; ++iC) {
+          dataSetHDF5 = H5Dcreate2(fileHDF5, (distribution.fieldName
+                                              +std::to_string(iC)).c_str(),
+                                   H5T_NATIVE_DOUBLE, dataSpaceHDF5, H5P_DEFAULT,
+                                   H5P_DEFAULT, H5P_DEFAULT);
+
+          statusHDF5 = H5Dwrite(dataSetHDF5, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL,
+                                propertyListHDF5,
+                                distribution.globalData()+ iC*gSD::volume());
+          statusHDF5 = H5Dclose(dataSetHDF5);
+        }
+
+        statusHDF5 = H5Sclose(dataSpaceHDF5);
+        statusHDF5 = H5Pclose(propertyListHDF5);
+
+        writerXDMF.writeDistribution(distribution);
+      }
     }
 
   protected:
@@ -528,6 +586,7 @@ namespace lbm {
     template<unsigned int NumberComponents, Architecture architecture>
     void writeField(Field<T, NumberComponents, DomainType::LocalSpace,
                     architecture, true>& field) {
+      INSTRUMENT_ON("Writer<T, InputOutput::HDF5, writerFileFromat>::writeField<NumberComponents>",3)
 
       for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
         fileSpaceHDF5 = H5Screate_simple(L::dimD,
@@ -577,6 +636,57 @@ namespace lbm {
     void writeField(Field<T, NumberComponents, DomainType::LocalSpace,
                     architecture, false>& field) {
     }
+
+    template<DomainType initDomainType, Architecture architecture>
+    void writeDistribution(const Distribution<T, initDomainType,
+                           architecture>& distribution) {
+      INSTRUMENT_ON("Writer<T, InputOutput::HDF5, writerFileFromat>::writeDistribution<Architecture>",3)
+
+      for(unsigned int iC = 0; iC < L::dimQ; ++iC) {
+        fileSpaceHDF5 = H5Screate_simple(L::dimD,
+                                         Project<hsize_t,
+                                         unsigned int, L::dimD>::Do(gSD::length()).data(),
+                                         NULL);
+
+        dataSetHDF5 = H5Dcreate2(fileHDF5, (distribution.fieldName
+                                            +std::to_string(iC)).c_str(),
+                                 H5T_NATIVE_DOUBLE, fileSpaceHDF5, H5P_DEFAULT,
+                                 H5P_DEFAULT, H5P_DEFAULT);
+
+        statusHDF5 = H5Sclose(fileSpaceHDF5);
+
+        dataSpaceHDF5 = H5Screate_simple(L::dimD,
+                                         Project<hsize_t,
+                                         unsigned int, L::dimD>::Do(lSD::length()).data(),
+                                         NULL);
+
+        fileSpaceHDF5 = H5Dget_space(dataSetHDF5);
+
+        H5Sselect_hyperslab(fileSpaceHDF5, H5S_SELECT_SET,
+                            Project<hsize_t,
+                            unsigned int, L::dimD>::Do(gSD::offset(rankMPI)).data(), NULL,
+                            Project<hsize_t,
+                            unsigned int, L::dimD>::Do(lSD::length()).data(), NULL);
+
+        propertyListHDF5 = H5Pcreate(H5P_DATASET_XFER);
+        H5Pset_dxpl_mpio(propertyListHDF5, H5FD_MPIO_COLLECTIVE);
+
+        statusHDF5 = H5Dwrite(dataSetHDF5, H5T_NATIVE_DOUBLE,
+                              dataSpaceHDF5, fileSpaceHDF5, propertyListHDF5,
+                              distribution.localHostData()+ iC*lSD::volume());
+
+        statusHDF5 = H5Dclose(dataSetHDF5);
+        statusHDF5 = H5Sclose(dataSpaceHDF5);
+        statusHDF5 = H5Sclose(fileSpaceHDF5);
+        statusHDF5 = H5Pclose(propertyListHDF5);
+      }
+
+      if(rankMPI[d::X] == 0) {
+        writerXDMF.writeDistribution(distribution);
+      }
+
+    }
+
 
     inline void open(const std::string& fileName) {
       propertyListHDF5 = H5Pcreate(H5P_FILE_ACCESS);
@@ -651,7 +761,7 @@ namespace lbm {
              Architecture architecture>
     void writeField(const Field<T, NumberComponents, initDomainType,
                     architecture, true>& field) {
-      INSTRUMENT_ON("Writer<T, InputOutput::VTR, writerFileFromat>::writeField<NumberComponents>",3)
+      INSTRUMENT_ON("Writer<T, InputOutput::XDMF, writerFileFromat>::writeField<NumberComponents>",3)
 
         for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
           file << "<Attribute Name=\"" << field.fieldName+std::to_string(iC) << "\" "
@@ -680,7 +790,7 @@ namespace lbm {
     template<DomainType initDomainType, Architecture architecture>
     void writeDistribution(const Distribution<T, initDomainType,
                            architecture>& distribution) {
-      INSTRUMENT_ON("Writer<T, InputOutput::VTR, writerFileFromat>::writeField<NumberComponents>",3)
+      INSTRUMENT_ON("Writer<T, InputOutput::XDMF, writerFileFromat>::writeDistribution<NumberComponents>",3)
 
         for(unsigned int iC = 0; iC < L::dimQ; ++iC) {
           file << "<Attribute Name=\"" << distribution.fieldName+std::to_string(iC) << "\" "
@@ -730,7 +840,7 @@ namespace lbm {
     }
 
     void writeHeader() {
-      INSTRUMENT_ON("Writer<T, InputOutput::VTR, InputOutputDataFormat::Generic>::writeHeader",2)
+      INSTRUMENT_ON("Writer<T, InputOutput::XDMF, InputOutputDataFormat::Generic>::writeHeader",2)
 
         file << "<?xml version=\"1.0\"?>\n";
       file << "<!DOCTYPE Xdmf SYSTEM \"Xdmf.dtd\" []>\n";
@@ -773,7 +883,7 @@ namespace lbm {
     }
 
     void writeFooter() {
-      INSTRUMENT_ON("Writer<T, InputOutput::VTR, InputOutputDataFormat::Generic>::writeFooter",2)
+      INSTRUMENT_ON("Writer<T, InputOutput::XDMF, InputOutputDataFormat::Generic>::writeFooter",2)
         file << "</Grid>\n";
       file << "</Domain>\n";
       file << "</Xdmf>\n";

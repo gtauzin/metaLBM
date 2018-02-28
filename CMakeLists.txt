@@ -83,7 +83,7 @@ if(USE_SCOREP)
 endif()
 
 # if CUDA present?
-option(USE_NVTX "Enabling manual instrumentation with NVTX" ON)
+option(USE_NVTX "Enabling manual instrumentation with NVTX" OFF)
 if(USE_NVTX)
   set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -lnvToolsExt" )
   add_definitions(-DUSE_NVTX)

@@ -61,8 +61,7 @@
   #define CONSTANT
   #define GLOBAL
   #define RESTRICT __restrict__
-
-#endif // __NVXX__
+#endif // __NVCC__
 
 
 #ifdef USE_SCOREP
@@ -73,11 +72,7 @@
     }
 
 #else // USE_SCOREP
-  #ifndef USE_NVTX
-    #define INSTRUMENT_ON(name,colorID)
-
-  #endif // USE_NVTX
-
+  #define INSTRUMENT_ON(name,colorID)
 #endif  // USE_SCOREP
 
 #define INSTRUMENT_OFF(name,colorID)
