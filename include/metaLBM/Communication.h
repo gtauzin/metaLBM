@@ -4,6 +4,11 @@
 #include <mpi.h>
 #include <string>
 
+#ifdef USE_NVSHMEM
+  #include<shmem.h>
+  #include<shmemx.h>
+#endif
+
 #include "Commons.h"
 #include "Options.h"
 #include "DynamicArray.cuh"
@@ -11,6 +16,7 @@
 #include "Domain.h"
 #include "Boundary.h"
 #include "Computation.h"
+
 
 namespace lbm {
 
@@ -43,24 +49,20 @@ namespace lbm {
 
     HOST
     void sendGlobalToLocal(DynamicArray<T, Architecture::CPU>& globalArray,
-                           DynamicArray<T, Architecture::CPU>& localHostArray,
-                           DynamicArray<T, Architecture::GPU>& localDeviceArray,
+                           DynamicArray<T, Architecture::CPU>& localArray,
                            unsigned int numberComponents) {
       INSTRUMENT_ON("Communication<6>::sendGlobalToLocal",3)
 
-      localHostArray.copyFrom(globalArray);
-      localDeviceArray.copyFrom(localHostArray);
+      localArray.copyFrom(globalArray);
     }
 
     HOST
-    void sendLocalToGlobal(DynamicArray<T, Architecture::GPU>& localDeviceArray,
-                           DynamicArray<T, Architecture::CPU>& localHostArray,
+    void sendLocalToGlobal(DynamicArray<T, Architecture::CPU>& localArray,
                            DynamicArray<T, Architecture::CPU>& globalArray,
                            unsigned int numberComponents) {
       INSTRUMENT_ON("Communication<6>::sendLocalToGlobal",3)
 
-      localDeviceArray.copyTo(localHostArray);
-      localHostArray.copyTo(globalArray);
+      localArray.copyTo(globalArray);
     }
 
     HOST
@@ -69,23 +71,20 @@ namespace lbm {
         }
 
     HOST
-    T reduce(const DynamicArray<T, Architecture::GPU>& localDeviceArray,
-             DynamicArray<T, Architecture::CPU>& localHostArray) {
-
-      localDeviceArray.copyTo(localHostArray);
-
+    T reduce(DynamicArray<T, Architecture::CPU>& localArray) {
       T localSum = (T) 0;
       for(unsigned int iZ = lSD::start()[d::Z]; iZ < lSD::end()[d::Z]; ++iZ) {
         for(unsigned int iY = lSD::start()[d::Y]; iY < lSD::end()[d::Y]; ++iY) {
           for(unsigned int iX = lSD::start()[d::X]; iX < lSD::end()[d::X]; ++iX) {
             localSum
-              += localHostArray[lSD::getIndex(MathVector<unsigned int, 3>({iX, iY, iZ}))];
+              += localArray[lSD::getIndex(MathVector<unsigned int, 3>({iX, iY, iZ}))];
           }
         }
       }
 
       return localSum;
     }
+
   };
 
 
@@ -96,6 +95,11 @@ namespace lbm {
     : public Communication<T, latticeType, AlgorithmType::Pull,
                            MemoryLayout::Generic, PartitionningType::Generic,
                            Implementation::Serial, 0> {
+  private:
+    using Base = Communication<T, latticeType, AlgorithmType::Pull,
+                               MemoryLayout::Generic, PartitionningType::Generic,
+                               Implementation::Serial, 0>;
+
   protected:
     const MathVector<int, 3> rankMPI;
     const MathVector<int, 3> sizeMPI;
@@ -120,10 +124,8 @@ namespace lbm {
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
                   const std::string& processorName_in)
-      : Communication<T, latticeType, AlgorithmType::Pull,
-                      MemoryLayout::Generic, PartitionningType::Generic,
-                      Implementation::Serial, 0>(rankMPI_in, sizeMPI_in,
-                                                 processorName_in)
+      : Base(rankMPI_in, sizeMPI_in,
+             processorName_in)
       , rankMPI(rankMPI_in)
       , sizeMPI(sizeMPI_in)
       , processorName(processorName_in)
@@ -155,35 +157,42 @@ namespace lbm {
 
     HOST
     void sendGlobalToLocal(DynamicArray<T, Architecture::CPU>& globalArray,
-                           DynamicArray<T, Architecture::CPU>& localHostArray,
-                           DynamicArray<T, Architecture::GPU>& localDeviceArray,
+                           DynamicArray<T, Architecture::CPU>& localArray,
                            unsigned int numberComponents) {
       INSTRUMENT_ON("Communication<6>::sendGlobalToLocal",3)
 
         MPI_Scatter(globalArray.data(), numberComponents*lSD::volume(), MPI_DOUBLE,
-                    localHostArray.data(), numberComponents*lSD::volume(), MPI_DOUBLE,
+                    localArray.data(), numberComponents*lSD::volume(), MPI_DOUBLE,
                     0, MPI_COMM_WORLD);
 
-      localDeviceArray.copyFrom(localHostArray);
     }
 
     HOST
-    void sendLocalToGlobal(DynamicArray<T, Architecture::GPU>& localDeviceArray,
-                           DynamicArray<T, Architecture::CPU>& localHostArray,
+    void sendLocalToGlobal(DynamicArray<T, Architecture::CPU>& localArray,
                            DynamicArray<T, Architecture::CPU>& globalArray,
                            unsigned int numberComponents) {
       INSTRUMENT_ON("Communication<6>::sendLocalToGlobal",3)
 
-        localDeviceArray.copyTo(localHostArray);
-
-      MPI_Gather(localHostArray.data(), numberComponents*lSD::volume(), MPI_DOUBLE,
+      MPI_Gather(localArray.data(), numberComponents*lSD::volume(), MPI_DOUBLE,
                  globalArray.data(), numberComponents*lSD::volume(), MPI_DOUBLE,
                  0, MPI_COMM_WORLD);
     }
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::Serial, 0>::reduce;
+    HOST
+    T reduce(DynamicArray<T, Architecture::CPU>& localArray) {
+      T localSum = Base::reduce(localArray);
+
+      MPI_Barrier(MPI_COMM_WORLD);
+
+      T globalSum = (T) 0;
+      MPI_Reduce(&localSum, &globalSum, 1, MPI_DOUBLE,
+                 MPI_SUM, 0, MPI_COMM_WORLD);
+
+      MPI_Barrier(MPI_COMM_WORLD);
+
+      return globalSum;
+    }
+
   };
 
 
@@ -601,7 +610,7 @@ namespace lbm {
 
 
 
-
+#ifdef USE_NVSHMEM
 
   template<class T, LatticeType latticeType>
   class Communication<T, latticeType, AlgorithmType::Pull,
@@ -992,7 +1001,7 @@ namespace lbm {
     }
   };
 
-
+#endif // USE_NVSHMEM
 
 
 

@@ -469,7 +469,7 @@ namespace lbm {
 
           statusHDF5 = H5Dwrite(dataSetHDF5, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL,
                                 propertyListHDF5,
-                                field.globalData()+ iC*gSD::volume());
+                                field.getGlobalData()+ iC*gSD::volume());
           statusHDF5 = H5Dclose(dataSetHDF5);
         }
 
@@ -508,7 +508,7 @@ namespace lbm {
 
           statusHDF5 = H5Dwrite(dataSetHDF5, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL,
                                 propertyListHDF5,
-                                distribution.globalData()+ iC*gSD::volume());
+                                distribution.getGlobalData()+ iC*gSD::volume());
           statusHDF5 = H5Dclose(dataSetHDF5);
         }
 
@@ -618,7 +618,7 @@ namespace lbm {
 
         statusHDF5 = H5Dwrite(dataSetHDF5, H5T_NATIVE_DOUBLE,
                               dataSpaceHDF5, fileSpaceHDF5, propertyListHDF5,
-                              field.localHostData()+ iC*lSD::volume());
+                              field.getLocalData()+ iC*lSD::volume());
 
         statusHDF5 = H5Dclose(dataSetHDF5);
         statusHDF5 = H5Sclose(dataSpaceHDF5);
@@ -673,7 +673,7 @@ namespace lbm {
 
         statusHDF5 = H5Dwrite(dataSetHDF5, H5T_NATIVE_DOUBLE,
                               dataSpaceHDF5, fileSpaceHDF5, propertyListHDF5,
-                              distribution.localHostData()+ iC*lSD::volume());
+                              distribution.getLocalData()+ iC*lSD::volume());
 
         statusHDF5 = H5Dclose(dataSetHDF5);
         statusHDF5 = H5Sclose(dataSpaceHDF5);

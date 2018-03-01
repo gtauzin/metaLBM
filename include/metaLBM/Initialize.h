@@ -41,6 +41,7 @@ namespace lbm {
       std::cout << "Wrong type of density initialization.";
     }
     }
+
     return densityFieldR;
   }
 
@@ -51,8 +52,9 @@ namespace lbm {
     MathVector<T, L::dimD> initVelocityVectorProjected{{ (T) 0 }};
     initVelocityVectorProjected = Project<T, T, L::dimD>::Do(initVelocityVector);
 
-    Field<T, L::dimD, DomainType::GlobalSpace, architecture, true> velocityFieldR("velocity",
-                                           initVelocityVectorProjected);
+    Field<T, L::dimD, DomainType::GlobalSpace,
+          architecture, true> velocityFieldR("velocity",
+                                             initVelocityVectorProjected);
 
     switch(initVelocityT){
     case InitVelocityType::Homogeneous: {
@@ -90,7 +92,6 @@ namespace lbm {
 
           equilibrium.setVariables(densityField.getGlobalValue(iP),
                                    velocityField.getGlobalVector(iP));
-
 
           for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
             distributionR[gSQD::getIndex(MathVector<unsigned int, 3>({iX, iY, iZ}), iQ)]
@@ -232,8 +233,8 @@ namespace lbm {
         for(unsigned int iX = lSD::start()[d::X]; iX < lSD::end()[d::X]; iX++) {
           iP =  MathVector<unsigned int, 3>({iX, iY, iZ});
 
-          equilibrium.setVariables(densityField.getLocalHostValue(iP),
-                                   velocityField.getLocalHostVector(iP));
+          equilibrium.setVariables(densityField.getLocalValue(iP),
+                                   velocityField.getLocalVector(iP));
 
           for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
             distributionR[lSD::getIndex(iP, iQ)] = equilibrium.calculate(iQ);

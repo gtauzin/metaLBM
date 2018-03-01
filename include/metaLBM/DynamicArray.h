@@ -45,8 +45,10 @@ namespace lbm {
     }
 
     HOST DEVICE
-    void operator()(const MathVector<unsigned int, 3>& iP, const U value) {
-      dArrayPtr[iP[0]] = value;
+    void operator()(const MathVector<unsigned int, 3>& iP,
+                    U * RESTRICT array,  const U value) {
+      array[iP[0]] = value;
+      std::cout << "Allocated ptr base: " << dArrayPtr << std::endl;
     }
 
     DEVICE HOST
@@ -76,36 +78,41 @@ namespace lbm {
   class DynamicArray<U, Architecture::CPU>
     : public DynamicArray<U, Architecture::Generic> {
   private:
-    using DynamicArray<U, Architecture::Generic>::numberElements;
-    using DynamicArray<U, Architecture::Generic>::dArrayPtr;
+    using Base = DynamicArray<U, Architecture::Generic>;
+
+  protected:
+    using Base::numberElements;
+    using Base::dArrayPtr;
     Computation<Architecture::CPU, 1> computation;
 
   public:
-    using DynamicArray<U, Architecture::Generic>::operator[];
-    using DynamicArray<U, Architecture::Generic>::operator();
-    using DynamicArray<U, Architecture::Generic>::data;
-    using DynamicArray<U, Architecture::Generic>::size;
+    using Base::operator[];
+    using Base::operator();
+    using Base::data;
+    using Base::size;
 
     DynamicArray()
-      : DynamicArray<U, Architecture::Generic>()
+      : Base()
       , computation(MathVector<unsigned int, 3>{{0}},
-                    MathVector<unsigned int, 3>{{numberElements}})
+                    MathVector<unsigned int, 3>{{0}})
     {}
 
     DynamicArray(const unsigned int numberElements_in,
                  const U& value_in = (U) 0)
-      : DynamicArray<U, Architecture::Generic>(numberElements_in)
+      : Base(numberElements_in)
       , computation(MathVector<unsigned int, 3>({0, 0, 0}),
                     MathVector<unsigned int, 3>({numberElements, 0, 0}))
 
     {
       dArrayPtr = (U*)MALLOC_CPU(numberElements_in*sizeof(U));
-
-      computation.Do(*this, value_in);
+      std::cout << "Allocated ptr:      " << dArrayPtr << std::endl;
+      computation.Do(*this, dArrayPtr, value_in);
+      std::cout << "Allocated ptr from: " << Base::dArrayPtr << std::endl;
+      std::cout << "Allocated ptr data: " << this->data() << std::endl;
     }
 
   DynamicArray(const DynamicArray<U, Architecture::CPU>& dArray_in)
-    : DynamicArray<U, Architecture::Generic>(dArray_in.size())
+    : Base(dArray_in.size())
     , computation(MathVector<unsigned int, 3>{{0}},
                   MathVector<unsigned int, 3>{{numberElements}})
 

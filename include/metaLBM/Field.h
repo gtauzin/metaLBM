@@ -48,30 +48,24 @@ namespace lbm {
     {}
 
     Field(const std::string& fieldName_in,
-          const DynamicArray<T, architecture>& globalArrayHost_in)
+          const DynamicArray<T, architecture>& globalArray_in)
       : fieldName(fieldName_in)
     {}
 
-    T * RESTRICT globalData() {
+    T * RESTRICT getGlobalData() {
       return NULL;
     }
 
-    void setGlobalField(DynamicArray<T, Architecture::CPU> globalArrayHost_in) {
-    }
-
-    void setGlobalValue(const unsigned int index, const T value) {
-    }
+    void setGlobalValue(const unsigned int index, const T value) {}
 
     void setGlobalValue(const MathVector<unsigned int, 3>& iP,
                         const T value,
-                        const unsigned int iC) {
-    }
+                        const unsigned int iC) {}
 
     void setGlobalVector(const MathVector<unsigned int, 3>& iP,
-                         const MathVector<T, NumberComponents> vector) {
-    }
+                         const MathVector<T, NumberComponents> vector) {}
 
-    DynamicArray<T, Architecture::CPU> globalArray() {
+    DynamicArray<T, Architecture::CPU> getGlobalArray() {
       return DynamicArray<T, Architecture::CPU>();
     }
 
@@ -84,18 +78,20 @@ namespace lbm {
       return MathVector<T, NumberComponents>{{(T) -1}};
     }
 
-    DynamicArray<T, Architecture::CPU> localHostArray() {
+    T * RESTRICT getLocalData() {
+      return NULL;
+    }
+
+    DynamicArray<T, Architecture::CPU> getLocalArray() {
       return DynamicArray<T, Architecture::CPU>();
     }
 
     DEVICE HOST
-    void setLocalValue(const unsigned int index, const T value, const unsigned int iC = 0) {
-    }
+    void setLocalValue(const unsigned int index, const T value, const unsigned int iC = 0) {}
 
     DEVICE HOST
     void setLocalVector(const unsigned int index,
-                       const MathVector<T, NumberComponents> vector) {
-    }
+                       const MathVector<T, NumberComponents> vector) {}
 
     DEVICE HOST
     T getLocalValue(const unsigned int index, const unsigned int iC = 0) {
@@ -107,19 +103,10 @@ namespace lbm {
       return MathVector<T, NumberComponents>{{(T) -1}};
     }
 
-    DEVICE HOST
-    DynamicArray<T, Architecture::GPU> localDeviceArray() {
-      return DynamicArray<T, Architecture::GPU>();
-    }
-
   };
 
   template <class T, unsigned int NumberComponents>
   class Field<T, NumberComponents, DomainType::Generic, Architecture::Generic, true> {
-  protected:
-    DynamicArray<T, Architecture::CPU> localArrayHost;
-    DynamicArray<T, Architecture::GPU> localArrayDevice;
-
   public:
     static constexpr unsigned int numberComponents = NumberComponents;
     static constexpr bool IsWritten = true;
@@ -128,116 +115,225 @@ namespace lbm {
 
     Field(const std::string& fieldName_in)
       : fieldName(fieldName_in)
-      , localArrayDevice(lSD::volume()*NumberComponents)
-      , localArrayHost(lSD::volume()*NumberComponents)
     {}
 
-    DynamicArray<T, Architecture::CPU>& localHostArray() {
-      return localArrayHost;
+  };
+
+
+
+
+  template <class T, unsigned int NumberComponents>
+  class Field<T, NumberComponents, DomainType::Generic,
+              Architecture::CPU, true>
+    : public Field<T, NumberComponents, DomainType::Generic,
+                 Architecture::Generic, true> {
+  private:
+    using Base = Field<T, NumberComponents, DomainType::Generic,
+                       Architecture::Generic, true>;
+
+  protected:
+    DynamicArray<T, Architecture::CPU> localArray;
+
+  public:
+    using Base::numberComponents;
+    using Base::IsWritten;
+    using Base::fieldName;
+
+    Field(const std::string& fieldName_in)
+      : Base(fieldName_in)
+      , localArray(NumberComponents*lSD::volume())
+    {}
+
+    Field(const std::string& fieldName_in,
+          const T& value_in)
+      : Base(fieldName_in)
+      , localArray(NumberComponents*lSD::volume(), value_in)
+    {}
+
+    Field(const std::string& fieldName_in,
+          const MathVector<T, NumberComponents>& vector_in)
+      : Base(fieldName_in)
+      , localArray(NumberComponents*lSD::volume(), vector_in[0])
+    {
+      //computationLocal = Computation
     }
 
-    DynamicArray<T, Architecture::GPU>& localDeviceArray() {
-      return localArrayDevice;
-    }
-
-    DEVICE HOST
-    T * RESTRICT localDeviceData() {
-      return localArrayDevice.data();
-    }
-
-    DEVICE HOST
-    T * RESTRICT localHostData() {
-      return localArrayHost.data();
-    }
+    Field(const std::string& fieldName_in,
+          const DynamicArray<T, Architecture::CPU>& localArray_in)
+      : Base(fieldName_in)
+      , localArray(localArray_in)
+    {}
 
   };
 
 
   template <class T, unsigned int NumberComponents>
-  class Field<T, NumberComponents, DomainType::GlobalSpace, Architecture::Generic, true>
-    : public Field<T, NumberComponents, DomainType::Generic, Architecture::Generic, true> {
-  public:
-    using Field<T, NumberComponents, DomainType::Generic,
-                Architecture::Generic, true>::numberComponents;
-    using Field<T, NumberComponents, DomainType::Generic,
-                Architecture::Generic, true>::IsWritten;
+  class Field<T, NumberComponents, DomainType::Generic,
+              Architecture::GPU, true>
+    : public Field<T, NumberComponents, DomainType::Generic,
+                 Architecture::Generic, true> {
+  private:
+    using Base = Field<T, NumberComponents, DomainType::Generic,
+                       Architecture::Generic, true>;
+  protected:
+    DynamicArray<T, Architecture::CPUPinned> localArray;
 
-    using Field<T, NumberComponents, DomainType::Generic,
-                Architecture::Generic, true>::fieldName;
+  public:
+    using Base::numberComponents;
+    using Base::IsWritten;
+
+    using Base::fieldName;
+
+    Field(const std::string& fieldName_in)
+      : Base(fieldName_in)
+      , localArray(NumberComponents*lSD::volume())
+    {}
+
+    Field(const std::string& fieldName_in,
+          const T& value_in)
+      : Base(fieldName_in)
+      , localArray(NumberComponents*lSD::volume(), value_in)
+    {}
 
     Field(const std::string& fieldName_in,
           const MathVector<T, NumberComponents>& vector_in)
-      : Field<T, NumberComponents, DomainType::Generic,
-              Architecture::Generic, true>(fieldName_in)
-      , globalArrayHost(gSD::volume()*NumberComponents)
-    {
-      MathVector<unsigned int, 3> iP;
-      for(unsigned int iZ = gSD::start()[d::Z]; iZ < gSD::end()[d::Z]; iZ++) {
-        for(unsigned int iY = gSD::start()[d::Y]; iY < gSD::end()[d::Y]; iY++) {
-          for(unsigned int iX = gSD::start()[d::X]; iX < gSD::end()[d::X]; iX++) {
-            iP =  MathVector<unsigned int, 3>({iX, iY, iZ});
-            setGlobalVector(iP, vector_in);
-          }
-        }
-      }
-    }
+      : Base(fieldName_in)
+      , localArray(NumberComponents*lSD::volume(), vector_in[0])
+    {}
 
     Field(const std::string& fieldName_in,
-          const T& value_in = (T) 0)
-      : Field<T, NumberComponents, DomainType::Generic,
-              Architecture::Generic, true>(fieldName_in)
-      , globalArrayHost(gSD::volume()*NumberComponents)
-    {
-      for(unsigned int i = 0; i < gSD::volume(); ++i) {
-        setGlobalValue(i, value_in);
-      }
-    }
+          const DynamicArray<T, Architecture::CPU>& localArray_in)
+      : Base(fieldName_in)
+      , localArray(localArray_in)
+    {}
 
-    Field(const std::string& fieldName_in,
-          const DynamicArray<T, Architecture::CPU>& globalArrayHost_in)
-      : Field<T, NumberComponents, DomainType::Generic,
-              Architecture::Generic, true>(fieldName_in)
-      , globalArrayHost(gSD::volume()*NumberComponents)
-      {
-      globalArrayHost.copyFrom(globalArrayHost_in);
-    }
+  };
 
+
+  template <class T, unsigned int NumberComponents, Architecture architecture>
+  class Field<T, NumberComponents, DomainType::LocalSpace,
+              architecture, true>
+    : public Field<T, NumberComponents, DomainType::Generic,
+                   architecture, true> {
+  private:
+    using Base = Field<T, NumberComponents, DomainType::Generic,
+                       architecture, true>;
   protected:
-    DynamicArray<T, Architecture::CPU> globalArrayHost;
+    using Base::localArray;
 
+  public:
+    using Base::numberComponents;
+    using Base::IsWritten;
+    using Base::fieldName;
+
+    using Base::Field;
+
+    DynamicArray<T, Architecture::CPU>& getLocalArray() {
+      return localArray;
+    }
+
+    DEVICE HOST
+    T * RESTRICT getLocalData() {
+      return localArray.data();
+    }
+
+    DEVICE HOST
+    void setLocalValue(const unsigned int index,
+                       const T value,
+                       const unsigned int iC = 0) {
+      localArray[lSD::getIndex(index, iC)] = value;
+    }
+
+    DEVICE HOST
+    void setLocalVector(const unsigned int index,
+                        const MathVector<T, NumberComponents> vector) {
+      for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+        setLocalValue(index, vector[iC], iC);
+      }
+    }
+
+    DEVICE HOST
+      T getLocalValue(const MathVector<unsigned int, 3>& iP,
+                          const unsigned int iC = 0) const {
+      return localArray[lSD::getIndex(iP, iC)];
+    }
+
+    DEVICE HOST
+    MathVector<T, NumberComponents> getLocalVector(const MathVector<unsigned int, 3>& iP) const {
+      MathVector<T, NumberComponents> vectorR;
+      for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+        vectorR[iC] = getLocalValue(iP, iC);
+      }
+
+      return vectorR;
+    }
+
+  };
+
+
+  template <class T, unsigned int NumberComponents, Architecture architecture>
+  class Field<T, NumberComponents, DomainType::GlobalSpace,
+              architecture, true>
+    : public Field<T, NumberComponents, DomainType::LocalSpace,
+                   architecture, true> {
+  private:
+    using Base = Field<T, NumberComponents, DomainType::LocalSpace,
+                       architecture, true>;
     typedef Domain<DomainType::GlobalSpace, partitionningT,
                    MemoryLayout::Generic, NumberComponents> gNCD;
 
-    using Field<T, NumberComponents, DomainType::Generic,
-                Architecture::Generic, true>::localArrayHost;
-    using Field<T, NumberComponents, DomainType::Generic,
-                Architecture::Generic, true>::localArrayDevice;
+  protected:
+    DynamicArray<T, Architecture::CPU> globalArray;
 
   public:
-    using Field<T, NumberComponents, DomainType::Generic,
-                Architecture::Generic, true>::localHostArray;
-    using Field<T, NumberComponents, DomainType::Generic,
-                Architecture::Generic, true>::localDeviceArray;
+    using Base::numberComponents;
+    using Base::IsWritten;
+    using Base::fieldName;
 
-    using Field<T, NumberComponents, DomainType::Generic,
-                Architecture::Generic, true>::localHostData;
-    using Field<T, NumberComponents, DomainType::Generic,
-                Architecture::Generic, true>::localDeviceData;
+    Field(const std::string& fieldName_in)
+      : Base(fieldName_in)
+      , globalArray(gSD::volume()*NumberComponents)
+    {}
 
-    T * RESTRICT globalData() {
-      return globalArrayHost.data();
+    Field(const std::string& fieldName_in,
+          const MathVector<T, NumberComponents>& vector_in)
+      : Base(fieldName_in)
+      , globalArray(gSD::volume()*NumberComponents, vector_in[0])
+    {}
+
+    Field(const std::string& fieldName_in,
+          const T& value_in)
+      : Base(fieldName_in)
+      , globalArray(gSD::volume()*NumberComponents, value_in)
+    {}
+
+    Field(const std::string& fieldName_in,
+          const DynamicArray<T, Architecture::CPU>& globalArray_in)
+      : Base(fieldName_in)
+      , globalArray(globalArray_in)
+    {}
+
+    using Base::getLocalArray;
+    using Base::getLocalData;
+    using Base::setLocalValue;
+    using Base::setLocalVector;
+    using Base::getLocalValue;
+    using Base::getLocalVector;
+
+    T * RESTRICT getGlobalData() {
+      return globalArray.data();
     }
 
-    DynamicArray<T, Architecture::CPU>& globalArray() {
-      return globalArrayHost;
+    DynamicArray<T, Architecture::CPU>& getGlobalArray() {
+      return globalArray;
     }
 
     void setGlobalField(DynamicArray<T, Architecture::CPU> globalArray_in) {
-      globalArrayHost.copyFrom(globalArray_in);
+      globalArray.copyFrom(globalArray_in);
     }
 
     void setGlobalValue(const unsigned int index, const T value) {
-      globalArrayHost[index] = value;
+      globalArray[index] = value;
     }
 
     void setGlobalValue(const MathVector<unsigned int, 3>& iP,
@@ -255,7 +351,7 @@ namespace lbm {
 
     T getGlobalValue(const MathVector<unsigned int, 3>& iP,
                      const unsigned int iC = 0) const {
-      return globalArrayHost[gNCD::getIndex(iP, iC)];
+      return globalArray[gNCD::getIndex(iP, iC)];
     }
 
     MathVector<T, NumberComponents> getGlobalVector(const MathVector<unsigned int, 3>& iP) const {
@@ -266,298 +362,9 @@ namespace lbm {
 
       return vectorR;
     }
-  };
-
-
-  template <class T, unsigned int NumberComponents>
-  class Field<T, NumberComponents, DomainType::LocalSpace, Architecture::Generic, true>
-    : public Field<T, NumberComponents, DomainType::Generic, Architecture::Generic, true> {
-  public:
-    using Field<T, NumberComponents, DomainType::Generic,
-                Architecture::Generic, true>::numberComponents;
-    using Field<T, NumberComponents, DomainType::Generic,
-                Architecture::Generic, true>::IsWritten;
-
-    using Field<T, NumberComponents, DomainType::Generic,
-                Architecture::Generic, true>::fieldName;
-
-    Field(const std::string& fieldName_in,
-          const T& value_in = (T) 0)
-      : Field<T, NumberComponents, DomainType::Generic,
-              Architecture::Generic, true>(fieldName_in)
-      , globalArrayHost()
-    {
-      MathVector<unsigned int, 3> iP;
-      for(unsigned int iZ = lSD::start()[d::Z]; iZ < lSD::end()[d::Z]; ++iZ) {
-        for(unsigned int iY = lSD::start()[d::Y]; iY < lSD::end()[d::Y]; ++iY) {
-          for(unsigned int iX = lSD::start()[d::X]; iX < lSD::end()[d::X]; ++iX) {
-            iP =  MathVector<unsigned int, 3>({iX, iY, iZ});
-            for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
-              setLocalHostValue(iP, value_in, iC);
-            }
-          }
-        }
-      }
-    }
-
-    Field(const std::string& fieldName_in,
-          const MathVector<T, NumberComponents>& vector_in)
-      : Field<T, NumberComponents, DomainType::Generic,
-              Architecture::Generic, true>(fieldName_in)
-      , globalArrayHost()
-    {
-      MathVector<unsigned int, 3> iP;
-      for(unsigned int iZ = lSD::start()[d::Z]; iZ < lSD::end()[d::Z]; ++iZ) {
-        for(unsigned int iY = lSD::start()[d::Y]; iY < lSD::end()[d::Y]; ++iY) {
-          for(unsigned int iX = lSD::start()[d::X]; iX < lSD::end()[d::X]; ++iX) {
-            iP =  MathVector<unsigned int, 3>({iX, iY, iZ});
-            setLocalHostVector(iP, vector_in);
-          }
-        }
-      }
-    }
-
-    Field(const std::string& fieldName_in,
-          const DynamicArray<T, Architecture::CPU>& localArrayHost_in)
-      : Field<T, NumberComponents, DomainType::Generic,
-              Architecture::Generic, true>(fieldName_in)
-      , globalArrayHost()
-    {
-      localArrayHost.copyFrom(localArrayHost_in);
-    }
-
-  protected:
-    DynamicArray<T, Architecture::CPU> globalArrayHost;
-
-    using Field<T, NumberComponents, DomainType::Generic,
-                Architecture::Generic, true>::localArrayDevice;
-    using Field<T, NumberComponents, DomainType::Generic,
-                Architecture::Generic, true>::localArrayHost;
-
-  public:
-    using Field<T, NumberComponents, DomainType::Generic,
-                Architecture::Generic, true>::localHostArray;
-    using Field<T, NumberComponents, DomainType::Generic,
-                Architecture::Generic, true>::localDeviceArray;
-
-    using Field<T, NumberComponents, DomainType::Generic,
-                Architecture::Generic, true>::localHostData;
-    using Field<T, NumberComponents, DomainType::Generic,
-                Architecture::Generic, true>::localDeviceData;
-
-    DEVICE HOST
-      T getLocalHostValue(const MathVector<unsigned int, 3>& iP,
-                          const unsigned int iC = 0) const {
-      return localArrayHost[lSD::getIndex(iP, iC)];
-    }
-
-    DEVICE HOST
-    MathVector<T, NumberComponents> getLocalHostVector(const MathVector<unsigned int, 3>& iP) const {
-      MathVector<T, NumberComponents> vectorR;
-      for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
-        vectorR[iC] = getLocalHostValue(iP, iC);
-      }
-
-      return vectorR;
-    }
-
-    T * RESTRICT globalData() {
-      return globalArrayHost.data();
-    }
-
-    DynamicArray<T, Architecture::CPU>& globalArray() {
-      return globalArrayHost;
-    }
-
-    void setGlobalField(DynamicArray<T, Architecture::CPU> globalArray_in) {
-    }
-
-    void setGlobalValue(const unsigned int index, const T value) {
-    }
-
-    void setGlobalValue(const MathVector<unsigned int, 3>& iP,
-                        const T value,
-                        const unsigned int iC) {
-    }
-
-    void setGlobalVector(const MathVector<unsigned int, 3>& iP,
-                         const MathVector<T, NumberComponents> vector) {
-    }
-
-    T getGlobalValue(const MathVector<unsigned int, 3>& iP,
-                     const unsigned int iC = 0) const {
-      return (T) -1;
-    }
-
-    MathVector<T, NumberComponents> getGlobalVector(const MathVector<unsigned int, 3>& iP) const {
-      return MathVector<T, NumberComponents>{(T) -1};
-    }
-
-
-  private:
-    DEVICE HOST
-    void setLocalHostValue(const MathVector<unsigned int, 3>& iP,
-                           const T value,
-                           const unsigned int iC) {
-      localArrayHost[lSD::getIndex(iP, iC)] = value;
-    }
-
-    DEVICE HOST
-    void setLocalHostVector(const MathVector<unsigned int, 3>& iP,
-                            const MathVector<T, NumberComponents> vector) {
-      for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
-        setLocalHostValue(iP, vector[iC], iC);
-      }
-    }
 
   };
 
-
-  template <class T, unsigned int NumberComponents, DomainType initDomainType>
-  class Field<T, NumberComponents, initDomainType, Architecture::CPU, true>
-  : public Field<T, NumberComponents, initDomainType, Architecture::Generic, true> {
-  protected:
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::localArrayDevice;
-
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::globalArrayHost;
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::localArrayHost;
-
-  public:
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::numberComponents;
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::IsWritten;
-
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::fieldName;
-
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::Field;
-
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::globalData;
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::globalArray;
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::setGlobalField;
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::setGlobalValue;
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::setGlobalVector;
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::getGlobalValue;
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::getGlobalVector;
-
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::localHostArray;
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::localDeviceArray;
-
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::localHostData;
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::localDeviceData;
-
-
-    DEVICE HOST
-    T * RESTRICT localComputedData() {
-      return localArrayHost.data();
-    }
-
-
-    DEVICE HOST
-    void setLocalValue(const unsigned int index,
-                       const T value,
-                       const unsigned int iC = 0) {
-      localArrayHost[lSD::getIndex(index, iC)] = value;
-    }
-
-    DEVICE HOST
-    void setLocalVector(const unsigned int index,
-                        const MathVector<T, NumberComponents> vector) {
-      for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
-        setLocalValue(index, vector[iC], iC);
-      }
-    }
-
-  };
-
-
-  template <class T, unsigned int NumberComponents, DomainType initDomainType>
-  class Field<T, NumberComponents, initDomainType, Architecture::GPU, true>
-    : public Field<T, NumberComponents, initDomainType, Architecture::Generic, true> {
-  protected:
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::localArrayDevice;
-
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::globalArrayHost;
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::localArrayHost;
-
-  public:
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::numberComponents;
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::IsWritten;
-
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::fieldName;
-
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::Field;
-
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::globalData;
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::globalArray;
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::setGlobalField;
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::setGlobalValue;
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::setGlobalVector;
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::getGlobalValue;
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::getGlobalVector;
-
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::localHostArray;
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::localDeviceArray;
-
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::localHostData;
-    using Field<T, NumberComponents, initDomainType,
-                Architecture::Generic, true>::localDeviceData;
-
-    DEVICE HOST
-    T * RESTRICT localComputedData() {
-      return localArrayDevice.data();
-    }
-
-    DEVICE HOST
-    void setLocalValue(const unsigned int index,
-                       const T value,
-                       const unsigned int iC = 0) {
-      localArrayDevice[lSD::getIndex(index, iC)] = value;
-    }
-
-    DEVICE HOST
-    void setLocalVector(const unsigned int index,
-                        const MathVector<T, NumberComponents> vector) {
-      for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
-        setLocalValue(index, vector[iC], iC);
-      }
-    }
-
-  };
-
-}
+} // namespace lbm
 
 #endif // FIELD_H

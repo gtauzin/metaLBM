@@ -9,6 +9,9 @@
 #include "Options.h"
 
 #ifdef USE_NVSHMEM
+  #include<shmem.h>
+  #include<shmemx.h>
+
   #define MALLOC_GPU shmem_malloc
   #define FREE_GPU shmem_free
 #else
@@ -36,7 +39,7 @@ namespace lbm {
     DynamicArray()
       : DynamicArray<U, Architecture::Generic>()
       , computation(MathVector<unsigned int, 3>{{0}},
-                    MathVector<unsigned int, 3>{{numberElements}})
+                    MathVector<unsigned int, 3>{{0}})
     {}
 
     DynamicArray(const unsigned int numberElements_in,
@@ -88,52 +91,44 @@ namespace lbm {
   };
 
  template<class U>
-  class DynamicArray<U, Architecture::GPUPinned>
-    :public DynamicArray<U, Architecture::Generic> {
+  class DynamicArray<U, Architecture::CPUPinned>
+    :public DynamicArray<U, Architecture::CPU> {
   private:
-    using DynamicArray<U, Architecture::Generic>::numberElements;
-    using DynamicArray<U, Architecture::Generic>::dArrayPtr;
+   using Base = DynamicArray<U, Architecture::CPU>;
+
+    using Base::numberElements;
+    using Base::dArrayPtr;
     Computation<Architecture::GPU, 1> computation;
 
   public:
-    using DynamicArray<U, Architecture::Generic>::operator[];
-    using DynamicArray<U, Architecture::Generic>::operator();
-    using DynamicArray<U, Architecture::Generic>::data;
-    using DynamicArray<U, Architecture::Generic>::size;
+    using Base::operator[];
+    using Base::operator();
+    using Base::data;
+    using Base::size;
 
     DynamicArray()
-      : DynamicArray<U, Architecture::Generic>()
-      , computation(MathVector<unsigned int, 3>{{0}},
-                    MathVector<unsigned int, 3>{{numberElements}})
+      : Base()
     {}
 
     DynamicArray(const unsigned int numberElements_in,
                  const U value_in = (U) 0)
-      : DynamicArray<U, Architecture::Generic>(numberElements_in)
+      : Base()
       , computation(MathVector<unsigned int, 3>{{0}},
                     MathVector<unsigned int, 3>{{numberElements_in}})
     {
+      numberElements = numberElements_in;
       CUDA_CALL( cudaMallocHost((void**)&dArrayPtr, numberElements_in*sizeof(U)); )
       computation.Do(*this, value_in);
     }
 
     DynamicArray(const DynamicArray& dArray_in)
-      : DynamicArray<U, Architecture::Generic>(dArray_in.size())
+      : Base()
       , computation(MathVector<unsigned int, 3>{{0}},
                     MathVector<unsigned int, 3>{{numberElements}})
     {
+      numberElements = dArray_in.size();
       CUDA_CALL( cudaMallocHost((void**)&dArrayPtr, numberElements*sizeof(U)); )
       copyFrom(dArray_in);
-    }
-
-    void copyFrom(const DynamicArray<U, Architecture::GPUPinned>& other) {
-      CUDA_CALL( cudaMemcpy(dArrayPtr, other.data(), other.size()*sizeof(U),
-                            cudaMemcpyHostToHost); )
-    }
-
-    void copyTo(DynamicArray<U, Architecture::GPUPinned>& other) const {
-      CUDA_CALL( cudaMemcpy(other.data(), dArrayPtr, numberElements*sizeof(U),
-                            cudaMemcpyHostToHost); )
     }
 
     ~DynamicArray(){
@@ -143,7 +138,10 @@ namespace lbm {
       }
     }
 
-  }; // end class DynamicArray<U, Architecture::GPUPinned>
+    using Base::copyFrom;
+    using Base::copyTo;
+
+  }; // end class DynamicArray<U, Architecture::CPUPinned>
 
 } // end namespace lbm
 

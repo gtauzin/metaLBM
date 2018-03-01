@@ -34,14 +34,14 @@ namespace lbm {
     class Algorithm<T, AlgorithmType::Generic, initDomainType,
     architecture, implementation> {
   protected:
-
     T * RESTRICT localDensity_Ptr;
     T * RESTRICT localVelocity_Ptr;
     T * RESTRICT localForce_Ptr;
     T * RESTRICT localAlpha_Ptr;
 
-    T * RESTRICT haloDistribution_Previous_Ptr;
-    T * RESTRICT haloDistribution_Next_Ptr;
+    T * RESTRICT localDistribution_Ptr;
+    T * RESTRICT haloDistributionPrevious_Ptr;
+    T * RESTRICT haloDistributionNext_Ptr;
 
     Communication<T, latticeT, algorithmT, memoryL,
                   partitionningT, implementation, L::dimD> communication;
@@ -59,23 +59,23 @@ namespace lbm {
 
     Algorithm(Field<T, 1, initDomainType, architecture, writeDensity>& densityField_in,
               Field<T, L::dimD, initDomainType, architecture, writeVelocity>& velocityField_in,
-              Field<T, L::dimD, initDomainType, architecture, writeDensity>& forceField_in,
-              Field<T, 1, initDomainType, architecture, writeDensity>& alphaField_in,
-              Distribution<T, initDomainType, architecture>& f_Previous_in,
-              Distribution<T, initDomainType, architecture>& f_Next_in,
+              Field<T, L::dimD, initDomainType, architecture, writeForce>& forceField_in,
+              Field<T, 1, initDomainType, architecture, writeAlpha>& alphaField_in,
+              Distribution<T, initDomainType, architecture>& distribution_in,
               Communication<T, latticeT, algorithmT, memoryL,
               partitionningT, implementation, L::dimD>& communication_in)
-      : localDensity_Ptr(densityField_in.localComputedData())
-      , localVelocity_Ptr(velocityField_in.localComputedData())
-      , localForce_Ptr(forceField_in.localComputedData())
-      , localAlpha_Ptr(alphaField_in.localComputedData())
-      , haloDistribution_Previous_Ptr(f_Previous_in.haloComputedData())
-      , haloDistribution_Next_Ptr(f_Next_in.haloComputedData())
+      : localDensity_Ptr(densityField_in.getLocalData())
+      , localVelocity_Ptr(velocityField_in.getLocalData())
+      , localForce_Ptr(forceField_in.getLocalData())
+      , localAlpha_Ptr(alphaField_in.getLocalData())
+      , localDistribution_Ptr(distribution_in.getLocalData())
+      , haloDistributionPrevious_Ptr(distribution_in.getHaloDataPrevious())
+      , haloDistributionNext_Ptr(distribution_in.getHaloDataNext())
       , communication(communication_in)
       , collision(relaxationTime, forceAmplitude, forceWaveLength, forcekMin, forcekMax)
       , moment()
       , computationLocal(lSD::start()+L::halo(),
-                    lSD::end()+L::halo())
+                         lSD::end()+L::halo())
       , computationHalo(hSD::start(),
                         hSD::end())
       , dtComputation()
@@ -122,26 +122,30 @@ namespace lbm {
     : public Algorithm<T, AlgorithmType::Generic, initDomainType,
                        architecture, implementation> {
   private:
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::localDensity_Ptr;
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::localVelocity_Ptr;
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::localForce_Ptr;
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::localAlpha_Ptr;
+    using Base = Algorithm<T, AlgorithmType::Generic, initDomainType,
+                           architecture, implementation>;
 
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::haloDistribution_Previous_Ptr;
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::haloDistribution_Next_Ptr;
+    using Base::localDensity_Ptr;
+    using Base::localVelocity_Ptr;
+    using Base::localForce_Ptr;
+    using Base::localAlpha_Ptr;
 
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::communication;
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::collision;
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::moment;
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::computationLocal;
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::computationHalo;
+    using Base::localDistribution_Ptr;
+    using Base::haloDistributionPrevious_Ptr;
+    using Base::haloDistributionNext_Ptr;
 
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::dtComputation;
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::dtCommunication;
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::dtTotal;
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::isWritten;
+    using Base::communication;
+    using Base::collision;
+    using Base::moment;
+    using Base::computationLocal;
+    using Base::computationHalo;
 
-    using Algorithm<T, AlgorithmType::Generic, initDomainType, architecture, implementation>::storeLocalFields;
+    using Base::dtComputation;
+    using Base::dtCommunication;
+    using Base::dtTotal;
+    using Base::isWritten;
+
+    using Base::storeLocalFields;
 
     Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
              partitionningT, implementation, L::dimD> periodicBoundary;
@@ -151,32 +155,32 @@ namespace lbm {
               Field<T, L::dimD, initDomainType, architecture, writeVelocity>& velocityField_in,
               Field<T, L::dimD, initDomainType, architecture, writeDensity>& forceField_in,
               Field<T, 1, initDomainType, architecture, writeDensity>& alphaField_in,
-              Distribution<T, initDomainType, architecture>& f_Previous_in,
-              Distribution<T, initDomainType, architecture>& f_Next_in,
+              Distribution<T, initDomainType, architecture>& distribution_in,
               Communication<T, latticeT, algorithmT, memoryL,
               partitionningT, implementation, L::dimD>& communication_in)
-      : Algorithm<T, AlgorithmType::Generic, initDomainType,
-                  architecture, implementation>(densityField_in, velocityField_in,
-                                                forceField_in, alphaField_in,
-                                                f_Previous_in, f_Next_in,
-                                                communication_in)
+      : Base(densityField_in, velocityField_in,
+             forceField_in, alphaField_in,
+             distribution_in,
+             communication_in)
     {}
 
     HOST DEVICE
     void operator()(const MathVector<unsigned int, 3>& iP) {
-      moment.calculateMoments(haloDistribution_Previous_Ptr, iP);
+      moment.calculateMoments(haloDistributionPrevious_Ptr, iP);
 
       collision.setForce(localForce_Ptr, iP, gSD::offset(communication.getRankMPI()));
-      collision.setVariables(haloDistribution_Previous_Ptr, iP,
+      collision.setVariables(haloDistributionPrevious_Ptr, iP,
                              moment.getDensity(), moment.getVelocity());
 
       for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
-        haloDistribution_Next_Ptr[hSD::getIndex(iP, iQ)] =
-                            collision.calculate(haloDistribution_Previous_Ptr,
+        haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)] =
+                            collision.calculate(haloDistributionPrevious_Ptr,
                                                 iP-uiL::celerity()[iQ], iQ);
       }
 
-      storeLocalFields(iP);
+      if(isWritten) {
+        storeLocalFields(iP);
+      }
     }
 
     void setIsWritten(bool isWritten_in) {
@@ -187,15 +191,17 @@ namespace lbm {
     void iterate(const unsigned int iteration) {
       INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate",2)
 
-      std::swap(haloDistribution_Previous_Ptr, haloDistribution_Next_Ptr);
+      std::swap(haloDistributionPrevious_Ptr, haloDistributionNext_Ptr);
 
       collision.update(iteration);
 
       auto t0 = std::chrono::high_resolution_clock::now();
 
-      communication.communicateHalos(haloDistribution_Previous_Ptr);
+      communication.communicateHalos(haloDistributionPrevious_Ptr);
+
+      // TODO: Run only at the boundaries
       computationHalo.Do(periodicBoundary,
-                         haloDistribution_Previous_Ptr);
+                         haloDistributionPrevious_Ptr);
 
       //boundary.apply(f_Previous.haloData());
 
@@ -210,13 +216,36 @@ namespace lbm {
       dtTotal = (t2 - t0);
     }
 
-    using Algorithm<T, AlgorithmType::Generic, initDomainType,
-                    architecture, implementation>::getCommunicationTime;
-    using Algorithm<T, AlgorithmType::Generic, initDomainType,
-                    architecture, implementation>::getComputationTime;
-    using Algorithm<T, AlgorithmType::Generic, initDomainType,
-                    architecture, implementation>::getTotalTime;
+    HOST DEVICE
+    void pack() {
+      computationLocal.Do([=] HOST DEVICE (const MathVector<unsigned int, 3>& iP) {
+          for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+            localDistribution_Ptr[hSD::getIndexLocal(iP, iQ)]
+              = haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)];
+          }
+        });
+    }
+
+    HOST DEVICE
+    void unpack() {
+      computationLocal.Do([=] HOST DEVICE (const MathVector<unsigned int, 3>& iP) {
+          for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+            haloDistributionPrevious_Ptr[hSD::getIndex(iP, iQ)]
+              = localDistribution_Ptr[lSD::getIndex(iP-L::halo(), iQ)];
+
+            // std::cout << "iP: " << iP << ", iQ: " << iQ << ", local: "
+            //           << localDistribution_Ptr[lSD::getIndex(iP-L::halo(), iQ)] << std::endl;
+
+          }
+        });
+    }
+
+    using Base::getCommunicationTime;
+    using Base::getComputationTime;
+    using Base::getTotalTime;
   };
+
+
 
 }
 

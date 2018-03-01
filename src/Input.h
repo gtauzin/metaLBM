@@ -10,10 +10,10 @@
 namespace lbm {
   typedef DATA_TYPE dataT;
 
-  constexpr LatticeType latticeT = LatticeType::D3Q27;
+  constexpr LatticeType latticeT = LatticeType::D2Q9;
   constexpr int lengthX_g = 16;
   constexpr int lengthY_g = 16;
-  constexpr int lengthZ_g = 16;
+  constexpr int lengthZ_g = 1;
 
   constexpr unsigned int startIteration = 0;
   constexpr unsigned int endIteration = 10;
@@ -43,7 +43,7 @@ namespace lbm {
   constexpr InitDensityType initDensityT = InitDensityType::Homogeneous;
   constexpr dataT initDensityValue = 1.0;
   constexpr InitVelocityType initVelocityT = InitVelocityType::Homogeneous;
-  constexpr MathVector<dataT, 3> initVelocityVector = { {0.0, 0.0, 0.0} };
+  constexpr MathVector<dataT, 3> initVelocityVector = { {3.0, 4.0, 5.0} };
 
   constexpr ForcingSchemeType forcingSchemeT = ForcingSchemeType::ExactDifferenceMethod;
   constexpr ForceType forceT = ForceType::Kolmogorov;
@@ -55,10 +55,10 @@ namespace lbm {
 
   constexpr BoundaryType boundaryT = BoundaryType::Generic;
 
-  constexpr InputOutput inputOutput = InputOutput::HDF5;
-  constexpr InputOutputType inputOutputType = InputOutputType::Parallel;
-  constexpr InputOutputDataFormat inputOutputDataFormat = InputOutputDataFormat::binary;
-  constexpr auto prefix = "test_serial";
+  constexpr InputOutput inputOutput = InputOutput::VTR;
+  constexpr InputOutputType inputOutputType = InputOutputType::Serial;
+  constexpr InputOutputDataFormat inputOutputDataFormat = InputOutputDataFormat::ascii;
+  constexpr auto prefix = "test_mar_1";
 
 
   constexpr bool writeDensity = 1;
