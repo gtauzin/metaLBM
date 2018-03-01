@@ -36,13 +36,14 @@ namespace lbm {
     #pragma omp declare simd
     HOST DEVICE
     static inline constexpr MathVector<unsigned int, 3> end() {
-      return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l());
+      return ProjectAndLeave1<unsigned int, L::dimD>::Do({lengthX_g/NPROCS,
+            lengthY_g, lengthZ_g});
     }
 
     #pragma omp declare simd
     HOST DEVICE
     static inline constexpr MathVector<unsigned int, 3> length() {
-      return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l());
+      return end();
     }
 
     #pragma omp declare simd
@@ -80,12 +81,16 @@ namespace lbm {
   };
 
 
-  template <PartitionningType partitionningType>
+  template <PartitionningType partitionningType, unsigned int NumberComponents>
   struct Domain<DomainType::GlobalSpace, partitionningType,
-                MemoryLayout::Generic, 1>
-    : public Domain<DomainType::LocalSpace, partitionningType,
-                    MemoryLayout::Generic, 1>
-  {
+                MemoryLayout::Generic, NumberComponents>
+    : public Domain<DomainType::LocalSpace, PartitionningType::Generic,
+                    MemoryLayout::Generic, NumberComponents> {
+  private:
+    using Base = Domain<DomainType::LocalSpace, PartitionningType::Generic,
+                        MemoryLayout::Generic, NumberComponents>;
+
+  public:
   public:
     #pragma omp declare simd
     HOST DEVICE
@@ -96,13 +101,13 @@ namespace lbm {
     #pragma omp declare simd
     HOST DEVICE
     static inline constexpr MathVector<unsigned int, 3> end() {
-      return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_g());
+      return ProjectAndLeave1<unsigned int, L::dimD>::Do({lengthX_g, lengthY_g, lengthZ_g});
     }
 
     #pragma omp declare simd
     HOST DEVICE
     static inline constexpr MathVector<unsigned int, 3> length() {
-      return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_g());
+      return end();
     }
 
     #pragma omp declare simd
@@ -116,99 +121,21 @@ namespace lbm {
     static inline MathVector<unsigned int, 3> offset(const MathVector<int, 3>& rankMPI) {
       MathVector<unsigned int, 3> offsetR{{0}};
       for(unsigned int iD = 0; iD < L::dimD; ++iD) {
-          offsetR[iD] = (unsigned int) length_g()[iD]*rankMPI[iD];
+        offsetR[iD] = (unsigned int) Base::length()[iD] * rankMPI[iD];
       }
-
       return offsetR;
-  }
-
-    #pragma omp declare simd
-    HOST DEVICE
-    static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP) {
-      const unsigned int localLengthX = Domain<DomainType::LocalSpace,
-                                               PartitionningType::Generic,
-                                               MemoryLayout::Generic, 1>::length()[d::X];
-      const unsigned int localVolume = Domain<DomainType::LocalSpace,
-                                              PartitionningType::Generic,
-                                              MemoryLayout::Generic, 1>::volume();
-
-      const unsigned int indexLocal
-        = Domain<DomainType::LocalSpace, PartitionningType::Generic,
-                 MemoryLayout::Generic, 1>::getIndex(MathVector<unsigned int, 3>({iP[d::X] - iP[d::X]/localLengthX * localLengthX, iP[d::Y], iP[d::Z]}));
-      return iP[d::X]/localLengthX * localVolume + indexLocal;
     }
 
     #pragma omp declare simd
     HOST DEVICE
     static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP,
-                                        const unsigned int iC) {
-      const unsigned int localLengthX = Domain<DomainType::LocalSpace,
-                                               PartitionningType::Generic,
-                                               MemoryLayout::Generic, 1>::length()[d::X];
-      const unsigned int localVolume = Domain<DomainType::LocalSpace,
-                                              PartitionningType::Generic,
-                                              MemoryLayout::Generic, 1>::volume();
-
-      const unsigned int indexLocal
-        = Domain<DomainType::LocalSpace, PartitionningType::Generic,
-                 MemoryLayout::Generic, 1>::getIndex(MathVector<unsigned int, 3>({iP[d::X] - iP[d::X]/localLengthX * localLengthX, iP[d::Y], iP[d::Z]}), iC);
-      return iP[d::X]/localLengthX * localVolume + indexLocal;
-    }
-
-  };
-
-  template <PartitionningType partitionningType, unsigned int NumberComponents>
-  struct Domain<DomainType::GlobalSpace, partitionningType,
-                MemoryLayout::Generic, NumberComponents>
-    : public Domain<DomainType::GlobalSpace, partitionningType,
-                    MemoryLayout::Generic, 1>
-  {
-  public:
-    using Domain<DomainType::GlobalSpace, partitionningType,
-                 MemoryLayout::Generic, 1>::start;
-    using Domain<DomainType::GlobalSpace, partitionningType,
-                 MemoryLayout::Generic, 1>::end;
-    using Domain<DomainType::GlobalSpace, partitionningType,
-                 MemoryLayout::Generic, 1>::length;
-    using Domain<DomainType::GlobalSpace, partitionningType,
-                 MemoryLayout::Generic, 1>::volume;
-    using Domain<DomainType::GlobalSpace, partitionningType,
-                 MemoryLayout::Generic, 1>::offset;
-
-    #pragma omp declare simd
-    HOST DEVICE
-    static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP) {
-      const unsigned int localLengthX = Domain<DomainType::LocalSpace,
-                                               PartitionningType::Generic,
-                                               MemoryLayout::Generic, NumberComponents>::length()[d::X];
-      const unsigned int localVolume = Domain<DomainType::LocalSpace,
-                                              PartitionningType::Generic,
-                                              MemoryLayout::Generic, NumberComponents>::volume();
-
-      const unsigned int indexLocal = Domain<DomainType::LocalSpace,
-                                             PartitionningType::Generic,
-                                             MemoryLayout::Generic, NumberComponents>::getIndex({iP[d::X] - iP[d::X]/localLengthX * localLengthX, iP[d::Y], iP[d::Z]});
-      return iP[d::X]/localLengthX * NumberComponents * localVolume + indexLocal;
-    }
-
-    #pragma omp declare simd
-    HOST DEVICE
-    static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP,
-                                        const unsigned int iC) {
-      const unsigned int localLengthX = Domain<DomainType::LocalSpace,
-                                               PartitionningType::Generic,
-                                               MemoryLayout::Generic, NumberComponents>::length()[d::X];
-      const unsigned int localVolume = Domain<DomainType::LocalSpace,
-                                              PartitionningType::Generic,
-                                              MemoryLayout::Generic, NumberComponents>::volume();
-
-      const unsigned int indexLocal = Domain<DomainType::LocalSpace,
-                                             PartitionningType::Generic,
-                                             MemoryLayout::Generic, NumberComponents>::getIndex({iP[d::X] - iP[d::X]/localLengthX * localLengthX, iP[d::Y], iP[d::Z]}, iC);
-      return iP[d::X]/localLengthX * NumberComponents * localVolume + indexLocal;
+                                        const unsigned int iC = 0) {
+      const unsigned int localLengthX = Base::length()[d::X];
+      //if(iC != 0) std::cout << "iC " << iC << " of " << NumberComponents << std::endl;
+      const unsigned int indexLocal = Base::getIndex({iP[d::X] - iP[d::X]/localLengthX * localLengthX, iP[d::Y], iP[d::Z]}, iC);
+      return iP[d::X]/localLengthX * NumberComponents * Base::volume() + indexLocal;
     }
   };
-
 
 
   template <unsigned int NumberComponents>
@@ -216,6 +143,10 @@ namespace lbm {
                 MemoryLayout::Generic, NumberComponents>
     : public Domain<DomainType::LocalSpace, PartitionningType::Generic,
                     MemoryLayout::Generic, NumberComponents> {
+  private:
+    using Base = Domain<DomainType::LocalSpace, PartitionningType::Generic,
+                        MemoryLayout::Generic, NumberComponents>;
+
   public:
     #pragma omp declare simd
     HOST DEVICE
@@ -226,13 +157,13 @@ namespace lbm {
     #pragma omp declare simd
     HOST DEVICE
     static inline constexpr MathVector<unsigned int, 3> end() {
-      return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l()) + 2 * L::halo();
+      return ProjectAndLeave1<unsigned int, L::dimD>::Do(Base::length()) + 2 * L::halo();
     }
 
     #pragma omp declare simd
     HOST DEVICE
     static inline constexpr MathVector<unsigned int, 3> length() {
-      return ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l()) + 2 * L::halo();
+      return ProjectAndLeave1<unsigned int, L::dimD>::Do(Base::length()) + 2 * L::halo();
     }
 
     #pragma omp declare simd
@@ -251,15 +182,13 @@ namespace lbm {
     HOST DEVICE
     static inline unsigned int getIndexLocal(const MathVector<unsigned int, 3>& iP,
                                              const unsigned int iC) {
-      return Domain<DomainType::LocalSpace, PartitionningType::Generic,
-                    MemoryLayout::Generic, NumberComponents>::getIndex(iP - L::halo(), iC);
+      return Base::getIndex(iP - L::halo(), iC);
     }
 
     #pragma omp declare simd
     HOST DEVICE
     static inline unsigned int getIndexLocal(const MathVector<unsigned int, 3>& iP) {
-      return Domain<DomainType::LocalSpace, PartitionningType::Generic,
-                    MemoryLayout::Generic, NumberComponents>::getIndex(iP - L::halo());
+      return Base::getIndex(iP - L::halo());
     }
 
   };
@@ -270,22 +199,17 @@ namespace lbm {
                 MemoryLayout::AoS, NumberComponents>
     : public Domain<DomainType::HaloSpace, PartitionningType::Generic,
                     MemoryLayout::Generic, NumberComponents> {
+  private:
+    using Base = Domain<DomainType::HaloSpace, PartitionningType::Generic,
+                        MemoryLayout::Generic, NumberComponents>;
+
   public:
-    using Domain<DomainType::HaloSpace, PartitionningType::Generic,
-                 MemoryLayout::Generic, NumberComponents>::start;
-    using Domain<DomainType::HaloSpace, PartitionningType::Generic,
-                 MemoryLayout::Generic, NumberComponents>::end;
-
-    using Domain<DomainType::HaloSpace, PartitionningType::Generic,
-                 MemoryLayout::Generic, NumberComponents>::length;
-    using Domain<DomainType::HaloSpace, PartitionningType::Generic,
-                 MemoryLayout::Generic, NumberComponents>::volume;
-
-    using Domain<DomainType::HaloSpace, PartitionningType::Generic,
-                 MemoryLayout::Generic, NumberComponents>::getIndex;
-    using Domain<DomainType::HaloSpace, PartitionningType::Generic,
-                 MemoryLayout::Generic, NumberComponents>::getIndexLocal;
-
+    using Base::start;
+    using Base::end;
+    using Base::length;
+    using Base::volume;
+    using Base::getIndex;
+    using Base::getIndexLocal;
 
     #pragma omp declare simd
     HOST DEVICE
@@ -308,22 +232,17 @@ namespace lbm {
                 MemoryLayout::SoA, NumberComponents>
     : public Domain<DomainType::HaloSpace, PartitionningType::Generic,
                     MemoryLayout::Generic, NumberComponents> {
+  private:
+    using Base = Domain<DomainType::HaloSpace, PartitionningType::Generic,
+                        MemoryLayout::Generic, NumberComponents>;
+
   public:
-    using Domain<DomainType::HaloSpace, PartitionningType::Generic,
-                 MemoryLayout::Generic, NumberComponents>::start;
-    using Domain<DomainType::HaloSpace, PartitionningType::Generic,
-                 MemoryLayout::Generic, NumberComponents>::end;
-
-    using Domain<DomainType::HaloSpace, PartitionningType::Generic,
-                 MemoryLayout::Generic, NumberComponents>::length;
-    using Domain<DomainType::HaloSpace, PartitionningType::Generic,
-                 MemoryLayout::Generic, NumberComponents>::volume;
-
-    using Domain<DomainType::HaloSpace, PartitionningType::Generic,
-                 MemoryLayout::Generic, NumberComponents>::getIndex;
-    using Domain<DomainType::HaloSpace, PartitionningType::Generic,
-                 MemoryLayout::Generic, NumberComponents>::getIndexLocal;
-
+    using Base::start;
+    using Base::end;
+    using Base::length;
+    using Base::volume;
+    using Base::getIndex;
+    using Base::getIndexLocal;
 
     #pragma omp declare simd
     HOST DEVICE
@@ -347,6 +266,10 @@ namespace lbm {
                 MemoryLayout::Generic, NumberComponents>
     : public Domain<DomainType::HaloSpace, PartitionningType::Generic,
                     MemoryLayout::Generic, NumberComponents> {
+  private:
+    using Base = Domain<DomainType::HaloSpace, PartitionningType::Generic,
+                        MemoryLayout::Generic, NumberComponents>;
+
   public:
     #pragma omp declare simd
     HOST DEVICE
@@ -358,16 +281,14 @@ namespace lbm {
     HOST DEVICE
     static inline constexpr MathVector<unsigned int, 3> end() {
       return MathVector<unsigned int, 3>({L::halo()[d::X],
-              ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l())[d::Y]+2*L::halo()[d::Y],
-            ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l())[d::Z]+2*L::halo()[d::Z]});
+            ProjectAndLeave1<unsigned int, L::dimD>::Do(Base::length())[d::Y],
+            ProjectAndLeave1<unsigned int, L::dimD>::Do(Base::length())[d::Z]});
     }
 
     #pragma omp declare simd
     HOST DEVICE
     static inline constexpr MathVector<unsigned int, 3> length() {
-      return MathVector<unsigned int, 3>({L::halo()[d::X],
-          ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l())[d::Y]+2*L::halo()[d::Y],
-            ProjectAndLeave1<unsigned int, L::dimD>::Do(length_l())[d::Z]+2*L::halo()[d::Z]});
+      return end();
     }
 
     #pragma omp declare simd
@@ -391,17 +312,17 @@ namespace lbm {
 
   };
 
-  typedef Domain<DomainType::GlobalSpace, partitionningT,
+  typedef Domain<DomainType::GlobalSpace, PartitionningType::Generic,
                  MemoryLayout::Generic, 1> gSD;
-  typedef Domain<DomainType::GlobalSpace, partitionningT,
+  typedef Domain<DomainType::GlobalSpace, PartitionningType::Generic,
                  MemoryLayout::Generic, L::dimD> gSDD;
-  typedef Domain<DomainType::GlobalSpace, partitionningT,
+  typedef Domain<DomainType::GlobalSpace, PartitionningType::Generic,
                  MemoryLayout::Generic, L::dimQ> gSQD;
 
   typedef Domain<DomainType::LocalSpace, PartitionningType::Generic,
                  MemoryLayout::Generic, 1> lSD;
   typedef Domain<DomainType::LocalSpace, PartitionningType::Generic,
-    MemoryLayout::Generic, L::dimD> lSDD;
+                 MemoryLayout::Generic, L::dimD> lSDD;
   typedef Domain<DomainType::HaloSpace, PartitionningType::Generic,
                  memoryL, L::dimQ> hSD;
   typedef Domain<DomainType::BufferXSpace, PartitionningType::Generic,

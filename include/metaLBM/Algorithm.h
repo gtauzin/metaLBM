@@ -216,9 +216,9 @@ namespace lbm {
       dtTotal = (t2 - t0);
     }
 
-    HOST DEVICE
+    HOST
     void pack() {
-      computationLocal.Do([=] HOST DEVICE (const MathVector<unsigned int, 3>& iP) {
+      computationLocal.Do([this] HOST DEVICE (const MathVector<unsigned int, 3>& iP) {
           for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
             localDistribution_Ptr[hSD::getIndexLocal(iP, iQ)]
               = haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)];
@@ -226,16 +226,12 @@ namespace lbm {
         });
     }
 
-    HOST DEVICE
+    HOST
     void unpack() {
-      computationLocal.Do([=] HOST DEVICE (const MathVector<unsigned int, 3>& iP) {
+      computationLocal.Do([this] HOST DEVICE (const MathVector<unsigned int, 3>& iP) {
           for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
             haloDistributionPrevious_Ptr[hSD::getIndex(iP, iQ)]
               = localDistribution_Ptr[lSD::getIndex(iP-L::halo(), iQ)];
-
-            // std::cout << "iP: " << iP << ", iQ: " << iQ << ", local: "
-            //           << localDistribution_Ptr[lSD::getIndex(iP-L::halo(), iQ)] << std::endl;
-
           }
         });
     }

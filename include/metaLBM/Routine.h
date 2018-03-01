@@ -108,11 +108,12 @@ namespace lbm {
 
     Field<T, 1, DomainType::GlobalSpace, architecture, writeDensity> densityField;
     Field<T, L::dimD, DomainType::GlobalSpace, architecture, writeVelocity> velocityField;
-    Field<T, L::dimD, DomainType::GlobalSpace, architecture, writeDensity> forceField;
-    Field<T, 1, DomainType::GlobalSpace, architecture, writeDensity> alphaField;
+    Field<T, L::dimD, DomainType::GlobalSpace, architecture, writeForce> forceField;
+    Field<T, 1, DomainType::GlobalSpace, architecture, writeAlpha> alphaField;
 
     Distribution<T, DomainType::GlobalSpace, architecture> distribution;
-    Algorithm<dataT, algorithmT, DomainType::GlobalSpace, arch, implementation> algorithm;
+    Algorithm<dataT, algorithmT, DomainType::GlobalSpace, architecture,
+              implementation> algorithm;
 
     using Base::communication;
     using Base:: initialMass;
@@ -130,9 +131,9 @@ namespace lbm {
             const MathVector<int, 3>& sizeMPI_in,
             const std::string& processorName_in)
       : Base(rankMPI_in, sizeMPI_in, processorName_in)
-      , densityField("density", initGlobalDensity<T, architecture>().getGlobalArray())
+      , densityField(initGlobalDensity<T, architecture>())
       , velocityField(initGlobalVelocity<T, architecture>())
-      , forceField("force")
+      , forceField(initGlobalForce<T, architecture>())
       , alphaField(initGlobalAlpha<T, architecture>())
       , distribution("distribution",
                      initGlobalDistribution<T, architecture>(densityField,
@@ -188,6 +189,10 @@ namespace lbm {
       communication.sendGlobalToLocal(alphaField.getGlobalArray(),
                                       alphaField.getLocalArray(),
                                       alphaField.numberComponents);
+
+      communication.sendGlobalToLocal(forceField.getGlobalArray(),
+                                      forceField.getLocalArray(),
+                                      forceField.numberComponents);
 
       communication.sendGlobalToLocal(distribution.getGlobalArray(),
                                       distribution.getLocalArray(),
@@ -248,7 +253,8 @@ namespace lbm {
 
     Distribution<T, DomainType::LocalSpace, architecture> distribution;
 
-    Algorithm<dataT, algorithmT, DomainType::LocalSpace, arch, implementation> algorithm;
+    Algorithm<dataT, algorithmT, DomainType::LocalSpace, architecture,
+              implementation> algorithm;
 
     using Base::communication;
     using Base:: initialMass;
@@ -270,7 +276,7 @@ namespace lbm {
                                            processorName_in)
       , densityField(initLocalDensity<T, architecture>())
       , velocityField(initLocalVelocity<T, architecture>())
-      , forceField("force")
+      , forceField(initLocalForce<T, architecture>(rankMPI_in))
       , alphaField(initLocalAlpha<T, architecture>())
       , distribution("distribution",
                      initLocalDistribution<T, architecture>(densityField,

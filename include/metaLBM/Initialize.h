@@ -49,8 +49,8 @@ namespace lbm {
   Field<T, L::dimD, DomainType::GlobalSpace, architecture, true> initGlobalVelocity() {
     INSTRUMENT_ON("initGlobalVelocity<T>",2)
 
-    MathVector<T, L::dimD> initVelocityVectorProjected{{ (T) 0 }};
-    initVelocityVectorProjected = Project<T, T, L::dimD>::Do(initVelocityVector);
+    MathVector<T, L::dimD> initVelocityVectorProjected
+      = Project<T, T, L::dimD>::Do(initVelocityVector);
 
     Field<T, L::dimD, DomainType::GlobalSpace,
           architecture, true> velocityFieldR("velocity",
@@ -146,7 +146,7 @@ namespace lbm {
       center[d::X] = static_cast<unsigned int>((gSD::length()[d::X]-1)* (T) 0.4);
       center[d::Y] = static_cast<unsigned int>((gSD::length()[d::Y]-1)* (T) 0.3);
       center[d::Z] = static_cast<unsigned int>((gSD::length()[d::Z]-1)* (T) 0.2);
-      densityFieldR.setLocalValue(gSD::getIndex(center), densityPeakValue);
+      densityFieldR.setLocalValue(center, densityPeakValue);
       break;
     }
     default: {
@@ -184,28 +184,62 @@ namespace lbm {
   Field<T, L::dimD, DomainType::LocalSpace,
         architecture, true> initLocalForce(const MathVector<int, 3>& rankMPI) {
     INSTRUMENT_ON("initLocalForce<T>",2)
-    Field<T, L::dimD, DomainType::LocalSpace,
-            architecture, true> forceFieldR("force", forceAmplitude);
-    Force<T, forceT> force;
+    MathVector<T, L::dimD> initForceAmplitudeProjected
+      = Project<T, T, L::dimD>::Do(forceAmplitude);
+
+      Field<T, L::dimD, DomainType::LocalSpace,
+            architecture, true> forceFieldR("force", initForceAmplitudeProjected);
+
+    Force<T, forceT> force(forceAmplitude, forceWaveLength, forcekMin, forcekMax);
     MathVector<unsigned int, 3> iP;
     for(unsigned int iZ = lSD::start()[d::Z]; iZ < lSD::end()[d::Z]; iZ++) {
       for(unsigned int iY = lSD::start()[d::Y]; iY < lSD::end()[d::Y]; iY++) {
         for(unsigned int iX = lSD::start()[d::X]; iX < lSD::end()[d::X]; iX++) {
           iP =  MathVector<unsigned int, 3>({iX, iY, iZ});
           force.setForce(iP, gSD::offset(rankMPI));
-          forceFieldR.setLocalVector(lSD::getIndex(iP), force.getForce());
+          forceFieldR.setLocalVector(iP, force.getForce());
         }
       }
     }
 
-    if(forceT == ForceType::ConstantShell) {
+    // if(forceT == ForceType::ConstantShell) {
+    // }
+
+    // else {
+    //   std::cout << "Wrong type of force initialization.";
+    // }
+    return forceFieldR;
+  }
 
 
+  template<class T, Architecture architecture>
+  Field<T, L::dimD, DomainType::GlobalSpace,
+        architecture, true> initGlobalForce() {
+    INSTRUMENT_ON("initLocalForce<T>",2)
+
+    MathVector<T, L::dimD> initForceAmplitudeProjected
+      = Project<T, T, L::dimD>::Do(forceAmplitude);
+
+      Field<T, L::dimD, DomainType::GlobalSpace,
+            architecture, true> forceFieldR("force", initForceAmplitudeProjected);
+      Force<T, forceT> force(forceAmplitude, forceWaveLength, forcekMin, forcekMax);
+    MathVector<unsigned int, 3> iP;
+    for(unsigned int iZ = gSD::start()[d::Z]; iZ < gSD::end()[d::Z]; iZ++) {
+      for(unsigned int iY = gSD::start()[d::Y]; iY < gSD::end()[d::Y]; iY++) {
+        for(unsigned int iX = gSD::start()[d::X]; iX < gSD::end()[d::X]; iX++) {
+          iP =  MathVector<unsigned int, 3>({iX, iY, iZ});
+          force.setForce(iP);
+          forceFieldR.setGlobalVector(iP, force.getForce());
+        }
+      }
     }
 
-    else {
-      std::cout << "Wrong type of force initialization.";
-    }
+    // if(forceT == ForceType::ConstantShell) {
+    // }
+
+    // else {
+    //   std::cout << "Wrong type of force initialization.";
+    // }
     return forceFieldR;
   }
 

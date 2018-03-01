@@ -8,47 +8,37 @@
 #include "metaLBM/MathVector.h"
 
 namespace lbm {
-  typedef DATA_TYPE dataT;
+  typedef double dataT;
 
   constexpr LatticeType latticeT = LatticeType::D2Q9;
-  constexpr int lengthX_g = 16;
-  constexpr int lengthY_g = 16;
+  constexpr int lengthX_g = 64;
+  constexpr int lengthY_g = 64;
   constexpr int lengthZ_g = 1;
 
   constexpr unsigned int startIteration = 0;
-  constexpr unsigned int endIteration = 10;
+  constexpr unsigned int endIteration = 100;
   constexpr unsigned int writeStep = 1;
   constexpr unsigned int successiveWriteStep = 2;
-  constexpr unsigned int backUpStep = 100;
-
-  DEVICE HOST
-  constexpr MathVector<unsigned int, 3> length_g() {
-    return MathVector<unsigned int, 3>({lengthX_g, lengthY_g, lengthZ_g});
-  }
-
-  DEVICE HOST
-    constexpr MathVector<unsigned int, 3> length_l() {
-    return MathVector<unsigned int, 3>({lengthX_g/NPROCS, lengthY_g, lengthZ_g});
-  }
+  constexpr unsigned int backUpStep = 101;
 
   constexpr AlgorithmType algorithmT = AlgorithmType::Pull;
   constexpr PartitionningType partitionningT = PartitionningType::OneD;
   constexpr Implementation implementationT = Implementation::MPI;
-  constexpr MemoryLayout memoryL = MemoryLayout::SoA;
+  constexpr MemoryLayout memoryL = MemoryLayout::AoS;
 
-  constexpr dataT relaxationTime = 0.65;
+  constexpr dataT relaxationTime = 0.85;
   constexpr CollisionType collisionT = CollisionType::BGK;
   constexpr EquilibriumType equilibriumT = EquilibriumType::Incompressible;
 
-  constexpr InitDensityType initDensityT = InitDensityType::Homogeneous;
+  constexpr InitDensityType initDensityT = InitDensityType::Peak;
   constexpr dataT initDensityValue = 1.0;
   constexpr InitVelocityType initVelocityT = InitVelocityType::Homogeneous;
-  constexpr MathVector<dataT, 3> initVelocityVector = { {3.0, 4.0, 5.0} };
+  constexpr MathVector<dataT, 3> initVelocityVector = { {0.0, 0.0, 0.0} };
 
   constexpr ForcingSchemeType forcingSchemeT = ForcingSchemeType::ExactDifferenceMethod;
   constexpr ForceType forceT = ForceType::Kolmogorov;
 
-  constexpr MathVector<dataT, 3> forceAmplitude = { {0.000001, 0.000001, 0.0} };
+  constexpr MathVector<dataT, 3> forceAmplitude = { {0.0, 0.0, 0.0} };
   constexpr MathVector<dataT, 3> forceWaveLength = { {32.0, 32.0, 0.0} };
   constexpr int forcekMin = 1;
   constexpr int forcekMax = 2;

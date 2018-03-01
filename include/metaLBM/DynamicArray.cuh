@@ -26,36 +26,24 @@ namespace lbm {
   class DynamicArray<U, Architecture::GPU>
     :public DynamicArray<U, Architecture::Generic> {
   private:
-    using DynamicArray<U, Architecture::Generic>::numberElements;
-    using DynamicArray<U, Architecture::Generic>::dArrayPtr;
-    Computation<Architecture::GPU, 1> computation;
+    using Base = DynamicArray<U, Architecture::Generic>;
+
+    using Base::numberElements;
+    using Base::dArrayPtr;
 
   public:
-    using DynamicArray<U, Architecture::Generic>::operator[];
-    using DynamicArray<U, Architecture::Generic>::operator();
-    using DynamicArray<U, Architecture::Generic>::data;
-    using DynamicArray<U, Architecture::Generic>::size;
+    using Base::operator[];
+    using Base::data;
+    using Base::size;
 
-    DynamicArray()
-      : DynamicArray<U, Architecture::Generic>()
-      , computation(MathVector<unsigned int, 3>{{0}},
-                    MathVector<unsigned int, 3>{{0}})
-    {}
-
-    DynamicArray(const unsigned int numberElements_in,
-                 const U value_in = (U) 0)
-      : DynamicArray<U, Architecture::Generic>(numberElements_in)
-      , computation(MathVector<unsigned int, 3>{{0}},
-                    MathVector<unsigned int, 3>{{numberElements_in}})
+    DynamicArray(const unsigned int numberElements_in)
+      : Base(numberElements_in)
     {
-      CUDA_CALL( MALLOC_GPU((void**)&dArrayPtr, numberElements_in*sizeof(U)); )
-      computation.Do(*this, value_in);
+      CUDA_CALL( MALLOC_GPU((void**)&dArrayPtr, numberElements*sizeof(U)); )
     }
 
     DynamicArray(const DynamicArray& dArray_in)
-      : DynamicArray<U, Architecture::Generic>(dArray_in.size())
-      , computation(MathVector<unsigned int, 3>{{0}},
-                    MathVector<unsigned int, 3>{{numberElements}})
+      : Base(dArray_in.size())
     {
       CUDA_CALL( MALLOC_GPU((void**)&dArrayPtr, numberElements*sizeof(U)); )
       copyFrom(dArray_in);
@@ -98,33 +86,21 @@ namespace lbm {
 
     using Base::numberElements;
     using Base::dArrayPtr;
-    Computation<Architecture::GPU, 1> computation;
 
   public:
     using Base::operator[];
-    using Base::operator();
     using Base::data;
     using Base::size;
 
-    DynamicArray()
+    DynamicArray(const unsigned int numberElements_in)
       : Base()
-    {}
-
-    DynamicArray(const unsigned int numberElements_in,
-                 const U value_in = (U) 0)
-      : Base()
-      , computation(MathVector<unsigned int, 3>{{0}},
-                    MathVector<unsigned int, 3>{{numberElements_in}})
     {
       numberElements = numberElements_in;
-      CUDA_CALL( cudaMallocHost((void**)&dArrayPtr, numberElements_in*sizeof(U)); )
-      computation.Do(*this, value_in);
+      CUDA_CALL( cudaMallocHost((void**)&dArrayPtr, numberElements*sizeof(U)); )
     }
 
     DynamicArray(const DynamicArray& dArray_in)
       : Base()
-      , computation(MathVector<unsigned int, 3>{{0}},
-                    MathVector<unsigned int, 3>{{numberElements}})
     {
       numberElements = dArray_in.size();
       CUDA_CALL( cudaMallocHost((void**)&dArrayPtr, numberElements*sizeof(U)); )

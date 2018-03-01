@@ -73,12 +73,12 @@ namespace lbm {
     void Do(Callback function, const Arguments&... arguments) {
     INSTRUMENT_OFF("Computation<Architecture::CPU, 2>::Do<Callback>",2)
 
+    MathVector<unsigned int, 3> iP{{0}};
 #pragma omp parallel for schedule(static) num_threads(NTHREADS)
     for(unsigned int iX = start[d::X]; iX < end[d::X]; ++iX) {
       //#pragma omp simd
+      iP[d::X] = iX;
       for(unsigned int iY = start[d::Y]; iY < end[d::Y]; ++iY) {
-        MathVector<unsigned int, 3> iP{{0}};
-        iP[d::X] = iX;
         iP[d::Y] = iY;
         function(iP, arguments...);
       }

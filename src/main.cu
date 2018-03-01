@@ -1,7 +1,5 @@
-#define NTHREADS 1
 #define NPROCS 1
-#define _AOS
-#define DATA_TYPE double
+#define NTHREADS 1
 
 #include <mpi.h>
 #include <iostream>
@@ -22,12 +20,8 @@
 #include "metaLBM/MathVector.h"
 #include "metaLBM/Computation.cuh"
 #include "metaLBM/DynamicArray.cuh"
-
-namespace lbm {
-  constexpr Architecture arch = Architecture::GPU;
-}
-
 #include "metaLBM/Routine.h"
+
 using namespace lbm;
 
 int main(int argc, char* argv[]) {
@@ -96,15 +90,15 @@ int main(int argc, char* argv[]) {
   // MPI_Comm_free(&localComm);
   // MPI_Info_free(&info);
 
-  Routine<dataT, arch, implementationT,
-          inputOutputType> routine(rankMPI, sizeMPI,
-                                   std::string(hostname));
+    Routine<dataT, Architecture::GPU, implementationT,
+            inputOutputType> routine(rankMPI, sizeMPI,
+                                     std::string(hostname));
 
   routine.compute();
 
   MPI_Finalize();
   }
-  
+
   cudaDeviceReset();
 
   return EXIT_SUCCESS;

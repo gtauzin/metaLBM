@@ -144,26 +144,6 @@ namespace lbm {
       , localArray(NumberComponents*lSD::volume())
     {}
 
-    Field(const std::string& fieldName_in,
-          const T& value_in)
-      : Base(fieldName_in)
-      , localArray(NumberComponents*lSD::volume(), value_in)
-    {}
-
-    Field(const std::string& fieldName_in,
-          const MathVector<T, NumberComponents>& vector_in)
-      : Base(fieldName_in)
-      , localArray(NumberComponents*lSD::volume(), vector_in[0])
-    {
-      //computationLocal = Computation
-    }
-
-    Field(const std::string& fieldName_in,
-          const DynamicArray<T, Architecture::CPU>& localArray_in)
-      : Base(fieldName_in)
-      , localArray(localArray_in)
-    {}
-
   };
 
 
@@ -189,24 +169,6 @@ namespace lbm {
       , localArray(NumberComponents*lSD::volume())
     {}
 
-    Field(const std::string& fieldName_in,
-          const T& value_in)
-      : Base(fieldName_in)
-      , localArray(NumberComponents*lSD::volume(), value_in)
-    {}
-
-    Field(const std::string& fieldName_in,
-          const MathVector<T, NumberComponents>& vector_in)
-      : Base(fieldName_in)
-      , localArray(NumberComponents*lSD::volume(), vector_in[0])
-    {}
-
-    Field(const std::string& fieldName_in,
-          const DynamicArray<T, Architecture::CPU>& localArray_in)
-      : Base(fieldName_in)
-      , localArray(localArray_in)
-    {}
-
   };
 
 
@@ -226,9 +188,46 @@ namespace lbm {
     using Base::IsWritten;
     using Base::fieldName;
 
-    using Base::Field;
+    Field(const std::string& fieldName_in)
+      : Base(fieldName_in)
+    {}
 
-    DynamicArray<T, Architecture::CPU>& getLocalArray() {
+    Field(const std::string& fieldName_in,
+          const T& value_in)
+      : Base(fieldName_in)
+    {
+      Computation<Architecture::CPU,
+                  L::dimD> computationLocal(lSD::start(),
+                                            lSD::end());
+      computationLocal.Do
+        ([&] HOST (const MathVector<unsigned int, 3>& iP) {
+          for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+            setLocalValue(iP, value_in, iC);
+          }
+        });
+    }
+
+    Field(const std::string& fieldName_in,
+          const MathVector<T, NumberComponents>& vector_in)
+      : Base(fieldName_in)
+    {
+      Computation<Architecture::CPU,
+                  L::dimD> computationLocal(lSD::start(),
+                                            lSD::end());
+      computationLocal.Do
+        ([&] HOST (const MathVector<unsigned int, 3>& iP) {
+          setLocalVector(iP, vector_in);
+        });
+    }
+
+    Field(const std::string& fieldName_in,
+          const DynamicArray<T, Architecture::CPU>& localArray_in)
+      : Base(fieldName_in)
+    {
+      localArray.copyFrom(localArray_in);
+    }
+
+    inline DynamicArray<T, Architecture::CPU>& getLocalArray() {
       return localArray;
     }
 
@@ -238,28 +237,28 @@ namespace lbm {
     }
 
     DEVICE HOST
-    void setLocalValue(const unsigned int index,
-                       const T value,
-                       const unsigned int iC = 0) {
-      localArray[lSD::getIndex(index, iC)] = value;
+    inline void setLocalValue(const MathVector<unsigned int, 3> iP,
+                              const T value,
+                              const unsigned int iC = 0) {
+      localArray[lSD::getIndex(iP, iC)] = value;
     }
 
     DEVICE HOST
-    void setLocalVector(const unsigned int index,
-                        const MathVector<T, NumberComponents> vector) {
+    inline void setLocalVector(const MathVector<unsigned int, 3> iP,
+                               const MathVector<T, NumberComponents> vector) {
       for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
-        setLocalValue(index, vector[iC], iC);
+        setLocalValue(iP, vector[iC], iC);
       }
     }
 
     DEVICE HOST
-      T getLocalValue(const MathVector<unsigned int, 3>& iP,
-                          const unsigned int iC = 0) const {
+    inline T getLocalValue(const MathVector<unsigned int, 3>& iP,
+                           const unsigned int iC = 0) const {
       return localArray[lSD::getIndex(iP, iC)];
     }
 
     DEVICE HOST
-    MathVector<T, NumberComponents> getLocalVector(const MathVector<unsigned int, 3>& iP) const {
+    inline MathVector<T, NumberComponents> getLocalVector(const MathVector<unsigned int, 3>& iP) const {
       MathVector<T, NumberComponents> vectorR;
       for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
         vectorR[iC] = getLocalValue(iP, iC);
@@ -296,16 +295,34 @@ namespace lbm {
     {}
 
     Field(const std::string& fieldName_in,
-          const MathVector<T, NumberComponents>& vector_in)
-      : Base(fieldName_in)
-      , globalArray(gSD::volume()*NumberComponents, vector_in[0])
-    {}
-
-    Field(const std::string& fieldName_in,
           const T& value_in)
       : Base(fieldName_in)
-      , globalArray(gSD::volume()*NumberComponents, value_in)
-    {}
+      , globalArray(gSD::volume()*NumberComponents)
+    {
+      Computation<Architecture::CPU,
+                  L::dimD> computationGlobal(gSD::start(),
+                                             gSD::end());
+      computationGlobal.Do
+        ([&] HOST (const MathVector<unsigned int, 3>& iP) {
+          for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+            setGlobalValue(iP, value_in, iC);
+          }
+        });
+    }
+
+    Field(const std::string& fieldName_in,
+          const MathVector<T, NumberComponents>& vector_in)
+      : Base(fieldName_in)
+      , globalArray(gSD::volume()*NumberComponents)
+    {
+      Computation<Architecture::CPU,
+                  L::dimD> computationGlobal(gSD::start(),
+                                             gSD::end());
+      computationGlobal.Do
+        ([&] HOST (const MathVector<unsigned int, 3>& iP) {
+          setGlobalVector(iP, vector_in);
+        });
+    }
 
     Field(const std::string& fieldName_in,
           const DynamicArray<T, Architecture::CPU>& globalArray_in)
@@ -320,41 +337,41 @@ namespace lbm {
     using Base::getLocalValue;
     using Base::getLocalVector;
 
-    T * RESTRICT getGlobalData() {
+    inline T * RESTRICT getGlobalData() {
       return globalArray.data();
     }
 
-    DynamicArray<T, Architecture::CPU>& getGlobalArray() {
+    inline DynamicArray<T, Architecture::CPU>& getGlobalArray() {
       return globalArray;
     }
 
-    void setGlobalField(DynamicArray<T, Architecture::CPU> globalArray_in) {
+    inline void setGlobalField(DynamicArray<T, Architecture::CPU> globalArray_in) {
       globalArray.copyFrom(globalArray_in);
     }
 
-    void setGlobalValue(const unsigned int index, const T value) {
+    inline void setGlobalValue(const unsigned int index, const T value) {
       globalArray[index] = value;
     }
 
-    void setGlobalValue(const MathVector<unsigned int, 3>& iP,
-                        const T value,
-                        const unsigned int iC) {
+    inline void setGlobalValue(const MathVector<unsigned int, 3>& iP,
+                               const T value,
+                               const unsigned int iC) {
       setGlobalValue(gNCD::getIndex(iP, iC), value);
     }
 
-    void setGlobalVector(const MathVector<unsigned int, 3>& iP,
-                         const MathVector<T, NumberComponents> vector) {
+    inline void setGlobalVector(const MathVector<unsigned int, 3>& iP,
+                                const MathVector<T, NumberComponents> vector) {
       for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
         setGlobalValue(iP, vector[iC], iC);
       }
     }
 
-    T getGlobalValue(const MathVector<unsigned int, 3>& iP,
-                     const unsigned int iC = 0) const {
+    inline T getGlobalValue(const MathVector<unsigned int, 3>& iP,
+                            const unsigned int iC = 0) const {
       return globalArray[gNCD::getIndex(iP, iC)];
     }
 
-    MathVector<T, NumberComponents> getGlobalVector(const MathVector<unsigned int, 3>& iP) const {
+    inline MathVector<T, NumberComponents> getGlobalVector(const MathVector<unsigned int, 3>& iP) const {
       MathVector<T, NumberComponents> vectorR;
       for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
         vectorR[iC] = getGlobalValue(iP, iC);

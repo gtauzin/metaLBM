@@ -88,7 +88,7 @@ namespace lbm {
                              const T density, const MathVector<T, L::dimD>& velocity) {
       INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::setVariables",4)
 
-        forcingScheme.setVariables(getForce(), density, velocity);
+      forcingScheme.setVariables(getForce(), density, velocity);
       equilibrium.setVariables(density,
                                forcingScheme.calculateEquilibriumVelocity(getForce()));
     }

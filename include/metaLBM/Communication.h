@@ -146,8 +146,8 @@ namespace lbm {
     void printInputs() {
       std::cout << "MPI #" << rankMPI << " of " << sizeMPI
                 << " running on host " << processorName << std::endl
-                << "Right MPI #" << rightYRankMPI
-                << ", left MPI #" << leftYRankMPI << std::endl;
+                << "Right MPI #" << rightXRankMPI
+                << ", left MPI #" << leftXRankMPI << std::endl;
     }
 
     DEVICE HOST
@@ -270,32 +270,32 @@ namespace lbm {
     void sendAndReceiveHaloX(T * RESTRICT haloDistributionPtr) {
       INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloX",4)
 
-        for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
-          sendToRightBeginX = hMLSD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X]+lSD::length()[d::X]-1,
-                  hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
-          receivedFromLeftBeginX = hMLSD::getIndex(MathVector<unsigned int, 3>({0,
-                  hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
+      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+        sendToRightBeginX = hMLSD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X]+lSD::length()[d::X]-1,
+                hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
+        receivedFromLeftBeginX = hMLSD::getIndex(MathVector<unsigned int, 3>({0,
+                hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
-          sendToLeftBeginX = hMLSD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X],
-                  hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
+        sendToLeftBeginX = hMLSD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X],
+                hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
-          receivedFromRightBeginX = hMLSD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X]+lSD::length()[d::X],
-                  hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
+        receivedFromRightBeginX = hMLSD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X]+lSD::length()[d::X],
+                hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
-          MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginX, sizeStripeX,
-                    MPI_DOUBLE, leftXRankMPI, 17, MPI_COMM_WORLD, &requestXMPI[0]);
+        MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginX, sizeStripeX,
+                  MPI_DOUBLE, leftXRankMPI, 17, MPI_COMM_WORLD, &requestXMPI[0]);
 
-          MPI_Irecv(haloDistributionPtr+receivedFromRightBeginX, sizeStripeX,
-                    MPI_DOUBLE, rightXRankMPI, 23, MPI_COMM_WORLD, &requestXMPI[1]);
+        MPI_Irecv(haloDistributionPtr+receivedFromRightBeginX, sizeStripeX,
+                  MPI_DOUBLE, rightXRankMPI, 23, MPI_COMM_WORLD, &requestXMPI[1]);
 
-          MPI_Isend(haloDistributionPtr+sendToRightBeginX, sizeStripeX,
-                    MPI_DOUBLE, rightXRankMPI, 17, MPI_COMM_WORLD, &requestXMPI[2]);
+        MPI_Isend(haloDistributionPtr+sendToRightBeginX, sizeStripeX,
+                  MPI_DOUBLE, rightXRankMPI, 17, MPI_COMM_WORLD, &requestXMPI[2]);
 
-          MPI_Isend(haloDistributionPtr+sendToLeftBeginX, sizeStripeX,
-                    MPI_DOUBLE, leftXRankMPI, 23, MPI_COMM_WORLD, &requestXMPI[3]);
+        MPI_Isend(haloDistributionPtr+sendToLeftBeginX, sizeStripeX,
+                  MPI_DOUBLE, leftXRankMPI, 23, MPI_COMM_WORLD, &requestXMPI[3]);
 
-          MPI_Waitall(4, requestXMPI, statusXMPI);
-        }
+        MPI_Waitall(4, requestXMPI, statusXMPI);
+      }
     }
 
     HOST
