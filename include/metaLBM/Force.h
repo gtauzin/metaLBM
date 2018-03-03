@@ -188,6 +188,12 @@ namespace lbm {
       force[d::X] = amplitude[d::X] * sin(iP[d::Y]*2*M_PI/waveLength[d::X]);
     }
 
+    #pragma omp declare simd
+    DEVICE HOST
+    inline void setForce(const MathVector<unsigned int, 3>& iP) {
+      force[d::X] = amplitude[d::X] * sin(iP[d::Y]*2*M_PI/waveLength[d::X]);
+    }
+
     using Force<T, ForceType::Sinusoidal>::setForce;
     using Force<T, ForceType::Sinusoidal>::getForce;
     using Force<T, ForceType::Sinusoidal>::update;

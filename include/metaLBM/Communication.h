@@ -4,6 +4,11 @@
 #include <mpi.h>
 #include <string>
 
+#ifdef USE_NVSHMEM
+  #include<shmem.h>
+  #include<shmemx.h>
+#endif
+
 #include "Commons.h"
 #include "Options.h"
 #include "DynamicArray.cuh"
@@ -11,6 +16,7 @@
 #include "Domain.h"
 #include "Boundary.h"
 #include "Computation.h"
+
 
 namespace lbm {
 
@@ -43,24 +49,20 @@ namespace lbm {
 
     HOST
     void sendGlobalToLocal(DynamicArray<T, Architecture::CPU>& globalArray,
-                           DynamicArray<T, Architecture::CPU>& localHostArray,
-                           DynamicArray<T, Architecture::GPU>& localDeviceArray,
+                           DynamicArray<T, Architecture::CPU>& localArray,
                            unsigned int numberComponents) {
       INSTRUMENT_ON("Communication<6>::sendGlobalToLocal",3)
 
-      localHostArray.copyFrom(globalArray);
-      localDeviceArray.copyFrom(localHostArray);
+      localArray.copyFrom(globalArray);
     }
 
     HOST
-    void sendLocalToGlobal(DynamicArray<T, Architecture::GPU>& localDeviceArray,
-                           DynamicArray<T, Architecture::CPU>& localHostArray,
+    void sendLocalToGlobal(DynamicArray<T, Architecture::CPU>& localArray,
                            DynamicArray<T, Architecture::CPU>& globalArray,
                            unsigned int numberComponents) {
       INSTRUMENT_ON("Communication<6>::sendLocalToGlobal",3)
 
-      localDeviceArray.copyTo(localHostArray);
-      localHostArray.copyTo(globalArray);
+      localArray.copyTo(globalArray);
     }
 
     HOST
@@ -69,23 +71,20 @@ namespace lbm {
         }
 
     HOST
-    T reduce(const DynamicArray<T, Architecture::GPU>& localDeviceArray,
-             DynamicArray<T, Architecture::CPU>& localHostArray) {
-
-      localDeviceArray.copyTo(localHostArray);
-
+    T reduce(DynamicArray<T, Architecture::CPU>& localArray) {
       T localSum = (T) 0;
       for(unsigned int iZ = lSD::start()[d::Z]; iZ < lSD::end()[d::Z]; ++iZ) {
         for(unsigned int iY = lSD::start()[d::Y]; iY < lSD::end()[d::Y]; ++iY) {
           for(unsigned int iX = lSD::start()[d::X]; iX < lSD::end()[d::X]; ++iX) {
             localSum
-              += localHostArray[lSD::getIndex(MathVector<unsigned int, 3>({iX, iY, iZ}))];
+              += localArray[lSD::getIndex(MathVector<unsigned int, 3>({iX, iY, iZ}))];
           }
         }
       }
 
       return localSum;
     }
+
   };
 
 
@@ -96,6 +95,11 @@ namespace lbm {
     : public Communication<T, latticeType, AlgorithmType::Pull,
                            MemoryLayout::Generic, PartitionningType::Generic,
                            Implementation::Serial, 0> {
+  private:
+    using Base = Communication<T, latticeType, AlgorithmType::Pull,
+                               MemoryLayout::Generic, PartitionningType::Generic,
+                               Implementation::Serial, 0>;
+
   protected:
     const MathVector<int, 3> rankMPI;
     const MathVector<int, 3> sizeMPI;
@@ -120,23 +124,21 @@ namespace lbm {
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
                   const std::string& processorName_in)
-      : Communication<T, latticeType, AlgorithmType::Pull,
-                      MemoryLayout::Generic, PartitionningType::Generic,
-                      Implementation::Serial, 0>(rankMPI_in, sizeMPI_in,
-                                                 processorName_in)
+      : Base(rankMPI_in, sizeMPI_in,
+             processorName_in)
       , rankMPI(rankMPI_in)
       , sizeMPI(sizeMPI_in)
       , processorName(processorName_in)
-      , rightXRankMPI((rankMPI_in[d::X] + sizeMPI_in[d::X] - 1) % sizeMPI_in[d::X])
-      , leftXRankMPI((rankMPI_in[d::X] + 1) % sizeMPI_in[d::X])
+      , leftXRankMPI((rankMPI_in[d::X] + sizeMPI_in[d::X] - 1) % sizeMPI_in[d::X])
+      , rightXRankMPI((rankMPI_in[d::X] + 1) % sizeMPI_in[d::X])
       , statusXMPI()
       , requestXMPI()
-      , rightYRankMPI((rankMPI_in[d::Y] + sizeMPI_in[d::Y] - 1) % sizeMPI_in[d::Y])
-      , leftYRankMPI((rankMPI_in[d::Y] + 1) % sizeMPI_in[d::Y])
+      , leftYRankMPI((rankMPI_in[d::Y] + sizeMPI_in[d::Y] - 1) % sizeMPI_in[d::Y])
+      , rightYRankMPI((rankMPI_in[d::Y] + 1) % sizeMPI_in[d::Y])
       , statusYMPI()
       , requestYMPI()
-      , rightZRankMPI((rankMPI_in[d::Z] + sizeMPI_in[d::Z] - 1) % sizeMPI_in[d::Z])
-      , leftZRankMPI((rankMPI_in[d::Z] + 1) % sizeMPI_in[d::Z])
+      , leftZRankMPI((rankMPI_in[d::Z] + sizeMPI_in[d::Z] - 1) % sizeMPI_in[d::Z])
+      , rightZRankMPI((rankMPI_in[d::Z] + 1) % sizeMPI_in[d::Z])
       , statusZMPI()
       , requestZMPI()
     {}
@@ -144,8 +146,8 @@ namespace lbm {
     void printInputs() {
       std::cout << "MPI #" << rankMPI << " of " << sizeMPI
                 << " running on host " << processorName << std::endl
-                << "Right MPI #" << rightYRankMPI
-                << ", left MPI #" << leftYRankMPI << std::endl;
+                << "Right MPI #" << rightXRankMPI
+                << ", left MPI #" << leftXRankMPI << std::endl;
     }
 
     DEVICE HOST
@@ -155,35 +157,42 @@ namespace lbm {
 
     HOST
     void sendGlobalToLocal(DynamicArray<T, Architecture::CPU>& globalArray,
-                           DynamicArray<T, Architecture::CPU>& localHostArray,
-                           DynamicArray<T, Architecture::GPU>& localDeviceArray,
+                           DynamicArray<T, Architecture::CPU>& localArray,
                            unsigned int numberComponents) {
       INSTRUMENT_ON("Communication<6>::sendGlobalToLocal",3)
 
         MPI_Scatter(globalArray.data(), numberComponents*lSD::volume(), MPI_DOUBLE,
-                    localHostArray.data(), numberComponents*lSD::volume(), MPI_DOUBLE,
+                    localArray.data(), numberComponents*lSD::volume(), MPI_DOUBLE,
                     0, MPI_COMM_WORLD);
 
-      localDeviceArray.copyFrom(localHostArray);
     }
 
     HOST
-    void sendLocalToGlobal(DynamicArray<T, Architecture::GPU>& localDeviceArray,
-                           DynamicArray<T, Architecture::CPU>& localHostArray,
+    void sendLocalToGlobal(DynamicArray<T, Architecture::CPU>& localArray,
                            DynamicArray<T, Architecture::CPU>& globalArray,
                            unsigned int numberComponents) {
       INSTRUMENT_ON("Communication<6>::sendLocalToGlobal",3)
 
-        localDeviceArray.copyTo(localHostArray);
-
-      MPI_Gather(localHostArray.data(), numberComponents*lSD::volume(), MPI_DOUBLE,
+      MPI_Gather(localArray.data(), numberComponents*lSD::volume(), MPI_DOUBLE,
                  globalArray.data(), numberComponents*lSD::volume(), MPI_DOUBLE,
                  0, MPI_COMM_WORLD);
     }
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::Serial, 0>::reduce;
+    HOST
+    T reduce(DynamicArray<T, Architecture::CPU>& localArray) {
+      T localSum = Base::reduce(localArray);
+
+      MPI_Barrier(MPI_COMM_WORLD);
+
+      T globalSum = (T) 0;
+      MPI_Reduce(&localSum, &globalSum, 1, MPI_DOUBLE,
+                 MPI_SUM, 0, MPI_COMM_WORLD);
+
+      MPI_Barrier(MPI_COMM_WORLD);
+
+      return globalSum;
+    }
+
   };
 
 
@@ -195,44 +204,23 @@ namespace lbm {
                            MemoryLayout::Generic, PartitionningType::Generic,
                            Implementation::MPI, 0> {
   private:
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::rightXRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::leftXRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::statusXMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::requestXMPI;
+    using Base = Communication<T, latticeType, AlgorithmType::Pull,
+                               MemoryLayout::Generic, PartitionningType::Generic,
+                               Implementation::MPI, 0>;
+    using Base::rightXRankMPI;
+    using Base::leftXRankMPI;
+    using Base::statusXMPI;
+    using Base::requestXMPI;
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::rightYRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::leftYRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::statusYMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::requestYMPI;
+    using Base::rightYRankMPI;
+    using Base::leftYRankMPI;
+    using Base::statusYMPI;
+    using Base::requestYMPI;
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::rightZRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::leftZRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::statusZMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::requestZMPI;
+    using Base::rightZRankMPI;
+    using Base::leftZRankMPI;
+    using Base::statusZMPI;
+    using Base::requestZMPI;
 
 
     typedef Domain<DomainType::HaloSpace, PartitionningType::Generic,
@@ -261,32 +249,32 @@ namespace lbm {
     void sendAndReceiveHaloX(T * RESTRICT haloDistributionPtr) {
       INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloX",4)
 
-        for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
-          sendToRightBeginX = hMLSD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X]+lSD::length()[d::X]-1,
-                  hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
-          receivedFromLeftBeginX = hMLSD::getIndex(MathVector<unsigned int, 3>({0,
-                  hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
+      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+        sendToRightBeginX = hMLSD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X]+lSD::length()[d::X]-1,
+                hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
+        receivedFromLeftBeginX = hMLSD::getIndex(MathVector<unsigned int, 3>({0,
+                hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
-          sendToLeftBeginX = hMLSD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X],
-                  hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
+        sendToLeftBeginX = hMLSD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X],
+                hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
-          receivedFromRightBeginX = hMLSD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X]+lSD::length()[d::X],
-                  hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
+        receivedFromRightBeginX = hMLSD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X]+lSD::length()[d::X],
+                hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
-          MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginX, sizeStripeX,
-                    MPI_DOUBLE, leftXRankMPI, 17, MPI_COMM_WORLD, &requestXMPI[0]);
+        MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginX, sizeStripeX,
+                  MPI_DOUBLE, leftXRankMPI, 17, MPI_COMM_WORLD, &requestXMPI[0]);
 
-          MPI_Irecv(haloDistributionPtr+receivedFromRightBeginX, sizeStripeX,
-                    MPI_DOUBLE, rightXRankMPI, 23, MPI_COMM_WORLD, &requestXMPI[1]);
+        MPI_Irecv(haloDistributionPtr+receivedFromRightBeginX, sizeStripeX,
+                  MPI_DOUBLE, rightXRankMPI, 23, MPI_COMM_WORLD, &requestXMPI[1]);
 
-          MPI_Isend(haloDistributionPtr+sendToRightBeginX, sizeStripeX,
-                    MPI_DOUBLE, rightXRankMPI, 17, MPI_COMM_WORLD, &requestXMPI[2]);
+        MPI_Isend(haloDistributionPtr+sendToRightBeginX, sizeStripeX,
+                  MPI_DOUBLE, rightXRankMPI, 17, MPI_COMM_WORLD, &requestXMPI[2]);
 
-          MPI_Isend(haloDistributionPtr+sendToLeftBeginX, sizeStripeX,
-                    MPI_DOUBLE, leftXRankMPI, 23, MPI_COMM_WORLD, &requestXMPI[3]);
+        MPI_Isend(haloDistributionPtr+sendToLeftBeginX, sizeStripeX,
+                  MPI_DOUBLE, leftXRankMPI, 23, MPI_COMM_WORLD, &requestXMPI[3]);
 
-          MPI_Waitall(4, requestXMPI, statusXMPI);
-        }
+        MPI_Waitall(4, requestXMPI, statusXMPI);
+      }
     }
 
     HOST
@@ -389,21 +377,11 @@ namespace lbm {
 
     {}
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::printInputs;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::getRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendGlobalToLocal;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendLocalToGlobal;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::reduce;
+    using Base::printInputs;
+    using Base::getRankMPI;
+    using Base::sendGlobalToLocal;
+    using Base::sendLocalToGlobal;
+    using Base::reduce;
   };
 
 
@@ -414,44 +392,24 @@ namespace lbm {
                            MemoryLayout::Generic, PartitionningType::Generic,
                            Implementation::MPI, 0> {
   private:
-    using Communication<T, latticeType, AlgorithmType::Pull,
+    using Base = Communication<T, latticeType, AlgorithmType::Pull,
                         MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::rightXRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::leftXRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::statusXMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::requestXMPI;
+                               Implementation::MPI, 0>;
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::rightYRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::leftYRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::statusYMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::requestYMPI;
+    using Base::rightXRankMPI;
+    using Base::leftXRankMPI;
+    using Base::statusXMPI;
+    using Base::requestXMPI;
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::rightZRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::leftZRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::statusZMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::requestZMPI;
+    using Base::rightYRankMPI;
+    using Base::leftYRankMPI;
+    using Base::statusYMPI;
+    using Base::requestYMPI;
+
+    using Base::rightZRankMPI;
+    using Base::leftZRankMPI;
+    using Base::statusZMPI;
+    using Base::requestZMPI;
 
 
     typedef Domain<DomainType::HaloSpace, PartitionningType::Generic,
@@ -516,21 +474,11 @@ namespace lbm {
 
     {}
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::printInputs;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::getRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendGlobalToLocal;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendLocalToGlobal;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::reduce;
+    using Base::printInputs;
+    using Base::getRankMPI;
+    using Base::sendGlobalToLocal;
+    using Base::sendLocalToGlobal;
+    using Base::reduce;
 
   protected:
     HOST
@@ -601,7 +549,7 @@ namespace lbm {
 
 
 
-
+#ifdef USE_NVSHMEM
 
   template<class T, LatticeType latticeType>
   class Communication<T, latticeType, AlgorithmType::Pull,
@@ -611,96 +559,46 @@ namespace lbm {
                            MemoryLayout::SoA, PartitionningType::Generic,
                            Implementation::MPI, 0> {
   private:
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::rightXRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::leftXRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::statusXMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::requestXMPI;
+   using Base = Communication<T, latticeType, AlgorithmType::Pull,
+                              MemoryLayout::SoA, PartitionningType::Generic,
+                              Implementation::MPI, 0>;
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::rightYRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::leftYRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::statusYMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::requestYMPI;
+    using Base::rightXRankMPI;
+    using Base::leftXRankMPI;
+    using Base::statusXMPI;
+    using Base::requestXMPI;
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::rightZRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::leftZRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::statusZMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::requestZMPI;
+    using Base::rightYRankMPI;
+    using Base::leftYRankMPI;
+    using Base::statusYMPI;
+    using Base::requestYMPI;
+
+    using Base::rightZRankMPI;
+    using Base::leftZRankMPI;
+    using Base::statusZMPI;
+    using Base::requestZMPI;
 
 
     typedef Domain<DomainType::HaloSpace, PartitionningType::Generic,
                    MemoryLayout::SoA, L::dimQ> hMLSD;
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sizeStripeX;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendToRightBeginX;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::receivedFromLeftBeginX;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendToLeftBeginX;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::receivedFromRightBeginX;
+    using Base::sizeStripeX;
+    using Base::sendToRightBeginX;
+    using Base::receivedFromLeftBeginX;
+    using Base::sendToLeftBeginX;
+    using Base::receivedFromRightBeginX;
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sizeStripeY;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendToRightBeginY;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::receivedFromLeftBeginY;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendToLeftBeginY;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::receivedFromRightBeginY;
+    using Base::sizeStripeY;
+    using Base::sendToRightBeginY;
+    using Base::receivedFromLeftBeginY;
+    using Base::sendToLeftBeginY;
+    using Base::receivedFromRightBeginY;
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sizeStripeZ;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendToRightBeginZ;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::receivedFromLeftBeginZ;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendToLeftBeginZ;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::receivedFromRightBeginZ;
+    using Base::sizeStripeZ;
+    using Base::sendToRightBeginZ;
+    using Base::receivedFromLeftBeginZ;
+    using Base::sendToLeftBeginZ;
+    using Base::receivedFromRightBeginZ;
 
   protected:
     HOST
@@ -744,36 +642,20 @@ namespace lbm {
         }
     }
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendAndReceiveHaloY;
+    using Base::sendAndReceiveHaloY;
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendAndReceiveHaloZ;
+    using Base::sendAndReceiveHaloZ;
 
 
 
   public:
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::Communication;
+    using Base::Communication;
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::printInputs;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::getRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendGlobalToLocal;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendLocalToGlobal;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::SoA, PartitionningType::Generic,
-                        Implementation::MPI, 0>::reduce;
+    using Base::printInputs;
+    using Base::getRankMPI;
+    using Base::sendGlobalToLocal;
+    using Base::sendLocalToGlobal;
+    using Base::reduce;
   };
 
 
@@ -784,118 +666,56 @@ namespace lbm {
                            MemoryLayout::AoS, PartitionningType::Generic,
                            Implementation::MPI, 0> {
   private:
-    using Communication<T, latticeType, AlgorithmType::Pull,
+    using Base = Communication<T, latticeType, AlgorithmType::Pull,
                         MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::rightXRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::leftXRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::statusXMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::requestXMPI;
+                               Implementation::MPI, 0>;
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::rightYRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::leftYRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::statusYMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::requestYMPI;
+    using Base::rightXRankMPI;
+    using Base::leftXRankMPI;
+    using Base::statusXMPI;
+    using Base::requestXMPI;
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::rightZRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::leftZRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::statusZMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::requestZMPI;
+    using Base::rightYRankMPI;
+    using Base::leftYRankMPI;
+    using Base::statusYMPI;
+    using Base::requestYMPI;
+
+    using Base::rightZRankMPI;
+    using Base::leftZRankMPI;
+    using Base::statusZMPI;
+    using Base::requestZMPI;
 
 
     typedef Domain<DomainType::HaloSpace, PartitionningType::Generic,
                    MemoryLayout::AoS, L::dimQ> hMLSD;
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sizeStripeX;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendToRightBeginX;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::receivedFromLeftBeginX;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendToLeftBeginX;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::receivedFromRightBeginX;
+    using Base::sizeStripeX;
+    using Base::sendToRightBeginX;
+    using Base::receivedFromLeftBeginX;
+    using Base::sendToLeftBeginX;
+    using Base::receivedFromRightBeginX;
 
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sizeStripeY;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendToRightBeginY;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::receivedFromLeftBeginY;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendToLeftBeginY;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::receivedFromRightBeginY;
+    using Base::sizeStripeY;
+    using Base::sendToRightBeginY;
+    using Base::receivedFromLeftBeginY;
+    using Base::sendToLeftBeginY;
+    using Base::receivedFromRightBeginY;
 
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sizeStripeZ;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendToRightBeginZ;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::receivedFromLeftBeginZ;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendToLeftBeginZ;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::receivedFromRightBeginZ;
+    using Base::sizeStripeZ;
+    using Base::sendToRightBeginZ;
+    using Base::receivedFromLeftBeginZ;
+    using Base::sendToLeftBeginZ;
+    using Base::receivedFromRightBeginZ;
 
-  using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::Communication;
+  using Base::Communication;
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::printInputs;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::getRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendGlobalToLocal;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendLocalToGlobal;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::reduce;
+    using Base::printInputs;
+    using Base::getRankMPI;
+    using Base::sendGlobalToLocal;
+    using Base::sendLocalToGlobal;
+    using Base::reduce;
 
   protected:
     HOST
@@ -926,13 +746,9 @@ namespace lbm {
 
     }
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendAndReceiveHaloY;
+    using Base::sendAndReceiveHaloY;
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::AoS, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendAndReceiveHaloZ;
+    using Base::sendAndReceiveHaloZ;
 
   };
 
@@ -957,26 +773,18 @@ namespace lbm {
     : public Communication<T, latticeType, AlgorithmType::Pull,
                            MemoryLayout::Generic, PartitionningType::Generic,
                            Implementation::MPI, 0> {
+  private:
+    using Base = Communication<T, latticeType, AlgorithmType::Pull,
+                               MemoryLayout::Generic, PartitionningType::Generic,
+                               Implementation::MPI, 0>;
   public:
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::Communication;
+    using Base::Communication;
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::printInputs;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::getRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendGlobalToLocal;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendLocalToGlobal;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        MemoryLayout::Generic, PartitionningType::Generic,
-                        Implementation::MPI, 0>::reduce;
+    using Base::printInputs;
+    using Base::getRankMPI;
+    using Base::sendGlobalToLocal;
+    using Base::sendLocalToGlobal;
+    using Base::reduce;
 
   protected:
     HOST
@@ -992,7 +800,7 @@ namespace lbm {
     }
   };
 
-
+#endif // USE_NVSHMEM
 
 
 
@@ -1028,6 +836,11 @@ namespace lbm {
     : public Communication<T, latticeType, AlgorithmType::Pull,
                            memoryLayout, PartitionningType::Generic,
                            Implementation::MPI, 0> {
+  private:
+    using Base = Communication<T, latticeType, AlgorithmType::Pull,
+                               memoryLayout, PartitionningType::Generic,
+                               Implementation::MPI, 0>;
+
   public:
     HOST
     Communication(const MathVector<int, 3>& rankMPI_in,
@@ -1039,21 +852,11 @@ namespace lbm {
                                        processorName_in)
     {}
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::printInputs;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::getRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendGlobalToLocal;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendLocalToGlobal;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::reduce;
+    using Base::printInputs;
+    using Base::getRankMPI;
+    using Base::sendGlobalToLocal;
+    using Base::sendLocalToGlobal;
+    using Base::reduce;
 
     HOST
     inline void communicateHalos(T * haloDistributionPtr) {
@@ -1062,9 +865,7 @@ namespace lbm {
     }
 
   private:
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendAndReceiveHaloX;
+    using Base::sendAndReceiveHaloX;
   };
 
   template<class T, LatticeType latticeType, MemoryLayout memoryLayout,
@@ -1073,70 +874,41 @@ namespace lbm {
                       memoryLayout, PartitionningType::TwoD, Implementation::MPI, Dimension>
     : public Communication<T, latticeType, AlgorithmType::Pull,
                            memoryLayout, PartitionningType::Generic, Implementation::MPI, 0> {
-  public:
-    HOST
-    Communication(const MathVector<int, 3>& rankMPI_in,
-                  const MathVector<int, 3>& sizeMPI_in,
-                  const std::string& processorName_in)
-      : Communication<T, latticeType, AlgorithmType::Pull,
-                      memoryLayout, PartitionningType::Generic,
-                      Implementation::MPI, 0>(rankMPI_in, sizeMPI_in,
-                                       processorName_in)
-    {}
+  private:
+    using Base = Communication<T, latticeType, AlgorithmType::Pull,
+                           memoryLayout, PartitionningType::Generic,
+                               Implementation::MPI, 0>;
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::printInputs;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::getRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendGlobalToLocal;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendLocalToGlobal;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::reduce;
+  public:
+    using Base::Communication;
+    using Base::printInputs;
+    using Base::getRankMPI;
+    using Base::sendGlobalToLocal;
+    using Base::sendLocalToGlobal;
+    using Base::reduce;
 
   private:
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendAndReceiveHaloX;
+    using Base::sendAndReceiveHaloX;
   };
 
   template<class T, LatticeType latticeType, MemoryLayout memoryLayout>
   class Communication<T, latticeType, AlgorithmType::Pull,
                       memoryLayout, PartitionningType::TwoD, Implementation::MPI, 2>
     : public Communication<T, latticeType, AlgorithmType::Pull,
-                           memoryLayout, PartitionningType::Generic, Implementation::MPI, 0> {
-  public:
-    HOST
-    Communication(const MathVector<int, 3>& rankMPI_in,
-                  const MathVector<int, 3>& sizeMPI_in,
-                  const std::string& processorName_in)
-      : Communication<T, latticeType, AlgorithmType::Pull,
-                      memoryLayout, PartitionningType::Generic,
-                      Implementation::MPI, 0>(rankMPI_in, sizeMPI_in,
-                                       processorName_in)
-    {}
+                           memoryLayout, PartitionningType::Generic,
+                           Implementation::MPI, 0> {
+  private:
+    using Base = Communication<T, latticeType, AlgorithmType::Pull,
+                           memoryLayout, PartitionningType::Generic,
+                               Implementation::MPI, 0>;
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::printInputs;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::getRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendGlobalToLocal;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendLocalToGlobal;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::reduce;
+  public:
+    using Base::Communication;
+    using Base::printInputs;
+    using Base::getRankMPI;
+    using Base::sendGlobalToLocal;
+    using Base::sendLocalToGlobal;
+    using Base::reduce;
 
     HOST
     inline void communicateHalos(T * haloDistributionPtr) {
@@ -1147,12 +919,8 @@ namespace lbm {
     }
 
   private:
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendAndReceiveHaloX;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendAndReceiveHaloY;
+    using Base::sendAndReceiveHaloX;
+    using Base::sendAndReceiveHaloY;
   };
 
   template<class T, LatticeType latticeType, MemoryLayout memoryLayout>
@@ -1160,43 +928,23 @@ namespace lbm {
                       memoryLayout, PartitionningType::TwoD, Implementation::MPI, 3>
     : public Communication<T, latticeType, AlgorithmType::Pull,
                            memoryLayout, PartitionningType::TwoD, Implementation::MPI, 2> {
-  public:
-    HOST
-    Communication(const MathVector<int, 3>& rankMPI_in,
-                  const MathVector<int, 3>& sizeMPI_in,
-                  const std::string& processorName_in)
-      : Communication<T, latticeType, AlgorithmType::Pull,
-                      memoryLayout, PartitionningType::TwoD,
-                      Implementation::MPI, 2>(rankMPI_in, sizeMPI_in,
-                                       processorName_in)
-    {}
+  private:
+    using Base = Communication<T, latticeType, AlgorithmType::Pull,
+                               memoryLayout, PartitionningType::TwoD,
+                               Implementation::MPI, 2>;
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::TwoD,
-                        Implementation::MPI, 2>::printInputs;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::TwoD,
-                        Implementation::MPI, 2>::getRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::TwoD,
-                        Implementation::MPI, 2>::sendGlobalToLocal;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::TwoD,
-                        Implementation::MPI, 2>::sendLocalToGlobal;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::TwoD,
-                        Implementation::MPI, 2>::reduce;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::TwoD,
-                        Implementation::MPI, 2>::communicateHalos;
+  public:
+    using Base::Communication;
+    using Base::printInputs;
+    using Base::getRankMPI;
+    using Base::sendGlobalToLocal;
+    using Base::sendLocalToGlobal;
+    using Base::reduce;
+    using Base::communicateHalos;
 
   private:
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::TwoD,
-                        Implementation::MPI, 2>::sendAndReceiveHaloX;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::TwoD,
-                        Implementation::MPI, 2>::sendAndReceiveHaloY;
+    using Base::sendAndReceiveHaloX;
+    using Base::sendAndReceiveHaloY;
   };
 
 
@@ -1206,37 +954,21 @@ namespace lbm {
                       memoryLayout, PartitionningType::ThreeD, Implementation::MPI, Dimension>
     : public Communication<T, latticeType, AlgorithmType::Pull,
                            memoryLayout, PartitionningType::Generic, Implementation::MPI, 0> {
-  public:
-    HOST
-    Communication(const MathVector<int, 3>& rankMPI_in,
-                  const MathVector<int, 3>& sizeMPI_in,
-                  const std::string& processorName_in)
-      : Communication<T, latticeType, AlgorithmType::Pull,
-                      memoryLayout, PartitionningType::Generic,
-      Implementation::MPI, 0>(rankMPI_in, sizeMPI_in,
-                       processorName_in)
-    {}
+  private:
+    using Base = Communication<T, latticeType, AlgorithmType::Pull,
+                               memoryLayout, PartitionningType::Generic,
+                               Implementation::MPI, 0>;
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::printInputs;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::getRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendGlobalToLocal;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendLocalToGlobal;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::reduce;
+    using Base::Communication;
+
+    using Base::printInputs;
+    using Base::getRankMPI;
+    using Base::sendGlobalToLocal;
+    using Base::sendLocalToGlobal;
+    using Base::reduce;
 
   private:
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendAndReceiveHaloX;
+    using Base::sendAndReceiveHaloX;
   };
 
   template<class T, LatticeType latticeType, MemoryLayout memoryLayout>
@@ -1244,32 +976,19 @@ namespace lbm {
                       memoryLayout, PartitionningType::ThreeD, Implementation::MPI, 3>
     : public Communication<T, latticeType, AlgorithmType::Pull,
                            memoryLayout, PartitionningType::Generic, Implementation::MPI, 0> {
-  public:
-    HOST
-    Communication(const MathVector<int, 3>& rankMPI_in,
-                  const MathVector<int, 3>& sizeMPI_in,
-                  const std::string& processorName_in)
-      : Communication<T, latticeType, AlgorithmType::Pull,
-                      memoryLayout, PartitionningType::Generic,
-                      Implementation::MPI, 0>(rankMPI_in, sizeMPI_in,
-                                       processorName_in)
-    {}
+  private:
+    using Base = Communication<T, latticeType, AlgorithmType::Pull,
+                        memoryLayout, PartitionningType::Generic,
+                               Implementation::MPI, 0>;
 
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::printInputs;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::getRankMPI;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendGlobalToLocal;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendLocalToGlobal;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::reduce;
+  public:
+    using Base::Communication;
+
+    using Base::printInputs;
+    using Base::getRankMPI;
+    using Base::sendGlobalToLocal;
+    using Base::sendLocalToGlobal;
+    using Base::reduce;
 
     HOST
     inline void communicateHalos(T * haloDistributionPtr) {
@@ -1281,15 +1000,9 @@ namespace lbm {
     }
 
   private:
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendAndReceiveHaloX;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendAndReceiveHaloY;
-    using Communication<T, latticeType, AlgorithmType::Pull,
-                        memoryLayout, PartitionningType::Generic,
-                        Implementation::MPI, 0>::sendAndReceiveHaloZ;
+    using Base::sendAndReceiveHaloX;
+    using Base::sendAndReceiveHaloY;
+    using Base::sendAndReceiveHaloZ;
   };
 
 }

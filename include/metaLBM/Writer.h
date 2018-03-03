@@ -1,4 +1,4 @@
-#ifndef WRITER_H
+#ifndef WRITE_H
 #define WRITER_H
 
 #include <iostream>
@@ -35,6 +35,7 @@ namespace lbm {
     const std::string fileFormat;
 
     const MathVector<int, 3> rankMPI;
+    const MathVector<int, 3> sizeMPI;
 
     bool isWritten;
 
@@ -44,13 +45,15 @@ namespace lbm {
            const std::string& filePrefix_in,
            const std::string& fileExtension_in,
            const std::string& fileFormat_in,
-           const MathVector<int, 3> rankMPI_in)
+           const MathVector<int, 3>& rankMPI_in,
+           const MathVector<int, 3>& sizeMPI_in)
       : writeFolder("../output/")
       , writerFolder(writerFolder_in)
       , fileExtension(fileExtension_in)
       , filePrefix(filePrefix_in)
       , fileFormat(fileFormat_in)
       , rankMPI(rankMPI_in)
+      , sizeMPI(sizeMPI_in)
       , isWritten(false)
     {}
 
@@ -81,36 +84,32 @@ namespace lbm {
                InputOutputDataFormat::ascii>
     : public Writer<T, InputOutput::Generic, InputOutputType::Generic,
                     InputOutputDataFormat::Generic> {
+  private:
+    using Base = Writer<T, InputOutput::Generic, InputOutputType::Generic,
+                        InputOutputDataFormat::Generic>;
+
   public:
     Writer(const std::string& writerFolder_in,
            const std::string& filePrefix_in,
            const std::string& fileExtension_in,
-           const MathVector<int, 3> rankMPI_in)
-      : Writer<T, InputOutput::Generic, InputOutputType::Generic,
-               InputOutputDataFormat::Generic>(writerFolder_in,
-                                               filePrefix_in,
-                                               fileExtension_in,
-                                               "ascii",
-                                               rankMPI_in)
+           const MathVector<int, 3>& rankMPI_in,
+           const MathVector<int, 3>& sizeMPI_in)
+      : Base(writerFolder_in, filePrefix_in, fileExtension_in, "ascii",
+             rankMPI_in, sizeMPI_in)
     {}
 
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 InputOutputDataFormat::Generic>::getIsWritten;
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 InputOutputDataFormat::Generic>::getIsBackedUp;
+    using Base::getIsWritten;
+    using Base::getIsBackedUp;
 
   protected:
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 InputOutputDataFormat::Generic>::file;
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 InputOutputDataFormat::Generic>::fileFormat;
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 InputOutputDataFormat::Generic>::rankMPI;
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 InputOutputDataFormat::Generic>::getFileName;
+    using Base::file;
+    using Base::fileFormat;
+    using Base::rankMPI;
+    using Base::getFileName;
 
     inline void open(const std::string& fileName) {
       file.open(fileName, std::ofstream::out | std::ofstream::trunc);
+      file.precision(16);
 
       if(!file) {
         std::cout << "Could not open file " << fileName << std::endl;
@@ -131,6 +130,10 @@ namespace lbm {
                InputOutputDataFormat::binary>
     : public Writer<T, InputOutput::Generic, InputOutputType::Generic,
                     InputOutputDataFormat::Generic> {
+  private:
+    using Base = Writer<T, InputOutput::Generic, InputOutputType::Generic,
+                        InputOutputDataFormat::Generic>;
+
   public:
     Writer(const std::string& writerFolder_in,
            const std::string& filePrefix_in,
@@ -144,20 +147,15 @@ namespace lbm {
                                                rankMPI_in)
     {}
 
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 InputOutputDataFormat::Generic>::getIsWritten;
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 InputOutputDataFormat::Generic>::getIsBackedUp;
+    using Base::getIsWritten;
+    using Base::getIsBackedUp;
 
   protected:
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 InputOutputDataFormat::Generic>::file;
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 InputOutputDataFormat::Generic>::fileFormat;
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 InputOutputDataFormat::Generic>::rankMPI;
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 InputOutputDataFormat::Generic>::getFileName;
+    using Base::file;
+    using Base::fileFormat;
+    using Base::rankMPI;
+    using Base::sizeMPI;
+    using Base::getFileName;
 
     inline void open(const std::string& fileName) {
       file.open(fileName, std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
@@ -171,9 +169,13 @@ namespace lbm {
   };
 
 
-    template <class T, InputOutputDataFormat inputOutputDataFormat>
+  template <class T, InputOutputDataFormat inputOutputDataFormat>
   class Writer<T, InputOutput::DAT, InputOutputType::Serial, inputOutputDataFormat>
-    : public Writer<T, InputOutput::Generic, InputOutputType::Generic, inputOutputDataFormat> {
+    : public Writer<T, InputOutput::Generic, InputOutputType::Generic,
+                    inputOutputDataFormat> {
+  private:
+  using Base = Writer<T, InputOutput::Generic, InputOutputType::Generic,
+                      inputOutputDataFormat>;
   public:
     Writer(const std::string& filePrefix_in,
            const MathVector<int, 3> rankMPI_in)
@@ -182,10 +184,8 @@ namespace lbm {
                                       ".dat", rankMPI_in)
     {}
 
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 inputOutputDataFormat>::getIsWritten;
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 inputOutputDataFormat>::getIsBackedUp;
+    using Base::getIsWritten;
+    using Base::getIsBackedUp;
 
     inline void openFile(const unsigned int iteration) {
       std::string fileName = "/dev/null";
@@ -229,19 +229,13 @@ namespace lbm {
 
 
   private:
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 inputOutputDataFormat>::file;
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 inputOutputDataFormat>::fileFormat;
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 inputOutputDataFormat>::rankMPI;
+    using Base::file;
+    using Base::fileFormat;
+    using Base::rankMPI;
 
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 inputOutputDataFormat>::getFileName;
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 inputOutputDataFormat>::open;
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 inputOutputDataFormat>::write;
+    using Base::getFileName;
+    using Base::open;
+    using Base::write;
 
 
     void writeHeader() {
@@ -258,19 +252,22 @@ namespace lbm {
 
   template <class T, InputOutputDataFormat inputOutputDataFormat>
   class Writer<T, InputOutput::VTR, InputOutputType::Serial, inputOutputDataFormat>
-    : public Writer<T, InputOutput::Generic, InputOutputType::Generic, inputOutputDataFormat> {
+    : public Writer<T, InputOutput::Generic, InputOutputType::Generic,
+                    inputOutputDataFormat> {
+  private:
+    using Base = Writer<T, InputOutput::Generic, InputOutputType::Generic,
+                        inputOutputDataFormat>;
+
   public:
     Writer(const std::string& filePrefix_in,
-           const MathVector<int, 3> rankMPI_in)
-      : Writer<T, InputOutput::Generic, InputOutputType::Generic,
-               inputOutputDataFormat>("outputVTR/", filePrefix_in,
-                                      ".vtr", rankMPI_in)
+           const MathVector<int, 3>& rankMPI_in,
+           const MathVector<int, 3>& sizeMPI_in)
+      : Base("outputVTR/", filePrefix_in,
+             ".vtr", rankMPI_in, sizeMPI_in)
     {}
 
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 inputOutputDataFormat>::getIsWritten;
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 inputOutputDataFormat>::getIsBackedUp;
+    using Base::getIsWritten;
+    using Base::getIsBackedUp;
 
     inline void openFile(const unsigned int iteration) {
       std::string fileName = "/dev/null";
@@ -313,49 +310,20 @@ namespace lbm {
       file << "</DataArray>\n";
     }
 
-    template<unsigned int NumberComponents, DomainType initDomainType, Architecture architecture>
+    template<unsigned int NumberComponents, DomainType initDomainType,
+             Architecture architecture>
     void writeField(const Field<T, NumberComponents, initDomainType,
                     architecture, false>& field) {
     }
 
-    template<Architecture architecture>
-    void writeDistribution(const Distribution<T, DomainType::GlobalSpace,
-                    architecture>& distribution) {
-      INSTRUMENT_ON("Writer<T, InputOutput::VTR, writerFileFromat>::writeDistribution<NumberComponents>",3)
-
-        file << "<DataArray type=\"Float32\" "
-             << "NumberOfComponents=\"" << L::dimQ << "\" "
-             << "Name=\"" << distribution.fieldName << "\" "
-             << "format=\"" + fileFormat + "\">\n";
-      for(unsigned int iZ = gSD::start()[d::Z]; iZ < gSD::end()[d::Z]; iZ++) {
-        for(unsigned int iY = gSD::start()[d::Y]; iY < gSD::end()[d::Y]; iY++) {
-          for(unsigned int iX = gSD::start()[d::X]; iX < gSD::end()[d::X]; iX++) {
-            MathVector<unsigned int, 3> iP = {iX, iY, iZ};
-            for(unsigned int iC = 0; iC < L::dimQ; ++iC) {
-              write(distribution.getGlobalValue(iP, iC));
-              file << " ";
-            }
-            //file << std::endl;
-          }
-        }
-      }
-      file << "</DataArray>\n";
-    }
-
   private:
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 inputOutputDataFormat>::file;
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 inputOutputDataFormat>::fileFormat;
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 inputOutputDataFormat>::rankMPI;
+    using Base::file;
+    using Base::fileFormat;
+    using Base::rankMPI;
 
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 inputOutputDataFormat>::getFileName;
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 inputOutputDataFormat>::open;
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 inputOutputDataFormat>::write;
+    using Base::getFileName;
+    using Base::open;
+    using Base::write;
 
 
     void writeHeader() {
@@ -416,19 +384,21 @@ namespace lbm {
   class Writer<T, InputOutput::HDF5, InputOutputType::Serial, inputOutputDataFormat>
     : public Writer<T, InputOutput::Generic, InputOutputType::Generic,
                     inputOutputDataFormat> {
+  private:
+    using Base = Writer<T, InputOutput::Generic, InputOutputType::Generic,
+                        inputOutputDataFormat>;
+
   public:
     Writer(const std::string& filePrefix_in,
-           const MathVector<int, 3> rankMPI_in)
-      : Writer<T, InputOutput::Generic,  InputOutputType::Generic,
-               inputOutputDataFormat>("outputHDF5/", filePrefix_in,
-                                      ".h5", rankMPI_in)
-      , writerXDMF(filePrefix_in, rankMPI_in)
+           const MathVector<int, 3>& rankMPI_in,
+           const MathVector<int, 3>& sizeMPI_in)
+      : Base("outputHDF5/", filePrefix_in,
+             ".h5", rankMPI_in, sizeMPI_in)
+      , writerXDMF(filePrefix_in, rankMPI_in, sizeMPI_in)
     {}
 
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 inputOutputDataFormat>::getIsWritten;
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 inputOutputDataFormat>::getIsBackedUp;
+    using Base::getIsWritten;
+    using Base::getIsBackedUp;
 
     inline void openFile(const unsigned int iteration) {
       if(rankMPI[d::X] == 0) {
@@ -457,30 +427,51 @@ namespace lbm {
       if(rankMPI[d::X] == 0) {
 
         propertyListHDF5 = H5Pcreate(H5P_DATASET_XFER);
-        dataSpaceHDF5 = H5Screate_simple(L::dimD,
+        fileSpaceHDF5 = H5Screate_simple(L::dimD,
                                          Project<hsize_t,
                                          unsigned int, L::dimD>::Do(gSD::length()).data(),
                                          NULL);
-
+        MathVector<int, 3> rank{{0}};
         for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
-          dataSetHDF5 = H5Dcreate2(fileHDF5, (field.fieldName+std::to_string(iC)).c_str(),
-                                   H5T_NATIVE_DOUBLE, dataSpaceHDF5, H5P_DEFAULT,
-                                   H5P_DEFAULT, H5P_DEFAULT);
+            dataSetHDF5 = H5Dcreate2(fileHDF5, (field.fieldName+std::to_string(iC)).c_str(),
+                                     H5T_NATIVE_DOUBLE, dataSpaceHDF5, H5P_DEFAULT,
+                                     H5P_DEFAULT, H5P_DEFAULT);
 
-          statusHDF5 = H5Dwrite(dataSetHDF5, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL,
-                                propertyListHDF5,
-                                field.globalData()+ iC*gSD::volume());
-          statusHDF5 = H5Dclose(dataSetHDF5);
+            statusHDF5 = H5Sclose(fileSpaceHDF5);
+
+
+            dataSpaceHDF5 = H5Screate_simple(L::dimD,
+                                         Project<hsize_t,
+                                         unsigned int, L::dimD>::Do(lSD::length()).data(),
+                                         NULL);
+
+            fileSpaceHDF5 = H5Dget_space(dataSetHDF5);
+
+            for(rank[d::X] = 0; rank[d::X] < sizeMPI[d::X]; ++rank[d::X]) {
+
+              H5Sselect_hyperslab(fileSpaceHDF5, H5S_SELECT_SET,
+                                  Project<hsize_t,
+                                  unsigned int, L::dimD>::Do(gSD::offset(rank)).data(),
+                                  NULL,
+                                  Project<hsize_t,
+                                  unsigned int, L::dimD>::Do(lSD::length()).data(), NULL);
+
+              statusHDF5 = H5Dwrite(dataSetHDF5, H5T_NATIVE_DOUBLE,
+                                    dataSpaceHDF5, fileSpaceHDF5, propertyListHDF5,
+                                    field.getGlobalData()
+                                    + lSD::volume() * (rank[d::X]*NumberComponents + iC));
+            }
+
+            statusHDF5 = H5Dclose(dataSetHDF5);
+            statusHDF5 = H5Sclose(dataSpaceHDF5);
+            statusHDF5 = H5Sclose(fileSpaceHDF5);
         }
 
-        statusHDF5 = H5Sclose(dataSpaceHDF5);
         statusHDF5 = H5Pclose(propertyListHDF5);
 
         writerXDMF.writeField(field);
       }
     }
-
-
 
     template<unsigned int NumberComponents, DomainType initDomainType,
              Architecture architecture>
@@ -488,44 +479,11 @@ namespace lbm {
                     architecture, false>& field) {
     }
 
-    template<Architecture architecture>
-    void writeDistribution(Distribution<T, DomainType::GlobalSpace,
-                           architecture>& distribution) {
-      INSTRUMENT_ON("Writer<T, InputOutput::HDF5, writerFileFromat>::writeDistribution<Architecture>",3)
-      if(rankMPI[d::X] == 0) {
-
-        propertyListHDF5 = H5Pcreate(H5P_DATASET_XFER);
-        dataSpaceHDF5 = H5Screate_simple(L::dimD,
-                                         Project<hsize_t,
-                                         unsigned int, L::dimD>::Do(gSD::length()).data(),
-                                         NULL);
-
-        for(unsigned int iC = 0; iC < L::dimQ; ++iC) {
-          dataSetHDF5 = H5Dcreate2(fileHDF5, (distribution.fieldName
-                                              +std::to_string(iC)).c_str(),
-                                   H5T_NATIVE_DOUBLE, dataSpaceHDF5, H5P_DEFAULT,
-                                   H5P_DEFAULT, H5P_DEFAULT);
-
-          statusHDF5 = H5Dwrite(dataSetHDF5, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL,
-                                propertyListHDF5,
-                                distribution.globalData()+ iC*gSD::volume());
-          statusHDF5 = H5Dclose(dataSetHDF5);
-        }
-
-        statusHDF5 = H5Sclose(dataSpaceHDF5);
-        statusHDF5 = H5Pclose(propertyListHDF5);
-
-        writerXDMF.writeDistribution(distribution);
-      }
-    }
-
   protected:
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 inputOutputDataFormat>::fileFormat;
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 inputOutputDataFormat>::rankMPI;
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 inputOutputDataFormat>::getFileName;
+    using Base::fileFormat;
+    using Base::rankMPI;
+    using Base::sizeMPI;
+    using Base::getFileName;
 
     hid_t fileHDF5;
     hid_t datasetHDF5;
@@ -533,8 +491,10 @@ namespace lbm {
     hid_t groupHDF5;
     hid_t dataSetHDF5;
     hid_t dataSpaceHDF5;
+    hid_t fileSpaceHDF5;
     hid_t propertyListHDF5;
-    Writer<T, InputOutput::XDMF, InputOutputType::Serial, inputOutputDataFormat> writerXDMF;
+    Writer<T, InputOutput::XDMF, InputOutputType::Serial,
+           inputOutputDataFormat> writerXDMF;
 
   private:
     inline void open(const std::string& fileName) {
@@ -556,14 +516,15 @@ namespace lbm {
   template <class T, InputOutputDataFormat inputOutputDataFormat>
   class Writer<T, InputOutput::HDF5, InputOutputType::Parallel, inputOutputDataFormat>
     : public Writer<T, InputOutput::HDF5, InputOutputType::Serial, inputOutputDataFormat> {
-  public:
-    using Writer<T, InputOutput::HDF5, InputOutputType::Serial,
-                 inputOutputDataFormat>::Writer;
+  private:
+    using Base = Writer<T, InputOutput::HDF5, InputOutputType::Serial,
+                        inputOutputDataFormat>;
 
-    using Writer<T, InputOutput::HDF5, InputOutputType::Serial,
-                 inputOutputDataFormat>::getIsWritten;
-    using Writer<T, InputOutput::HDF5, InputOutputType::Serial,
-                 inputOutputDataFormat>::getIsBackedUp;
+  public:
+    using Base::Writer;
+
+    using Base::getIsWritten;
+    using Base::getIsBackedUp;
 
     inline void openFile(const unsigned int iteration) {
       std::string fileName = getFileName(iteration);
@@ -588,6 +549,7 @@ namespace lbm {
                     architecture, true>& field) {
       INSTRUMENT_ON("Writer<T, InputOutput::HDF5, writerFileFromat>::writeField<NumberComponents>",3)
 
+      propertyListHDF5 = H5Pcreate(H5P_DATASET_XFER);
       for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
         fileSpaceHDF5 = H5Screate_simple(L::dimD,
                                          Project<hsize_t,
@@ -613,18 +575,18 @@ namespace lbm {
                             Project<hsize_t,
                             unsigned int, L::dimD>::Do(lSD::length()).data(), NULL);
 
-        propertyListHDF5 = H5Pcreate(H5P_DATASET_XFER);
         H5Pset_dxpl_mpio(propertyListHDF5, H5FD_MPIO_COLLECTIVE);
 
         statusHDF5 = H5Dwrite(dataSetHDF5, H5T_NATIVE_DOUBLE,
                               dataSpaceHDF5, fileSpaceHDF5, propertyListHDF5,
-                              field.localHostData()+ iC*lSD::volume());
+                              field.getLocalData()+ iC*lSD::volume());
 
         statusHDF5 = H5Dclose(dataSetHDF5);
         statusHDF5 = H5Sclose(dataSpaceHDF5);
         statusHDF5 = H5Sclose(fileSpaceHDF5);
-        statusHDF5 = H5Pclose(propertyListHDF5);
       }
+
+      statusHDF5 = H5Pclose(propertyListHDF5);
 
       if(rankMPI[d::X] == 0) {
         writerXDMF.writeField(field);
@@ -636,57 +598,6 @@ namespace lbm {
     void writeField(Field<T, NumberComponents, DomainType::LocalSpace,
                     architecture, false>& field) {
     }
-
-    template<DomainType initDomainType, Architecture architecture>
-    void writeDistribution(const Distribution<T, initDomainType,
-                           architecture>& distribution) {
-      INSTRUMENT_ON("Writer<T, InputOutput::HDF5, writerFileFromat>::writeDistribution<Architecture>",3)
-
-      for(unsigned int iC = 0; iC < L::dimQ; ++iC) {
-        fileSpaceHDF5 = H5Screate_simple(L::dimD,
-                                         Project<hsize_t,
-                                         unsigned int, L::dimD>::Do(gSD::length()).data(),
-                                         NULL);
-
-        dataSetHDF5 = H5Dcreate2(fileHDF5, (distribution.fieldName
-                                            +std::to_string(iC)).c_str(),
-                                 H5T_NATIVE_DOUBLE, fileSpaceHDF5, H5P_DEFAULT,
-                                 H5P_DEFAULT, H5P_DEFAULT);
-
-        statusHDF5 = H5Sclose(fileSpaceHDF5);
-
-        dataSpaceHDF5 = H5Screate_simple(L::dimD,
-                                         Project<hsize_t,
-                                         unsigned int, L::dimD>::Do(lSD::length()).data(),
-                                         NULL);
-
-        fileSpaceHDF5 = H5Dget_space(dataSetHDF5);
-
-        H5Sselect_hyperslab(fileSpaceHDF5, H5S_SELECT_SET,
-                            Project<hsize_t,
-                            unsigned int, L::dimD>::Do(gSD::offset(rankMPI)).data(), NULL,
-                            Project<hsize_t,
-                            unsigned int, L::dimD>::Do(lSD::length()).data(), NULL);
-
-        propertyListHDF5 = H5Pcreate(H5P_DATASET_XFER);
-        H5Pset_dxpl_mpio(propertyListHDF5, H5FD_MPIO_COLLECTIVE);
-
-        statusHDF5 = H5Dwrite(dataSetHDF5, H5T_NATIVE_DOUBLE,
-                              dataSpaceHDF5, fileSpaceHDF5, propertyListHDF5,
-                              distribution.localHostData()+ iC*lSD::volume());
-
-        statusHDF5 = H5Dclose(dataSetHDF5);
-        statusHDF5 = H5Sclose(dataSpaceHDF5);
-        statusHDF5 = H5Sclose(fileSpaceHDF5);
-        statusHDF5 = H5Pclose(propertyListHDF5);
-      }
-
-      if(rankMPI[d::X] == 0) {
-        writerXDMF.writeDistribution(distribution);
-      }
-
-    }
-
 
     inline void open(const std::string& fileName) {
       propertyListHDF5 = H5Pcreate(H5P_FILE_ACCESS);
@@ -704,29 +615,20 @@ namespace lbm {
     }
 
   private:
-    using Writer<T, InputOutput::HDF5, InputOutputType::Serial,
-                 inputOutputDataFormat>::fileFormat;
-    using Writer<T, InputOutput::HDF5, InputOutputType::Serial,
-                 inputOutputDataFormat>::rankMPI;
-    using Writer<T, InputOutput::HDF5, InputOutputType::Serial,
-                 inputOutputDataFormat>::getFileName;
+    using Base::fileFormat;
+    using Base::rankMPI;
+    using Base::getFileName;
 
-    using Writer<T, InputOutput::HDF5, InputOutputType::Serial,
-                 inputOutputDataFormat>::fileHDF5;
-    using Writer<T, InputOutput::HDF5, InputOutputType::Serial,
-                 inputOutputDataFormat>::statusHDF5;
+    using Base::fileHDF5;
+    using Base::statusHDF5;
     //using Writer<T, InputOutput::HDF5, InputOutputType::Serial,
     //inputOutputDataFormat>::groupHDF5;
-    using Writer<T, InputOutput::HDF5, InputOutputType::Serial,
-                 inputOutputDataFormat>::dataSetHDF5;
-    using Writer<T, InputOutput::HDF5, InputOutputType::Serial,
-                 inputOutputDataFormat>::dataSpaceHDF5;
+    using Base::dataSetHDF5;
+    using Base::dataSpaceHDF5;
     hid_t fileSpaceHDF5;
-    using Writer<T, InputOutput::HDF5, InputOutputType::Serial,
-                 inputOutputDataFormat>::propertyListHDF5;
+    using Base::propertyListHDF5;
 
-    using Writer<T, InputOutput::HDF5, InputOutputType::Serial,
-                 inputOutputDataFormat>::writerXDMF;
+    using Base::writerXDMF;
 
   };
 
@@ -735,12 +637,16 @@ namespace lbm {
   class Writer<T, InputOutput::XDMF, InputOutputType::Serial, inputOutputDataFormat>
     : public Writer<T, InputOutput::Generic,
                     InputOutputType::Generic, inputOutputDataFormat> {
+  private:
+    using Base = Writer<T, InputOutput::Generic,
+                        InputOutputType::Generic, inputOutputDataFormat>;
+
   public:
     Writer(const std::string& filePrefix_in,
-           const MathVector<int, 3> rankMPI_in)
-      : Writer<T, InputOutput::Generic, InputOutputType::Generic,
-               inputOutputDataFormat>("outputHDF5/", filePrefix_in,
-                                      ".xmf", rankMPI_in)
+           const MathVector<int, 3>& rankMPI_in,
+           const MathVector<int, 3>& sizeMPI_in)
+      : Base("outputHDF5/", filePrefix_in,
+             ".xmf", rankMPI_in, sizeMPI_in)
       , fileName("/dev/null")
       , fileNameHDF5("/dev/null")
     {}
@@ -786,46 +692,15 @@ namespace lbm {
                     architecture, false>& field) {
     }
 
-
-    template<DomainType initDomainType, Architecture architecture>
-    void writeDistribution(const Distribution<T, initDomainType,
-                           architecture>& distribution) {
-      INSTRUMENT_ON("Writer<T, InputOutput::XDMF, writerFileFromat>::writeDistribution<NumberComponents>",3)
-
-        for(unsigned int iC = 0; iC < L::dimQ; ++iC) {
-          file << "<Attribute Name=\"" << distribution.fieldName+std::to_string(iC) << "\" "
-               << "AttributeType=\"Scalar\" Center=\"Node\">\n";
-          file << "<DataItem Dimensions=\""
-               << gSD::length()[d::X];
-
-          for(unsigned int iD = 1; iD < L::dimD; ++iD) {
-            file << " " << gSD::length()[iD];
-          }
-          file << "\" ";
-          file << "NumberType=\"Double\" Precision=\"8\" Format=\"HDF\">\n";
-          file << fileNameHDF5 << ":/" << distribution.fieldName+std::to_string(iC) << "\n";
-          file << "</DataItem>\n";
-          file << "</Attribute>\n";
-        }
-    }
-
-
   private:
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 inputOutputDataFormat>::file;
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 inputOutputDataFormat>::filePrefix;
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 inputOutputDataFormat>::fileFormat;
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 inputOutputDataFormat>::rankMPI;
+    using Base::file;
+    using Base::filePrefix;
+    using Base::fileFormat;
+    using Base::rankMPI;
 
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 inputOutputDataFormat>::getFileName;
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 inputOutputDataFormat>::open;
-    using Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                 inputOutputDataFormat>::write;
+    using Base::getFileName;
+    using Base::open;
+    using Base::write;
 
     std::string fileName;
     std::string fileNameHDF5;

@@ -28,19 +28,20 @@ namespace lbm {
       break;
     }
     case InitDensityType::Peak: {
-      const T densityPeakValue = 3.0 * initDensityValue;
+      const T densityPeakValue = 1.1 * initDensityValue;
       MathVector<unsigned int, 3> center;
 
       center[d::X] = static_cast<unsigned int>((gSD::length()[d::X]-1)* (T) 0.4);
       center[d::Y] = static_cast<unsigned int>((gSD::length()[d::Y]-1)* (T) 0.3);
       center[d::Z] = static_cast<unsigned int>((gSD::length()[d::Z]-1)* (T) 0.2);
-      densityFieldR.setGlobalValue(gSD::getIndex(center), densityPeakValue);
+      densityFieldR.setGlobalValue(center, densityPeakValue);
       break;
     }
     default: {
       std::cout << "Wrong type of density initialization.";
     }
     }
+
     return densityFieldR;
   }
 
@@ -48,11 +49,12 @@ namespace lbm {
   Field<T, L::dimD, DomainType::GlobalSpace, architecture, true> initGlobalVelocity() {
     INSTRUMENT_ON("initGlobalVelocity<T>",2)
 
-    MathVector<T, L::dimD> initVelocityVectorProjected{{ (T) 0 }};
-    initVelocityVectorProjected = Project<T, T, L::dimD>::Do(initVelocityVector);
+    MathVector<T, L::dimD> initVelocityVectorProjected
+      = Project<T, T, L::dimD>::Do(initVelocityVector);
 
-    Field<T, L::dimD, DomainType::GlobalSpace, architecture, true> velocityFieldR("velocity",
-                                           initVelocityVectorProjected);
+    Field<T, L::dimD, DomainType::GlobalSpace,
+          architecture, true> velocityFieldR("velocity",
+                                             initVelocityVectorProjected);
 
     switch(initVelocityT){
     case InitVelocityType::Homogeneous: {
@@ -70,7 +72,7 @@ namespace lbm {
   Field<T, 1, DomainType::GlobalSpace, architecture, true> initGlobalAlpha() {
     INSTRUMENT_ON("initGlobalAlpha<T>",2)
 
-    Field<T, 1, DomainType::GlobalSpace, architecture, true> alphaFieldR("alpha", (T) 2);
+    Field<T, 1, DomainType::GlobalSpace, architecture, true> alphaFieldR("alpha", (T) 5);
     return alphaFieldR;
   }
 
@@ -91,10 +93,15 @@ namespace lbm {
           equilibrium.setVariables(densityField.getGlobalValue(iP),
                                    velocityField.getGlobalVector(iP));
 
-
           for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
-            distributionR[gSQD::getIndex(MathVector<unsigned int, 3>({iX, iY, iZ}), iQ)]
+            distributionR[gSQD::getIndex(iP, iQ)]
               = equilibrium.calculate(iQ);
+            // if (iQ == 6) std::cout << "iQ: " << iQ
+            //                        << ", iP: " << iP
+            //                        << "index: " << gSQD::getIndex(iP, iQ)
+            //                        << ", f: " << distributionR[gSQD::getIndex(iP, iQ)]
+            //                        << std::endl;
+
           }
         }
       }
@@ -142,10 +149,10 @@ namespace lbm {
       const T densityPeakValue = 3.0 * initDensityValue;
       MathVector<unsigned int, 3> center;
 
-      center[d::X] = static_cast<unsigned int>((gSD::length()[d::X]-1)* (T) 0.4);
-      center[d::Y] = static_cast<unsigned int>((gSD::length()[d::Y]-1)* (T) 0.3);
-      center[d::Z] = static_cast<unsigned int>((gSD::length()[d::Z]-1)* (T) 0.2);
-      densityFieldR.setLocalValue(gSD::getIndex(center), densityPeakValue);
+      center[d::X] = static_cast<unsigned int>((lSD::length()[d::X]-1)* (T) 0.4);
+      center[d::Y] = static_cast<unsigned int>((lSD::length()[d::Y]-1)* (T) 0.3);
+      center[d::Z] = static_cast<unsigned int>((lSD::length()[d::Z]-1)* (T) 0.2);
+      densityFieldR.setLocalValue(center, densityPeakValue);
       break;
     }
     default: {
@@ -183,28 +190,62 @@ namespace lbm {
   Field<T, L::dimD, DomainType::LocalSpace,
         architecture, true> initLocalForce(const MathVector<int, 3>& rankMPI) {
     INSTRUMENT_ON("initLocalForce<T>",2)
-    Field<T, L::dimD, DomainType::LocalSpace,
-            architecture, true> forceFieldR("force", forceAmplitude);
-    Force<T, forceT> force;
+    MathVector<T, L::dimD> initForceAmplitudeProjected
+      = Project<T, T, L::dimD>::Do(forceAmplitude);
+
+      Field<T, L::dimD, DomainType::LocalSpace,
+            architecture, true> forceFieldR("force", initForceAmplitudeProjected);
+
+    Force<T, forceT> force(forceAmplitude, forceWaveLength, forcekMin, forcekMax);
     MathVector<unsigned int, 3> iP;
     for(unsigned int iZ = lSD::start()[d::Z]; iZ < lSD::end()[d::Z]; iZ++) {
       for(unsigned int iY = lSD::start()[d::Y]; iY < lSD::end()[d::Y]; iY++) {
         for(unsigned int iX = lSD::start()[d::X]; iX < lSD::end()[d::X]; iX++) {
           iP =  MathVector<unsigned int, 3>({iX, iY, iZ});
           force.setForce(iP, gSD::offset(rankMPI));
-          forceFieldR.setLocalVector(lSD::getIndex(iP), force.getForce());
+          forceFieldR.setLocalVector(iP, force.getForce());
         }
       }
     }
 
-    if(forceT == ForceType::ConstantShell) {
+    // if(forceT == ForceType::ConstantShell) {
+    // }
+
+    // else {
+    //   std::cout << "Wrong type of force initialization.";
+    // }
+    return forceFieldR;
+  }
 
 
+  template<class T, Architecture architecture>
+  Field<T, L::dimD, DomainType::GlobalSpace,
+        architecture, true> initGlobalForce() {
+    INSTRUMENT_ON("initLocalForce<T>",2)
+
+    MathVector<T, L::dimD> initForceAmplitudeProjected
+      = Project<T, T, L::dimD>::Do(forceAmplitude);
+
+      Field<T, L::dimD, DomainType::GlobalSpace,
+            architecture, true> forceFieldR("force", initForceAmplitudeProjected);
+      Force<T, forceT> force(forceAmplitude, forceWaveLength, forcekMin, forcekMax);
+    MathVector<unsigned int, 3> iP;
+    for(unsigned int iZ = gSD::start()[d::Z]; iZ < gSD::end()[d::Z]; iZ++) {
+      for(unsigned int iY = gSD::start()[d::Y]; iY < gSD::end()[d::Y]; iY++) {
+        for(unsigned int iX = gSD::start()[d::X]; iX < gSD::end()[d::X]; iX++) {
+          iP =  MathVector<unsigned int, 3>({iX, iY, iZ});
+          force.setForce(iP);
+          forceFieldR.setGlobalVector(iP, force.getForce());
+        }
+      }
     }
 
-    else {
-      std::cout << "Wrong type of force initialization.";
-    }
+    // if(forceT == ForceType::ConstantShell) {
+    // }
+
+    // else {
+    //   std::cout << "Wrong type of force initialization.";
+    // }
     return forceFieldR;
   }
 
@@ -232,8 +273,8 @@ namespace lbm {
         for(unsigned int iX = lSD::start()[d::X]; iX < lSD::end()[d::X]; iX++) {
           iP =  MathVector<unsigned int, 3>({iX, iY, iZ});
 
-          equilibrium.setVariables(densityField.getLocalHostValue(iP),
-                                   velocityField.getLocalHostVector(iP));
+          equilibrium.setVariables(densityField.getLocalValue(iP),
+                                   velocityField.getLocalVector(iP));
 
           for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
             distributionR[lSD::getIndex(iP, iQ)] = equilibrium.calculate(iQ);

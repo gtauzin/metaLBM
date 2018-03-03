@@ -1,7 +1,5 @@
-#define NTHREADS 2
-#define NPROCS 1
-#define _AOS
-#define DATA_TYPE double
+#define NPROCS 8
+#define NTHREADS 1
 
 #include <mpi.h>
 #include <iostream>
@@ -12,6 +10,7 @@
 #include "metaLBM/Commons.h"
 #include "metaLBM/MathVector.h"
 #include "metaLBM/Computation.h"
+#include "metaLBM/Routine.h"
 
 #ifdef USE_FFTW
   #include <fftw3-mpi.h>
@@ -20,20 +19,10 @@
   #include "metaLBM/Domain.h"
 #endif
 
-
-namespace lbm {
-  constexpr Architecture arch = Architecture::CPU;
-
-  typedef Computation<arch, L::dimD> Computation_;
-}
-
-#include "metaLBM/Routine.h"
-
 using namespace lbm;
 
 int main(int argc, char* argv[]) {
   INSTRUMENT_ON("main",0)
-
 
   #ifndef USE_FFTW
     MPI_Init(&argc, &argv);
@@ -70,7 +59,7 @@ int main(int argc, char* argv[]) {
   char hostname[MPI_MAX_PROCESSOR_NAME];
   MPI_Get_processor_name(hostname, &hostnameLength);
 
-  Routine<dataT, arch, implementationT,
+  Routine<dataT, Architecture::CPU, implementationT,
           inputOutputType> routine(rankMPI, sizeMPI,
                                    std::string(hostname));
 
