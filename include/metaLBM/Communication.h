@@ -539,16 +539,6 @@ namespace lbm {
     }
   };
 
-
-
-
-
-
-
-
-
-
-
 #ifdef USE_NVSHMEM
 
   template<class T, LatticeType latticeType>
@@ -753,20 +743,6 @@ namespace lbm {
   };
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   template<class T, LatticeType latticeType, MemoryLayout memoryLayout>
   class Communication<T, latticeType, AlgorithmType::Pull,
                       memoryLayout, PartitionningType::Generic, Implementation::NVSHMEM_IN, 0>
@@ -802,32 +778,6 @@ namespace lbm {
 
 #endif // USE_NVSHMEM
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  //MAKE IT VALID FOR ALL IMPLEMENTATION
-  //____________________
 
   template<class T, LatticeType latticeType,
            MemoryLayout memoryLayout, unsigned int Dimension>
