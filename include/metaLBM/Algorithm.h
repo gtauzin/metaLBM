@@ -217,20 +217,22 @@ namespace lbm {
 
     HOST
     void pack() {
-      computationLocal.Do([this] HOST DEVICE (const MathVector<unsigned int, 3>& iP) {
+      T * RESTRICT local = localDistribution_Ptr;
+      T * RESTRICT halo = haloDistributionNext_Ptr;
+      computationLocal.Do([local, halo] HOST DEVICE (const MathVector<unsigned int, 3>& iP) {
           for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
-            localDistribution_Ptr[hSD::getIndexLocal(iP, iQ)]
-              = haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)];
+            local[hSD::getIndexLocal(iP, iQ)] = halo[hSD::getIndex(iP, iQ)];
           }
         });
     }
 
     HOST
     void unpack() {
-      computationLocal.Do([this] HOST DEVICE (const MathVector<unsigned int, 3>& iP) {
+      T * RESTRICT halo = haloDistributionNext_Ptr;
+      T * RESTRICT local = localDistribution_Ptr;
+      computationLocal.Do([halo, local] HOST DEVICE (const MathVector<unsigned int, 3>& iP) {
           for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
-            haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)]
-              = localDistribution_Ptr[hSD::getIndexLocal(iP, iQ)];
+            halo[hSD::getIndex(iP, iQ)] = local[hSD::getIndexLocal(iP, iQ)];
 
           }
         });
