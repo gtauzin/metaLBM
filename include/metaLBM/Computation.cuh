@@ -31,11 +31,12 @@ namespace lbm {
                  const MathVector<unsigned int, 3> end,
                  Callback function, const Arguments... arguments) {
 
-    MathVector<unsigned int, 3> iP = {blockIdx.y*blockDim.y + threadIdx.y + start[d::X],
-                                      blockIdx.x*blockDim.x + threadIdx.x + start[d::Y],
+    MathVector<unsigned int, 3> iP = {blockIdx.y*blockDim.y + threadIdx.y + start[d::Y],
+                                      blockIdx.x*blockDim.x + threadIdx.x + start[d::X],
                                       start[d::Z]};
 
     if(iP[1] < end[d::X] && iP[0] < end[d::Y]) {
+      printf("iP = %d, %d\n", iP[0], iP[1]);
       function(iP, arguments...);
     }
   }
@@ -46,9 +47,9 @@ namespace lbm {
                  const MathVector<unsigned int, 3> end,
                  Callback function, const Arguments... arguments) {
 
-    MathVector<unsigned int, 3> iP = {blockIdx.z*blockDim.z + threadIdx.z + start[d::X],
+    MathVector<unsigned int, 3> iP = {blockIdx.z*blockDim.z + threadIdx.z + start[d::Z],
                                       blockIdx.y*blockDim.y + threadIdx.y + start[d::Y],
-                                      blockIdx.x*blockDim.x + threadIdx.x + start[d::Z]};
+                                      blockIdx.x*blockDim.x + threadIdx.x + start[d::X]};
     if(iP[2] < end[d::X] && iP[1] < end[d::Y] && iP[0] < end[d::Z]) {
       function(iP, arguments...);
     }
@@ -92,6 +93,9 @@ namespace lbm {
     template<typename Callback, typename... Arguments>
     void Do(Callback function, const Arguments... arguments) {
       INSTRUMENT_OFF("Computation<Architecture::GPU, 2>::Do<Callback>",3)
+      
+
+      std::cout << "start: " << start << ", end: " << end << std::endl;
 
       dim3 dimBlock(128, 1, 1);
       dim3 dimGrid((127+length[d::Y])/128, length[d::X], 1);

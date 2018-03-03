@@ -11,8 +11,8 @@ namespace lbm {
   typedef double dataT;
 
   constexpr LatticeType latticeT = LatticeType::D2Q9;
-  constexpr int lengthX_g = 8;
-  constexpr int lengthY_g = 8;
+  constexpr int lengthX_g = 2;
+  constexpr int lengthY_g = 2;
   constexpr int lengthZ_g = 32;
 
   constexpr unsigned int startIteration = 0;
@@ -39,7 +39,7 @@ namespace lbm {
   constexpr ForcingSchemeType forcingSchemeT = ForcingSchemeType::ExactDifferenceMethod;
   constexpr ForceType forceT = ForceType::Kolmogorov;
 
-  constexpr MathVector<dataT, 3> forceAmplitude = { {0.00001, 0.00001, 0.0} };
+  constexpr MathVector<dataT, 3> forceAmplitude = { {0.0, 0.0, 0.0} };
   constexpr MathVector<dataT, 3> forceWaveLength = { {32.0, 32.0, 0.0} };
   constexpr int forcekMin = 1;
   constexpr int forcekMax = 2;
