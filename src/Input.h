@@ -18,6 +18,7 @@ namespace lbm {
   constexpr unsigned int startIteration = 0;
   constexpr unsigned int endIteration = 50;
   constexpr unsigned int writeStep = 1;
+
   constexpr unsigned int successiveWriteStep = 2;
   constexpr unsigned int backUpStep = 1;
 
@@ -45,11 +46,10 @@ namespace lbm {
 
   constexpr BoundaryType boundaryT = BoundaryType::Generic;
 
-  constexpr InputOutput inputOutput = InputOutput::HDF5;
+  constexpr InputOutput inputOutput = InputOutput::VTR;
   constexpr InputOutputType inputOutputType = InputOutputType::Serial;
   constexpr InputOutputDataFormat inputOutputDataFormat = InputOutputDataFormat::ascii;
-  constexpr auto prefix = "test_mar_1";
-
+  constexpr auto prefix = "test_serial";
 
   constexpr bool writeDensity = 1;
   constexpr bool writeVelocity = 1;

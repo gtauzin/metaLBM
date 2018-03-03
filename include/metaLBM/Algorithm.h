@@ -171,7 +171,6 @@ namespace lbm {
       collision.setForce(localForce_Ptr, iP, gSD::offset(communication.getRankMPI()));
       collision.setVariables(haloDistributionPrevious_Ptr, iP,
                              moment.getDensity(), moment.getVelocity());
-
       for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
         haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)] =
           collision.calculate(haloDistributionPrevious_Ptr,

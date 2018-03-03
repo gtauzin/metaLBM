@@ -42,7 +42,7 @@ namespace lbm {
     #pragma omp declare simd
     DEVICE HOST
     inline void calculateDensity(const T * RESTRICT f,
-                               const MathVector<unsigned int, 3>& iP) {
+				 const MathVector<unsigned int, 3>& iP) {
       INSTRUMENT_OFF("Moment<T>::calculateDensity",5)
 
       density = f[hSD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)];

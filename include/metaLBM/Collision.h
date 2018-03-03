@@ -68,12 +68,8 @@ namespace lbm {
                        const MathVector<unsigned int, 3>& iP,
                        const unsigned int iQ) {
       INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::calculate",4)
-        /* if (iQ == 6) std::cout << "iQ: " << iQ */
-        /*                       << ", iP: " << iP */
-        /*                       << "index: " << hSD::getIndex(iP, iQ) */
-        /*                       << ", f: " << f[hSD::getIndex(iP, iQ)] << std::endl; */
         return ( (T) 1.0 - (T) tau) * f[hSD::getIndex(iP, iQ)]
-        //+ forcingScheme.calculateCollisionSource(getForce(), iQ)
+        + forcingScheme.calculateCollisionSource(getForce(), iQ)
         + (T) tau * equilibrium.calculate(iQ);
     }
 

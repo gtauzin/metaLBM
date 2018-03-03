@@ -15,6 +15,11 @@
 #include "Lattice.h"
 #include "Domain.h"
 #include "Boundary.h"
+
+#ifdef USE_NVSHMEM
+  #include <shmem.h>
+  #include <shmemx.h>
+#endif
 #include "Computation.h"
 
 
@@ -775,7 +780,6 @@ namespace lbm {
     void sendAndReceiveHaloZ(T * haloDistributionPtr) {
     }
   };
-
 #endif // USE_NVSHMEM
 
 

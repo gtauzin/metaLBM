@@ -34,8 +34,8 @@ namespace lbm {
 
     HOST DEVICE
     static inline constexpr MathVector<unsigned int, 3> end() {
-      return ProjectAndLeave1<unsigned int, L::dimD>::Do({lengthX_g/NPROCS,
-            lengthY_g, lengthZ_g});
+      return ProjectAndLeave1<unsigned int, L::dimD>::Do({{lengthX_g/NPROCS,
+            lengthY_g, lengthZ_g}});
     }
 
     HOST DEVICE
@@ -44,7 +44,7 @@ namespace lbm {
     }
 
     HOST DEVICE
-    static inline constexpr unsigned int volume() {
+    static inline unsigned int volume() {
       return length()[d::X]*length()[d::Y]*length()[d::Z];
     }
 
@@ -85,7 +85,7 @@ namespace lbm {
 
     HOST DEVICE
     static inline constexpr MathVector<unsigned int, 3> end() {
-      return ProjectAndLeave1<unsigned int, L::dimD>::Do({lengthX_g, lengthY_g, lengthZ_g});
+      return ProjectAndLeave1<unsigned int, L::dimD>::Do({{lengthX_g, lengthY_g, lengthZ_g}});
     }
 
     HOST DEVICE
@@ -94,7 +94,7 @@ namespace lbm {
     }
 
     HOST DEVICE
-    static inline constexpr unsigned int volume() {
+    static inline unsigned int volume() {
       return length()[d::X]*length()[d::Y]*length()[d::Z];
     }
 
@@ -149,7 +149,7 @@ namespace lbm {
     }
 
     HOST DEVICE
-    static inline const unsigned int volume() {
+    static inline unsigned int volume() {
       return length()[d::X]*length()[d::Y]*length()[d::Z];
     }
 
@@ -263,7 +263,7 @@ namespace lbm {
     }
 
     HOST DEVICE
-    static inline constexpr unsigned int volume() {
+      static inline unsigned int volume() {
       return length()[d::X]*length()[d::Y]*length()[d::Z];
     }
 
