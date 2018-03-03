@@ -9,6 +9,32 @@
 
 namespace lbm {
 
+  template<class T>
+  struct Packer {
+  public:
+    DEVICE HOST
+    inline void operator()(const MathVector<unsigned int, 3>& iP,
+                           T * RESTRICT local, T * RESTRICT halo) {
+      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+            local[hSD::getIndexLocal(iP, iQ)] = halo[hSD::getIndex(iP, iQ)];
+      }
+    }
+  };
+
+  template<class T>
+  struct Unpacker {
+  public:
+    DEVICE HOST
+    inline void operator()(const MathVector<unsigned int, 3>& iP,
+                           T * RESTRICT halo, T * RESTRICT local) {
+      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+            halo[hSD::getIndex(iP, iQ)] = local[hSD::getIndexLocal(iP, iQ)];
+      }
+    }
+  };
+
+
+
   template<class T, BoundaryType boundaryType, AlgorithmType algorithmType,
     PartitionningType partitionningType, Implementation implementation,
     unsigned int Dimension>
@@ -158,7 +184,7 @@ namespace lbm {
   public:
     DEVICE HOST
     inline void operator()(const MathVector<unsigned int, 3>& iP,
-                             T * RESTRICT f) {
+                           T * RESTRICT f) {
       applyY(iP, f);
     }
   };

@@ -20,31 +20,6 @@
 
 namespace lbm {
 
-  struct Packer {
-  public:
-    HOST DEVICE
-    template<class T>
-    inline void operator()(const MathVector<unsigned int, 3>& iP,
-                                  T * RESTRICT local, T * RESTRICT halo) {
-      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
-            local[hSD::getIndexLocal(iP, iQ)] = halo[hSD::getIndex(iP, iQ)];
-      }
-    }
-  };
-
-  struct Unpacker {
-  public:
-    HOST DEVICE
-    template<class T>
-    inline void operator()(const MathVector<unsigned int, 3>& iP,
-                                  T * RESTRICT halo, T * RESTRICT local) {
-      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
-            halo[hSD::getIndex(iP, iQ)] = local[hSD::getIndexLocal(iP, iQ)];
-      }
-    }
-  };
-
-
   template<class T, AlgorithmType algorithmType, DomainType initDomainType,
     Architecture architecture, Implementation implementation>
   class Algorithm {
@@ -68,8 +43,8 @@ namespace lbm {
     T * RESTRICT haloDistributionPrevious_Ptr;
     T * RESTRICT haloDistributionNext_Ptr;
 
-    Packer packer;
-    Unpacker unpacker;
+    Packer<T> packer;
+    Unpacker<T> unpacker;
     Communication<T, latticeT, algorithmT, memoryL,
                   partitionningT, implementation, L::dimD> communication;
     Collision_ collision;
@@ -130,12 +105,14 @@ namespace lbm {
   public:
     HOST
     void pack() {
-      computationLocal.Do(packer, localDistribution_Ptr, haloDistributionNext_Ptr);
+      computationLocal.Do(packer, localDistribution_Ptr,
+                          haloDistributionNext_Ptr);
     }
 
     HOST
     void unpack() {
-      computationLocal.Do(unpacker, haloDistributionNext_Ptr, localDistribution_Ptr);
+      computationLocal.Do(unpacker, haloDistributionNext_Ptr,
+                          localDistribution_Ptr);
     }
 
     double getCommunicationTime() {
