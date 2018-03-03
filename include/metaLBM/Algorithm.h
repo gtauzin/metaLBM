@@ -153,8 +153,8 @@ namespace lbm {
   public:
     Algorithm(Field<T, 1, initDomainType, architecture, writeDensity>& densityField_in,
               Field<T, L::dimD, initDomainType, architecture, writeVelocity>& velocityField_in,
-              Field<T, L::dimD, initDomainType, architecture, writeDensity>& forceField_in,
-              Field<T, 1, initDomainType, architecture, writeDensity>& alphaField_in,
+              Field<T, L::dimD, initDomainType, architecture, writeForce>& forceField_in,
+              Field<T, 1, initDomainType, architecture, writeAlpha>& alphaField_in,
               Distribution<T, initDomainType, architecture>& distribution_in,
               Communication<T, latticeT, algorithmT, memoryL,
               partitionningT, implementation, L::dimD>& communication_in)
@@ -174,8 +174,8 @@ namespace lbm {
 
       for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
         haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)] =
-                            collision.calculate(haloDistributionPrevious_Ptr,
-                                                iP-uiL::celerity()[iQ], iQ);
+          collision.calculate(haloDistributionPrevious_Ptr,
+                              iP-uiL::celerity()[iQ], iQ);
       }
 
       if(isWritten) {
@@ -230,8 +230,9 @@ namespace lbm {
     void unpack() {
       computationLocal.Do([this] HOST DEVICE (const MathVector<unsigned int, 3>& iP) {
           for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
-            haloDistributionPrevious_Ptr[hSD::getIndex(iP, iQ)]
-              = localDistribution_Ptr[lSD::getIndex(iP-L::halo(), iQ)];
+            haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)]
+              = localDistribution_Ptr[hSD::getIndexLocal(iP, iQ)];
+
           }
         });
     }

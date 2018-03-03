@@ -48,7 +48,7 @@ namespace lbm {
 
     DEVICE HOST
     T * RESTRICT getHaloDataNext() {
-      return haloArrayPrevious.data();
+      return haloArrayNext.data();
     }
 
     DynamicArray<T, architecture>& getHaloArrayPrevious() {

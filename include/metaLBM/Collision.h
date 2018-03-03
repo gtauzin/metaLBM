@@ -68,10 +68,13 @@ namespace lbm {
                        const MathVector<unsigned int, 3>& iP,
                        const unsigned int iQ) {
       INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::calculate",4)
-
-        return ( (T) 1.0 - (T) 1.0 / tau) * f[hSD::getIndex(iP, iQ)]
-        + forcingScheme.calculateCollisionSource(getForce(), iQ)
-        + (T) 1.0 / tau * equilibrium.calculate(iQ);
+        /* if (iQ == 6) std::cout << "iQ: " << iQ */
+        /*                       << ", iP: " << iP */
+        /*                       << "index: " << hSD::getIndex(iP, iQ) */
+        /*                       << ", f: " << f[hSD::getIndex(iP, iQ)] << std::endl; */
+        return ( (T) 1.0 - (T) tau) * f[hSD::getIndex(iP, iQ)]
+        //+ forcingScheme.calculateCollisionSource(getForce(), iQ)
+        + (T) tau * equilibrium.calculate(iQ);
     }
 
     #pragma omp declare simd
@@ -138,8 +141,10 @@ namespace lbm {
   public:
     Collision(const T tau_in,
               const MathVector<T, 3>& amplitude_in,
-              const MathVector<T, 3>& waveLength_in)
-      : Collision<T, CollisionType::BGK>(tau_in, amplitude_in, waveLength_in)
+              const MathVector<T, 3>& waveLength_in,
+              const unsigned int kMin_in, const unsigned int kMax_in)
+      : Collision<T, CollisionType::BGK>(tau_in, amplitude_in, waveLength_in,
+                                         kMin_in, kMax_in)
       , beta( (T) 1.0/(2.0 * tau_in))
     {}
 

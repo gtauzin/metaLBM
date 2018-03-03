@@ -28,13 +28,13 @@ namespace lbm {
       break;
     }
     case InitDensityType::Peak: {
-      const T densityPeakValue = 3.0 * initDensityValue;
+      const T densityPeakValue = 1.1 * initDensityValue;
       MathVector<unsigned int, 3> center;
 
       center[d::X] = static_cast<unsigned int>((gSD::length()[d::X]-1)* (T) 0.4);
       center[d::Y] = static_cast<unsigned int>((gSD::length()[d::Y]-1)* (T) 0.3);
       center[d::Z] = static_cast<unsigned int>((gSD::length()[d::Z]-1)* (T) 0.2);
-      densityFieldR.setGlobalValue(gSD::getIndex(center), densityPeakValue);
+      densityFieldR.setGlobalValue(center, densityPeakValue);
       break;
     }
     default: {
@@ -72,7 +72,7 @@ namespace lbm {
   Field<T, 1, DomainType::GlobalSpace, architecture, true> initGlobalAlpha() {
     INSTRUMENT_ON("initGlobalAlpha<T>",2)
 
-    Field<T, 1, DomainType::GlobalSpace, architecture, true> alphaFieldR("alpha", (T) 2);
+    Field<T, 1, DomainType::GlobalSpace, architecture, true> alphaFieldR("alpha", (T) 5);
     return alphaFieldR;
   }
 
@@ -94,8 +94,14 @@ namespace lbm {
                                    velocityField.getGlobalVector(iP));
 
           for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
-            distributionR[gSQD::getIndex(MathVector<unsigned int, 3>({iX, iY, iZ}), iQ)]
+            distributionR[gSQD::getIndex(iP, iQ)]
               = equilibrium.calculate(iQ);
+            // if (iQ == 6) std::cout << "iQ: " << iQ
+            //                        << ", iP: " << iP
+            //                        << "index: " << gSQD::getIndex(iP, iQ)
+            //                        << ", f: " << distributionR[gSQD::getIndex(iP, iQ)]
+            //                        << std::endl;
+
           }
         }
       }
@@ -143,9 +149,9 @@ namespace lbm {
       const T densityPeakValue = 3.0 * initDensityValue;
       MathVector<unsigned int, 3> center;
 
-      center[d::X] = static_cast<unsigned int>((gSD::length()[d::X]-1)* (T) 0.4);
-      center[d::Y] = static_cast<unsigned int>((gSD::length()[d::Y]-1)* (T) 0.3);
-      center[d::Z] = static_cast<unsigned int>((gSD::length()[d::Z]-1)* (T) 0.2);
+      center[d::X] = static_cast<unsigned int>((lSD::length()[d::X]-1)* (T) 0.4);
+      center[d::Y] = static_cast<unsigned int>((lSD::length()[d::Y]-1)* (T) 0.3);
+      center[d::Z] = static_cast<unsigned int>((lSD::length()[d::Z]-1)* (T) 0.2);
       densityFieldR.setLocalValue(center, densityPeakValue);
       break;
     }

@@ -97,7 +97,7 @@ namespace lbm {
                       PartitionningType::Generic, Implementation::Generic, 1> {
   private:
     using Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                   partitionningType, Implementation::Generic, 1>::applyX;
+      PartitionningType::Generic, Implementation::Generic, 1>::applyX;
   public:
     DEVICE HOST
     inline void operator()(const MathVector<unsigned int, 3>& iP,

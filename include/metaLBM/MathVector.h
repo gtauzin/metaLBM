@@ -77,6 +77,16 @@ namespace lbm {
       return norm2R;
     }
 
+    DEVICE HOST
+    inline U volume(){
+      U volumeR = sArray[0];
+      for(unsigned int iC = 1; iC < NumberComponents; ++iC) {
+        volumeR *= sArray[iC];
+      }
+
+      return volumeR;
+    }
+
   };
 
   template<class U, unsigned int NumberComponents>
@@ -133,6 +143,14 @@ namespace lbm {
       mV_result[iC] = mV_a[iC] + mV_b[iC];
     }
     return mV_result;
+  }
+
+  template<class U>
+  DEVICE HOST
+  constexpr MathVector<U, 3> operator+(const MathVector<U, 3>& mV_a,
+                                       const MathVector<U, 3>& mV_b)
+  {
+    return MathVector<U, 3>{mV_a[0]+mV_b[0], mV_a[1]+mV_b[1], mV_a[2]+mV_b[2]};
   }
 
 

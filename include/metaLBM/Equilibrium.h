@@ -24,7 +24,7 @@ namespace lbm {
     static constexpr EquilibriumType Type = EquilibriumType::Incompressible;
 
     Equilibrium()
-      : density( (T) 0)
+      : density( (T) 1)
       , velocity(MathVector<T, L::dimD>{{ (T) 0}})
       , velocity2(0)
     {}

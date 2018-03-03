@@ -278,7 +278,7 @@ namespace lbm {
   private:
     using Base = Field<T, NumberComponents, DomainType::LocalSpace,
                        architecture, true>;
-    typedef Domain<DomainType::GlobalSpace, partitionningT,
+    typedef Domain<DomainType::GlobalSpace, PartitionningType::Generic,
                    MemoryLayout::Generic, NumberComponents> gNCD;
 
   protected:
@@ -349,14 +349,10 @@ namespace lbm {
       globalArray.copyFrom(globalArray_in);
     }
 
-    inline void setGlobalValue(const unsigned int index, const T value) {
-      globalArray[index] = value;
-    }
-
     inline void setGlobalValue(const MathVector<unsigned int, 3>& iP,
                                const T value,
-                               const unsigned int iC) {
-      setGlobalValue(gNCD::getIndex(iP, iC), value);
+                               const unsigned int iC = 0) {
+      globalArray[gNCD::getIndex(iP, iC)] = value;
     }
 
     inline void setGlobalVector(const MathVector<unsigned int, 3>& iP,

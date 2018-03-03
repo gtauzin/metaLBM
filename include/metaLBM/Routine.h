@@ -42,7 +42,7 @@ namespace lbm {
             const MathVector<int, 3>& sizeMPI_in,
             const std::string& processorName_in)
       : communication(rankMPI_in, sizeMPI_in, processorName_in)
-      , writer(prefix, rankMPI_in)
+      , writer(prefix, rankMPI_in, sizeMPI_in)
       , initialMass(0.0)
       , finalMass(0.0)
       , differenceMass(0.0)
@@ -197,6 +197,7 @@ namespace lbm {
       communication.sendGlobalToLocal(distribution.getGlobalArray(),
                                       distribution.getLocalArray(),
                                       distribution.numberComponents);
+
       algorithm.unpack();
     }
 
