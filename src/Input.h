@@ -11,8 +11,8 @@ namespace lbm {
   typedef double dataT;
 
   constexpr LatticeType latticeT = LatticeType::D2Q9;
-  constexpr int lengthX_g = 32;
-  constexpr int lengthY_g = 32;
+  constexpr int lengthX_g = 8;
+  constexpr int lengthY_g = 8;
   constexpr int lengthZ_g = 32;
 
   constexpr unsigned int startIteration = 0;

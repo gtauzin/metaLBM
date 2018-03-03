@@ -31,8 +31,8 @@ namespace lbm {
                  const MathVector<unsigned int, 3> end,
                  Callback function, const Arguments... arguments) {
 
-    MathVector<unsigned int, 3> iP = {blockIdx.y*blockDim.y + threadIdx.y + start[d::Y],
-                                      blockIdx.x*blockDim.x + threadIdx.x + start[d::X],
+    MathVector<unsigned int, 3> iP = {blockIdx.y*blockDim.y + threadIdx.y + start[d::X],
+                                      blockIdx.x*blockDim.x + threadIdx.x + start[d::Y],
                                       start[d::Z]};
 
     if(iP[1] < end[d::X] && iP[0] < end[d::Y]) {
