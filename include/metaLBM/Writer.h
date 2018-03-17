@@ -7,7 +7,7 @@
 #include <sstream>
 
 #ifdef USE_HDF5
-#include <hdf5.h>
+  #include <hdf5.h>
 #endif
 
 #include "Commons.h"
@@ -138,13 +138,14 @@ namespace lbm {
     Writer(const std::string& writerFolder_in,
            const std::string& filePrefix_in,
            const std::string& fileExtension_in,
-           const MathVector<int, 3> rankMPI_in)
+           const MathVector<int, 3> rankMPI_in,
+           const MathVector<int, 3> sizeMPI_in)
       : Writer<T, InputOutput::Generic, InputOutputType::Generic,
                InputOutputDataFormat::Generic>(writerFolder_in,
                                                filePrefix_in,
                                                fileExtension_in,
                                                "binary",
-                                               rankMPI_in)
+                                               rankMPI_in, sizeMPI_in)
     {}
 
     using Base::getIsWritten;
@@ -178,10 +179,11 @@ namespace lbm {
                       inputOutputDataFormat>;
   public:
     Writer(const std::string& filePrefix_in,
-           const MathVector<int, 3> rankMPI_in)
+           const MathVector<int, 3> rankMPI_in,
+           const MathVector<int, 3> sizeMPI_in)
       : Writer<T, InputOutput::Generic, InputOutputType::Generic,
                inputOutputDataFormat>("outputDAT/", filePrefix_in,
-                                      ".dat", rankMPI_in)
+                                      ".dat", rankMPI_in, sizeMPI_in)
     {}
 
     using Base::getIsWritten;
@@ -204,22 +206,16 @@ namespace lbm {
     }
 
     template<unsigned int NumberComponents>
-    void writeAnalysis(const Field<T, NumberComponents, DomainType::GlobalSpace,
-                       Architecture::CPU, true>& field) {
+      void writeField(const unsigned int iteration, const T * data) {
       INSTRUMENT_ON("Writer<T, InputOutput::VTR, writerFileFromat>::writeField<NumberComponents>",3)
 
-      for(unsigned int iZ = gSD::start()[d::Z]; iZ < gSD::end()[d::Z]; iZ++) {
-        for(unsigned int iY = gSD::start()[d::Y]; iY < gSD::end()[d::Y]; iY++) {
-          for(unsigned int iX = gSD::start()[d::X]; iX < gSD::end()[d::X]; iX++) {
-            MathVector<unsigned int, 3> iP = {iX, iY, iZ};
-            for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
-              write(field.getGlobalValue(iP, iC));
-              file << " ";
-            }
-            //file << std::endl;
-          }
+        write(iteration);
+
+        for(unsigned int i = 0; i < NumberComponents; ++i) {
+          write(data[i]);
+          file << " ";
         }
-      }
+        file << std::endl;
     }
 
     template<unsigned int NumberComponents, DomainType initDomainType>
@@ -250,236 +246,15 @@ namespace lbm {
 
 
 
-  template <class T, InputOutputDataFormat inputOutputDataFormat>
-  class Writer<T, InputOutput::VTR, InputOutputType::Serial, inputOutputDataFormat>
-    : public Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                    inputOutputDataFormat> {
-  private:
-    using Base = Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                        inputOutputDataFormat>;
-
-  public:
-    Writer(const std::string& filePrefix_in,
-           const MathVector<int, 3>& rankMPI_in,
-           const MathVector<int, 3>& sizeMPI_in)
-      : Base("outputVTR/", filePrefix_in,
-             ".vtr", rankMPI_in, sizeMPI_in)
-    {}
-
-    using Base::getIsWritten;
-    using Base::getIsBackedUp;
-
-    inline void openFile(const unsigned int iteration) {
-      std::string fileName = "/dev/null";
-
-      if(rankMPI[d::X] == 0) {
-        fileName = getFileName(iteration);
-      }
-
-      open(fileName);
-      writeHeader();
-
-    }
-
-    inline void closeFile() {
-      writeFooter();
-      file.close();
-    }
-
-    template<unsigned int NumberComponents, Architecture architecture>
-    void writeField(const Field<T, NumberComponents, DomainType::GlobalSpace,
-                    architecture, true>& field) {
-      INSTRUMENT_ON("Writer<T, InputOutput::VTR, writerFileFromat>::writeField<NumberComponents>",3)
-
-        file << "<DataArray type=\"Float32\" "
-             << "NumberOfComponents=\"" << NumberComponents << "\" "
-             << "Name=\"" << field.fieldName << "\" "
-             << "format=\"" + fileFormat + "\">\n";
-      for(unsigned int iZ = gSD::start()[d::Z]; iZ < gSD::end()[d::Z]; iZ++) {
-        for(unsigned int iY = gSD::start()[d::Y]; iY < gSD::end()[d::Y]; iY++) {
-          for(unsigned int iX = gSD::start()[d::X]; iX < gSD::end()[d::X]; iX++) {
-            MathVector<unsigned int, 3> iP = {iX, iY, iZ};
-            for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
-              write(field.getGlobalValue(iP, iC));
-              file << " ";
-            }
-            //file << std::endl;
-          }
-        }
-      }
-      file << "</DataArray>\n";
-    }
-
-    template<unsigned int NumberComponents, DomainType initDomainType,
-             Architecture architecture>
-    void writeField(const Field<T, NumberComponents, initDomainType,
-                    architecture, false>& field) {
-    }
-
-  private:
-    using Base::file;
-    using Base::fileFormat;
-    using Base::rankMPI;
-
-    using Base::getFileName;
-    using Base::open;
-    using Base::write;
-
-
-    void writeHeader() {
-      INSTRUMENT_ON("Writer<T, InputOutput::VTR, InputOutputDataFormat::Generic>::writeHeader",2)
-
-        file << "<?xml version=\"1.0\"?>\n";
-      file << "<VTKFile type=\"RectilinearGrid\" version=\"0.1\" "
-           << "byte_order=\"LittleEndian\">\n";
-      file << "<RectilinearGrid WholeExtent=\""
-           << gSD::start()[d::X] << " " << gSD::end()[d::X]-1 << " "
-           << gSD::start()[d::Y] << " " << gSD::end()[d::Y]-1 << " "
-           << gSD::start()[d::Z] << " " << gSD::end()[d::Z]-1 << " \">\n";
-      file << "<Piece Extent=\""
-           << gSD::start()[d::X] << " " << gSD::end()[d::X]-1 << " "
-           << gSD::start()[d::Y] << " " << gSD::end()[d::Y]-1 << " "
-           << gSD::start()[d::Z] << " " << gSD::end()[d::Z]-1 << " \">\n";
-      file << "<PointData>\n";
-    }
-
-    void writeFooter() {
-      INSTRUMENT_ON("Writer<T, InputOutput::VTR, InputOutputDataFormat::Generic>::writeFooter",2)
-
-        file << "</PointData>\n" << "<CellData />\n" << "<Coordinates>\n";
-
-      file << "<DataArray type=\"Float32\" "
-           << "Name=\"" << "X" << "\" "
-           << "format=\"" + fileFormat + "\">\n";
-      for(unsigned int iX = gSD::start()[d::X]; iX < gSD::end()[d::X]; iX++){
-        write(iX+1);
-        file << "\n";
-      }
-      file << "</DataArray>\n";
-      file << "<DataArray type=\"Float32\" "
-           << "Name=\"" << "Y" << "\" "
-           << "format=\"" + fileFormat + "\">\n";
-      for(unsigned int iY = gSD::start()[d::Y]; iY < gSD::end()[d::Y]; iY++){
-        write(iY+1);
-        file << "\n";
-      }
-      file << "</DataArray>\n";
-      file << "<DataArray type=\"Float32\" "
-           << "Name=\"" << "Z" << "\" "
-           << "format=\"" + fileFormat + "\">\n";
-      for(unsigned int iZ = gSD::start()[d::Z]; iZ < gSD::end()[d::Z]; iZ++){
-        write(iZ+1);
-        file << "\n";
-      }
-      file << "</DataArray>\n";
-      file << "</Coordinates>\n" << "</Piece>\n" << "</RectilinearGrid>\n";
-      file << "</VTKFile>\n";
-    }
-
-  };
-
-
 #ifdef USE_HDF5
   template <class T, InputOutputDataFormat inputOutputDataFormat>
-  class Writer<T, InputOutput::HDF5, InputOutputType::Serial, inputOutputDataFormat>
+  class Writer<T, InputOutput::HDF5, InputOutputType::Parallel, inputOutputDataFormat>
     : public Writer<T, InputOutput::Generic, InputOutputType::Generic,
                     inputOutputDataFormat> {
   private:
     using Base = Writer<T, InputOutput::Generic, InputOutputType::Generic,
                         inputOutputDataFormat>;
 
-  public:
-    Writer(const std::string& filePrefix_in,
-           const MathVector<int, 3>& rankMPI_in,
-           const MathVector<int, 3>& sizeMPI_in)
-      : Base("outputHDF5/", filePrefix_in,
-             ".h5", rankMPI_in, sizeMPI_in)
-      , writerXDMF(filePrefix_in, rankMPI_in, sizeMPI_in)
-    {}
-
-    using Base::getIsWritten;
-    using Base::getIsBackedUp;
-
-    inline void openFile(const unsigned int iteration) {
-      if(rankMPI[d::X] == 0) {
-        std::string fileName = getFileName(iteration);
-        open(fileName);
-
-        writerXDMF.openFile(iteration);
-      }
-    }
-
-
-    inline void closeFile() {
-      if(rankMPI[d::X] == 0) {
-        // statusHDF5 = H5Gclose(groupHDF5);
-        statusHDF5 = H5Fclose(fileHDF5);
-
-        writerXDMF.closeFile();
-      }
-    }
-
-    template<unsigned int NumberComponents, Architecture architecture>
-    void writeField(Field<T, NumberComponents, DomainType::GlobalSpace,
-                    architecture, true>& field) {
-      INSTRUMENT_ON("Writer<T, InputOutput::HDF5, writerFileFromat>::writeField<NumberComponents>",3)
-
-      if(rankMPI[d::X] == 0) {
-
-        propertyListHDF5 = H5Pcreate(H5P_DATASET_XFER);
-        fileSpaceHDF5 = H5Screate_simple(L::dimD,
-                                         Project<hsize_t,
-                                         unsigned int, L::dimD>::Do(gSD::length()).data(),
-                                         NULL);
-        MathVector<int, 3> rank{{0}};
-        for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
-            dataSetHDF5 = H5Dcreate2(fileHDF5, (field.fieldName+std::to_string(iC)).c_str(),
-                                     H5T_NATIVE_DOUBLE, dataSpaceHDF5, H5P_DEFAULT,
-                                     H5P_DEFAULT, H5P_DEFAULT);
-
-            statusHDF5 = H5Sclose(fileSpaceHDF5);
-
-
-            dataSpaceHDF5 = H5Screate_simple(L::dimD,
-                                         Project<hsize_t,
-                                         unsigned int, L::dimD>::Do(lSD::length()).data(),
-                                         NULL);
-
-            fileSpaceHDF5 = H5Dget_space(dataSetHDF5);
-
-            for(rank[d::X] = 0; rank[d::X] < sizeMPI[d::X]; ++rank[d::X]) {
-
-              H5Sselect_hyperslab(fileSpaceHDF5, H5S_SELECT_SET,
-                                  Project<hsize_t,
-                                  unsigned int, L::dimD>::Do(gSD::offset(rank)).data(),
-                                  NULL,
-                                  Project<hsize_t,
-                                  unsigned int, L::dimD>::Do(lSD::length()).data(), NULL);
-
-              statusHDF5 = H5Dwrite(dataSetHDF5, H5T_NATIVE_DOUBLE,
-                                    dataSpaceHDF5, fileSpaceHDF5, propertyListHDF5,
-                                    field.getGlobalData()
-                                    + lSD::volume() * (rank[d::X]*NumberComponents + iC));
-            }
-
-            statusHDF5 = H5Dclose(dataSetHDF5);
-            statusHDF5 = H5Sclose(dataSpaceHDF5);
-            statusHDF5 = H5Sclose(fileSpaceHDF5);
-        }
-
-        statusHDF5 = H5Pclose(propertyListHDF5);
-
-        writerXDMF.writeField(field);
-      }
-    }
-
-    template<unsigned int NumberComponents, DomainType initDomainType,
-             Architecture architecture>
-    void writeField(Field<T, NumberComponents, initDomainType,
-                    architecture, false>& field) {
-    }
-
-  protected:
     using Base::fileFormat;
     using Base::rankMPI;
     using Base::sizeMPI;
@@ -496,32 +271,14 @@ namespace lbm {
     Writer<T, InputOutput::XDMF, InputOutputType::Serial,
            inputOutputDataFormat> writerXDMF;
 
-  private:
-    inline void open(const std::string& fileName) {
-      propertyListHDF5 = H5Pcreate(H5P_FILE_ACCESS);
-      fileHDF5 = H5Fcreate(fileName.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT,
-                           propertyListHDF5);
-      H5Pclose(propertyListHDF5);
-
-      // groupHDF5 = H5Gcreate2(fileHDF5, "/field", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-
-      if(!fileHDF5) {
-        std::cout << "Could not open file " << fileName << std::endl;
-      }
-    }
-
-  };
-
-
-  template <class T, InputOutputDataFormat inputOutputDataFormat>
-  class Writer<T, InputOutput::HDF5, InputOutputType::Parallel, inputOutputDataFormat>
-    : public Writer<T, InputOutput::HDF5, InputOutputType::Serial, inputOutputDataFormat> {
-  private:
-    using Base = Writer<T, InputOutput::HDF5, InputOutputType::Serial,
-                        inputOutputDataFormat>;
-
   public:
-    using Base::Writer;
+    Writer(const std::string& filePrefix_in,
+           const MathVector<int, 3>& rankMPI_in,
+           const MathVector<int, 3>& sizeMPI_in)
+      : Base("outputHDF5/", filePrefix_in,
+             ".h5", rankMPI_in, sizeMPI_in)
+      , writerXDMF(filePrefix_in, rankMPI_in, sizeMPI_in)
+    {}
 
     using Base::getIsWritten;
     using Base::getIsBackedUp;
@@ -536,7 +293,6 @@ namespace lbm {
     }
 
     inline void closeFile() {
-      // statusHDF5 = H5Gclose(groupHDF5);
       statusHDF5 = H5Fclose(fileHDF5);
 
       if(rankMPI[d::X] == 0) {
@@ -553,7 +309,7 @@ namespace lbm {
       for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
         fileSpaceHDF5 = H5Screate_simple(L::dimD,
                                          Project<hsize_t,
-                                         unsigned int, L::dimD>::Do(gSD::length()).data(),
+                                         unsigned int, L::dimD>::Do(gSD::pLength()).data(),
                                          NULL);
 
         dataSetHDF5 = H5Dcreate2(fileHDF5, (field.fieldName+std::to_string(iC)).c_str(),
@@ -564,22 +320,22 @@ namespace lbm {
 
         dataSpaceHDF5 = H5Screate_simple(L::dimD,
                                          Project<hsize_t,
-                                         unsigned int, L::dimD>::Do(lSD::length()).data(),
+                                         unsigned int, L::dimD>::Do(lSD::pLength()).data(),
                                          NULL);
 
         fileSpaceHDF5 = H5Dget_space(dataSetHDF5);
 
         H5Sselect_hyperslab(fileSpaceHDF5, H5S_SELECT_SET,
                             Project<hsize_t,
-                            unsigned int, L::dimD>::Do(gSD::offset(rankMPI)).data(), NULL,
+                            unsigned int, L::dimD>::Do(gSD::pOffset(rankMPI)).data(), NULL,
                             Project<hsize_t,
-                            unsigned int, L::dimD>::Do(lSD::length()).data(), NULL);
+                            unsigned int, L::dimD>::Do(lSD::pLength()).data(), NULL);
 
         H5Pset_dxpl_mpio(propertyListHDF5, H5FD_MPIO_COLLECTIVE);
 
         statusHDF5 = H5Dwrite(dataSetHDF5, H5T_NATIVE_DOUBLE,
                               dataSpaceHDF5, fileSpaceHDF5, propertyListHDF5,
-                              field.getLocalData()+ iC*lSD::volume());
+                              field.getMultiData()[iC]);
 
         statusHDF5 = H5Dclose(dataSetHDF5);
         statusHDF5 = H5Sclose(dataSpaceHDF5);
@@ -607,28 +363,10 @@ namespace lbm {
                            propertyListHDF5);
       H5Pclose(propertyListHDF5);
 
-      // groupHDF5 = H5Gcreate2(fileHDF5, "/field", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-
       if(!fileHDF5) {
         std::cout << "Could not open file " << fileName << std::endl;
       }
     }
-
-  private:
-    using Base::fileFormat;
-    using Base::rankMPI;
-    using Base::getFileName;
-
-    using Base::fileHDF5;
-    using Base::statusHDF5;
-    //using Writer<T, InputOutput::HDF5, InputOutputType::Serial,
-    //inputOutputDataFormat>::groupHDF5;
-    using Base::dataSetHDF5;
-    using Base::dataSpaceHDF5;
-    hid_t fileSpaceHDF5;
-    using Base::propertyListHDF5;
-
-    using Base::writerXDMF;
 
   };
 
@@ -673,10 +411,10 @@ namespace lbm {
           file << "<Attribute Name=\"" << field.fieldName+std::to_string(iC) << "\" "
                << "AttributeType=\"Scalar\" Center=\"Node\">\n";
           file << "<DataItem Dimensions=\""
-               << gSD::length()[d::X];
+               << gSD::pLength()[d::X];
 
           for(unsigned int iD = 1; iD < L::dimD; ++iD) {
-            file << " " << gSD::length()[iD];
+            file << " " << gSD::sLength()[iD];
           }
           file << "\" ";
           file << "NumberType=\"Double\" Precision=\"8\" Format=\"HDF\">\n";
@@ -723,10 +461,10 @@ namespace lbm {
       file << "<Domain>\n";
       file << "<Grid Name=\"grid\" GridType=\"Uniform\">\n";
       file << "<Topology TopologyType=\"" << L::dimD << "DCoRectMesh\" Dimensions=\""
-           << gSD::length()[d::X];
+           << gSD::pLength()[d::X];
 
       for(unsigned int iD = 1; iD < L::dimD; ++iD) {
-        file << " " << gSD::length()[iD];
+        file << " " << gSD::sLength()[iD];
       }
       file << "\" />\n";
       file << "<Geometry GeometryType=\"Origin_Dx";

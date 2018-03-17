@@ -28,41 +28,51 @@ namespace lbm {
                 MemoryLayout::Generic, NumberComponents> {
   public:
     HOST DEVICE
-    static inline constexpr MathVector<unsigned int, 3> start() {
+    static inline constexpr MathVector<unsigned int, 3> pStart() {
       return MathVector<unsigned int, 3>({0, 0, 0});
     }
 
     HOST DEVICE
-    static inline constexpr MathVector<unsigned int, 3> end() {
+    static inline constexpr MathVector<unsigned int, 3> pEnd() {
+      return ProjectPadRealAndLeave1<unsigned int, L::dimD>::Do({{lengthX_g/NPROCS,
+            lengthY_g, lengthZ_g}});
+    }
+
+    HOST DEVICE
+    static inline constexpr MathVector<unsigned int, 3> pLength() {
+      return pEnd();
+    }
+
+    HOST DEVICE
+    static inline unsigned int pVolume() {
+      return pLength()[d::X]*pLength()[d::Y]*pLength()[d::Z];
+    }
+
+
+    HOST DEVICE
+    static inline constexpr MathVector<unsigned int, 3> sStart() {
+      return MathVector<unsigned int, 3>({0, 0, 0});
+    }
+
+    HOST DEVICE
+    static inline constexpr MathVector<unsigned int, 3> sEnd() {
       return ProjectAndLeave1<unsigned int, L::dimD>::Do({{lengthX_g/NPROCS,
             lengthY_g, lengthZ_g}});
     }
 
     HOST DEVICE
-    static inline constexpr MathVector<unsigned int, 3> length() {
-      return end();
+    static inline constexpr MathVector<unsigned int, 3> sLength() {
+      return sEnd();
     }
 
     HOST DEVICE
-    static inline unsigned int volume() {
-      return length()[d::X]*length()[d::Y]*length()[d::Z];
+    static inline unsigned int sVolume() {
+      return sLength()[d::X]*sLength()[d::Y]*sLength()[d::Z];
     }
 
     HOST DEVICE
     static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP) {
-      return length()[d::Z] * (length()[d::Y] * iP[d::X] + iP[d::Y]) + iP[d::Z];
-    }
-
-    HOST DEVICE
-    static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP,
-                                        const unsigned int iC) {
-      return iC * volume() + getIndex(iP);
-    }
-
-    HOST DEVICE
-    static inline unsigned int getIndex(const unsigned int index,
-                                        const unsigned int iC) {
-      return iC * volume() + index;
+      return pLength()[d::Z] * (pLength()[d::Y] * iP[d::X] + iP[d::Y]) + iP[d::Z];
     }
 
   };
@@ -78,46 +88,70 @@ namespace lbm {
                         MemoryLayout::Generic, NumberComponents>;
 
   public:
+
     HOST DEVICE
-    static inline constexpr MathVector<unsigned int, 3> start() {
+    static inline constexpr MathVector<unsigned int, 3> pStart() {
       return MathVector<unsigned int, 3>({0, 0, 0});
     }
 
     HOST DEVICE
-    static inline constexpr MathVector<unsigned int, 3> end() {
-      return ProjectAndLeave1<unsigned int, L::dimD>::Do({{lengthX_g, lengthY_g, lengthZ_g}});
+    static inline constexpr MathVector<unsigned int, 3> pEnd() {
+      return ProjectAndLeave1<unsigned int, L::dimD>::Do({{NPROCS * Base::pLength()[d::X], Base::pLength()[d::Y],Base::pLength()[d::Z]}});
     }
 
     HOST DEVICE
-    static inline constexpr MathVector<unsigned int, 3> length() {
-      return end();
+    static inline constexpr MathVector<unsigned int, 3> pLength() {
+      return pEnd();
     }
 
     HOST DEVICE
-    static inline unsigned int volume() {
-      return length()[d::X]*length()[d::Y]*length()[d::Z];
+    static inline unsigned int pVolume() {
+      return pLength()[d::X]*pLength()[d::Y]*pLength()[d::Z];
     }
 
     HOST DEVICE
-    static inline MathVector<unsigned int, 3> offset(const MathVector<int, 3>& rankMPI) {
+    static inline MathVector<unsigned int, 3> pOffset(const MathVector<int, 3>& rankMPI) {
       MathVector<unsigned int, 3> offsetR{{0}};
       for(unsigned int iD = 0; iD < L::dimD; ++iD) {
-        offsetR[iD] = (unsigned int) Base::length()[iD] * rankMPI[iD];
+        offsetR[iD] = (unsigned int) Base::pLength()[iD] * rankMPI[iD];
       }
       return offsetR;
     }
 
     HOST DEVICE
-    static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP,
-                                        const unsigned int iC) {
-      const unsigned int indexLocal = Base::getIndex({iP[d::X] - iP[d::X]/Base::length()[d::X] * Base::length()[d::X], iP[d::Y], iP[d::Z]}, iC);
-      return iP[d::X]/Base::length()[d::X] * NumberComponents * Base::volume() + indexLocal;
+    static inline constexpr MathVector<unsigned int, 3> sStart() {
+      return MathVector<unsigned int, 3>({0, 0, 0});
     }
+
+    HOST DEVICE
+    static inline constexpr MathVector<unsigned int, 3> sEnd() {
+      return ProjectAndLeave1<unsigned int, L::dimD>::Do({{lengthX_g, lengthY_g, lengthZ_g}});
+    }
+
+    HOST DEVICE
+    static inline constexpr MathVector<unsigned int, 3> sLength() {
+      return sEnd();
+    }
+
+    HOST DEVICE
+    static inline unsigned int sVolume() {
+      return sLength()[d::X]*sLength()[d::Y]*sLength()[d::Z];
+    }
+
+    HOST DEVICE
+    static inline MathVector<unsigned int, 3> sOffset(const MathVector<int, 3>& rankMPI) {
+      MathVector<unsigned int, 3> offsetR{{0}};
+      for(unsigned int iD = 0; iD < L::dimD; ++iD) {
+        offsetR[iD] = (unsigned int) Base::sLength()[iD] * rankMPI[iD];
+      }
+      return offsetR;
+    }
+
 
     HOST DEVICE
     static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP) {
       const unsigned int indexLocal = Base::getIndex({iP[d::X] - iP[d::X]/Base::length()[d::X] * Base::length()[d::X], iP[d::Y], iP[d::Z]});
-      return iP[d::X]/Base::length()[d::X] * NumberComponents * Base::volume() + indexLocal;
+      return iP[d::X]/Base::length()[d::X] * Base::volume() + indexLocal;
     }
 
   };
@@ -131,7 +165,6 @@ namespace lbm {
   private:
     using Base = Domain<DomainType::LocalSpace, PartitionningType::Generic,
                         MemoryLayout::Generic, L::dimQ>;
-
   public:
     HOST DEVICE
     static inline constexpr MathVector<unsigned int, 3> start() {
@@ -140,12 +173,12 @@ namespace lbm {
 
     HOST DEVICE
     static inline constexpr MathVector<unsigned int, 3> end() {
-      return Base::length() + L::halo() + L::halo();
+      return Base::sLength() + L::halo() + L::halo();
     }
 
     HOST DEVICE
     static inline constexpr MathVector<unsigned int, 3> length() {
-      return Base::length() + L::halo() + L::halo();
+      return Base::sLength() + L::halo() + L::halo();
     }
 
     HOST DEVICE
@@ -156,12 +189,6 @@ namespace lbm {
     HOST DEVICE
     static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP) {
       return length()[d::Z] * (length()[d::Y] * iP[d::X] + iP[d::Y]) + iP[d::Z];
-    }
-
-    HOST DEVICE
-    static inline unsigned int getIndexLocal(const MathVector<unsigned int, 3>& iP,
-                                             const unsigned int iC) {
-      return Base::getIndex(iP - L::halo(), iC);
     }
 
     HOST DEVICE
@@ -281,15 +308,9 @@ namespace lbm {
 
   typedef Domain<DomainType::GlobalSpace, PartitionningType::Generic,
                  MemoryLayout::Generic, 1> gSD;
-  typedef Domain<DomainType::GlobalSpace, PartitionningType::Generic,
-                 MemoryLayout::Generic, L::dimD> gSDD;
-  typedef Domain<DomainType::GlobalSpace, PartitionningType::Generic,
-                 MemoryLayout::Generic, L::dimQ> gSQD;
 
   typedef Domain<DomainType::LocalSpace, PartitionningType::Generic,
                  MemoryLayout::Generic, 1> lSD;
-  typedef Domain<DomainType::LocalSpace, PartitionningType::Generic,
-                 MemoryLayout::Generic, L::dimD> lSDD;
   typedef Domain<DomainType::HaloSpace, PartitionningType::Generic,
                  memoryL, L::dimQ> hSD;
   typedef Domain<DomainType::BufferXSpace, PartitionningType::Generic,

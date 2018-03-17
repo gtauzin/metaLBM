@@ -19,7 +19,7 @@ namespace lbm {
   public:
     #pragma omp declare simd
     DEVICE HOST
-    inline void calculateMoments(const T * RESTRICT f,
+    inline void calculateMoments(const T * f,
                                  const MathVector<unsigned int, 3>& iP) {
       INSTRUMENT_OFF("Moment<T>::calculateMoments",4)
 
@@ -41,7 +41,7 @@ namespace lbm {
 
     #pragma omp declare simd
     DEVICE HOST
-    inline void calculateDensity(const T * RESTRICT f,
+    inline void calculateDensity(const T * f,
 				 const MathVector<unsigned int, 3>& iP) {
       INSTRUMENT_OFF("Moment<T>::calculateDensity",5)
 
@@ -54,7 +54,7 @@ namespace lbm {
 
     #pragma omp declare simd
     DEVICE HOST
-    inline void calculateVelocity(const T * RESTRICT f,
+    inline void calculateVelocity(const T * f,
                                   const MathVector<unsigned int, 3>& iP,
                                   const T density_in) {
       INSTRUMENT_OFF("Moment<T>::calculateVelocity",5)
@@ -72,7 +72,7 @@ namespace lbm {
 
     #pragma omp declare simd
     DEVICE HOST
-    inline T calculateEntropy(const T * RESTRICT f,
+    inline T calculateEntropy(const T * f,
                             const MathVector<unsigned int, 3>& iP) {
       INSTRUMENT_OFF("Moment<T>::calculateEntropy",5)
 

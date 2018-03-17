@@ -34,14 +34,14 @@ namespace lbm {
     class Algorithm<T, AlgorithmType::Generic, initDomainType,
     architecture, implementation> {
   protected:
-    T * RESTRICT localDensity_Ptr;
-    T * RESTRICT localVelocity_Ptr;
-    T * RESTRICT localForce_Ptr;
-    T * RESTRICT localAlpha_Ptr;
+    T * localDensity_Ptr;
+    T * * localVelocity_Ptr;
+    T * * localForce_Ptr;
+    T * localAlpha_Ptr;
 
-    T * RESTRICT localDistribution_Ptr;
-    T * RESTRICT haloDistributionPrevious_Ptr;
-    T * RESTRICT haloDistributionNext_Ptr;
+    T * * localDistribution_Ptr;
+    T * haloDistributionPrevious_Ptr;
+    T * haloDistributionNext_Ptr;
 
     Packer<T> packer;
     Unpacker<T> unpacker;
@@ -67,17 +67,17 @@ namespace lbm {
               Communication<T, latticeT, algorithmT, memoryL,
               partitionningT, implementation, L::dimD>& communication_in)
       : localDensity_Ptr(densityField_in.getLocalData())
-      , localVelocity_Ptr(velocityField_in.getLocalData())
-      , localForce_Ptr(forceField_in.getLocalData())
+      , localVelocity_Ptr(velocityField_in.getMultiData())
+      , localForce_Ptr(forceField_in.getMultiData())
       , localAlpha_Ptr(alphaField_in.getLocalData())
-      , localDistribution_Ptr(distribution_in.getLocalData())
+      , localDistribution_Ptr(distribution_in.getMultiData())
       , haloDistributionPrevious_Ptr(distribution_in.getHaloDataPrevious())
       , haloDistributionNext_Ptr(distribution_in.getHaloDataNext())
       , communication(communication_in)
       , collision(relaxationTime, forceAmplitude, forceWaveLength, forcekMin, forcekMax)
       , moment()
-      , computationLocal(lSD::start()+L::halo(),
-                         lSD::end()+L::halo())
+      , computationLocal(lSD::sStart()+L::halo(),
+                         lSD::sEnd()+L::halo())
       , computationHalo(hSD::start(),
                         hSD::end())
       , dtComputation()
@@ -96,8 +96,8 @@ namespace lbm {
       localAlpha_Ptr[indexLocal] = collision.getAlpha();
 
       for(unsigned int iD = 0; iD < L::dimD; ++iD) {
-        localVelocity_Ptr[lSDD::getIndex(indexLocal, iD)] = collision.getHydrodynamicVelocity()[iD];
-        localForce_Ptr[lSDD::getIndex(indexLocal, iD)] = collision.getForce()[iD];
+        localVelocity_Ptr[iD][indexLocal] = collision.getHydrodynamicVelocity()[iD];
+        localForce_Ptr[iD][indexLocal] = collision.getForce()[iD];
       }
 
     }
@@ -182,7 +182,7 @@ namespace lbm {
     void operator()(const MathVector<unsigned int, 3>& iP) {
       moment.calculateMoments(haloDistributionPrevious_Ptr, iP);
 
-      collision.setForce(localForce_Ptr, iP, gSD::offset(communication.getRankMPI()));
+      collision.setForce(localForce_Ptr, iP, gSD::sOffset(communication.getRankMPI()));
       collision.setVariables(haloDistributionPrevious_Ptr, iP,
                              moment.getDensity(), moment.getVelocity());
       for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {

@@ -6,7 +6,7 @@
 #include <sstream>
 
 #include "StaticArray.h"
-#include "Helpers.h"
+#include "Input.h"
 
 namespace lbm {
 
@@ -26,12 +26,12 @@ namespace lbm {
     }
 
     DEVICE HOST
-    U * RESTRICT data() {
+    U * data() {
       return sArray.data();
     }
 
     DEVICE HOST
-    const U * RESTRICT data() const {
+    const U * data() const {
       return sArray.data();
     }
 
@@ -51,7 +51,7 @@ namespace lbm {
     inline U sum() {
       U sumR = 0;
       for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
-          sumR += sArray[iC];
+        sumR += sArray[iC];
       }
 
       return sumR;
@@ -100,12 +100,12 @@ namespace lbm {
   template<class U, unsigned int NumberComponents>
   HOST
   std::ofstream& operator<<(std::ofstream& file,
-                           const MathVector<U, NumberComponents>& mV){
+                            const MathVector<U, NumberComponents>& mV){
     file << "\t\t\t\t";
 
     UnrolledFor<0, NumberComponents-1>::Do([&] HOST (int i) {
         file << mV[i] << " ";
-    });
+      });
 
     file << mV[NumberComponents-1];
 
@@ -127,7 +127,7 @@ namespace lbm {
                                               const MathVector<U, NumberComponents>& rhs)
   {
     for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
-        lhs[iC] += rhs[iC];
+      lhs[iC] += rhs[iC];
     }
 
     return lhs;
@@ -172,7 +172,7 @@ namespace lbm {
   {
     MathVector<U, NumberComponents> mV_result;
     for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
-        mV_result[iC] = mV[iC] * (U) factor;
+      mV_result[iC] = mV[iC] * (U) factor;
     }
 
     return mV_result;
@@ -185,7 +185,7 @@ namespace lbm {
   {
     MathVector<U, NumberComponents> mV_result;
     for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
-        mV_result[iC] = mV[iC] * (U) factor;
+      mV_result[iC] = mV[iC] * (U) factor;
     }
 
     return mV_result;
@@ -295,7 +295,7 @@ namespace lbm {
   {
     MathVector<unsigned int, 3> mV_result = mV_a;
     for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
-        mV_result[iC] = mV_a[iC] - mV_b[iC];
+      mV_result[iC] = mV_a[iC] - mV_b[iC];
     }
 
     return mV_result;
@@ -326,7 +326,7 @@ namespace lbm {
         mVProjected[iD] = mV[iD];
       }
 
-    return mVProjected;
+      return mVProjected;
     }
   };
 
@@ -339,10 +339,28 @@ namespace lbm {
       MathVector<T, 3> mVProjected = { (T) 1, (T) 1, (T) 1};
 
       for(unsigned int iD = 0; iD < Dimension; ++iD) {
-          mVProjected[iD] = mV[iD];
+        mVProjected[iD] = mV[iD];
       }
 
-    return mVProjected;
+      return mVProjected;
+    }
+  };
+
+
+  template<class T, unsigned int Dimension>
+  struct ProjectPadRealAndLeave1 {
+    DEVICE HOST
+    static inline MathVector<T, 3> Do(const MathVector<T, 3>& mV) {
+
+      MathVector<T, 3> mVProjected = { (T) 1, (T) 1, (T) 1};
+
+      for(unsigned int iD = 0; iD < Dimension; ++iD) {
+        mVProjected[iD] = mV[iD];
+      }
+
+      mVProjected[Dimension-1] = 2*(mV[Dimension-1]/2 + (T) 1);
+
+        return mVProjected;
     }
   };
 
@@ -355,26 +373,26 @@ namespace lbm {
       MathVector<T, 3> mVProjected = { (T) 0, (T) 0, (T) 0};
 
       for(unsigned int iD = 0; iD < Dimension; ++iD) {
-          mVProjected[iD] = mV[iD];
+        mVProjected[iD] = mV[iD];
       }
 
-    return mVProjected;
+      return mVProjected;
     }
   };
 
   template<class T, unsigned int Dimension>
-  struct ProjectAndLeaveHalfAnd1 {
+  struct ProjectPadComplexAndLeave1 {
     DEVICE HOST
     static inline MathVector<T, 3> Do(const MathVector<T, 3>& mV) {
 
       MathVector<T, 3> mVProjected = { (T) 1, (T) 1, (T) 1};
 
       for(unsigned int iD = 0; iD < Dimension-1; ++iD) {
-          mVProjected[iD] = mV[iD];
+        mVProjected[iD] = mV[iD];
       }
-      mVProjected[Dimension-1] = mV[Dimension-1]/((T) 2);
+      mVProjected[Dimension-1] = mV[Dimension-1]/((T) 2) + (T) 1;
 
-    return mVProjected;
+      return mVProjected;
     }
   };
 
@@ -390,10 +408,12 @@ namespace lbm {
         mVCasted[iC] = (U) mV[iC];
       }
 
-    return mVCasted;
+      return mVCasted;
     }
   };
 
+  typedef MathVector<unsigned int, 3> Position;
+  typedef MathVector<int, 3> WaveNumber;
 
 }
 

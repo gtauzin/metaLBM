@@ -26,14 +26,15 @@ namespace lbm {
   public:
     using Base::fieldName;
 
-    Distribution(const std::string& fieldName_in)
-      : Base(fieldName_in)
+    Distribution(const std::string& fieldName_in,
+                 const unsigned int numberElements_in)
+      : Base(fieldName_in, numberElements_in)
       , haloArrayPrevious(hSD::volume()*L::dimQ)
       , haloArrayNext(hSD::volume()*L::dimQ)
     {}
 
     Distribution(const std::string& fieldName_in,
-                 const DynamicArray<T, Architecture::CPU>& initArray_in)
+                 const MultiDynamicArray<T, Architecture::CPU, L::dimQ>& initArray_in)
       : Base(fieldName_in, initArray_in)
       , haloArrayPrevious(hSD::volume()*L::dimQ)
       , haloArrayNext(hSD::volume()*L::dimQ)
@@ -42,13 +43,13 @@ namespace lbm {
     using Base::getLocalData;
 
     DEVICE HOST
-    T * RESTRICT getHaloDataPrevious() {
-      return haloArrayPrevious.data();
+    T * getHaloDataPrevious(const unsigned int offset = 0) {
+      return haloArrayPrevious.data(offset);
     }
 
     DEVICE HOST
-    T * RESTRICT getHaloDataNext() {
-      return haloArrayNext.data();
+    T * getHaloDataNext(const unsigned int offset = 0) {
+      return haloArrayNext.data(offset);
     }
 
     DynamicArray<T, architecture>& getHaloArrayPrevious() {

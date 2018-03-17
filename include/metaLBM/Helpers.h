@@ -3,8 +3,11 @@
 
 #include <memory>
 #include <cmath>
+#include <mpi.h>
+#include <fftw3-mpi.h>
 
 #include "Commons.h"
+#include "MathVector.h"
 
 namespace lbm {
 
@@ -25,6 +28,7 @@ namespace lbm {
     static void Do (F f) {
     }
   };
+
 
   template <class T>
   DEVICE HOST

@@ -20,7 +20,6 @@
   #define DEVICE __device__
   #define CONSTANT __constant__
   #define GLOBAL __global__
-  #define RESTRICT //__restrict__
 
   #ifdef USE_NVTX
     #include <nvToolsExt.h>
@@ -60,7 +59,6 @@
   #define DEVICE //#pragma omp declare simd
   #define CONSTANT
   #define GLOBAL
-  #define RESTRICT __restrict__
 #endif // __NVCC__
 
 

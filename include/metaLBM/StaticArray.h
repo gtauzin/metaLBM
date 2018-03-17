@@ -41,12 +41,12 @@ namespace lbm {
     }
 
     DEVICE HOST
-    U * RESTRICT data() {
+    U * data() {
       return sArray;
     }
 
     DEVICE HOST
-    const U * RESTRICT data() const {
+    const U * data() const {
       return sArray;
     }
 

@@ -6,8 +6,10 @@
 
 #include "Commons.h"
 #include "Options.h"
+#include "StaticArray.h"
 
 #ifdef USE_FFTW
+  #include <fftw3-mpi.h>
   #define MALLOC_CPU fftw_malloc
   #define FREE_CPU fftw_free
 #else
@@ -25,7 +27,7 @@ namespace lbm {
   class DynamicArray<U, Architecture::Generic> {
   protected:
     unsigned int numberElements;
-    U * RESTRICT dArrayPtr;
+    U * dArrayPtr;
 
     DynamicArray(const unsigned int numberElements_in = 0,
                  U * dArrayPtr_in = NULL)
@@ -45,13 +47,13 @@ namespace lbm {
     }
 
     DEVICE HOST
-    U * RESTRICT data() {
-      return dArrayPtr;
+    U * data(const unsigned offset = 0) {
+      return dArrayPtr + offset;
     }
 
     DEVICE HOST
-    const U * RESTRICT data() const {
-      return dArrayPtr;
+    const U * data(const unsigned offset = 0) const {
+      return dArrayPtr + offset;
     }
 
     DEVICE HOST
@@ -131,6 +133,82 @@ namespace lbm {
       return false;
     }
   }
+
+
+  template<class U, Architecture architecture,
+           unsigned int NumberComponents>
+  class MultiDynamicArray {};
+
+
+  template<class U, unsigned int NumberComponents>
+  class MultiDynamicArray<U, Architecture::CPU, NumberComponents>
+    : public DynamicArray<U, Architecture::CPU> {
+  private:
+    using Base = DynamicArray<U, Architecture::CPU>;
+
+  protected:
+    using Base::dArrayPtr;
+    U * sMultiArrayPtr[NumberComponents];
+    unsigned int numberElements;
+
+  public:
+    MultiDynamicArray(const unsigned int numberElements_in)
+      : Base(NumberComponents*numberElements_in)
+      , numberElements(numberElements_in)
+    {
+      for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+        sMultiArrayPtr[iC] = Base::data(iC*numberElements);
+      }
+    }
+
+    MultiDynamicArray(const MultiDynamicArray& multiArray_in)
+      : Base(multiArray_in)
+      , numberElements(multiArray_in.numberElements)
+    {
+      for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+        sMultiArrayPtr[iC] = Base::data(iC*numberElements);
+      }
+    }
+
+    ~MultiDynamicArray() {
+      Base::~DynamicArray<U, Architecture::CPU>();
+    }
+
+    void copyFrom(const MultiDynamicArray& other) {
+      Base::copyFrom(other);
+    }
+
+    void copyTo(MultiDynamicArray& other) const {
+      Base::copyTo(other);
+    }
+
+    DEVICE HOST
+    inline unsigned int getNumberElements() {
+      return numberElements;
+    }
+
+    DEVICE HOST
+    U * operator[] (int iC) {
+      return sMultiArrayPtr[iC];
+    }
+
+    DEVICE HOST
+    const U * operator[] (int iC) const {
+      return sMultiArrayPtr[iC];
+    }
+
+    DEVICE HOST
+    U ** multiData() {
+      return sMultiArrayPtr;
+    }
+
+    DEVICE HOST
+    const U ** multiData() const {
+      return sMultiArrayPtr;
+    }
+
+
+  };
 
 }
 

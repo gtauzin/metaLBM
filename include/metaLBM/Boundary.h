@@ -14,9 +14,9 @@ namespace lbm {
   public:
     DEVICE HOST
     inline void operator()(const MathVector<unsigned int, 3>& iP,
-                           T * RESTRICT local, T * RESTRICT halo) {
+                           T * local[L::dimQ], T * halo) {
       for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
-            local[hSD::getIndexLocal(iP, iQ)] = halo[hSD::getIndex(iP, iQ)];
+            local[iQ][hSD::getIndexLocal(iP)] = halo[hSD::getIndex(iP, iQ)];
       }
     }
   };
@@ -26,9 +26,9 @@ namespace lbm {
   public:
     DEVICE HOST
     inline void operator()(const MathVector<unsigned int, 3>& iP,
-                           T * RESTRICT halo, T * RESTRICT local) {
+                           T * halo, T * local[L::dimQ]) {
       for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
-            halo[hSD::getIndex(iP, iQ)] = local[hSD::getIndexLocal(iP, iQ)];
+            halo[hSD::getIndex(iP, iQ)] = local[iQ][hSD::getIndexLocal(iP)];
       }
     }
   };
@@ -46,18 +46,18 @@ namespace lbm {
   public:
     DEVICE HOST
     inline void applyX(const MathVector<unsigned int, 3>& iP,
-                              T * RESTRICT f) {
+                              T * f) {
       INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyX",5)
 
         MathVector<unsigned int, 3> iP_Origin = {L::halo()[d::X], iP[d::Y], iP[d::Z]};
-      MathVector<unsigned int, 3> iP_Destination = {L::halo()[d::X] + lSD::length()[d::X],
+      MathVector<unsigned int, 3> iP_Destination = {L::halo()[d::X] + lSD::sLength()[d::X],
                                                     iP[d::Y], iP[d::Z]};
 
       for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
         f[hSD::getIndex(iP_Destination, iQ)] = f[hSD::getIndex(iP_Origin, iQ)];
       }
 
-      iP_Origin =  MathVector<unsigned int, 3>({L::halo()[d::X]+ lSD::length()[d::X] -1,
+      iP_Origin =  MathVector<unsigned int, 3>({L::halo()[d::X]+ lSD::sLength()[d::X] -1,
             iP[d::Y], iP[d::Z]});
       iP_Destination =  MathVector<unsigned int, 3>({0, iP[d::Y], iP[d::Z]});
 
@@ -68,12 +68,12 @@ namespace lbm {
 
     DEVICE HOST
     inline void applyY(const MathVector<unsigned int, 3>& iP,
-                              T * RESTRICT f) {
+                              T * f) {
       INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyY",5)
 
       MathVector<unsigned int, 3> iP_Origin = {iP[d::X], L::halo()[d::Y], iP[d::Z]};
       MathVector<unsigned int, 3> iP_Destination = {iP[d::X],
-                                                    L::halo()[d::Y] + lSD::length()[d::Y],
+                                                    L::halo()[d::Y] + lSD::sLength()[d::Y],
                                                     iP[d::Z]};
 
       for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
@@ -81,7 +81,7 @@ namespace lbm {
       }
 
       iP_Origin =  MathVector<unsigned int, 3>({iP[d::X],
-            L::halo()[d::Y]+ lSD::length()[d::Y] -1, iP[d::Z]});
+            L::halo()[d::Y]+ lSD::sLength()[d::Y] -1, iP[d::Z]});
       iP_Destination =  MathVector<unsigned int, 3>({iP[d::X], 0, iP[d::Z]});
 
       for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
@@ -91,19 +91,19 @@ namespace lbm {
 
     DEVICE HOST
     inline void applyZ(const MathVector<unsigned int, 3>& iP,
-                              T * RESTRICT f) {
+                              T * f) {
       INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyZ",5)
 
         MathVector<unsigned int, 3> iP_Origin = {iP[d::X], iP[d::Y], L::halo()[d::Z]};
       MathVector<unsigned int, 3>iP_Destination = {iP[d::X], iP[d::Y],
-            L::halo()[d::Z] + lSD::length()[d::Z]};
+            L::halo()[d::Z] + lSD::sLength()[d::Z]};
 
       for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
         f[hSD::getIndex(iP_Destination, iQ)] = f[hSD::getIndex(iP_Origin, iQ)];
       }
 
       iP_Origin =  MathVector<unsigned int, 3>({iP[d::X], iP[d::Y],
-            L::halo()[d::Z] + lSD::length()[d::Z] - 1});
+            L::halo()[d::Z] + lSD::sLength()[d::Z] - 1});
       iP_Destination =  MathVector<unsigned int, 3>({iP[d::X], iP[d::Y], 0});
 
       for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
@@ -116,22 +116,6 @@ namespace lbm {
   // class Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
   //                partitionningType, 1> {};
 
-  template<class T, PartitionningType partitionningType>
-  class Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                 partitionningType, Implementation::Serial, 1>
-    : public Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                      PartitionningType::Generic, Implementation::Generic, 1> {
-  private:
-    using Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-      PartitionningType::Generic, Implementation::Generic, 1>::applyX;
-  public:
-    DEVICE HOST
-    inline void operator()(const MathVector<unsigned int, 3>& iP,
-                             T * RESTRICT f) {
-      applyX(iP, f);
-    }
-  };
-
   template<class T>
   class Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
                  PartitionningType::OneD, Implementation::MPI, 1>
@@ -140,7 +124,7 @@ namespace lbm {
   public:
     DEVICE HOST
     inline void operator()(const MathVector<unsigned int, 3>& iP,
-                             T * RESTRICT f) {
+                             T * f) {
     }
   };
 
@@ -151,26 +135,6 @@ namespace lbm {
   //   : public Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
   //                     PartitionningType::Generic, 0> {
   // };
-
-  template<class T, PartitionningType partitionningType>
-  class Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                 partitionningType, Implementation::Serial, 2>
-    : public Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                      PartitionningType::Generic, Implementation::Generic, 2> {
-  private:
-    using Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                   PartitionningType::Generic, Implementation::Generic, 2>::applyX;
-    using Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                   PartitionningType::Generic, Implementation::Generic, 2>::applyY;
-
-  public:
-    DEVICE HOST
-    inline void operator()(const MathVector<unsigned int, 3>& iP,
-                             T * RESTRICT f) {
-      applyY(iP, f);
-      applyX(iP, f);
-    }
-  };
 
   template<class T>
   class Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
@@ -184,7 +148,7 @@ namespace lbm {
   public:
     DEVICE HOST
     inline void operator()(const MathVector<unsigned int, 3>& iP,
-                           T * RESTRICT f) {
+                           T * f) {
       applyY(iP, f);
     }
   };
@@ -197,33 +161,10 @@ namespace lbm {
   public:
     DEVICE HOST
     inline void operator()(const MathVector<unsigned int, 3>& iP,
-                             T * RESTRICT f) {
+                             T * f) {
     }
   };
 
-
-  template<class T, PartitionningType partitionningType>
-  class Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                 partitionningType, Implementation::Serial, 3>
-    : public Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                      PartitionningType::Generic, Implementation::Generic, 3> {
-  private:
-    using Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                   PartitionningType::Generic, Implementation::Generic, 3>::applyX;
-    using Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                   PartitionningType::Generic, Implementation::Generic, 3>::applyY;
-    using Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                   PartitionningType::Generic, Implementation::Generic, 3>::applyZ;
-
-  public:
-    DEVICE HOST
-    inline void operator()(const MathVector<unsigned int, 3>& iP,
-                             T * RESTRICT f) {
-      applyX(iP, f);
-      applyY(iP, f);
-      applyZ(iP, f);
-    }
-  };
 
   template<class T>
   class Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
@@ -239,7 +180,7 @@ namespace lbm {
   public:
     DEVICE HOST
     inline void operator()(const MathVector<unsigned int, 3>& iP,
-                             T * RESTRICT f) {
+                             T * f) {
       applyY(iP, f);
       applyZ(iP, f);
     }
@@ -257,7 +198,7 @@ namespace lbm {
   public:
     DEVICE HOST
     inline void operator()(const MathVector<unsigned int, 3>& iP,
-                             T * RESTRICT f) {
+                             T * f) {
       applyZ(iP, f);
     }
   };
@@ -271,7 +212,7 @@ namespace lbm {
   public:
     DEVICE HOST
     inline void operator()(const MathVector<unsigned int, 3>& iP,
-                             T * RESTRICT f) {
+                             T * f) {
     }
   };
 

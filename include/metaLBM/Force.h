@@ -3,18 +3,25 @@
 
 #include <cmath>
 
+#ifdef USE_FFTW
+  #include "FourierDomain.h"
+#else
+  #include "Domain.h"
+#endif
+
+
 #include "Commons.h"
 #include "Options.h"
 #include "MathVector.h"
 #include "StaticArray.h"
 #include "Lattice.h"
-#include "Analyzer.h"
+#include "Transformer.h"
 
 // TODO: Functors
 
 namespace lbm {
 
-  template<class T, ForceType forceType>
+  template<class T, ForceType forceType, unsigned int Dimension = 0>
   class Force {};
 
   template<class T>
@@ -56,11 +63,11 @@ namespace lbm {
 
     #pragma omp declare simd
     DEVICE HOST
-    inline void setForce(const T * RESTRICT localForceArray,
-                         const MathVector<unsigned int, 3>& iP,
-                         const MathVector<unsigned int, 3>& offset) {
+      inline void setForce(T * localForceArray[L::dimD],
+                           const MathVector<unsigned int, 3>& iP,
+                           const MathVector<unsigned int, 3>& offset) {
       for(unsigned int iD = 0; iD < L::dimD; ++iD) {
-        force[iD] = localForceArray[lSD::getIndex(iP, iD)];
+        force[iD] = localForceArray[iD][lSD::getIndex(iP)];
       }
     }
 
@@ -84,11 +91,11 @@ namespace lbm {
 
     #pragma omp declare simd
     DEVICE HOST
-    inline void setForce(const T * RESTRICT localForceArray,
-                         const MathVector<unsigned int, 3>& iP,
-                         const MathVector<unsigned int, 3>& offset) {
+      inline void setForce(T * localForceArray[L::dimD],
+                           const MathVector<unsigned int, 3>& iP,
+                           const MathVector<unsigned int, 3>& offset) {
       for(unsigned int iD = 0; iD < L::dimD; ++iD) {
-        force[iD] = localForceArray[hSD::getIndexLocal(iP, iD)];
+        force[iD] = localForceArray[iD][hSD::getIndexLocal(iP)];
       }
     }
 
@@ -199,22 +206,26 @@ namespace lbm {
     using Force<T, ForceType::Sinusoidal>::update;
   };
 
+
 #ifdef USE_FFTW
+
   template<>
   class Force<double, ForceType::ConstantShell>
     : public Force<double, ForceType::GenericTimeIndependent> {
   private:
+    using Base = Force<double, ForceType::GenericTimeIndependent>;
+
     const unsigned int kMin, kMax;
 
   protected:
-    using Force<double, ForceType::GenericTimeIndependent>::force;
-    using Force<double, ForceType::GenericTimeIndependent>::amplitude;
+    using Base::force;
+    using Base::amplitude;
 
   public:
     Force(const MathVector<double, 3>& amplitude_in,
           const MathVector<double, 3>& waveLength_in,
           const unsigned int kMin_in, const unsigned int kMax_in)
-      : Force<double, ForceType::GenericTimeIndependent>(amplitude_in)
+      : Base(amplitude_in)
       , kMin(kMin_in)
       , kMax(kMax_in)
     {}
@@ -229,80 +240,73 @@ namespace lbm {
       }
     }
 
-    inline void setGlobalForceArray(double * RESTRICT globalForceArray) {
-      DynamicArray<fftw_complex, Architecture::CPU>
-        globalForceFourierArray(L::dimD * gFD::volume());
+    inline void setLocalForceArray(double * localForcePtr[L::dimD],
+                                   const unsigned int offsetX) {
 
-      int kNormSquared;
-      MathVector<int, 3> iK{{0}};
-      MathVector<unsigned int, 3> iFP{{0}};
-      for(unsigned int iFX = gFD::start()[d::X]; iFX < gFD::end()[d::X]; ++iFX) {
-        iFP[d::X] = iFX;
-        iK[d::X] = gFD::start()[d::X]/2 ? iFX : iFX - gFD::start()[d::X];
-        for(unsigned int iFY = gFD::start()[d::Y]; iFY < gFD::end()[d::Y]; ++iFY) {
-          iFP[d::Y] = iFY;
-          iK[d::Y] = gFD::start()[d::Y]/2 ? iFY : iFY - gFD::start()[d::Y];
-          for(unsigned int iFZ = gFD::start()[d::Z]; iFZ < gFD::end()[d::Z]; ++iFZ) {
-            iFP[d::Z] = iFZ;
-            iK[d::Z] = gFD::start()[d::Z]/2 ? iFZ : iFZ - gFD::start()[d::Z];
 
-            kNormSquared = iK.norm2();
-            if (kNormSquared >= kMin*kMin && kNormSquared <= kMax*kMax) {
-              for(unsigned int iD = 0; iD < L::dimD; ++iD) {
-                globalForceFourierArray[gFD::getIndex(iFP, iD)] = {amplitude[iD], amplitude[iD]};
+      Computation<Architecture::CPU, L::dimD> computation(lFD::start(), lFD::end());
+
+      computation.Do([=] HOST (const Position& iFP) {
+          int kNormSquared;
+          WaveNumber iK{{0}};
+          Position iFP_symmetric{{0}};
+          WaveNumber iK_symmetric{{0}};
+
+          iK[d::X] = iFP[d::X]+offsetX <= gSD::sLength()[d::X]/2 ?
+            iFP[d::X]+offsetX : iFP[d::X]+offsetX-gSD::sLength()[d::X];
+          iK[d::Y] = iFP[d::Y] <= gSD::sLength()[d::Y]/2 ?
+            iFP[d::Y] : iFP[d::Y]-gSD::sLength()[d::Y];
+          iK[d::Z] = iFP[d::Z] <= gSD::sLength()[d::Z]/2 ?
+            iFP[d::Z] : iFP[d::Z]-gSD::sLength()[d::Z];
+
+          kNormSquared = iK.norm2();
+          if (kNormSquared >= kMin*kMin && kNormSquared <= kMax*kMax) {
+            auto index = lFD::getIndex(iFP);
+
+            for(auto iD = 0; iD < L::dimD; ++iD) {
+              fftw_complex * fourierForcePtr = ((fftw_complex *) localForcePtr[iD]);
+
+              fourierForcePtr[index][0] = 1;
+              fourierForcePtr[index][1] = 0;
+
+              if(iFP[L::dimD-1] == 0) {
+                iFP_symmetric[d::X] = gSD::sLength()[d::X] - iFP[d::X];
+                if(iFP_symmetric[d::X] < lFD::length()[d::X]) {
+                  iFP_symmetric[d::Y] = gSD::sLength()[d::Y] - iFP[d::Y];
+
+                  iK_symmetric[d::X]
+                    = iFP_symmetric[d::X]+offsetX <= gSD::sLength()[d::X]/2 ?
+                    iFP_symmetric[d::X]+offsetX :
+                    iFP_symmetric[d::X]+offsetX - gSD::sLength()[d::X];
+                  iK_symmetric[d::Y]
+                    = iFP_symmetric[d::Y] <= gSD::sLength()[d::Y]/2 ?
+                    iFP_symmetric[d::Y] : iFP_symmetric[d::Y]-gSD::sLength()[d::Y];
+
+                  auto index_symmetric = lFD::getIndex(iFP_symmetric);
+                  fourierForcePtr[index_symmetric][0] = 1;
+                  fourierForcePtr[index_symmetric][1] = 0;
+                }
               }
             }
-
           }
-        }
-      }
+        });
 
-      for(unsigned int iD = 0; iD < L::dimD; ++iD) {
-
-      }
+      FourierTransformer<double, Architecture::CPU, PartitionningType::OneD,
+                         L::dimD, L::dimD> fftTransformer(localForcePtr,
+                                                          Cast<unsigned int,
+                                                          ptrdiff_t, 3>::Do(gSD::sLength()).data());
+    fftTransformer.executeBackwardFFT();
 
     }
 
-    using Force<double, ForceType::GenericTimeIndependent>::setForce;
-    using Force<double, ForceType::GenericTimeIndependent>::getForce;
-    using Force<double, ForceType::GenericTimeIndependent>::update;
+    using Base::setForce;
+    using Base::getForce;
+    using Base::update;
   };
+
+
+
 #endif
-
-  /* template<class T, unsigned int NumberForces> */
-  /* class Forces { */
-  /* private: */
-  /*   MathVector<T, L::dimD> force; */
-  /*   const StaticArray<Force<T, ForceType::Generic>, NumberForces> forceArray; */
-
-  /* public: */
-  /* Forces(const StaticArray<Force<T, ForceType::Generic>, NumberForces>& forceArray_in) */
-  /*   : force{(T) 0} */
-  /*   , forceArray(forceArray_in) */
-  /*   {} */
-
-  /*   #pragma omp declare simd */
-  /*   inline void update() { */
-
-  /*   } */
-
-  /*   #pragma omp declare simd */
-  /*   inline MathVector<T, L::dimD> getForce(const MathVector<int, 3>& iP) { */
-  /*      force = MathVector<T, L::dimD>{{(T) 0}}; */
-
-  /*     for(Force<T, ForceType::Generic> force : forceArray) { */
-  /*       force += force.force(iP); */
-  /*     } */
-
-  /*     return force; */
-  /*   } */
-
-  /*   #pragma omp declare simd */
-  /*   inline MathVector<T, L::dimD>& getForce() { */
-  /*     return force; */
-  /*   } */
-
-  /* }; */
 
   typedef Force<dataT, forceT> Force_;
 

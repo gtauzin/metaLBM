@@ -55,101 +55,6 @@ namespace lbm {
   };
 
 
-  template <class T, unsigned int NumberComponents>
-  class Reader<T, NumberComponents, InputOutput::VTR, InputOutputType::Serial,
-               InputOutputDataFormat::ascii>
-    : public Reader<T, NumberComponents, InputOutput::Generic, InputOutputType::Generic,
-                    InputOutputDataFormat::Generic> {
-  private:
-    using Reader<T, NumberComponents, InputOutput::Generic, InputOutputType::Generic,
-                 InputOutputDataFormat::Generic>::getFileName;
-    typedef Domain<DomainType::GlobalSpace, partitionningT,
-                   MemoryLayout::Generic, NumberComponents> gNCD;
-
-  public:
-    Reader(const std::string& filePrefix_in)
-      : Reader<T, NumberComponents, InputOutput::Generic, InputOutputType::Generic,
-               InputOutputDataFormat::Generic>("outputVTR/", filePrefix_in, ".vtr")
-    {}
-
-    inline DynamicArray<T, Architecture::CPU> readArray(const std::string& fieldName,
-                                                        const unsigned int iteration) {
-      INSTRUMENT_ON("Reader<T, NumberComponents, InputOutput::VTR>::readArray",3)
-
-      DynamicArray<T, Architecture::CPU> arrayR(gSD::volume());
-
-      std::string fileName = getFileName(iteration);
-      rapidxml::file<> xmlFile(fileName.c_str());
-      rapidxml::xml_document<> document;
-      document.parse<0>(xmlFile.data());
-
-      rapidxml::xml_node<>* node = document.first_node("VTKFile")->first_node("RectilinearGrid")->first_node("Piece")->first_node("PointData")->first_node("DataArray");
-      std::string content = node->value();
-      std::istringstream file(content);
-
-      std::string line;
-      std::getline(file, line);
-
-      for(unsigned int index = 0; index < gSD::volume(); ++index) {
-        MathVector<unsigned int, 3> iP;
-
-        unsigned int indexTemporary = index;
-        iP[d::X] = indexTemporary%gSD::length()[d::X];
-        indexTemporary = (indexTemporary-iP[d::X])/gSD::length()[d::X];
-        iP[d::Y] = indexTemporary%gSD::length()[d::Y];
-        indexTemporary = (indexTemporary-iP[d::Y])/gSD::length()[d::Y];
-        iP[d::Z] = indexTemporary;
-
-        std::getline(file, line);
-        std::string::size_type offset, offsetTemporary;
-        T value = std::stod(line, &offset);
-        offsetTemporary = offset;
-        arrayR[gNCD::getIndex(iP, 0)] = value;
-
-        for(unsigned int iQ = 1; iQ < NumberComponents; ++iQ) {
-          value = std::stod(line.substr(offset), &offset);
-          offset += offsetTemporary;
-          offsetTemporary = offset;
-          arrayR[gNCD::getIndex(iP, iQ)] = value;
-        }
-      }
-
-      return arrayR;
-    }
-
-  };
-
-
-  template <class T, unsigned int NumberComponents,
-            InputOutputDataFormat inputOutputDataFormat>
-    class Reader<T, NumberComponents, InputOutput::HDF5, InputOutputType::Serial,
-                 inputOutputDataFormat>
-    : public Reader<T, NumberComponents, InputOutput::Generic, InputOutputType::Generic,
-                    InputOutputDataFormat::Generic> {
-  private:
-    using Reader<T, NumberComponents, InputOutput::Generic, InputOutputType::Generic,
-                 InputOutputDataFormat::Generic>::getFileName;
-    typedef Domain<DomainType::GlobalSpace, partitionningT,
-                   MemoryLayout::Generic, NumberComponents> gNCD;
-
-  public:
-    Reader(const std::string& filePrefix_in)
-      : Reader<T, NumberComponents, InputOutput::Generic, InputOutputType::Generic,
-               InputOutputDataFormat::Generic>("outputHDF5/", filePrefix_in, ".h5")
-    {}
-
-    inline DynamicArray<T, Architecture::CPU> readArray(const std::string& fieldName,
-                                                        const unsigned int iteration) {
-      INSTRUMENT_ON("Reader<T, NumberComponents, InputOutput::VTR>::readArray",3)
-
-      DynamicArray<T, Architecture::CPU> arrayR(gSD::volume());
-
-      return arrayR;
-    }
-
-  };
-
-
   template <class T, unsigned int NumberComponents,
             InputOutputDataFormat inputOutputDataFormat>
     class Reader<T, NumberComponents, InputOutput::HDF5, InputOutputType::Parallel,
@@ -168,11 +73,12 @@ namespace lbm {
                InputOutputDataFormat::Generic>("outputHDF5/", filePrefix_in, ".h5")
     {}
 
-    inline DynamicArray<T, Architecture::CPU> readArray(const std::string& fieldName,
-                                                        const unsigned int iteration) {
+    inline MultiDynamicArray<T, Architecture::CPU,
+                             NumberComponents> readArray(const std::string& fieldName,
+                                                         const unsigned int iteration) {
       INSTRUMENT_ON("Reader<T, NumberComponents, InputOutput::VTR>::readArray",3)
 
-      DynamicArray<T, Architecture::CPU> arrayR(gSD::volume());
+      MultiDynamicArray<T, Architecture::CPU, NumberComponents> arrayR(gSD::sVolume());
 
       return arrayR;
     }

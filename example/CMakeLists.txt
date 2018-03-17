@@ -6,3 +6,6 @@ set_target_properties(example_constexpr PROPERTIES CUDA_SEPARABLE_COMPILATION ON
 add_executable(templated_kernel TemplatedKernel.cu)
 target_link_libraries(templated_kernel PRIVATE metalbm)
 set_target_properties(templated_kernel PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+
+add_executable(test_fftw TestFFTW.cpp)
+target_link_libraries(test_fftw PRIVATE metalbm)

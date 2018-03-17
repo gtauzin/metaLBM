@@ -42,9 +42,9 @@ namespace lbm {
   public:
     #pragma omp declare simd
     DEVICE HOST
-    inline void setForce(const T * RESTRICT localForceArray,
-                         const MathVector<unsigned int, 3>& iP,
-                         const MathVector<unsigned int, 3>& offset) {
+      inline void setForce(T * localForceArray[L::dimD],
+                           const MathVector<unsigned int, 3>& iP,
+                           const MathVector<unsigned int, 3>& offset) {
       INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::setForce",4)
 
         force.setForce(localForceArray, iP, offset);
@@ -64,7 +64,7 @@ namespace lbm {
 
     #pragma omp declare simd
     DEVICE HOST
-    inline T calculate(const T * RESTRICT f,
+    inline T calculate(const T * f,
                        const MathVector<unsigned int, 3>& iP,
                        const unsigned int iQ) {
       INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::calculate",4)
@@ -82,7 +82,7 @@ namespace lbm {
 
     #pragma omp declare simd
     DEVICE HOST
-    inline void setVariables(const T * RESTRICT f,
+    inline void setVariables(const T * f,
                              const MathVector<unsigned int, 3>& iP,
                              const T density, const MathVector<T, L::dimD>& velocity) {
       INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::setVariables",4)
@@ -148,7 +148,7 @@ namespace lbm {
 
     #pragma omp declare simd
     DEVICE HOST
-    inline void setVariables(const T * RESTRICT f,
+    inline void setVariables(const T * f,
                              const MathVector<unsigned int, 3>& iP,
                              const T density,
                              const MathVector<T, L::dimD>& velocity) {
