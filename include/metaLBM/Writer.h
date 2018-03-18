@@ -1,4 +1,4 @@
-#ifndef WRITE_H
+#ifndef WRITER_H
 #define WRITER_H
 
 #include <iostream>
@@ -245,8 +245,6 @@ namespace lbm {
   };
 
 
-
-#ifdef USE_HDF5
   template <class T, InputOutputDataFormat inputOutputDataFormat>
   class Writer<T, InputOutput::HDF5, InputOutputType::Parallel, inputOutputDataFormat>
     : public Writer<T, InputOutput::Generic, InputOutputType::Generic,
@@ -504,7 +502,6 @@ namespace lbm {
 
   };
 
-#endif // USE_HDF5
 
   typedef Writer<dataT, inputOutput, inputOutputType, inputOutputDataFormat> Writer_;
 

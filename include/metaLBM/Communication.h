@@ -290,7 +290,6 @@ namespace lbm {
         }
 
 
-
   public:
     HOST
     Communication(const MathVector<int, 3>& rankMPI_in,

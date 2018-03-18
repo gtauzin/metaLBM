@@ -41,12 +41,10 @@ if(OpenMP_CXX_FOUND)
 endif()
 
 find_package(HDF5 REQUIRED)
-if(HDF5_FOUND)
-  #target_include_directories(metalbm INTERFACE ${HDF5_INCLUDE_DIRS})
-  #target_link_libraries(metalbm INTERFACE ${HDF5_LIBRARIES})
-  target_link_libraries(metalbm INTERFACE HDF5::HDF5)
-  add_definitions(-DUSE_HDF5 -lz -ldl)
-endif()
+#target_include_directories(metalbm INTERFACE ${HDF5_INCLUDE_DIRS})
+#target_link_libraries(metalbm INTERFACE ${HDF5_LIBRARIES})
+target_link_libraries(metalbm INTERFACE HDF5::HDF5)
+add_definitions(-DUSE_HDF5 -lz -ldl)
 
 
 option(USE_FFTW "Enabling FFTW" ON)

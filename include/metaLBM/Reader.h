@@ -3,9 +3,6 @@
 
 #include <string>
 
-#include <rapidxml.hpp>
-#include <rapidxml_utils.hpp>
-
 #include "Commons.h"
 #include "Options.h"
 #include "MathVector.h"
@@ -77,8 +74,6 @@ namespace lbm {
       { INSTRUMENT_ON("Reader<T, NumberComponents, InputOutput::VTR>::readArray",3) }
 
       MultiDynamicArray<T, Architecture::CPU, NumberComponents> arrayR(gSD::sVolume());
-
-
 
       return arrayR;
     }
