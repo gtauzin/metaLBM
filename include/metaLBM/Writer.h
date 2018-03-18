@@ -6,9 +6,7 @@
 #include <fstream>
 #include <sstream>
 
-#ifdef USE_HDF5
-  #include <hdf5.h>
-#endif
+#include <hdf5.h>
 
 #include "Commons.h"
 #include "Options.h"
