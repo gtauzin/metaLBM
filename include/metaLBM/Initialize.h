@@ -85,27 +85,27 @@ namespace lbm {
         architecture, true> forceFieldR("force", numberElements, 0);
 
 
-      if(forceT == ForceType::ConstantShell) {
-        Force<T, forceT> force(forceAmplitude, forceWaveLength, forcekMin, forcekMax);
+    if(forceT == ForceType::ConstantShell) {
+      Force<T, forceT> force(forceAmplitude, forceWaveLength, forcekMin, forcekMax);
 
-        force.setLocalForceArray(forceFieldR.getMultiData(), gFD::offset(rankMPI)[d::X]);
+      force.setLocalForceArray(forceFieldR.getMultiData(), gFD::offset(rankMPI)[d::X]);
 
-      }
+    }
 
-      else {
-        Force<T, forceT> force(forceAmplitude, forceWaveLength, forcekMin, forcekMax);
-        Position iP;
-        for(auto iZ = lSD::sStart()[d::Z]; iZ < lSD::sEnd()[d::Z]; iZ++) {
-          for(auto iY = lSD::sStart()[d::Y]; iY < lSD::sEnd()[d::Y]; iY++) {
-            for(auto iX = lSD::sStart()[d::X]; iX < lSD::sEnd()[d::X]; iX++) {
-              iP =  Position({iX, iY, iZ});
-              force.setForce(iP, gSD::sOffset(rankMPI));
-              forceFieldR.setLocalVector(iP, force.getForce());
-            }
+    else {
+      Force<T, forceT> force(forceAmplitude, forceWaveLength, forcekMin, forcekMax);
+      Position iP;
+      for(auto iZ = lSD::sStart()[d::Z]; iZ < lSD::sEnd()[d::Z]; iZ++) {
+        for(auto iY = lSD::sStart()[d::Y]; iY < lSD::sEnd()[d::Y]; iY++) {
+          for(auto iX = lSD::sStart()[d::X]; iX < lSD::sEnd()[d::X]; iX++) {
+            iP =  Position({iX, iY, iZ});
+            force.setForce(iP, gSD::sOffset(rankMPI));
+            forceFieldR.setLocalVector(iP, force.getForce());
           }
         }
       }
-   return forceFieldR;
+    }
+    return forceFieldR;
   }
 
   template<class T, Architecture architecture>

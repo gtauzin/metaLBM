@@ -4,18 +4,15 @@
 #include <cmath>
 
 #ifdef USE_FFTW
-  #include "FourierDomain.h"
-#else
-  #include "Domain.h"
+  #include "Transformer.h"
 #endif
-
 
 #include "Commons.h"
 #include "Options.h"
 #include "MathVector.h"
 #include "StaticArray.h"
 #include "Lattice.h"
-#include "Transformer.h"
+#include "FourierDomain.h"
 
 // TODO: Functors
 
@@ -102,6 +99,12 @@ namespace lbm {
     #pragma omp declare simd
     DEVICE HOST
     inline void update(const unsigned int iteration) {
+    }
+
+    #pragma omp declare simd
+    DEVICE HOST
+    inline void setLocalForceArray(double * localForcePtr[L::dimD],
+                                   const unsigned int offsetX) {
     }
 
   };

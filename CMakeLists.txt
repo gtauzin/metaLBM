@@ -44,8 +44,8 @@ find_package(HDF5 REQUIRED)
 target_include_directories(metalbm INTERFACE ${HDF5_INCLUDE_DIRS})
 target_link_libraries(metalbm INTERFACE ${HDF5_LIBRARIES})
 #target_link_libraries(metalbm INTERFACE HDF5::HDF5)
-add_definitions(-lhdf5 -lz -ldl)
-
+#add_definitions(-lhdf5 -lz -ldl)
+message(STATUS "${HDF5_INCLUDE_DIRS}")
 
 option(USE_FFTW "Enabling FFTW" OFF)
 if(USE_FFTW)

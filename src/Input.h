@@ -39,7 +39,7 @@ namespace lbm {
   constexpr Vector initVelocityVector = { {0.0, 0.0, 0.0} };
 
   constexpr ForcingSchemeType forcingSchemeT = ForcingSchemeType::ExactDifferenceMethod;
-  constexpr ForceType forceT = ForceType::ConstantShell;
+  constexpr ForceType forceT = ForceType::Kolmogorov;
 
   constexpr Vector forceAmplitude = { {0.0001, 0.0001, 0.0} };
   constexpr Vector forceWaveLength = { {32.0, 32.0, 0.0} };
