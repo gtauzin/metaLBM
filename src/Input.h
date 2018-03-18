@@ -12,10 +12,10 @@ namespace lbm {
   typedef MathVector<dataT, 3> Vector;
 
 
-  constexpr LatticeType latticeT = LatticeType::D2Q9;
-  constexpr int lengthX_g = 64;
-  constexpr int lengthY_g = 64;
-  constexpr int lengthZ_g = 64;
+  constexpr LatticeType latticeT = LatticeType::D3Q27;
+  constexpr int lengthX_g = 128;
+  constexpr int lengthY_g = 128;
+  constexpr int lengthZ_g = 128;
 
   constexpr unsigned int startIteration = 0;
   constexpr unsigned int endIteration = 2;
@@ -43,8 +43,8 @@ namespace lbm {
 
   constexpr Vector forceAmplitude = { {0.0001, 0.0001, 0.0} };
   constexpr Vector forceWaveLength = { {32.0, 32.0, 0.0} };
-  constexpr int forcekMin = 1;
-  constexpr int forcekMax = 2;
+  constexpr int forcekMin = 10;
+  constexpr int forcekMax = 14;
 
   constexpr BoundaryType boundaryT = BoundaryType::Generic;
 

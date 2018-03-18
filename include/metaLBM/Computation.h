@@ -10,8 +10,8 @@ namespace lbm {
   template<Architecture architecture, unsigned int Dimension>
   class Computation {
   public:
-    Computation(const MathVector<unsigned int, 3>& start_in,
-                const MathVector<unsigned int, 3>& end_in) {}
+    Computation(const Position& start_in,
+                const Position& end_in) {}
 
     template<typename Callback, typename... Arguments>
     void Do(Callback function, const Arguments&... arguments) {}
@@ -20,13 +20,13 @@ namespace lbm {
   template<unsigned int Dimension>
   class Computation<Architecture::Generic, Dimension> {
   protected:
-    const MathVector<unsigned int, 3> start;
-    const MathVector<unsigned int, 3> end;
-    const MathVector<unsigned int, 3> length;
+    const Position start;
+    const Position end;
+    const Position length;
 
   public:
-      Computation(const MathVector<unsigned int, 3>& start_in,
-                  const MathVector<unsigned int, 3>& end_in)
+      Computation(const Position& start_in,
+                  const Position& end_in)
       : start(start_in)
       , end(end_in)
       , length(end_in-start_in)
@@ -48,10 +48,10 @@ namespace lbm {
     void Do(Callback function, const Arguments&... arguments) {
       INSTRUMENT_OFF("Computation<Architecture::CPU, 2>::Do<Callback>",1)
 
-      MathVector<unsigned int, 3> iP{{0}};
+      Position iP{{0}};
       #pragma omp parallel for schedule(static) num_threads(NTHREADS)
       //#pragma omp simd
-      for(unsigned int iX = start[d::X]; iX < end[d::X]; ++iX) {
+      for(auto iX = start[d::X]; iX < end[d::X]; ++iX) {
         iP[d::X] = iX;
         function(iP, arguments...);
       }
@@ -73,12 +73,12 @@ namespace lbm {
     void Do(Callback function, const Arguments&... arguments) {
     INSTRUMENT_OFF("Computation<Architecture::CPU, 2>::Do<Callback>",2)
 
-    MathVector<unsigned int, 3> iP{{0}};
+    Position iP{{0}};
 #pragma omp parallel for schedule(static) num_threads(NTHREADS)
-    for(unsigned int iX = start[d::X]; iX < end[d::X]; ++iX) {
+    for(auto iX = start[d::X]; iX < end[d::X]; ++iX) {
       //#pragma omp simd
       iP[d::X] = iX;
-      for(unsigned int iY = start[d::Y]; iY < end[d::Y]; ++iY) {
+      for(auto iY = start[d::Y]; iY < end[d::Y]; ++iY) {
         iP[d::Y] = iY;
         function(iP, arguments...);
       }
@@ -101,15 +101,15 @@ namespace lbm {
     void Do(Callback function, const Arguments&... arguments) {
       INSTRUMENT_OFF("Computation<Architecture::CPU, 2>::Do<Callback>",3)
 
-      MathVector<unsigned int, 3> iP{{0}};
+      Position iP{{0}};
     #pragma omp parallel for schedule(static) num_threads(NTHREADS)
-      for(unsigned int iX = start[d::X]; iX < end[d::X]; ++iX) {
+      for(auto iX = start[d::X]; iX < end[d::X]; ++iX) {
         iP[d::X] = iX;
       //#pragma omp simd
-        for(unsigned int iY = start[d::Y]; iY < end[d::Y]; ++iY) {
+        for(auto iY = start[d::Y]; iY < end[d::Y]; ++iY) {
           iP[d::Y] = iY;
         //#pragma omp simd
-          for(unsigned int iZ = start[d::Z]; iZ < end[d::Z]; ++iZ) {
+          for(auto iZ = start[d::Z]; iZ < end[d::Z]; ++iZ) {
             iP[d::Z] = iZ;
             function(iP, arguments...);
           }

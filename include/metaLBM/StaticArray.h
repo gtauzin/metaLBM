@@ -14,7 +14,7 @@ namespace lbm {
 
     DEVICE HOST
     StaticArray<U, Size>& operator=(const StaticArray<U, Size> other){
-      for(unsigned int i = 0; i < Size; ++i) {
+      for(auto i = 0; i < Size; ++i) {
         sArray[i] = other[i];
       }
 
@@ -23,7 +23,7 @@ namespace lbm {
 
     DEVICE HOST
     StaticArray<U, Size>& operator=(const U other[Size]){
-      for(unsigned int i = 0; i < Size; ++i) {
+      for(auto i = 0; i < Size; ++i) {
           sArray[i] = other[i];
       }
 
@@ -60,7 +60,7 @@ namespace lbm {
   template<class U, unsigned int Size>
   std::ostream& operator<<(std::ostream& os, const StaticArray<U, Size>& sArray){
     os << "[";
-    for(unsigned int i = 0; i < Size-1; ++i) {
+    for(auto i = 0; i < Size-1; ++i) {
       os << sArray[i] << " ";
     }
     os << sArray[Size-1] << "]";
@@ -71,7 +71,7 @@ namespace lbm {
   DEVICE HOST
   bool operator==(StaticArray<U, Size> const &lhs,
                   StaticArray<U, Size> const &rhs) {
-    for(unsigned int i = 0; i < Size; ++i){
+    for(auto i = 0; i < Size; ++i){
       if (!(lhs[i] == rhs[i])) {
         return false;
       }

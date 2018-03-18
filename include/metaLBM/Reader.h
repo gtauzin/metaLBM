@@ -64,8 +64,6 @@ namespace lbm {
   private:
     using Reader<T, NumberComponents, InputOutput::Generic, InputOutputType::Generic,
                  InputOutputDataFormat::Generic>::getFileName;
-    typedef Domain<DomainType::GlobalSpace, partitionningT,
-                   MemoryLayout::Generic, NumberComponents> gNCD;
 
   public:
     Reader(const std::string& filePrefix_in)
@@ -76,9 +74,11 @@ namespace lbm {
     inline MultiDynamicArray<T, Architecture::CPU,
                              NumberComponents> readArray(const std::string& fieldName,
                                                          const unsigned int iteration) {
-      INSTRUMENT_ON("Reader<T, NumberComponents, InputOutput::VTR>::readArray",3)
+      { INSTRUMENT_ON("Reader<T, NumberComponents, InputOutput::VTR>::readArray",3) }
 
       MultiDynamicArray<T, Architecture::CPU, NumberComponents> arrayR(gSD::sVolume());
+
+
 
       return arrayR;
     }

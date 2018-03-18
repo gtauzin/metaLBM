@@ -211,7 +211,7 @@ namespace lbm {
 
         write(iteration);
 
-        for(unsigned int i = 0; i < NumberComponents; ++i) {
+        for(auto i = 0; i < NumberComponents; ++i) {
           write(data[i]);
           file << " ";
         }
@@ -301,12 +301,12 @@ namespace lbm {
     }
 
     template<unsigned int NumberComponents, Architecture architecture>
-    void writeField(Field<T, NumberComponents, DomainType::LocalSpace,
+      void writeField(Field<T, NumberComponents, DomainType::LocalSpace,
                     architecture, true>& field) {
       INSTRUMENT_ON("Writer<T, InputOutput::HDF5, writerFileFromat>::writeField<NumberComponents>",3)
 
       propertyListHDF5 = H5Pcreate(H5P_DATASET_XFER);
-      for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+      for(auto iC = 0; iC < NumberComponents; ++iC) {
         fileSpaceHDF5 = H5Screate_simple(L::dimD,
                                          Project<hsize_t,
                                          unsigned int, L::dimD>::Do(gSD::pLength()).data(),
@@ -407,13 +407,13 @@ namespace lbm {
                     architecture, true>& field) {
       INSTRUMENT_ON("Writer<T, InputOutput::XDMF, writerFileFromat>::writeField<NumberComponents>",3)
 
-        for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+        for(auto iC = 0; iC < NumberComponents; ++iC) {
           file << "<Attribute Name=\"" << field.fieldName+std::to_string(iC) << "\" "
                << "AttributeType=\"Scalar\" Center=\"Node\">\n";
           file << "<DataItem Dimensions=\""
                << gSD::pLength()[d::X];
 
-          for(unsigned int iD = 1; iD < L::dimD; ++iD) {
+          for(auto iD = 1; iD < L::dimD; ++iD) {
             file << " " << gSD::sLength()[iD];
           }
           file << "\" ";
@@ -463,7 +463,7 @@ namespace lbm {
       file << "<Topology TopologyType=\"" << L::dimD << "DCoRectMesh\" Dimensions=\""
            << gSD::pLength()[d::X];
 
-      for(unsigned int iD = 1; iD < L::dimD; ++iD) {
+      for(auto iD = 1; iD < L::dimD; ++iD) {
         file << " " << gSD::sLength()[iD];
       }
       file << "\" />\n";
@@ -479,7 +479,7 @@ namespace lbm {
            << "\" NumberType=\"Integer\" Format=\"XML\">"
            << "0";
 
-      for(unsigned int iD = 1; iD < L::dimD; ++iD) {
+      for(auto iD = 1; iD < L::dimD; ++iD) {
         file << " 0";
       }
       file << "</DataItem>\n";
@@ -488,7 +488,7 @@ namespace lbm {
            << "\" NumberType=\"Integer\" Format=\"XML\">"
            << "1";
 
-      for(unsigned int iD = 1; iD < L::dimD; ++iD) {
+      for(auto iD = 1; iD < L::dimD; ++iD) {
         file << " 1";
       }
       file << "</DataItem>\n";

@@ -25,7 +25,7 @@ namespace lbm {
   class Algorithm {
   public:
     HOST DEVICE
-      void operator()(const MathVector<unsigned int, 3> iP);
+      void operator()(const Position iP);
   };
 
 
@@ -87,15 +87,15 @@ namespace lbm {
     {}
 
     DEVICE HOST
-    void storeLocalFields(const MathVector<unsigned int, 3>& iP) {
+    void storeLocalFields(const Position& iP) {
       INSTRUMENT_OFF("Algorithm<T, AlgorithmType::Pull>::storeLocalFields",4)
 
-      const unsigned int indexLocal = hSD::getIndexLocal(iP);
+      const auto indexLocal = hSD::getIndexLocal(iP);
 
       localDensity_Ptr[indexLocal] = moment.getDensity();
       localAlpha_Ptr[indexLocal] = collision.getAlpha();
 
-      for(unsigned int iD = 0; iD < L::dimD; ++iD) {
+      for(auto iD = 0; iD < L::dimD; ++iD) {
         localVelocity_Ptr[iD][indexLocal] = collision.getHydrodynamicVelocity()[iD];
         localForce_Ptr[iD][indexLocal] = collision.getForce()[iD];
       }
@@ -179,13 +179,13 @@ namespace lbm {
     {}
 
     HOST DEVICE
-    void operator()(const MathVector<unsigned int, 3>& iP) {
+    void operator()(const Position& iP) {
       moment.calculateMoments(haloDistributionPrevious_Ptr, iP);
 
       collision.setForce(localForce_Ptr, iP, gSD::sOffset(communication.getRankMPI()));
       collision.setVariables(haloDistributionPrevious_Ptr, iP,
                              moment.getDensity(), moment.getVelocity());
-      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+      for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
         haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)] =
           collision.calculate(haloDistributionPrevious_Ptr,
                               iP-uiL::celerity()[iQ], iQ);

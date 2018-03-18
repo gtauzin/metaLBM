@@ -122,7 +122,7 @@ namespace lbm {
   bool operator==(DynamicArray<U, architecture> const &lhs,
                   DynamicArray<U, architecture> const &rhs) {
     if(lhs.size() == rhs.size) {
-      for(unsigned int i = 0; i < lhs.size(); ++i){
+      for(auto i = 0; i < lhs.size(); ++i){
         if (!(lhs[i] == rhs[i])) {
           return false;
         }
@@ -156,7 +156,7 @@ namespace lbm {
       : Base(NumberComponents*numberElements_in)
       , numberElements(numberElements_in)
     {
-      for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+      for(auto iC = 0; iC < NumberComponents; ++iC) {
         sMultiArrayPtr[iC] = Base::data(iC*numberElements);
       }
     }
@@ -165,7 +165,7 @@ namespace lbm {
       : Base(multiArray_in)
       , numberElements(multiArray_in.numberElements)
     {
-      for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+      for(auto iC = 0; iC < NumberComponents; ++iC) {
         sMultiArrayPtr[iC] = Base::data(iC*numberElements);
       }
     }

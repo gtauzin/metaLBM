@@ -95,7 +95,7 @@ namespace lbm {
 
       T fEq_iQ = 1.0;
 
-      for(unsigned int iD = 0; iD < L::dimD; ++iD) {
+      for(auto iD = 0; iD < L::dimD; ++iD) {
         fEq_iQ *= (2.0 - sqrt(1.0 + 3.0*velocity[iD]*velocity[iD]))
           * PowerBase((2* velocity[iD]
                        + sqrt(1.0 + 3.0*velocity[iD]*velocity[iD]))
@@ -129,7 +129,7 @@ namespace lbm {
 
       T fEq_iQ = 1.0;
 
-      for(unsigned int iD = 0; iD < L::dimD; ++iD) {
+      for(auto iD = 0; iD < L::dimD; ++iD) {
         fEq_iQ *= (2.0 - sqrt(1.0 + 3.0*velocity[iD]*velocity[iD]))
           * PowerBase((2* velocity[iD]
                        + sqrt(1.0 + 3.0*velocity[iD]*velocity[iD]))
@@ -164,7 +164,7 @@ namespace lbm {
 
       T fEq_iQ = (T) 1;
 
-      for(unsigned int iD = 0; iD < L::dimD; ++iD) {
+      for(auto iD = 0; iD < L::dimD; ++iD) {
         fEq_iQ *= (2.0 - sqrt(1.0 + 3.0*velocity[iD]*velocity[iD]))
           * PowerBase((2* velocity[iD]
                        + sqrt(1.0 + 3.0*velocity[iD]*velocity[iD]))

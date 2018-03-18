@@ -48,12 +48,10 @@ if(HDF5_FOUND)
   add_definitions(-DUSE_HDF5 -lz -ldl)
 endif()
 
-find_package(RapidXML REQUIRED)
-target_link_libraries(metalbm INTERFACE RapidXML::RapidXML)
 
 option(USE_FFTW "Enabling FFTW" ON)
 if(USE_FFTW)
-  find_package(FFTW)
+  find_package(FFTW REQUIRED)
   if(FFTW_FOUND)
     target_link_libraries(metalbm INTERFACE FFTW::FFTW)
     add_definitions(-DUSE_FFTW)

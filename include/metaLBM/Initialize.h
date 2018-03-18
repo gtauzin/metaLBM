@@ -33,7 +33,7 @@ namespace lbm {
     case InitDensityType::Peak: {
       if(rankMPI[d::X] == 0) {
       const T densityPeakValue = 3.0 * initDensityValue;
-      MathVector<unsigned int, 3> center;
+      Position center;
 
       center[d::X] = static_cast<unsigned int>((lSD::sLength()[d::X]-1)* (T) 0.4);
       center[d::Y] = static_cast<unsigned int>((lSD::sLength()[d::Y]-1)* (T) 0.3);
@@ -94,11 +94,11 @@ namespace lbm {
 
       else {
         Force<T, forceT> force(forceAmplitude, forceWaveLength, forcekMin, forcekMax);
-        MathVector<unsigned int, 3> iP;
-        for(unsigned int iZ = lSD::sStart()[d::Z]; iZ < lSD::sEnd()[d::Z]; iZ++) {
-          for(unsigned int iY = lSD::sStart()[d::Y]; iY < lSD::sEnd()[d::Y]; iY++) {
-            for(unsigned int iX = lSD::sStart()[d::X]; iX < lSD::sEnd()[d::X]; iX++) {
-              iP =  MathVector<unsigned int, 3>({iX, iY, iZ});
+        Position iP;
+        for(auto iZ = lSD::sStart()[d::Z]; iZ < lSD::sEnd()[d::Z]; iZ++) {
+          for(auto iY = lSD::sStart()[d::Y]; iY < lSD::sEnd()[d::Y]; iY++) {
+            for(auto iX = lSD::sStart()[d::X]; iX < lSD::sEnd()[d::X]; iX++) {
+              iP =  Position({iX, iY, iZ});
               force.setForce(iP, gSD::sOffset(rankMPI));
               forceFieldR.setLocalVector(iP, force.getForce());
             }
@@ -128,16 +128,16 @@ namespace lbm {
                                                    densityField.numberElements);
 
     Equilibrium_ equilibrium;
-    MathVector<unsigned int, 3> iP;
-    for(unsigned int iZ = lSD::sStart()[d::Z]; iZ < lSD::sEnd()[d::Z]; iZ++) {
-      for(unsigned int iY = lSD::sStart()[d::Y]; iY < lSD::sEnd()[d::Y]; iY++) {
-        for(unsigned int iX = lSD::sStart()[d::X]; iX < lSD::sEnd()[d::X]; iX++) {
-          iP =  MathVector<unsigned int, 3>({iX, iY, iZ});
+    Position iP;
+    for(auto iZ = lSD::sStart()[d::Z]; iZ < lSD::sEnd()[d::Z]; iZ++) {
+      for(auto iY = lSD::sStart()[d::Y]; iY < lSD::sEnd()[d::Y]; iY++) {
+        for(auto iX = lSD::sStart()[d::X]; iX < lSD::sEnd()[d::X]; iX++) {
+          iP =  Position({iX, iY, iZ});
 
           equilibrium.setVariables(densityField.getLocalValue(iP),
                                    velocityField.getLocalVector(iP));
 
-          for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+          for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
             distributionFieldR.setLocalValue(iP, equilibrium.calculate(iQ), iQ);
           }
         }

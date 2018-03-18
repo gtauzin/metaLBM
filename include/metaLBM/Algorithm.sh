@@ -65,7 +65,7 @@ namespace lbm {
     {}
 
     HOST DEVICE
-    void operator()(const MathVector<unsigned int, 3>& iP) {
+    void operator()(const Position& iP) {
       moment.calculateMoments(haloDistribution_Previous_Ptr, iP);
 
       collision.setForce(localForce_Ptr, iP, gSD::offset(communication.getRankMPI()));

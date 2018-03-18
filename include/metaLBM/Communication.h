@@ -114,11 +114,11 @@ namespace lbm {
     HOST
     T reduce(T * localPtr) {
       T localSum = (T) 0;
-      for(unsigned int iZ = lSD::sStart()[d::Z]; iZ < lSD::sEnd()[d::Z]; ++iZ) {
-        for(unsigned int iY = lSD::sStart()[d::Y]; iY < lSD::sEnd()[d::Y]; ++iY) {
-          for(unsigned int iX = lSD::sStart()[d::X]; iX < lSD::sEnd()[d::X]; ++iX) {
+      for(auto iZ = lSD::sStart()[d::Z]; iZ < lSD::sEnd()[d::Z]; ++iZ) {
+        for(auto iY = lSD::sStart()[d::Y]; iY < lSD::sEnd()[d::Y]; ++iY) {
+          for(auto iX = lSD::sStart()[d::X]; iX < lSD::sEnd()[d::X]; ++iX) {
             localSum
-              += localPtr[lSD::getIndex(MathVector<unsigned int, 3>({iX, iY, iZ}))];
+              += localPtr[lSD::getIndex(Position({iX, iY, iZ}))];
           }
         }
       }
@@ -190,16 +190,16 @@ namespace lbm {
     void sendAndReceiveHaloX(T * haloDistributionPtr) {
       INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloX",4)
 
-      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
-        sendToRightBeginX = hMLSD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X]+lSD::sLength()[d::X]-1,
+      for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
+        sendToRightBeginX = hMLSD::getIndex(Position({L::halo()[d::X]+lSD::sLength()[d::X]-1,
                 hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
-        receivedFromLeftBeginX = hMLSD::getIndex(MathVector<unsigned int, 3>({0,
-                hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
-
-        sendToLeftBeginX = hMLSD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X],
+        receivedFromLeftBeginX = hMLSD::getIndex(Position({0,
                 hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
-        receivedFromRightBeginX = hMLSD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X]+lSD::sLength()[d::X],
+        sendToLeftBeginX = hMLSD::getIndex(Position({L::halo()[d::X],
+                hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
+
+        receivedFromRightBeginX = hMLSD::getIndex(Position({L::halo()[d::X]+lSD::sLength()[d::X],
                 hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
         MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginX, sizeStripeX,
@@ -225,16 +225,16 @@ namespace lbm {
         //TODO - PACK AND UNPACK
 
 
-        // for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
-        //     sendToRightBeginY = hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X],
+        // for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
+        //     sendToRightBeginY = hMLSD::getIndex(Position({hMLSD::start()[d::X],
         //             L::halo()[d::Y]+lSD::sLength()[d::Y]-1,
         //             hMLSD::start()[d::Z]}), iQ);
-        //     receivedFromLeftBeginY = hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X], 0, hMLSD::start()[d::Z]}), iQ);
+        //     receivedFromLeftBeginY = hMLSD::getIndex(Position({hMLSD::start()[d::X], 0, hMLSD::start()[d::Z]}), iQ);
 
-        //     sendToLeftBeginY = hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X],
+        //     sendToLeftBeginY = hMLSD::getIndex(Position({hMLSD::start()[d::X],
         //             L::halo()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
-        //     receivedFromRightBeginY = hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X], L::halo()[d::Y]+lSD::sLength()[d::Y], hMLSD::start()[d::Z]}), iQ);
+        //     receivedFromRightBeginY = hMLSD::getIndex(Position({hMLSD::start()[d::X], L::halo()[d::Y]+lSD::sLength()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
 
         //     MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginY, sizeStripeY,
@@ -259,18 +259,18 @@ namespace lbm {
 
         //TODO: PACK AND UNPACK
 
-        // for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
-        //     sendToRightBeginZ = hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X],
+        // for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
+        //     sendToRightBeginZ = hMLSD::getIndex(Position({hMLSD::start()[d::X],
         //             hMLSD::start()[d::Y],
         //             L::halo()[d::Z]+lSD::sLength()[d::Z]-1}), iQ);
 
-        //     receivedFromLeftBeginZ = hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X],
+        //     receivedFromLeftBeginZ = hMLSD::getIndex(Position({hMLSD::start()[d::X],
         //             hMLSD::start()[d::Y], 0}), iQ);
 
-        //     sendToLeftBeginZ = hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X],
+        //     sendToLeftBeginZ = hMLSD::getIndex(Position({hMLSD::start()[d::X],
         //             hMLSD::start()[d::Y], L::halo()[d::Z]}), iQ);
 
-        //     receivedFromRightBeginZ = hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X], hMLSD::start()[d::Y], L::halo()[d::Z]+lSD::sLength()[d::Z]}), iQ);
+        //     receivedFromRightBeginZ = hMLSD::getIndex(Position({hMLSD::start()[d::X], hMLSD::start()[d::Y], L::halo()[d::Z]+lSD::sLength()[d::Z]}), iQ);
 
 
         //     MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginZ, sizeStripeZ,
@@ -384,34 +384,34 @@ namespace lbm {
                         Implementation::MPI, 0>(rankMPI_in, sizeMPI_in,
                                          processorName_in)
       , sizeStripeX(L::dimQ*hMLSD::volume()*L::halo()[d::X]/hMLSD::length()[d::X])
-      , sendToRightBeginX(hMLSD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X]+lSD::sLength()[d::X]-1,
+      , sendToRightBeginX(hMLSD::getIndex(Position({L::halo()[d::X]+lSD::sLength()[d::X]-1,
                 hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), 0))
-      , receivedFromLeftBeginX(hMLSD::getIndex(MathVector<unsigned int, 3>({0,
+      , receivedFromLeftBeginX(hMLSD::getIndex(Position({0,
                 hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), 0))
-      , sendToLeftBeginX(hMLSD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X],
+      , sendToLeftBeginX(hMLSD::getIndex(Position({L::halo()[d::X],
                 hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), 0))
-      , receivedFromRightBeginX(hMLSD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X]+lSD::sLength()[d::X],
+      , receivedFromRightBeginX(hMLSD::getIndex(Position({L::halo()[d::X]+lSD::sLength()[d::X],
                 hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), 0))
       , sizeStripeY(L::dimQ*hMLSD::volume()*L::halo()[d::Y]/hMLSD::length()[d::Y])
 
-      , sendToRightBeginY(hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X], L::halo()[d::Y]+lSD::sLength()[d::Y]-1, hMLSD::start()[d::Z]}), 0))
+      , sendToRightBeginY(hMLSD::getIndex(Position({hMLSD::start()[d::X], L::halo()[d::Y]+lSD::sLength()[d::Y]-1, hMLSD::start()[d::Z]}), 0))
 
-      , receivedFromLeftBeginY(hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X],
+      , receivedFromLeftBeginY(hMLSD::getIndex(Position({hMLSD::start()[d::X],
                 0, hMLSD::start()[d::Z]}), 0))
-      , sendToLeftBeginY(hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X],
+      , sendToLeftBeginY(hMLSD::getIndex(Position({hMLSD::start()[d::X],
                 L::halo()[d::Y], hMLSD::start()[d::Z]}), 0))
-      , receivedFromRightBeginY(hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X], L::halo()[d::Y]+lSD::sLength()[d::Y], hMLSD::start()[d::Z]}), 0))
+      , receivedFromRightBeginY(hMLSD::getIndex(Position({hMLSD::start()[d::X], L::halo()[d::Y]+lSD::sLength()[d::Y], hMLSD::start()[d::Z]}), 0))
 
 
       , sizeStripeZ(L::dimQ*hMLSD::volume()*L::halo()[d::Z]/hMLSD::length()[d::Z])
 
-      , sendToRightBeginZ(hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X], hMLSD::start()[d::Y], L::halo()[d::Z]+lSD::sLength()[d::Z]-1}), 0))
+      , sendToRightBeginZ(hMLSD::getIndex(Position({hMLSD::start()[d::X], hMLSD::start()[d::Y], L::halo()[d::Z]+lSD::sLength()[d::Z]-1}), 0))
 
-      , receivedFromLeftBeginZ(hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X],
+      , receivedFromLeftBeginZ(hMLSD::getIndex(Position({hMLSD::start()[d::X],
                 hMLSD::start()[d::Y], 0}), 0))
-      , sendToLeftBeginZ(hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X],
+      , sendToLeftBeginZ(hMLSD::getIndex(Position({hMLSD::start()[d::X],
                 hMLSD::start()[d::Y], L::halo()[d::Z]}), 0))
-      , receivedFromRightBeginZ(hMLSD::getIndex(MathVector<unsigned int, 3>({hMLSD::start()[d::X], hMLSD::start()[d::Y], L::halo()[d::Z]+lSD::sLength()[d::Z]}), 0))
+      , receivedFromRightBeginZ(hMLSD::getIndex(Position({hMLSD::start()[d::X], hMLSD::start()[d::Y], L::halo()[d::Z]+lSD::sLength()[d::Z]}), 0))
 
     {}
 
@@ -536,16 +536,16 @@ namespace lbm {
     void sendAndReceiveHaloX(T * haloDistributionPtr) {
       INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloX",4)
         //TODO: Replace with NVSHMEM directives
-        for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
-          sendToRightBeginX = hMLSD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X]+lSD::sLength()[d::X]-1,
+        for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
+          sendToRightBeginX = hMLSD::getIndex(Position({L::halo()[d::X]+lSD::sLength()[d::X]-1,
                   hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
-          receivedFromLeftBeginX = hMLSD::getIndex(MathVector<unsigned int, 3>({0,
-                  hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
-
-          sendToLeftBeginX = hMLSD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X],
+          receivedFromLeftBeginX = hMLSD::getIndex(Position({0,
                   hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
-          receivedFromRightBeginX = hMLSD::getIndex(MathVector<unsigned int, 3>({L::halo()[d::X]+lSD::sLength()[d::X],
+          sendToLeftBeginX = hMLSD::getIndex(Position({L::halo()[d::X],
+                  hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
+
+          receivedFromRightBeginX = hMLSD::getIndex(Position({L::halo()[d::X]+lSD::sLength()[d::X],
                   hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
           /* MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginX, sizeStripeX, */

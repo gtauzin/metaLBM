@@ -22,19 +22,19 @@ namespace lbm {
   public:
     #pragma omp declare simd
     HOST DEVICE
-    static inline constexpr MathVector<unsigned int, 3> start() {
-      return MathVector<unsigned int, 3>({0, 0, 0});
+    static inline constexpr Position start() {
+      return Position({0, 0, 0});
     }
 
     #pragma omp declare simd
     HOST DEVICE
-    static inline constexpr MathVector<unsigned int, 3> end() {
+    static inline constexpr Position end() {
       return ProjectPadComplexAndLeave1<unsigned int, L::dimD>::Do(lSD::sLength());
     }
 
     #pragma omp declare simd
     HOST DEVICE
-    static inline constexpr MathVector<unsigned int, 3> length() {
+    static inline constexpr Position length() {
       return end();
     }
 
@@ -46,7 +46,7 @@ namespace lbm {
 
     #pragma omp declare simd
     HOST DEVICE
-      static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP) {
+      static inline unsigned int getIndex(const Position& iP) {
       return length()[d::Z] * (length()[d::Y] * iP[d::X] + iP[d::Y]) + iP[d::Z];
     }
   };
@@ -64,19 +64,19 @@ namespace lbm {
   public:
     #pragma omp declare simd
     HOST DEVICE
-    static inline constexpr MathVector<unsigned int, 3> start() {
-      return MathVector<unsigned int, 3>({0, 0, 0});
+    static inline constexpr Position start() {
+      return Position({0, 0, 0});
     }
 
     #pragma omp declare simd
     HOST DEVICE
-    static inline constexpr MathVector<unsigned int, 3> end() {
+    static inline constexpr Position end() {
       return ProjectPadComplexAndLeave1<unsigned int, L::dimD>::Do(gSD::sLength());
     }
 
     #pragma omp declare simd
     HOST DEVICE
-    static inline constexpr MathVector<unsigned int, 3> length() {
+    static inline constexpr Position length() {
       return end();
     }
 
@@ -88,9 +88,9 @@ namespace lbm {
 
     #pragma omp declare simd
     HOST DEVICE
-    static inline MathVector<unsigned int, 3> offset(const MathVector<int, 3>& rankMPI) {
-      MathVector<unsigned int, 3> offsetR{{0}};
-      for(unsigned int iD = 0; iD < L::dimD; ++iD) {
+    static inline Position offset(const MathVector<int, 3>& rankMPI) {
+      Position offsetR{{0}};
+      for(auto iD = 0; iD < L::dimD; ++iD) {
         offsetR[iD] = (unsigned int) Base::length()[iD]*rankMPI[iD];
       }
 
@@ -99,12 +99,12 @@ namespace lbm {
 
     #pragma omp declare simd
     HOST DEVICE
-    static inline unsigned int getIndex(const MathVector<unsigned int, 3>& iP) {
+    static inline unsigned int getIndex(const Position& iP) {
       const unsigned int localLengthX = Base::length()[d::X];
       const unsigned int localVolume = Base::volume();
 
       const unsigned int indexLocal
-        = Base::getIndex(MathVector<unsigned int, 3>({iP[d::X] - iP[d::X]/localLengthX * localLengthX, iP[d::Y], iP[d::Z]}));
+        = Base::getIndex(Position({iP[d::X] - iP[d::X]/localLengthX * localLengthX, iP[d::Y], iP[d::Z]}));
       return iP[d::X]/localLengthX * localVolume + indexLocal;
     }
   };

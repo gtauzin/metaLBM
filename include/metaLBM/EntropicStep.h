@@ -28,7 +28,7 @@ namespace lbm {
     inline T evaluateFunction(T const& alpha) {
       T entropicStepFunction = 0.0;
 
-      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+      for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
         T fmAlphafNeq_iQ = f[iQ] - alpha*fNeq[iQ];
         entropicStepFunction += f[iQ]*log(f[iQ]/L::weight()[iQ])
           - fmAlphafNeq_iQ*log(fmAlphafNeq_iQ/L::weight()[iQ]);
@@ -41,7 +41,7 @@ namespace lbm {
     inline T evaluateDerivative(T const& alpha) {
       T entropicStepFunctionDerivative = 0.0;
 
-      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+      for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
         T fmAlphafNeq_iQ = f[iQ] - alpha*fNeq[iQ];
 
         entropicStepFunctionDerivative += fNeq[iQ]*(1 + log(fmAlphafNeq_iQ/L::weight()[iQ]));

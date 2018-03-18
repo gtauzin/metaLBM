@@ -30,8 +30,8 @@ namespace lbm {
 
     #pragma omp declare simd
     DEVICE HOST
-    static inline constexpr MathVector<unsigned int, 3> halo() {
-      return MathVector<unsigned int, 3>({1, 0, 0});
+    static inline constexpr Position halo() {
+      return Position({1, 0, 0});
     }
 
     static constexpr T inv_cs2 = (T)3;
@@ -68,8 +68,8 @@ namespace lbm {
 
     #pragma omp declare simd
     DEVICE HOST
-    static inline constexpr MathVector<unsigned int, 3> halo() {
-      return MathVector<unsigned int, 3>({1, 1, 0});
+    static inline constexpr Position halo() {
+      return Position({1, 1, 0});
     }
 
     static constexpr T inv_cs2 = (T)3;
@@ -111,8 +111,8 @@ namespace lbm {
 
     #pragma omp declare simd
     DEVICE HOST
-    static inline constexpr MathVector<unsigned int, 3> halo() {
-      return MathVector<unsigned int, 3>({1, 1, 0});
+    static inline constexpr Position halo() {
+      return Position({1, 1, 0});
     }
 
     static constexpr T inv_cs2 = (T)3;
@@ -159,8 +159,8 @@ namespace lbm {
 
     #pragma omp declare simd
     DEVICE HOST
-    static inline constexpr MathVector<unsigned int, 3> halo() {
-      return MathVector<unsigned int, 3>({3, 3, 0});
+    static inline constexpr Position halo() {
+      return Position({3, 3, 0});
     }
 
     static constexpr T inv_cs2 = (T)3;
@@ -245,8 +245,8 @@ namespace lbm {
 
     #pragma omp declare simd
     DEVICE HOST
-    static inline constexpr MathVector<unsigned int, 3> halo() {
-      return MathVector<unsigned int, 3>({1, 1, 1});
+    static inline constexpr Position halo() {
+      return Position({1, 1, 1});
     }
 
     static constexpr T inv_cs2 = (T)3;
@@ -300,8 +300,8 @@ namespace lbm {
 
     #pragma omp declare simd
     DEVICE HOST
-    static inline constexpr MathVector<unsigned int, 3> halo() {
-      return MathVector<unsigned int, 3>({1, 1, 1});
+    static inline constexpr Position halo() {
+      return Position({1, 1, 1});
     }
 
     static constexpr T inv_cs2 = (T)3;
@@ -362,8 +362,8 @@ namespace lbm {
 
     #pragma omp declare simd
     DEVICE HOST
-    static inline constexpr MathVector<unsigned int, 3> halo() {
-      return MathVector<unsigned int, 3>({1, 1, 1});
+    static inline constexpr Position halo() {
+      return Position({1, 1, 1});
     }
 
     static constexpr T inv_cs2 = (T)3;

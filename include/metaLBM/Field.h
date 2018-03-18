@@ -62,23 +62,23 @@ namespace lbm {
 
     void setGlobalValue(const unsigned int index, const T value) {}
 
-    void setGlobalValue(const MathVector<unsigned int, 3>& iP,
+    void setGlobalValue(const Position& iP,
                         const T value,
                         const unsigned int iC) {}
 
-    void setGlobalVector(const MathVector<unsigned int, 3>& iP,
+    void setGlobalVector(const Position& iP,
                          const MathVector<T, NumberComponents> vector) {}
 
     DynamicArray<T, Architecture::CPU> getGlobalArray() {
       return DynamicArray<T, Architecture::CPU>();
     }
 
-    T getGlobalValue(const MathVector<unsigned int, 3>& iP,
+    T getGlobalValue(const Position& iP,
                      const unsigned int iC = 0) const {
       return (T) -1;
     }
 
-    MathVector<T, NumberComponents> getGlobalVector(const MathVector<unsigned int, 3>& iP) const {
+    MathVector<T, NumberComponents> getGlobalVector(const Position& iP) const {
       return MathVector<T, NumberComponents>{{(T) -1}};
     }
 
@@ -205,8 +205,8 @@ namespace lbm {
                   L::dimD> computationLocal(lSD::sStart(),
                                             lSD::sEnd());
       computationLocal.Do
-        ([&] HOST (const MathVector<unsigned int, 3>& iP) {
-          for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+        ([&] HOST (const Position& iP) {
+          for(auto iC = 0; iC < NumberComponents; ++iC) {
             setLocalValue(iP, value_in, iC);
           }
         });
@@ -220,7 +220,7 @@ namespace lbm {
                   L::dimD> computationLocal(lSD::sStart(),
                                             lSD::sEnd());
       computationLocal.Do
-        ([&] HOST (const MathVector<unsigned int, 3>& iP) {
+        ([&] HOST (const Position& iP) {
           setLocalVector(iP, vector_in);
         });
     }
@@ -248,30 +248,30 @@ namespace lbm {
 
 
     DEVICE HOST
-    inline void setLocalValue(const MathVector<unsigned int, 3> iP,
+    inline void setLocalValue(const Position iP,
                               const T value,
                               const unsigned int iC = 0) {
       localArray[iC][lSD::getIndex(iP)] = value;
     }
 
     DEVICE HOST
-    inline void setLocalVector(const MathVector<unsigned int, 3> iP,
+    inline void setLocalVector(const Position iP,
                                const MathVector<T, NumberComponents> vector) {
-      for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+      for(auto iC = 0; iC < NumberComponents; ++iC) {
         setLocalValue(iP, vector[iC], iC);
       }
     }
 
     DEVICE HOST
-    inline T getLocalValue(const MathVector<unsigned int, 3>& iP,
+    inline T getLocalValue(const Position& iP,
                            const unsigned int iC = 0) const {
       return localArray[iC][lSD::getIndex(iP)];
     }
 
     DEVICE HOST
-    inline MathVector<T, NumberComponents> getLocalVector(const MathVector<unsigned int, 3>& iP) const {
+    inline MathVector<T, NumberComponents> getLocalVector(const Position& iP) const {
       MathVector<T, NumberComponents> vectorR;
-      for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+      for(auto iC = 0; iC < NumberComponents; ++iC) {
         vectorR[iC] = getLocalValue(iP, iC);
       }
 

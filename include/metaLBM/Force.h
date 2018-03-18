@@ -35,7 +35,7 @@ namespace lbm {
       : force{(T) 0}
       , amplitude{(T) 0}
     {
-      for(unsigned int iD = 0; iD < L::dimD; ++iD) {
+      for(auto iD = 0; iD < L::dimD; ++iD) {
         amplitude[iD] = amplitude_in[iD];
       }
     }
@@ -64,9 +64,9 @@ namespace lbm {
     #pragma omp declare simd
     DEVICE HOST
       inline void setForce(T * localForceArray[L::dimD],
-                           const MathVector<unsigned int, 3>& iP,
-                           const MathVector<unsigned int, 3>& offset) {
-      for(unsigned int iD = 0; iD < L::dimD; ++iD) {
+                           const Position& iP,
+                           const Position& offset) {
+      for(auto iD = 0; iD < L::dimD; ++iD) {
         force[iD] = localForceArray[iD][lSD::getIndex(iP)];
       }
     }
@@ -92,9 +92,9 @@ namespace lbm {
     #pragma omp declare simd
     DEVICE HOST
       inline void setForce(T * localForceArray[L::dimD],
-                           const MathVector<unsigned int, 3>& iP,
-                           const MathVector<unsigned int, 3>& offset) {
-      for(unsigned int iD = 0; iD < L::dimD; ++iD) {
+                           const Position& iP,
+                           const Position& offset) {
+      for(auto iD = 0; iD < L::dimD; ++iD) {
         force[iD] = localForceArray[iD][hSD::getIndexLocal(iP)];
       }
     }
@@ -122,8 +122,8 @@ namespace lbm {
 
     #pragma omp declare simd
     DEVICE HOST
-    inline void setForce(MathVector<unsigned int, 3> iP,
-                         const MathVector<unsigned int, 3>& offset) {
+    inline void setForce(Position iP,
+                         const Position& offset) {
       iP += offset;
       force = amplitude;
     }
@@ -150,17 +150,17 @@ namespace lbm {
       : Force<T, ForceType::GenericTimeIndependent>(amplitude_in)
       , waveLength{(T) 0}
     {
-      for(unsigned int iD = 0; iD < L::dimD; ++iD) {
+      for(auto iD = 0; iD < L::dimD; ++iD) {
         waveLength[iD] =  waveLength_in[iD];
       }
     }
 
     #pragma omp declare simd
     DEVICE HOST
-    inline void setForce(MathVector<unsigned int, 3> iP,
-                         const MathVector<unsigned int, 3>& offset) {
+    inline void setForce(Position iP,
+                         const Position& offset) {
       iP += offset;
-      for(unsigned int iD = 0; iD < L::dimD; ++iD) {
+      for(auto iD = 0; iD < L::dimD; ++iD) {
         force[iD] = amplitude[iD] * sin(iP[iD]*2*M_PI/waveLength[iD]);
       }
     }
@@ -189,15 +189,15 @@ namespace lbm {
 
     #pragma omp declare simd
     DEVICE HOST
-    inline void setForce(MathVector<unsigned int, 3> iP,
-                         const MathVector<unsigned int, 3>& offset) {
+    inline void setForce(Position iP,
+                         const Position& offset) {
       iP += offset;
       force[d::X] = amplitude[d::X] * sin(iP[d::Y]*2*M_PI/waveLength[d::X]);
     }
 
     #pragma omp declare simd
     DEVICE HOST
-    inline void setForce(const MathVector<unsigned int, 3>& iP) {
+    inline void setForce(const Position& iP) {
       force[d::X] = amplitude[d::X] * sin(iP[d::Y]*2*M_PI/waveLength[d::X]);
     }
 
@@ -232,10 +232,10 @@ namespace lbm {
 
     #pragma omp declare simd
     DEVICE HOST
-    inline void setForce(MathVector<unsigned int, 3> iP,
-                         const MathVector<unsigned int, 3>& offset){
+    inline void setForce(Position iP,
+                         const Position& offset){
       iP += offset;
-      for(unsigned int iD = 0; iD < L::dimD; ++iD) {
+      for(auto iD = 0; iD < L::dimD; ++iD) {
         //force[iD] = amplitude[iD] * sin(iP[iD]*2*M_PI/waveLength[iD]);
       }
     }

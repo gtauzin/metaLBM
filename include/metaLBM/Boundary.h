@@ -13,9 +13,9 @@ namespace lbm {
   struct Packer {
   public:
     DEVICE HOST
-    inline void operator()(const MathVector<unsigned int, 3>& iP,
+    inline void operator()(const Position& iP,
                            T * local[L::dimQ], T * halo) {
-      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+      for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
             local[iQ][hSD::getIndexLocal(iP)] = halo[hSD::getIndex(iP, iQ)];
       }
     }
@@ -25,9 +25,9 @@ namespace lbm {
   struct Unpacker {
   public:
     DEVICE HOST
-    inline void operator()(const MathVector<unsigned int, 3>& iP,
+    inline void operator()(const Position& iP,
                            T * halo, T * local[L::dimQ]) {
-      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+      for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
             halo[hSD::getIndex(iP, iQ)] = local[iQ][hSD::getIndexLocal(iP)];
       }
     }
@@ -45,68 +45,68 @@ namespace lbm {
                  PartitionningType::Generic, Implementation::Generic, Dimension> {
   public:
     DEVICE HOST
-    inline void applyX(const MathVector<unsigned int, 3>& iP,
+    inline void applyX(const Position& iP,
                               T * f) {
-      INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyX",5)
+      { INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyX",5) }
 
-        MathVector<unsigned int, 3> iP_Origin = {L::halo()[d::X], iP[d::Y], iP[d::Z]};
-      MathVector<unsigned int, 3> iP_Destination = {L::halo()[d::X] + lSD::sLength()[d::X],
+      Position iP_Origin = {L::halo()[d::X], iP[d::Y], iP[d::Z]};
+      Position iP_Destination = {L::halo()[d::X] + lSD::sLength()[d::X],
                                                     iP[d::Y], iP[d::Z]};
 
-      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+      for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
         f[hSD::getIndex(iP_Destination, iQ)] = f[hSD::getIndex(iP_Origin, iQ)];
       }
 
-      iP_Origin =  MathVector<unsigned int, 3>({L::halo()[d::X]+ lSD::sLength()[d::X] -1,
+      iP_Origin =  Position({L::halo()[d::X]+ lSD::sLength()[d::X] -1,
             iP[d::Y], iP[d::Z]});
-      iP_Destination =  MathVector<unsigned int, 3>({0, iP[d::Y], iP[d::Z]});
+      iP_Destination =  Position({0, iP[d::Y], iP[d::Z]});
 
-        for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+        for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
           f[hSD::getIndex(iP_Destination, iQ)] = f[hSD::getIndex(iP_Origin, iQ)];
         }
     }
 
     DEVICE HOST
-    inline void applyY(const MathVector<unsigned int, 3>& iP,
+    inline void applyY(const Position& iP,
                               T * f) {
       INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyY",5)
 
-      MathVector<unsigned int, 3> iP_Origin = {iP[d::X], L::halo()[d::Y], iP[d::Z]};
-      MathVector<unsigned int, 3> iP_Destination = {iP[d::X],
+      Position iP_Origin = {iP[d::X], L::halo()[d::Y], iP[d::Z]};
+      Position iP_Destination = {iP[d::X],
                                                     L::halo()[d::Y] + lSD::sLength()[d::Y],
                                                     iP[d::Z]};
 
-      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+      for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
         f[hSD::getIndex(iP_Destination, iQ)] = f[hSD::getIndex(iP_Origin, iQ)];
       }
 
-      iP_Origin =  MathVector<unsigned int, 3>({iP[d::X],
+      iP_Origin =  Position({iP[d::X],
             L::halo()[d::Y]+ lSD::sLength()[d::Y] -1, iP[d::Z]});
-      iP_Destination =  MathVector<unsigned int, 3>({iP[d::X], 0, iP[d::Z]});
+      iP_Destination =  Position({iP[d::X], 0, iP[d::Z]});
 
-      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+      for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
         f[hSD::getIndex(iP_Destination, iQ)] = f[hSD::getIndex(iP_Origin, iQ)];
       }
     }
 
     DEVICE HOST
-    inline void applyZ(const MathVector<unsigned int, 3>& iP,
-                              T * f) {
-      INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyZ",5)
+    inline void applyZ(const Position& iP,
+                       T * f) {
+      { INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyZ",5) }
 
-        MathVector<unsigned int, 3> iP_Origin = {iP[d::X], iP[d::Y], L::halo()[d::Z]};
-      MathVector<unsigned int, 3>iP_Destination = {iP[d::X], iP[d::Y],
+      Position iP_Origin = {iP[d::X], iP[d::Y], L::halo()[d::Z]};
+      Position iP_Destination = {iP[d::X], iP[d::Y],
             L::halo()[d::Z] + lSD::sLength()[d::Z]};
 
-      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+      for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
         f[hSD::getIndex(iP_Destination, iQ)] = f[hSD::getIndex(iP_Origin, iQ)];
       }
 
-      iP_Origin =  MathVector<unsigned int, 3>({iP[d::X], iP[d::Y],
+      iP_Origin =  Position({iP[d::X], iP[d::Y],
             L::halo()[d::Z] + lSD::sLength()[d::Z] - 1});
-      iP_Destination =  MathVector<unsigned int, 3>({iP[d::X], iP[d::Y], 0});
+      iP_Destination =  Position({iP[d::X], iP[d::Y], 0});
 
-      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+      for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
         f[hSD::getIndex(iP_Destination, iQ)] = f[hSD::getIndex(iP_Origin, iQ)];
       }
     }
@@ -123,7 +123,7 @@ namespace lbm {
                       PartitionningType::Generic, Implementation::Generic, 1> {
   public:
     DEVICE HOST
-    inline void operator()(const MathVector<unsigned int, 3>& iP,
+    inline void operator()(const Position& iP,
                              T * f) {
     }
   };
@@ -147,7 +147,7 @@ namespace lbm {
 
   public:
     DEVICE HOST
-    inline void operator()(const MathVector<unsigned int, 3>& iP,
+    inline void operator()(const Position& iP,
                            T * f) {
       applyY(iP, f);
     }
@@ -160,7 +160,7 @@ namespace lbm {
                       PartitionningType::Generic, Implementation::Generic, 2> {
   public:
     DEVICE HOST
-    inline void operator()(const MathVector<unsigned int, 3>& iP,
+    inline void operator()(const Position& iP,
                              T * f) {
     }
   };
@@ -179,7 +179,7 @@ namespace lbm {
 
   public:
     DEVICE HOST
-    inline void operator()(const MathVector<unsigned int, 3>& iP,
+    inline void operator()(const Position& iP,
                              T * f) {
       applyY(iP, f);
       applyZ(iP, f);
@@ -197,7 +197,7 @@ namespace lbm {
 
   public:
     DEVICE HOST
-    inline void operator()(const MathVector<unsigned int, 3>& iP,
+    inline void operator()(const Position& iP,
                              T * f) {
       applyZ(iP, f);
     }
@@ -211,7 +211,7 @@ namespace lbm {
                       PartitionningType::Generic, Implementation::Generic, 3> {
   public:
     DEVICE HOST
-    inline void operator()(const MathVector<unsigned int, 3>& iP,
+    inline void operator()(const Position& iP,
                              T * f) {
     }
   };

@@ -50,7 +50,7 @@ namespace lbm {
     DEVICE HOST
     inline U sum() {
       U sumR = 0;
-      for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+      for(auto iC = 0; iC < NumberComponents; ++iC) {
         sumR += sArray[iC];
       }
 
@@ -60,7 +60,7 @@ namespace lbm {
     DEVICE HOST
     inline U dot(const MathVector<U, NumberComponents>& other){
       U dotR = 0;
-      for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+      for(auto iC = 0; iC < NumberComponents; ++iC) {
         dotR += sArray[iC]*other[iC];
       }
 
@@ -70,7 +70,7 @@ namespace lbm {
     DEVICE HOST
     inline U norm2() const {
       U norm2R = 0;
-      for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+      for(auto iC = 0; iC < NumberComponents; ++iC) {
         norm2R += sArray[iC]*sArray[iC];
       }
 
@@ -80,7 +80,7 @@ namespace lbm {
     DEVICE HOST
     inline U volume(){
       U volumeR = sArray[0];
-      for(unsigned int iC = 1; iC < NumberComponents; ++iC) {
+      for(auto iC = 1; iC < NumberComponents; ++iC) {
         volumeR *= sArray[iC];
       }
 
@@ -126,7 +126,7 @@ namespace lbm {
   MathVector<U, NumberComponents>& operator+=(MathVector<U, NumberComponents>& lhs,
                                               const MathVector<U, NumberComponents>& rhs)
   {
-    for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+    for(auto iC = 0; iC < NumberComponents; ++iC) {
       lhs[iC] += rhs[iC];
     }
 
@@ -139,7 +139,7 @@ namespace lbm {
                                             const MathVector<U, NumberComponents>& mV_b)
   {
     MathVector<U, NumberComponents> mV_result;
-    for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+    for(auto iC = 0; iC < NumberComponents; ++iC) {
       mV_result[iC] = mV_a[iC] + mV_b[iC];
     }
     return mV_result;
@@ -158,7 +158,7 @@ namespace lbm {
   DEVICE HOST
   MathVector<U, NumberComponents>& operator*=(MathVector<U, NumberComponents>& mV,
                                               const U factor) {
-    for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+    for(auto iC = 0; iC < NumberComponents; ++iC) {
       mV[iC] *= factor;
     }
 
@@ -171,7 +171,7 @@ namespace lbm {
                                             const V factor)
   {
     MathVector<U, NumberComponents> mV_result;
-    for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+    for(auto iC = 0; iC < NumberComponents; ++iC) {
       mV_result[iC] = mV[iC] * (U) factor;
     }
 
@@ -184,7 +184,7 @@ namespace lbm {
                                             const MathVector<U, NumberComponents>& mV)
   {
     MathVector<U, NumberComponents> mV_result;
-    for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+    for(auto iC = 0; iC < NumberComponents; ++iC) {
       mV_result[iC] = mV[iC] * (U) factor;
     }
 
@@ -197,7 +197,7 @@ namespace lbm {
   MathVector<U, NumberComponents>& operator/=(MathVector<U, NumberComponents>& mV,
                                               const U factor)
   {
-    for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+    for(auto iC = 0; iC < NumberComponents; ++iC) {
       mV[iC] /= factor;
     }
 
@@ -210,7 +210,7 @@ namespace lbm {
                                             const U factor)
   {
     MathVector<U, NumberComponents> mV_result;
-    for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+    for(auto iC = 0; iC < NumberComponents; ++iC) {
       mV_result[iC] = mV[iC] / factor;
     }
 
@@ -222,7 +222,7 @@ namespace lbm {
   MathVector<U, NumberComponents>& operator-=(MathVector<U, NumberComponents>& lhs,
                                               const MathVector<U, NumberComponents>& rhs)
   {
-    for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+    for(auto iC = 0; iC < NumberComponents; ++iC) {
       lhs[iC] -= rhs[iC];
     }
 
@@ -235,7 +235,7 @@ namespace lbm {
                                             const MathVector<U, NumberComponents>& mV_b)
   {
     MathVector<U, NumberComponents> mV_result;
-    for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+    for(auto iC = 0; iC < NumberComponents; ++iC) {
       mV_result[iC] = mV_a[iC] - mV_b[iC];
     }
 
@@ -248,7 +248,7 @@ namespace lbm {
                                                        const MathVector<unsigned int, NumberComponents>& mV_b)
   {
     MathVector<unsigned int, NumberComponents> mV_result;
-    for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+    for(auto iC = 0; iC < NumberComponents; ++iC) {
       mV_result[iC] = mV_a[iC] - mV_b[iC];
     }
 
@@ -261,7 +261,7 @@ namespace lbm {
                                                        const MathVector<U, NumberComponents>& mV_b)
   {
     MathVector<unsigned int, NumberComponents> mV_result;
-    for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+    for(auto iC = 0; iC < NumberComponents; ++iC) {
       mV_result[iC] = mV_a[iC] - (unsigned int) mV_b[iC];
     }
 
@@ -274,7 +274,7 @@ namespace lbm {
                                                        const MathVector<unsigned int, NumberComponents>& mV_b)
   {
     MathVector<unsigned int, NumberComponents> mV_result;
-    for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+    for(auto iC = 0; iC < NumberComponents; ++iC) {
       mV_result[iC] = (unsigned int) mV_a[iC] - mV_b[iC];
     }
 
@@ -294,7 +294,7 @@ namespace lbm {
                                         const MathVector<unsigned int, NumberComponents>& mV_b)
   {
     MathVector<unsigned int, 3> mV_result = mV_a;
-    for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+    for(auto iC = 0; iC < NumberComponents; ++iC) {
       mV_result[iC] = mV_a[iC] - mV_b[iC];
     }
 
@@ -307,7 +307,7 @@ namespace lbm {
                                         const MathVector<unsigned int, 3>& mV_b)
   {
     MathVector<unsigned int, 3> mV_result = -1* mV_b;
-    for(unsigned int iC = 0; iC < 3; ++iC) {
+    for(auto iC = 0; iC < 3; ++iC) {
       mV_result[iC] = mV_a[iC] - mV_b[iC];
     }
 
@@ -322,7 +322,7 @@ namespace lbm {
 
       MathVector<T, Dimension> mVProjected{{ (T) 0 }};
 
-      for(unsigned int iD = 0; iD < Dimension; ++iD) {
+      for(auto iD = 0; iD < Dimension; ++iD) {
         mVProjected[iD] = mV[iD];
       }
 
@@ -338,7 +338,7 @@ namespace lbm {
 
       MathVector<T, 3> mVProjected = { (T) 1, (T) 1, (T) 1};
 
-      for(unsigned int iD = 0; iD < Dimension; ++iD) {
+      for(auto iD = 0; iD < Dimension; ++iD) {
         mVProjected[iD] = mV[iD];
       }
 
@@ -354,7 +354,7 @@ namespace lbm {
 
       MathVector<T, 3> mVProjected = { (T) 1, (T) 1, (T) 1};
 
-      for(unsigned int iD = 0; iD < Dimension; ++iD) {
+      for(auto iD = 0; iD < Dimension; ++iD) {
         mVProjected[iD] = mV[iD];
       }
 
@@ -372,7 +372,7 @@ namespace lbm {
 
       MathVector<T, 3> mVProjected = { (T) 0, (T) 0, (T) 0};
 
-      for(unsigned int iD = 0; iD < Dimension; ++iD) {
+      for(auto iD = 0; iD < Dimension; ++iD) {
         mVProjected[iD] = mV[iD];
       }
 
@@ -387,7 +387,7 @@ namespace lbm {
 
       MathVector<T, 3> mVProjected = { (T) 1, (T) 1, (T) 1};
 
-      for(unsigned int iD = 0; iD < Dimension-1; ++iD) {
+      for(auto iD = 0; iD < Dimension-1; ++iD) {
         mVProjected[iD] = mV[iD];
       }
       mVProjected[Dimension-1] = mV[Dimension-1]/((T) 2) + (T) 1;
@@ -404,7 +404,7 @@ namespace lbm {
 
       MathVector<U, NumberComponents> mVCasted = {{(U) 0}};
 
-      for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+      for(auto iC = 0; iC < NumberComponents; ++iC) {
         mVCasted[iC] = (U) mV[iC];
       }
 

@@ -11,12 +11,12 @@ namespace lbm {
 
   template<typename Callback, typename... Arguments>
   GLOBAL
-  void kernel_1D(const MathVector<unsigned int, 3> start,
-                 const MathVector<unsigned int, 3> end,
+  void kernel_1D(const Position start,
+                 const Position end,
                  Callback function, const Arguments... arguments) {
 
-    MathVector<unsigned int, 3> iP = {blockIdx.x*blockDim.x + threadIdx.x+ start[d::X],
-                                      start[d::Y], start[d::Z]};
+    Position iP = {blockIdx.x*blockDim.x + threadIdx.x+ start[d::X],
+                   start[d::Y], start[d::Z]};
 
     // delete if and make sure that this we choose blocks so that we are always
     // in the right case
@@ -27,13 +27,13 @@ namespace lbm {
 
   template<typename Callback, typename... Arguments>
   GLOBAL
-  void kernel_2D(const MathVector<unsigned int, 3> start,
-                 const MathVector<unsigned int, 3> end,
+  void kernel_2D(const Position start,
+                 const Position end,
                  Callback function, const Arguments... arguments) {
 
-    MathVector<unsigned int, 3> iP = {blockIdx.y*blockDim.y + threadIdx.y + start[d::X],
-                                      blockIdx.x*blockDim.x + threadIdx.x + start[d::Y],
-                                      start[d::Z]};
+    Position iP = {blockIdx.y*blockDim.y + threadIdx.y + start[d::X],
+                   blockIdx.x*blockDim.x + threadIdx.x + start[d::Y],
+                   start[d::Z]};
 
     if(iP[1] < end[d::X] && iP[0] < end[d::Y]) {
       function(iP, arguments...);
@@ -42,13 +42,13 @@ namespace lbm {
 
   template<typename Callback, typename... Arguments>
   GLOBAL
-  void kernel_3D(const MathVector<unsigned int, 3> start,
-                 const MathVector<unsigned int, 3> end,
+  void kernel_3D(const Position start,
+                 const Position end,
                  Callback function, const Arguments... arguments) {
 
-    MathVector<unsigned int, 3> iP = {blockIdx.z*blockDim.z + threadIdx.z + start[d::X],
-                                      blockIdx.y*blockDim.y + threadIdx.y + start[d::Y],
-                                      blockIdx.x*blockDim.x + threadIdx.x + start[d::Z]};
+    Position iP = {blockIdx.z*blockDim.z + threadIdx.z + start[d::X],
+                   blockIdx.y*blockDim.y + threadIdx.y + start[d::Y],
+                   blockIdx.x*blockDim.x + threadIdx.x + start[d::Z]};
     if(iP[2] < end[d::X] && iP[1] < end[d::Y] && iP[0] < end[d::Z]) {
       function(iP, arguments...);
     }

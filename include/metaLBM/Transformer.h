@@ -28,7 +28,7 @@ namespace lbm {
                        const ptrdiff_t globalLength_in[3])
       : localComputation(lSD::sStart(), lSD::sEnd())
     {
-      for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+      for(auto iC = 0; iC < NumberComponents; ++iC) {
         planForward[iC] = fftw_mpi_plan_dft_r2c(Dimension,
                                                 globalLength_in,
                                                 (double *) localPtr_in[iC],
@@ -44,7 +44,7 @@ namespace lbm {
 
     ~FourierTransformer()
     {
-      for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+      for(auto iC = 0; iC < NumberComponents; ++iC) {
         fftw_destroy_plan(planForward[iC]);
         fftw_destroy_plan(planBackward[iC]);
       }
@@ -54,7 +54,7 @@ namespace lbm {
     inline void executeForwardFFT(double * localPtr[NumberComponents]) {
       for(auto iC = 0; iC < NumberComponents; ++iC) {
         fftw_execute(planForward[iC]);
-        localComputation.Do([=] HOST (MathVector<unsigned int, 3>& iP) {
+        localComputation.Do([=] HOST (const Position& iP) {
             localPtr[iC][lSD::getIndex(iP)] /= gSD::sVolume();
           });
       }
@@ -62,7 +62,7 @@ namespace lbm {
 
     HOST
     inline void executeBackwardFFT() {
-      for(unsigned int iC = 0; iC < NumberComponents; ++iC) {
+      for(auto iC = 0; iC < NumberComponents; ++iC) {
         fftw_execute(planBackward[iC]);
       }
     }
