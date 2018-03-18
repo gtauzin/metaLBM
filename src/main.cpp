@@ -13,11 +13,10 @@
 #include "metaLBM/Routine.h"
 
 #ifdef USE_FFTW
-#include <fftw3-mpi.h>
-#include "metaLBM/FourierDomain.h"
-#else
-#include "metaLBM/Domain.h"
+  #include <fftw3-mpi.h>
 #endif
+
+#include "metaLBM/FourierDomain.h"
 
 using namespace lbm;
 

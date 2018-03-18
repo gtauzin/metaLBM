@@ -2,7 +2,10 @@
 #define TRANSFORMER_H
 
 #include <mpi.h>
-#include <fftw3-mpi.h>
+
+#ifdef USE_FFTW
+  #include <fftw3-mpi.h>
+#endif
 
 #include "Commons.h"
 #include "MathVector.h"
