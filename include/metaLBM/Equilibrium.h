@@ -15,47 +15,14 @@ namespace lbm {
 
   template <class T, LatticeType latticeType>
   class Equilibrium<T, latticeType, EquilibriumType::Incompressible> {
-  protected:
-    T density;
-    MathVector<T, L::dimD> velocity;
-    T velocity2;
-
   public:
-    static constexpr EquilibriumType Type = EquilibriumType::Incompressible;
-
-    Equilibrium()
-      : density( (T) 1)
-      , velocity(MathVector<T, L::dimD>{{ (T) 0}})
-      , velocity2(0)
-    {}
-
     #pragma omp declare simd
     DEVICE HOST
-    inline void setDensity(T density_in) {
-      density = density_in;
-    }
-
-    #pragma omp declare simd
-    DEVICE HOST
-    inline void setVelocity(MathVector<T, L::dimD> velocity_in) {
-      velocity = velocity_in;
-      velocity2 = velocity_in.norm2();
-    }
-
-    #pragma omp declare simd
-    DEVICE HOST
-    inline void setVariables(const T density_in,
-                             const MathVector<T, L::dimD> velocity_in) {
-      INSTRUMENT_OFF("Equilibrium<T, L, EquilibriumType::Incompressible>::setVariables",5)
-
-      setDensity(density_in);
-      setVelocity(velocity_in);
-  }
-
-    #pragma omp declare simd
-    DEVICE HOST
-    inline T calculate(const unsigned int iQ) const {
-      INSTRUMENT_OFF("Equilibrium<T, latticeType, EquilibriumType::Incompressible>::calculate",5)
+    static inline T calculate(const T& density,
+                              const MathVector<T, L::dimD>& velocity,
+                              const T& velocity2,
+                              const unsigned int iQ) {
+      { INSTRUMENT_OFF("Equilibrium<T, latticeType, EquilibriumType::Incompressible>::calculate",5) }
 
       T cu = L::celerity()[iQ].dot(velocity);
 
@@ -75,23 +42,14 @@ namespace lbm {
   template <class T>
   class Equilibrium<T, LatticeType::D1Q3, EquilibriumType::Incompressible>
     : public Equilibrium<T, LatticeType::Generic, EquilibriumType::Incompressible> {
-  protected:
-    using Equilibrium<T, LatticeType::Generic, EquilibriumType::Incompressible>::density;
-    using Equilibrium<T, LatticeType::Generic, EquilibriumType::Incompressible>::velocity;
-    using Equilibrium<T, LatticeType::Generic, EquilibriumType::Incompressible>::velocity2;
-
   public:
-    static constexpr EquilibriumType Type = EquilibriumType::Incompressible;
-
-    using Equilibrium<T, LatticeType::Generic, EquilibriumType::Incompressible>::Equilibrium;
-    using Equilibrium<T, LatticeType::Generic, EquilibriumType::Incompressible>::setDensity;
-    using Equilibrium<T, LatticeType::Generic, EquilibriumType::Incompressible>::setVelocity;
-    using Equilibrium<T, LatticeType::Generic, EquilibriumType::Incompressible>::setVariables;
-
     #pragma omp declare simd
     DEVICE HOST
-    inline T calculate(const unsigned int iQ) const {
-      INSTRUMENT_OFF("Equilibrium<T, D1Q3, EquilibriumType::Incompressible>::calculate",5)
+    static inline T calculate(const T& density,
+                              const MathVector<T, L::dimD>& velocity,
+                              const T& velocity2,
+                              const unsigned int iQ) {
+      { INSTRUMENT_OFF("Equilibrium<T, D1Q3, EquilibriumType::Incompressible>::calculate",5) }
 
       T fEq_iQ = 1.0;
 
@@ -109,23 +67,14 @@ namespace lbm {
   template <class T>
   class Equilibrium<T, LatticeType::D2Q9, EquilibriumType::Incompressible>
     : public Equilibrium<T, LatticeType::D1Q3, EquilibriumType::Incompressible> {
-  private:
-    using Equilibrium<T, LatticeType::D1Q3, EquilibriumType::Incompressible>::density;
-    using Equilibrium<T, LatticeType::D1Q3, EquilibriumType::Incompressible>::velocity;
-    using Equilibrium<T, LatticeType::D1Q3, EquilibriumType::Incompressible>::velocity2;
-
   public:
-    static constexpr EquilibriumType Type = EquilibriumType::Incompressible;
-
-    using Equilibrium<T, LatticeType::D1Q3, EquilibriumType::Incompressible>::Equilibrium;
-    using Equilibrium<T, LatticeType::D1Q3, EquilibriumType::Incompressible>::setDensity;
-    using Equilibrium<T, LatticeType::D1Q3, EquilibriumType::Incompressible>::setVelocity;
-    using Equilibrium<T, LatticeType::D1Q3, EquilibriumType::Incompressible>::setVariables;
-
     #pragma omp declare simd
     DEVICE HOST
-    inline T calculate(const unsigned int iQ) const {
-      INSTRUMENT_OFF("Equilibrium<T, D2Q9, EquilibriumType::Incompressible>::calculate",5)
+    static inline T calculate(const T& density,
+                              const MathVector<T, L::dimD>& velocity,
+                              const T& velocity2,
+                              const unsigned int iQ) {
+      { INSTRUMENT_OFF("Equilibrium<T, D2Q9, EquilibriumType::Incompressible>::calculate",5) }
 
       T fEq_iQ = 1.0;
 
@@ -143,27 +92,17 @@ namespace lbm {
 
   template <class T>
   class Equilibrium<T, LatticeType::D3Q27, EquilibriumType::Incompressible>
-      : public Equilibrium<T, LatticeType::D1Q3, EquilibriumType::Incompressible> {
-  private:
-    using Equilibrium<T, LatticeType::D1Q3, EquilibriumType::Incompressible>::density;
-    using Equilibrium<T, LatticeType::D1Q3, EquilibriumType::Incompressible>::velocity;
-    using Equilibrium<T, LatticeType::D1Q3, EquilibriumType::Incompressible>::velocity2;
-
+    : public Equilibrium<T, LatticeType::D1Q3, EquilibriumType::Incompressible> {
   public:
-    static constexpr EquilibriumType Type = EquilibriumType::Incompressible;
-
-    using Equilibrium<T, LatticeType::D1Q3, EquilibriumType::Incompressible>::Equilibrium;
-    using Equilibrium<T, LatticeType::D1Q3, EquilibriumType::Incompressible>::setDensity;
-    using Equilibrium<T, LatticeType::D1Q3, EquilibriumType::Incompressible>::setVelocity;
-    using Equilibrium<T, LatticeType::D1Q3, EquilibriumType::Incompressible>::setVariables;
-
     #pragma omp declare simd
     DEVICE HOST
-    inline T calculate(const unsigned int iQ) const {
+    static inline T calculate(const T& density,
+                              const MathVector<T, L::dimD>& velocity,
+                              const T& velocity2,
+                              const unsigned int iQ) {
       INSTRUMENT_OFF("Equilibrium<T, D3Q27, EquilibriumType::Incompressible>::calculate",5)
 
       T fEq_iQ = (T) 1;
-
       for(auto iD = 0; iD < L::dimD; ++iD) {
         fEq_iQ *= (2.0 - sqrt(1.0 + 3.0*velocity[iD]*velocity[iD]))
           * PowerBase((2* velocity[iD]

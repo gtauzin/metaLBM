@@ -24,101 +24,20 @@ namespace lbm {
    * and therefore allocated.
    */
 
-  template <class T, unsigned int NumberComponents, DomainType initDomainType,
+  template <class T, unsigned int NumberComponents,
             Architecture architecture, bool IsWritten>
-  class Field {};
-
-
-  template <class T, unsigned int NumberComponents, DomainType initDomainType,
-            Architecture architecture>
-  class Field<T, NumberComponents, initDomainType, architecture, false>  {
-  public:
-    const unsigned int numberElements;
-    static constexpr bool IsWritten = false;
-
-    const std::string fieldName;
-
-  Field(const std::string& fieldName_in, const unsigned int numberElements_in,
-        const MathVector<T, NumberComponents>& vector_in)
-      : fieldName(fieldName_in)
-      , numberElements(numberElements_in)
-    {}
-
-    Field(const std::string& fieldName_in, const unsigned int numberElements_in,
-          const T& value_in = (T) 0)
-      : fieldName(fieldName_in)
-      , numberElements(numberElements_in)
-    {}
-
-    Field(const std::string& fieldName_in, const unsigned int numberElements_in,
-          const DynamicArray<T, architecture>& globalArray_in)
-      : fieldName(fieldName_in)
-      , numberElements(numberElements_in)
-    {}
-
-    T * getGlobalData(const unsigned int offset = 0) {
-      return NULL;
-    }
-
-    void setGlobalValue(const unsigned int index, const T value) {}
-
-    void setGlobalValue(const Position& iP,
-                        const T value,
-                        const unsigned int iC) {}
-
-    void setGlobalVector(const Position& iP,
-                         const MathVector<T, NumberComponents> vector) {}
-
-    DynamicArray<T, Architecture::CPU> getGlobalArray() {
-      return DynamicArray<T, Architecture::CPU>();
-    }
-
-    T getGlobalValue(const Position& iP,
-                     const unsigned int iC = 0) const {
-      return (T) -1;
-    }
-
-    MathVector<T, NumberComponents> getGlobalVector(const Position& iP) const {
-      return MathVector<T, NumberComponents>{{(T) -1}};
-    }
-
-    T * getLocalData(const unsigned int offset = 0) {
-      return NULL;
-    }
-
-    MultiDynamicArray<T, Architecture::CPU, NumberComponents> getLocalArray() {
-      return MultiDynamicArray<T, Architecture::CPU, NumberComponents>();
-    }
-
-    DEVICE HOST
-    void setLocalValue(const unsigned int index, const T value, const unsigned int iC = 0) {}
-
-    DEVICE HOST
-    void setLocalVector(const unsigned int index,
-                       const MathVector<T, NumberComponents> vector) {}
-
-    DEVICE HOST
-    T getLocalValue(const unsigned int index, const unsigned int iC = 0) {
-      return (T) -1;
-    }
-
-    DEVICE HOST
-    MathVector<T, NumberComponents> getLocalVector(const unsigned int index) {
-      return MathVector<T, NumberComponents>{{(T) -1}};
-    }
-
-  };
+  class FieldAllocator {};
 
 
   template <class T, unsigned int NumberComponents>
-  class Field<T, NumberComponents, DomainType::Generic, Architecture::Generic, true> {
+  class FieldAllocator<T, NumberComponents, Architecture::Generic, true> {
   public:
     const unsigned int numberElements;
     static constexpr bool IsWritten = true;
 
     const std::string fieldName;
 
-    Field(const std::string& fieldName_in, const unsigned int numberElements_in)
+    FieldAllocator(const std::string& fieldName_in, const unsigned int numberElements_in)
       : fieldName(fieldName_in)
       , numberElements(numberElements_in)
 
@@ -128,13 +47,10 @@ namespace lbm {
 
 
   template <class T, unsigned int NumberComponents>
-  class Field<T, NumberComponents, DomainType::Generic,
-              Architecture::CPU, true>
-    : public Field<T, NumberComponents, DomainType::Generic,
-                 Architecture::Generic, true> {
+  class FieldAllocator<T, NumberComponents, Architecture::CPU, true>
+    : public FieldAllocator<T, NumberComponents, Architecture::Generic, true> {
   private:
-    using Base = Field<T, NumberComponents, DomainType::Generic,
-                       Architecture::Generic, true>;
+    using Base = FieldAllocator<T, NumberComponents, Architecture::Generic, true>;
 
   protected:
     MultiDynamicArray<T, Architecture::CPU, NumberComponents> localArray;
@@ -144,7 +60,7 @@ namespace lbm {
     using Base::IsWritten;
     using Base::fieldName;
 
-  Field(const std::string& fieldName_in, const unsigned int numberElements_in)
+  FieldAllocator(const std::string& fieldName_in, const unsigned int numberElements_in)
     : Base(fieldName_in, numberElements_in)
       , localArray(numberElements_in)
     {}
@@ -153,13 +69,10 @@ namespace lbm {
 
 
   template <class T, unsigned int NumberComponents>
-  class Field<T, NumberComponents, DomainType::Generic,
-              Architecture::GPU, true>
-    : public Field<T, NumberComponents, DomainType::Generic,
-                 Architecture::Generic, true> {
+  class FieldAllocator<T, NumberComponents, Architecture::GPU, true>
+    : public FieldAllocator<T, NumberComponents, Architecture::Generic, true> {
   private:
-    using Base = Field<T, NumberComponents, DomainType::Generic,
-                       Architecture::Generic, true>;
+    using Base = FieldAllocator<T, NumberComponents, Architecture::Generic, true>;
   protected:
     MultiDynamicArray<T, Architecture::CPUPinned, NumberComponents> localArray;
 
@@ -169,7 +82,7 @@ namespace lbm {
 
     using Base::fieldName;
 
-    Field(const std::string& fieldName_in, const unsigned int numberElements_in)
+    FieldAllocator(const std::string& fieldName_in, const unsigned int numberElements_in)
       : Base(fieldName_in, numberElements_in)
       , localArray(numberElements_in)
     {}
@@ -177,14 +90,17 @@ namespace lbm {
   };
 
 
+  template <class T, unsigned int NumberComponents, Architecture architecture,
+            bool isWritten>
+  class Field {};
+
+
   template <class T, unsigned int NumberComponents, Architecture architecture>
-  class Field<T, NumberComponents, DomainType::LocalSpace,
-              architecture, true>
-    : public Field<T, NumberComponents, DomainType::Generic,
-                   architecture, true> {
+  class Field<T, NumberComponents, architecture, true>
+    : public FieldAllocator<T, NumberComponents, architecture, true> {
   private:
-    using Base = Field<T, NumberComponents, DomainType::Generic,
-                       architecture, true>;
+    using Base = FieldAllocator<T, NumberComponents, architecture, true>;
+
   protected:
     using Base::localArray;
 
@@ -280,6 +196,65 @@ namespace lbm {
 
   };
 
+
+  template <class T, unsigned int NumberComponents,
+    Architecture architecture>
+  class Field<T, NumberComponents, architecture, false>  {
+  public:
+    const unsigned int numberElements;
+    static constexpr bool IsWritten = false;
+
+    const std::string fieldName;
+
+  Field(const std::string& fieldName_in, const unsigned int numberElements_in,
+        const MathVector<T, NumberComponents>& vector_in)
+      : fieldName(fieldName_in)
+      , numberElements(numberElements_in)
+    {}
+
+    Field(const std::string& fieldName_in, const unsigned int numberElements_in,
+          const T& value_in = (T) 0)
+      : fieldName(fieldName_in)
+      , numberElements(numberElements_in)
+    {}
+
+    Field(const std::string& fieldName_in, const unsigned int numberElements_in,
+          const DynamicArray<T, architecture>& globalArray_in)
+      : fieldName(fieldName_in)
+      , numberElements(numberElements_in)
+    {}
+
+    DEVICE HOST
+    T ** getMultiData() {
+      return NULL;
+    }
+
+    T * getLocalData(const unsigned int offset = 0) {
+      return NULL;
+    }
+
+    MultiDynamicArray<T, Architecture::CPU, NumberComponents> getLocalArray() {
+      return MultiDynamicArray<T, Architecture::CPU, NumberComponents>();
+    }
+
+    DEVICE HOST
+    void setLocalValue(const unsigned int index, const T value, const unsigned int iC = 0) {}
+
+    DEVICE HOST
+    void setLocalVector(const unsigned int index,
+                       const MathVector<T, NumberComponents> vector) {}
+
+    DEVICE HOST
+    T getLocalValue(const unsigned int index, const unsigned int iC = 0) {
+      return (T) -1;
+    }
+
+    DEVICE HOST
+    MathVector<T, NumberComponents> getLocalVector(const unsigned int index) {
+      return MathVector<T, NumberComponents>{{(T) -1}};
+    }
+
+  };
 
 } // namespace lbm
 

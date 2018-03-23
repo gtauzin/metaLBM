@@ -1,4 +1,4 @@
-#define NPROCS 2
+#define NPROCS 1
 #define NTHREADS 1
 
 #include <mpi.h>
@@ -25,12 +25,14 @@ int main(int argc, char* argv[]) {
 
   #ifndef USE_FFTW
     MPI_Init(&argc, &argv);
-  unsigned int numberElements = lSD::pVolume();
+  {
+    unsigned int numberElements = lSD::pVolume();
 
 
   #else
     int provided;
     MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided);
+    {
     int useThreadsFFTW = (provided >= MPI_THREAD_FUNNELED);
 
     if(useThreadsFFTW) useThreadsFFTW = fftw_init_threads();
@@ -61,10 +63,9 @@ int main(int argc, char* argv[]) {
   char hostname[MPI_MAX_PROCESSOR_NAME];
   MPI_Get_processor_name(hostname, &hostnameLength);
 
-  Routine<dataT, Architecture::CPU, implementationT,
-          inputOutputType> routine(rankMPI, sizeMPI,
-                                   std::string(hostname),
-                                   numberElements);
+  Routine<dataT, Architecture::CPU, implementationT> routine(rankMPI, sizeMPI,
+                                                             std::string(hostname),
+                                                             numberElements);
 
   routine.compute();
 
@@ -72,7 +73,8 @@ int main(int argc, char* argv[]) {
     fftw_mpi_cleanup();
   #endif
 
-  MPI_Finalize();
+    }
+    MPI_Finalize();
 
   return EXIT_SUCCESS;
 }

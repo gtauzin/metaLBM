@@ -88,6 +88,12 @@ namespace lbm {
 
     #pragma omp declare simd
     HOST DEVICE
+    static inline constexpr unsigned int maxWaveNumber() {
+      return arrayMax(globalLength);
+    }
+
+    #pragma omp declare simd
+    HOST DEVICE
     static inline Position offset(const MathVector<int, 3>& rankMPI) {
       Position offsetR{{0}};
       for(auto iD = 0; iD < L::dimD; ++iD) {

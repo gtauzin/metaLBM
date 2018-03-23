@@ -11,13 +11,11 @@
 
 namespace lbm {
 
-  template<class T, unsigned int NumberComponents, InputOutput inputOutput,
-           InputOutputType inputOutputType, InputOutputDataFormat inputOutputDataFormat>
+  template<class T, unsigned int NumberComponents, InputOutput inputOutput>
   class Reader {};
 
   template<class T, unsigned int NumberComponents>
-  class Reader<T, NumberComponents, InputOutput::Generic, InputOutputType::Generic,
-               InputOutputDataFormat::Generic> {
+  class Reader<T, NumberComponents, InputOutput::Generic> {
   protected:
     const std::string readFolder;
     const std::string readerFolder;
@@ -52,26 +50,22 @@ namespace lbm {
   };
 
 
-  template <class T, unsigned int NumberComponents,
-            InputOutputDataFormat inputOutputDataFormat>
-    class Reader<T, NumberComponents, InputOutput::HDF5, InputOutputType::Parallel,
-                 inputOutputDataFormat>
-    : public Reader<T, NumberComponents, InputOutput::Generic, InputOutputType::Generic,
-                    InputOutputDataFormat::Generic> {
+  template <class T, unsigned int NumberComponents>
+    class Reader<T, NumberComponents, InputOutput::HDF5>
+    : public Reader<T, NumberComponents, InputOutput::Generic> {
   private:
-    using Reader<T, NumberComponents, InputOutput::Generic, InputOutputType::Generic,
-                 InputOutputDataFormat::Generic>::getFileName;
+    using Base = Reader<T, NumberComponents, InputOutput::Generic>;
+    using Base::getFileName;
 
   public:
     Reader(const std::string& filePrefix_in)
-      : Reader<T, NumberComponents, InputOutput::Generic, InputOutputType::Generic,
-               InputOutputDataFormat::Generic>("outputHDF5/", filePrefix_in, ".h5")
+      : Base("outputHDF5/", filePrefix_in, ".h5")
     {}
 
     inline MultiDynamicArray<T, Architecture::CPU,
                              NumberComponents> readArray(const std::string& fieldName,
                                                          const unsigned int iteration) {
-      { INSTRUMENT_ON("Reader<T, NumberComponents, InputOutput::VTR>::readArray",3) }
+      { INSTRUMENT_ON("Reader<T, NumberComponents, InputOutput::HDF5>::readArray",3) }
 
       MultiDynamicArray<T, Architecture::CPU, NumberComponents> arrayR(gSD::sVolume());
 
@@ -80,6 +74,7 @@ namespace lbm {
 
   };
 
+  typedef Reader<dataT, L::dimQ, InputOutput::HDF5> ReaderDimQ_;
 
 }
 

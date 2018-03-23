@@ -11,18 +11,20 @@ namespace lbm {
   typedef double dataT;
   typedef MathVector<dataT, 3> Vector;
 
-
   constexpr LatticeType latticeT = LatticeType::D3Q27;
-  constexpr int lengthX_g = 128;
-  constexpr int lengthY_g = 128;
-  constexpr int lengthZ_g = 128;
+  constexpr int globalLengthX = 8;
+  constexpr int globalLengthY = 8;
+  constexpr int globalLengthZ = 8;
 
   constexpr unsigned int startIteration = 0;
-  constexpr unsigned int endIteration = 2;
+  constexpr unsigned int endIteration = 1;
   constexpr unsigned int writeStep = 1;
+  constexpr unsigned int backUpStep = 10;
+
+  constexpr unsigned int scalarAnalysisStep = 1;
+  constexpr unsigned int spectralAnalysisStep = 2;
 
   constexpr unsigned int successiveWriteStep = 2;
-  constexpr unsigned int backUpStep = 1;
 
   constexpr AlgorithmType algorithmT = AlgorithmType::Pull;
   constexpr PartitionningType partitionningT = PartitionningType::OneD;
@@ -39,29 +41,28 @@ namespace lbm {
   constexpr Vector initVelocityVector = { {0.0, 0.0, 0.0} };
 
   constexpr ForcingSchemeType forcingSchemeT = ForcingSchemeType::ExactDifferenceMethod;
-  constexpr ForceType forceT = ForceType::Kolmogorov;
+  constexpr ForceType forceT = ForceType::ConstantShell;
 
-  constexpr Vector forceAmplitude = { {0.0001, 0.0001, 0.0} };
-  constexpr Vector forceWaveLength = { {32.0, 32.0, 0.0} };
-  constexpr int forcekMin = 10;
-  constexpr int forcekMax = 14;
+  constexpr Vector forceAmplitude = { {0.00001, 0.00001, 0.00001} };
+  constexpr Vector forceWaveLength = { {32.0, 32.0, 32.0} };
+  constexpr int forcekMin = 1;
+  constexpr int forcekMax = 2;
 
   constexpr BoundaryType boundaryT = BoundaryType::Generic;
 
-  constexpr InputOutput inputOutput = InputOutput::HDF5;
-  constexpr InputOutputType inputOutputType = InputOutputType::Parallel;
-  constexpr InputOutputDataFormat inputOutputDataFormat = InputOutputDataFormat::ascii;
+  constexpr InputOutputFormat inputOutputFormatT = InputOutputFormat::ascii;
   constexpr auto prefix = "test_serial";
 
-  constexpr bool writeDensity = 1;
-  constexpr bool writeVelocity = 1;
   constexpr bool writeForce = 1;
   constexpr bool writeEntropy = 1;
-  constexpr bool writeAlpha = 1;
+  constexpr bool writeAlpha = 0;
+  constexpr bool writeVorticity = 1;
 
-  constexpr bool analyzeEnergy = 1;
-  constexpr bool analyzeEnstrophy = 1;
+  constexpr bool analyzeTotalEnergy = 1;
+  constexpr bool analyzeTotalEnstrophy = 1;
 
+  constexpr bool analyzeEnergySpectra = 1;
+  constexpr bool analyzeEnstrophySpectra = 1;
 }
 
 #endif // INPUT_H

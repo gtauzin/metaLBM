@@ -5,6 +5,7 @@
 
 namespace lbm {
   enum d {X, Y, Z};
+  enum p {Re, Im};
 
   enum class LatticeType {Generic, D1Q3, D2Q5, D2Q9, D2Q37, D3Q15, D3Q19, D3Q27};
 
@@ -34,12 +35,8 @@ namespace lbm {
 
   enum class BoundaryType {Generic, None, Periodic, BounceBack_Halfway, Entropic};
 
-  enum class AnalyzerType {Generic, FFT, TotalEnergy,
-      TotalEnstrophy, EnergySpectrum};
-
-  enum class InputOutput {Generic, None, DAT, VTR, HDF5, XDMF};
-  enum class InputOutputDataFormat {Generic, ascii, binary};
-  enum class InputOutputType {Generic, Serial, Parallel};
+  enum class InputOutput {Generic, None, DAT, HDF5, XDMF};
+  enum class InputOutputFormat {Generic, ascii, binary};
 }
 
 #endif // OPTIONS_H

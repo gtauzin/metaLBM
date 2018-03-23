@@ -48,7 +48,6 @@ namespace lbm {
     Communication<T, latticeT, algorithmT, memoryL,
                   partitionningT, implementation, L::dimD> communication;
     Collision_ collision;
-    Moment<T> moment;
 
     Computation<architecture, L::dimD> computationLocal;
     Computation<architecture, L::dimD> computationHalo;
@@ -57,25 +56,22 @@ namespace lbm {
     std::chrono::duration<double> dtCommunication;
     std::chrono::duration<double> dtTotal;
 
-    bool isWritten;
+  public:
+    bool isStored;
 
-    Algorithm(Field<T, 1, initDomainType, architecture, writeDensity>& densityField_in,
-              Field<T, L::dimD, initDomainType, architecture, writeVelocity>& velocityField_in,
-              Field<T, L::dimD, initDomainType, architecture, writeForce>& forceField_in,
-              Field<T, 1, initDomainType, architecture, writeAlpha>& alphaField_in,
+    Algorithm(FieldList<T, architecture>& fieldList_in,
               Distribution<T, initDomainType, architecture>& distribution_in,
               Communication<T, latticeT, algorithmT, memoryL,
               partitionningT, implementation, L::dimD>& communication_in)
-      : localDensity_Ptr(densityField_in.getLocalData())
-      , localVelocity_Ptr(velocityField_in.getMultiData())
-      , localForce_Ptr(forceField_in.getMultiData())
-      , localAlpha_Ptr(alphaField_in.getLocalData())
+      : localDensity_Ptr(fieldList_in.density.getLocalData())
+      , localVelocity_Ptr(fieldList_in.velocity.getMultiData())
+      , localForce_Ptr(fieldList_in.force.getMultiData())
+      , localAlpha_Ptr(fieldList_in.alpha.getLocalData())
       , localDistribution_Ptr(distribution_in.getMultiData())
       , haloDistributionPrevious_Ptr(distribution_in.getHaloDataPrevious())
       , haloDistributionNext_Ptr(distribution_in.getHaloDataNext())
       , communication(communication_in)
       , collision(relaxationTime, forceAmplitude, forceWaveLength, forcekMin, forcekMax)
-      , moment()
       , computationLocal(lSD::sStart()+L::halo(),
                          lSD::sEnd()+L::halo())
       , computationHalo(hSD::start(),
@@ -83,26 +79,9 @@ namespace lbm {
       , dtComputation()
       , dtCommunication()
       , dtTotal()
-      , isWritten()
+      , isStored(false)
     {}
 
-    DEVICE HOST
-    void storeLocalFields(const Position& iP) {
-      INSTRUMENT_OFF("Algorithm<T, AlgorithmType::Pull>::storeLocalFields",4)
-
-      const auto indexLocal = hSD::getIndexLocal(iP);
-
-      localDensity_Ptr[indexLocal] = moment.getDensity();
-      localAlpha_Ptr[indexLocal] = collision.getAlpha();
-
-      for(auto iD = 0; iD < L::dimD; ++iD) {
-        localVelocity_Ptr[iD][indexLocal] = collision.getHydrodynamicVelocity()[iD];
-        localForce_Ptr[iD][indexLocal] = collision.getForce()[iD];
-      }
-
-    }
-
-  public:
     HOST
     void pack() {
       computationLocal.Do(packer, localDistribution_Ptr,
@@ -126,6 +105,29 @@ namespace lbm {
     double getTotalTime() {
       return dtTotal.count();
     }
+
+
+  protected:
+    DEVICE HOST
+    void storeLocalFields(const Position& iP) {
+      INSTRUMENT_OFF("Algorithm<T, AlgorithmType::Pull>::storeLocalFields",4)
+
+      const auto indexLocal = hSD::getIndexLocal(iP);
+
+      localDensity_Ptr[indexLocal] = collision.getDensity();
+      for(auto iD = 0; iD < L::dimD; ++iD) {
+        localVelocity_Ptr[iD][indexLocal] = collision.getHydrodynamicVelocity()[iD];
+      }
+
+      if(writeAlpha) localAlpha_Ptr[indexLocal] = collision.getAlpha();
+
+      if(writeForce) {
+        for(auto iD = 0; iD < L::dimD; ++iD) {
+          localForce_Ptr[iD][indexLocal] = collision.getForce()[iD];
+        }
+      }
+    }
+
   };
 
 
@@ -150,14 +152,13 @@ namespace lbm {
 
     using Base::communication;
     using Base::collision;
-    using Base::moment;
+
     using Base::computationLocal;
     using Base::computationHalo;
 
     using Base::dtComputation;
     using Base::dtCommunication;
     using Base::dtTotal;
-    using Base::isWritten;
 
     using Base::storeLocalFields;
 
@@ -165,39 +166,24 @@ namespace lbm {
              partitionningT, implementation, L::dimD> periodicBoundary;
 
   public:
-    Algorithm(Field<T, 1, initDomainType, architecture, writeDensity>& densityField_in,
-              Field<T, L::dimD, initDomainType, architecture, writeVelocity>& velocityField_in,
-              Field<T, L::dimD, initDomainType, architecture, writeForce>& forceField_in,
-              Field<T, 1, initDomainType, architecture, writeAlpha>& alphaField_in,
-              Distribution<T, initDomainType, architecture>& distribution_in,
-              Communication<T, latticeT, algorithmT, memoryL,
-              partitionningT, implementation, L::dimD>& communication_in)
-      : Base(densityField_in, velocityField_in,
-             forceField_in, alphaField_in,
-             distribution_in,
-             communication_in)
-    {}
+    //using Base::isStored;
+    using Base::Algorithm;
 
     HOST DEVICE
     void operator()(const Position& iP) {
-      moment.calculateMoments(haloDistributionPrevious_Ptr, iP);
+      collision.calculateMoments(haloDistributionPrevious_Ptr, iP);
 
       collision.setForce(localForce_Ptr, iP, gSD::sOffset(communication.getRankMPI()));
-      collision.setVariables(haloDistributionPrevious_Ptr, iP,
-                             moment.getDensity(), moment.getVelocity());
+
       for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
         haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)] =
           collision.calculate(haloDistributionPrevious_Ptr,
                               iP-uiL::celerity()[iQ], iQ);
       }
 
-      if(isWritten) {
+      if(Base::isStored) {
         storeLocalFields(iP);
       }
-    }
-
-    void setIsWritten(bool isWritten_in) {
-      isWritten = isWritten_in;
     }
 
     HOST

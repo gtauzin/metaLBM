@@ -18,13 +18,11 @@
 namespace lbm {
 
   template<class T, Architecture architecture>
-  Field<T, 1, DomainType::LocalSpace,
-        architecture, true> initLocalDensity(const unsigned int numberElements,
-                                             const MathVector<int, 3>& rankMPI) {
-    INSTRUMENT_ON("initLocalDensity<T>",2)
+    Field<T, 1, architecture, true> initLocalDensity(const unsigned int numberElements,
+                                                     const MathVector<int, 3>& rankMPI) {
+    { INSTRUMENT_ON("initLocalDensity<T>",2) }
 
-      Field<T, 1, DomainType::LocalSpace,
-      architecture, true> densityFieldR("density", numberElements, initDensityValue);
+    Field<T, 1, architecture, true> densityFieldR("density", numberElements, initDensityValue);
 
     switch(initDensityT){
     case InitDensityType::Homogeneous: {
@@ -51,16 +49,14 @@ namespace lbm {
   }
 
   template<class T, Architecture architecture>
-  Field<T, L::dimD, DomainType::LocalSpace,
-        architecture, true> initLocalVelocity(const unsigned int numberElements) {
+  Field<T, L::dimD, architecture, true> initLocalVelocity(const unsigned int numberElements) {
     INSTRUMENT_ON("initLocalVelocity<T>",2)
 
     MathVector<T, L::dimD> initVelocityVectorProjected{{ (T) 0 }};
     initVelocityVectorProjected = Project<T, T, L::dimD>::Do(initVelocityVector);
 
-    Field<T, L::dimD, DomainType::LocalSpace,
-      architecture, true> velocityFieldR("velocity", numberElements,
-                                         initVelocityVectorProjected);
+    Field<T, L::dimD, architecture, true> velocityFieldR("velocity", numberElements,
+                                                         initVelocityVectorProjected);
 
     switch(initVelocityT){
     case InitVelocityType::Homogeneous: {
@@ -76,69 +72,53 @@ namespace lbm {
 
 
   template<class T, Architecture architecture>
-  Field<T, L::dimD, DomainType::LocalSpace,
-        architecture, true> initLocalForce(const unsigned int numberElements,
-                                           const MathVector<int, 3>& rankMPI) {
-    INSTRUMENT_ON("initLocalForce<T>",2)
+  Field<T, L::dimD, architecture, writeForce>
+  initLocalForce(const unsigned int numberElements,
+                 const MathVector<int, 3>& rankMPI) {
+    { INSTRUMENT_ON("initLocalForce<T>",2) }
 
-      Field<T, L::dimD, DomainType::LocalSpace,
-        architecture, true> forceFieldR("force", numberElements, 0);
+    Field<T, L::dimD, architecture, writeForce> forceFieldR("force", numberElements, 0);
 
+    Force<T, forceT> force(forceAmplitude, forceWaveLength, forcekMin, forcekMax);
 
-    if(forceT == ForceType::ConstantShell) {
-      Force<T, forceT> force(forceAmplitude, forceWaveLength, forcekMin, forcekMax);
-
-      force.setLocalForceArray(forceFieldR.getMultiData(), gFD::offset(rankMPI)[d::X]);
-
+    if(writeForce) {
+      force.setLocalForceArray(forceFieldR.getMultiData(), gFD::offset(rankMPI));
     }
 
-    else {
-      Force<T, forceT> force(forceAmplitude, forceWaveLength, forcekMin, forcekMax);
-      Position iP;
-      for(auto iZ = lSD::sStart()[d::Z]; iZ < lSD::sEnd()[d::Z]; iZ++) {
-        for(auto iY = lSD::sStart()[d::Y]; iY < lSD::sEnd()[d::Y]; iY++) {
-          for(auto iX = lSD::sStart()[d::X]; iX < lSD::sEnd()[d::X]; iX++) {
-            iP =  Position({iX, iY, iZ});
-            force.setForce(iP, gSD::sOffset(rankMPI));
-            forceFieldR.setLocalVector(iP, force.getForce());
-          }
-        }
-      }
-    }
     return forceFieldR;
   }
 
   template<class T, Architecture architecture>
-  Field<T, 1, DomainType::LocalSpace,
-        architecture, true> initLocalAlpha(const unsigned int numberElements) {
-    INSTRUMENT_ON("initLocalAlpha<T>",2)
+  Field<T, 1, architecture, writeAlpha>
+  initLocalAlpha(const unsigned int numberElements) {
+    { INSTRUMENT_ON("initLocalAlpha<T>",2) }
 
-    Field<T, 1, DomainType::LocalSpace,
-          architecture, true> alphaFieldR("alpha", numberElements, (T) 2);
+    Field<T, 1, architecture, writeAlpha> alphaFieldR("alpha", numberElements, (T) 2);
     return alphaFieldR;
   }
 
   template<class T, Architecture architecture>
-  MultiDynamicArray<T, Architecture::CPU, L::dimQ> initLocalDistributionStart(const Field<T, 1, DomainType::LocalSpace, architecture, true>& densityField,
-                                                                              const Field<T, L::dimD, DomainType::LocalSpace, architecture, true>& velocityField) {
+  MultiDynamicArray<T, Architecture::CPU, L::dimQ>
+    initLocalDistributionStart(const Field<T, 1, architecture, true>& densityField,
+                               const Field<T, L::dimD, architecture, true>& velocityField) {
     INSTRUMENT_ON("initLocalDistributionStart<T>",2)
 
-      Field<T, L::dimQ, DomainType::LocalSpace,
-            architecture, true> distributionFieldR("distribution",
-                                                   densityField.numberElements);
+      Field<T, L::dimQ, architecture, true> distributionFieldR("distribution",
+                                                               densityField.numberElements);
 
-    Equilibrium_ equilibrium;
     Position iP;
     for(auto iZ = lSD::sStart()[d::Z]; iZ < lSD::sEnd()[d::Z]; iZ++) {
       for(auto iY = lSD::sStart()[d::Y]; iY < lSD::sEnd()[d::Y]; iY++) {
         for(auto iX = lSD::sStart()[d::X]; iX < lSD::sEnd()[d::X]; iX++) {
           iP =  Position({iX, iY, iZ});
 
-          equilibrium.setVariables(densityField.getLocalValue(iP),
-                                   velocityField.getLocalVector(iP));
+          T density = densityField.getLocalValue(iP);
+          MathVector<T, L::dimD> velocity = velocityField.getLocalVector(iP);
+          T velocity2 = velocity.norm2();
 
           for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
-            distributionFieldR.setLocalValue(iP, equilibrium.calculate(iQ), iQ);
+            distributionFieldR.setLocalValue(iP, Equilibrium_::calculate(density, velocity,
+                                                                         velocity2, iQ), iQ);
           }
         }
       }
@@ -151,14 +131,15 @@ namespace lbm {
   MultiDynamicArray<T, Architecture::CPU, L::dimQ> initLocalDistributionRestart(const unsigned int numberElements) {
     INSTRUMENT_ON("initLocalDistributionRestart<T>",2)
 
-      Reader<T, L::dimQ, inputOutput, inputOutputType, inputOutputDataFormat> reader(prefix);
+      ReaderDimQ_ reader(prefix);
     return reader.readArray("distribution", startIteration);
   }
 
 
   template<class T, Architecture architecture>
-  MultiDynamicArray<T, Architecture::CPU, L::dimQ> initLocalDistribution(const Field<T, 1, DomainType::LocalSpace, architecture, true>& densityField,
-                                                             const Field<T, L::dimD, DomainType::LocalSpace, architecture, true>& velocityField) {
+  MultiDynamicArray<T, Architecture::CPU, L::dimQ>
+    initLocalDistribution(const Field<T, 1, architecture, true>& densityField,
+                          const Field<T, L::dimD, architecture, true>& velocityField) {
     INSTRUMENT_ON("initLocalDistribution<T>",2)
 
     if(startIteration == 0) {

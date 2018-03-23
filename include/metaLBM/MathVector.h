@@ -59,8 +59,8 @@ namespace lbm {
 
     DEVICE HOST
     inline U dot(const MathVector<U, NumberComponents>& other){
-      U dotR = 0;
-      for(auto iC = 0; iC < NumberComponents; ++iC) {
+      U dotR = sArray[0]*other[0];
+      for(auto iC = 1; iC < NumberComponents; ++iC) {
         dotR += sArray[iC]*other[iC];
       }
 
@@ -69,13 +69,19 @@ namespace lbm {
 
     DEVICE HOST
     inline U norm2() const {
-      U norm2R = 0;
-      for(auto iC = 0; iC < NumberComponents; ++iC) {
+      U norm2R = sArray[0]*sArray[0];
+      for(auto iC = 1; iC < NumberComponents; ++iC) {
         norm2R += sArray[iC]*sArray[iC];
       }
 
       return norm2R;
     }
+
+    DEVICE HOST
+    inline U norm() const {
+      return sqrt(norm2());
+    }
+
 
     DEVICE HOST
     inline U volume(){

@@ -7,6 +7,7 @@
 #include <sstream>
 
 #include <hdf5.h>
+#include <sys/stat.h>
 
 #include "Commons.h"
 #include "Options.h"
@@ -18,13 +19,11 @@
 
 namespace lbm {
 
-  template <class T, InputOutput inputOutput, InputOutputType inputOutputType,
-            InputOutputDataFormat inputOutputDataFormat>
+  template <class T, InputOutput inputOutput, InputOutputFormat inputOutputFormat>
   class Writer {};
 
   template <class T>
-  class Writer<T, InputOutput::Generic, InputOutputType::Generic,
-               InputOutputDataFormat::Generic> {
+  class Writer<T, InputOutput::Generic, InputOutputFormat::Generic> {
   protected:
     const std::string writeFolder;
     const std::string writerFolder;
@@ -53,7 +52,19 @@ namespace lbm {
       , rankMPI(rankMPI_in)
       , sizeMPI(sizeMPI_in)
       , isWritten(false)
-    {}
+    {
+      if(rankMPI[d::X] == 0) {
+        int dirError = mkdir(writeFolder.c_str(), S_IRWXU | S_IRWXG
+                             | S_IROTH | S_IXOTH);
+        dirError = mkdir((writeFolder+writerFolder).c_str(), S_IRWXU | S_IRWXG
+                         | S_IROTH | S_IXOTH);
+        if (dirError == -1)
+          {
+            std::cout << "Error creating directory! It probably already exists..."
+                      << std::endl;
+          }
+      }
+    }
 
     std::string getFileName(const unsigned int iteration) {
       std::ostringstream number;
@@ -64,6 +75,14 @@ namespace lbm {
 
       return fileName;
     }
+
+    std::string getFileName() {
+      std::string fileName =  writeFolder + writerFolder
+        + filePrefix + fileExtension;
+
+      return fileName;
+    }
+
 
   public:
     inline bool getIsWritten(const unsigned int iteration) {
@@ -78,13 +97,10 @@ namespace lbm {
 
 
   template <class T>
-  class Writer<T, InputOutput::Generic, InputOutputType::Generic,
-               InputOutputDataFormat::ascii>
-    : public Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                    InputOutputDataFormat::Generic> {
+  class Writer<T, InputOutput::Generic, InputOutputFormat::ascii>
+    : public Writer<T, InputOutput::Generic, InputOutputFormat::Generic> {
   private:
-    using Base = Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                        InputOutputDataFormat::Generic>;
+    using Base = Writer<T, InputOutput::Generic, InputOutputFormat::Generic>;
 
   public:
     Writer(const std::string& writerFolder_in,
@@ -100,16 +116,21 @@ namespace lbm {
     using Base::getIsBackedUp;
 
   protected:
-    using Base::file;
-    using Base::fileFormat;
-    using Base::rankMPI;
-    using Base::getFileName;
+    inline void openAndAppend(const std::string& fileName) {
+      Base::file.open(fileName, std::ofstream::out | std::ofstream::app);
+      Base::file.precision(16);
 
-    inline void open(const std::string& fileName) {
-      file.open(fileName, std::ofstream::out | std::ofstream::trunc);
-      file.precision(16);
+      if(!Base::file) {
+        std::cout << "Could not open file " << fileName << std::endl;
+      }
 
-      if(!file) {
+    }
+
+    inline void openAndTruncate(const std::string& fileName) {
+      Base::file.open(fileName, std::ofstream::out | std::ofstream::trunc);
+      Base::file.precision(16);
+
+      if(!Base::file) {
         std::cout << "Could not open file " << fileName << std::endl;
       }
 
@@ -117,20 +138,17 @@ namespace lbm {
 
     template<class U>
     inline void write(const U data) {
-      file << data;
+      Base::file << data;
     }
 
   };
 
 
   template <class T>
-  class Writer<T, InputOutput::Generic, InputOutputType::Generic,
-               InputOutputDataFormat::binary>
-    : public Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                    InputOutputDataFormat::Generic> {
+  class Writer<T, InputOutput::Generic, InputOutputFormat::binary>
+    : public Writer<T, InputOutput::Generic, InputOutputFormat::Generic> {
   private:
-    using Base = Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                        InputOutputDataFormat::Generic>;
+    using Base = Writer<T, InputOutput::Generic, InputOutputFormat::Generic>;
 
   public:
     Writer(const std::string& writerFolder_in,
@@ -138,123 +156,170 @@ namespace lbm {
            const std::string& fileExtension_in,
            const MathVector<int, 3> rankMPI_in,
            const MathVector<int, 3> sizeMPI_in)
-      : Writer<T, InputOutput::Generic, InputOutputType::Generic,
-               InputOutputDataFormat::Generic>(writerFolder_in,
-                                               filePrefix_in,
-                                               fileExtension_in,
-                                               "binary",
-                                               rankMPI_in, sizeMPI_in)
+      : Base(writerFolder_in, filePrefix_in, fileExtension_in,
+             "binary", rankMPI_in, sizeMPI_in)
     {}
 
     using Base::getIsWritten;
     using Base::getIsBackedUp;
 
   protected:
-    using Base::file;
-    using Base::fileFormat;
-    using Base::rankMPI;
-    using Base::sizeMPI;
-    using Base::getFileName;
+    inline void openAndAppend(const std::string& fileName) {
+      Base::file.open(fileName, std::ofstream::out | std::ofstream::app
+                      | std::ofstream::binary);
+    }
 
-    inline void open(const std::string& fileName) {
-      file.open(fileName, std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
+    inline void openAndTruncate(const std::string& fileName) {
+      Base::file.open(fileName, std::ofstream::out | std::ofstream::trunc
+                      | std::ofstream::binary);
     }
 
     template<class U>
     inline void write(U data) {
-      file.write(reinterpret_cast<char*>(&data), sizeof(data));
+      Base::file.write(reinterpret_cast<char*>(&data), sizeof(data));
     }
 
   };
 
-
-  template <class T, InputOutputDataFormat inputOutputDataFormat>
-  class Writer<T, InputOutput::DAT, InputOutputType::Serial, inputOutputDataFormat>
-    : public Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                    inputOutputDataFormat> {
+  template <class T, InputOutputFormat inputOutputFormat>
+  class ScalarAnalysisWriter
+    : public Writer<T, InputOutput::Generic, inputOutputFormat> {
   private:
-  using Base = Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                      inputOutputDataFormat>;
+  using Base = Writer<T, InputOutput::Generic, inputOutputFormat>;
+
   public:
-    Writer(const std::string& filePrefix_in,
-           const MathVector<int, 3> rankMPI_in,
-           const MathVector<int, 3> sizeMPI_in)
-      : Writer<T, InputOutput::Generic, InputOutputType::Generic,
-               inputOutputDataFormat>("outputDAT/", filePrefix_in,
-                                      ".dat", rankMPI_in, sizeMPI_in)
+  ScalarAnalysisWriter(const std::string& filePrefix_in,
+                   const MathVector<int, 3> rankMPI_in,
+                   const MathVector<int, 3> sizeMPI_in)
+      : Base(filePrefix_in+"/", "observables",
+             ".dat", rankMPI_in, sizeMPI_in)
     {}
 
-    using Base::getIsWritten;
-    using Base::getIsBackedUp;
+    inline bool getIsAnalyzed(const unsigned int iteration) {
+      return (iteration % scalarAnalysisStep) == 0;
+    }
+
 
     inline void openFile(const unsigned int iteration) {
       std::string fileName = "/dev/null";
 
-      if(rankMPI[d::X] == 0) {
-        fileName = getFileName(iteration);
+      if(Base::rankMPI[d::X] == 0) {
+        fileName = Base::getFileName();
+        Base::openAndAppend(fileName);
       }
+    }
 
-      open(fileName);
-      writeHeader();
+    inline void closeFile() {
+      Base::file.close();
+    }
+
+    template<unsigned int NumberScalarAnalyses>
+    void writeAnalysis(const unsigned int iteration, T * data) {
+      { INSTRUMENT_ON("Writer<T, InputOutputFormat>::writeAnalysis<NumberScalarAnalysis>",3) }
+      Base::write(iteration);
+      Base::file << " ";
+
+      for(auto iS = 0; iS < NumberScalarAnalyses; ++iS) {
+        Base::write(data[iS]);
+        Base::file << " ";
+      }
+      Base::file << std::endl;
+    }
+
+    //template<unsigned int NumberScalarAnalyses>
+    //void writeAnalysis(const unsigned int iteration, T * data) {}
+
+    void writeHeader(const std::string& header) {
+      { INSTRUMENT_ON("AnalysisWriter::writeHeader",2) }
+      std::string fileName = "/dev/null";
+
+      if(Base::rankMPI[d::X] == 0) {
+        fileName = Base::getFileName();
+        Base::openAndTruncate(fileName);
+
+        Base::file << header << std::endl;
+
+        closeFile();
+      }
+    }
+
+  };
+
+  template <class T, InputOutputFormat inputOutputFormat>
+    class SpectralAnalysisWriter
+    : public Writer<T, InputOutput::Generic, inputOutputFormat> {
+  private:
+  using Base = Writer<T, InputOutput::Generic, inputOutputFormat>;
+  public:
+    SpectralAnalysisWriter(const std::string& filePrefix_in,
+                   const MathVector<int, 3> rankMPI_in,
+                   const MathVector<int, 3> sizeMPI_in)
+      : Base(filePrefix_in+"/", "spectra",
+             ".dat", rankMPI_in, sizeMPI_in)
+    {}
+
+    inline bool getIsAnalyzed(const unsigned int iteration) {
+      return (iteration % spectralAnalysisStep) == 0;
+    }
+
+    inline void openFile(const unsigned int iteration) {
+      std::string fileName = "/dev/null";
+
+      if(Base::rankMPI[d::X] == 0) {
+        fileName = Base::getFileName();
+        Base::openAndAppend(fileName);
+      }
 
     }
 
     inline void closeFile() {
-      file.close();
+      Base::file.close();
     }
 
-    template<unsigned int NumberComponents>
-      void writeField(const unsigned int iteration, const T * data) {
-      INSTRUMENT_ON("Writer<T, InputOutput::VTR, writerFileFromat>::writeField<NumberComponents>",3)
+    template<unsigned int NumberSpectralAnalyses, unsigned int MaxWaveNumber>
+    void writeAnalysis(const unsigned int iteration, T * data[NumberSpectralAnalyses]) {
+      { INSTRUMENT_ON("Writer<T, InputOutput::DAT, writerFileFromat>::writeAnalysis<NumberComponents>",3) }
 
-        write(iteration);
+      for(auto kNorm = 0; kNorm < MaxWaveNumber; ++kNorm) {
+        Base::write(iteration);
+        Base::file << " ";
 
-        for(auto i = 0; i < NumberComponents; ++i) {
-          write(data[i]);
-          file << " ";
+        for(auto iS = 0; iS < NumberSpectralAnalyses; ++iS) {
+          Base::write(data[iS][kNorm]);
+          Base::file << " ";
         }
-        file << std::endl;
+        Base::file << std::endl;
+      }
     }
 
-    template<unsigned int NumberComponents, DomainType initDomainType>
-    void writeField(const Field<T, NumberComponents, initDomainType,
-                    Architecture::CPU, false>& field) {
-    }
+    //template<unsigned int NumberComponents>
+    //void writeAnalysis(const unsigned int iteration, const T * data) {}
 
+    void writeHeader(const std::string& header) {
+      { INSTRUMENT_ON("AnalysisWriter::writeHeader",2) }
+      std::string fileName = "/dev/null";
 
-  private:
-    using Base::file;
-    using Base::fileFormat;
-    using Base::rankMPI;
+      if(Base::rankMPI[d::X] == 0) {
+        fileName = Base::getFileName();
+        Base::openAndTruncate(fileName);
 
-    using Base::getFileName;
-    using Base::open;
-    using Base::write;
+        Base::file << header << std::endl;
 
-
-    void writeHeader() {
-      INSTRUMENT_ON("Writer<T, InputOutput::VTR, InputOutputDataFormat::Generic>::writeHeader",2)
-
-        file << "<?xml version=\"1.0\"?>\n";
-      file << "<VTKFile type=\"RectilinearGrid\" version=\"0.1\" "
-           << "byte_order=\"LittleEndian\">\n";
+        closeFile();
+      }
     }
 
   };
 
 
-  template <class T, InputOutputDataFormat inputOutputDataFormat>
-  class Writer<T, InputOutput::HDF5, InputOutputType::Parallel, inputOutputDataFormat>
-    : public Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                    inputOutputDataFormat> {
-  private:
-    using Base = Writer<T, InputOutput::Generic, InputOutputType::Generic,
-                        inputOutputDataFormat>;
+  template <class T, InputOutput inputOutput>
+  class FieldWriter {};
 
-    using Base::fileFormat;
-    using Base::rankMPI;
-    using Base::sizeMPI;
-    using Base::getFileName;
+  template <class T>
+  class FieldWriter<T, InputOutput::HDF5>
+    : public Writer<T, InputOutput::Generic, InputOutputFormat::Generic> {
+  private:
+    using Base = Writer<T, InputOutput::Generic, InputOutputFormat::Generic>;
 
     hid_t fileHDF5;
     hid_t datasetHDF5;
@@ -264,15 +329,13 @@ namespace lbm {
     hid_t dataSpaceHDF5;
     hid_t fileSpaceHDF5;
     hid_t propertyListHDF5;
-    Writer<T, InputOutput::XDMF, InputOutputType::Serial,
-           inputOutputDataFormat> writerXDMF;
+    FieldWriter<T, InputOutput::XDMF> writerXDMF;
 
   public:
-    Writer(const std::string& filePrefix_in,
-           const MathVector<int, 3>& rankMPI_in,
-           const MathVector<int, 3>& sizeMPI_in)
-      : Base("outputHDF5/", filePrefix_in,
-             ".h5", rankMPI_in, sizeMPI_in)
+    FieldWriter(const std::string& filePrefix_in,
+                const MathVector<int, 3>& rankMPI_in,
+                const MathVector<int, 3>& sizeMPI_in)
+      : Base(filePrefix_in+"/", "field", ".h5", "binary", rankMPI_in, sizeMPI_in)
       , writerXDMF(filePrefix_in, rankMPI_in, sizeMPI_in)
     {}
 
@@ -280,10 +343,10 @@ namespace lbm {
     using Base::getIsBackedUp;
 
     inline void openFile(const unsigned int iteration) {
-      std::string fileName = getFileName(iteration);
+      std::string fileName = Base::getFileName(iteration);
       open(fileName);
 
-      if(rankMPI[d::X] == 0) {
+      if(Base::rankMPI[d::X] == 0) {
         writerXDMF.openFile(iteration);
       }
     }
@@ -291,14 +354,13 @@ namespace lbm {
     inline void closeFile() {
       statusHDF5 = H5Fclose(fileHDF5);
 
-      if(rankMPI[d::X] == 0) {
+      if(Base::rankMPI[d::X] == 0) {
         writerXDMF.closeFile();
       }
     }
 
     template<unsigned int NumberComponents, Architecture architecture>
-      void writeField(Field<T, NumberComponents, DomainType::LocalSpace,
-                    architecture, true>& field) {
+      void writeField(Field<T, NumberComponents, architecture, true>& field) {
       INSTRUMENT_ON("Writer<T, InputOutput::HDF5, writerFileFromat>::writeField<NumberComponents>",3)
 
       propertyListHDF5 = H5Pcreate(H5P_DATASET_XFER);
@@ -323,7 +385,8 @@ namespace lbm {
 
         H5Sselect_hyperslab(fileSpaceHDF5, H5S_SELECT_SET,
                             Project<hsize_t,
-                            unsigned int, L::dimD>::Do(gSD::pOffset(rankMPI)).data(), NULL,
+                            unsigned int, L::dimD>::Do(gSD::pOffset(Base::rankMPI)).data(),
+                            NULL,
                             Project<hsize_t,
                             unsigned int, L::dimD>::Do(lSD::pLength()).data(), NULL);
 
@@ -340,15 +403,14 @@ namespace lbm {
 
       statusHDF5 = H5Pclose(propertyListHDF5);
 
-      if(rankMPI[d::X] == 0) {
+      if(Base::rankMPI[d::X] == 0) {
         writerXDMF.writeField(field);
       }
 
     }
 
     template<unsigned int NumberComponents, Architecture architecture>
-    void writeField(Field<T, NumberComponents, DomainType::LocalSpace,
-                    architecture, false>& field) {
+    void writeField(Field<T, NumberComponents, architecture, false>& field) {
     }
 
     inline void open(const std::string& fileName) {
@@ -367,75 +429,60 @@ namespace lbm {
   };
 
 
-  template <class T, InputOutputDataFormat inputOutputDataFormat>
-  class Writer<T, InputOutput::XDMF, InputOutputType::Serial, inputOutputDataFormat>
-    : public Writer<T, InputOutput::Generic,
-                    InputOutputType::Generic, inputOutputDataFormat> {
+  template <class T>
+  class FieldWriter<T, InputOutput::XDMF>
+    : public Writer<T, InputOutput::Generic, InputOutputFormat::ascii> {
   private:
-    using Base = Writer<T, InputOutput::Generic,
-                        InputOutputType::Generic, inputOutputDataFormat>;
+    using Base = Writer<T, InputOutput::Generic, InputOutputFormat::ascii>;
 
   public:
-    Writer(const std::string& filePrefix_in,
-           const MathVector<int, 3>& rankMPI_in,
-           const MathVector<int, 3>& sizeMPI_in)
-      : Base("outputHDF5/", filePrefix_in,
+    FieldWriter(const std::string& filePrefix_in,
+                const MathVector<int, 3>& rankMPI_in,
+                const MathVector<int, 3>& sizeMPI_in)
+      : Base(filePrefix_in+"/", "field",
              ".xmf", rankMPI_in, sizeMPI_in)
       , fileName("/dev/null")
       , fileNameHDF5("/dev/null")
     {}
 
     inline void openFile(const unsigned int iteration) {
-      fileName = getFileName(iteration);
+      fileName = Base::getFileName(iteration);
       fileNameHDF5 = getFileNameHDF5(iteration);
-      open(fileName);
+      Base::openAndTruncate(fileName);
       writeHeader();
     }
 
     inline void closeFile() {
       writeFooter();
-      file.close();
+      Base::file.close();
     }
 
-    template<unsigned int NumberComponents, DomainType initDomainType,
-             Architecture architecture>
-    void writeField(const Field<T, NumberComponents, initDomainType,
-                    architecture, true>& field) {
+    template<unsigned int NumberComponents, Architecture architecture>
+    void writeField(const Field<T, NumberComponents, architecture, true>& field) {
       INSTRUMENT_ON("Writer<T, InputOutput::XDMF, writerFileFromat>::writeField<NumberComponents>",3)
 
         for(auto iC = 0; iC < NumberComponents; ++iC) {
-          file << "<Attribute Name=\"" << field.fieldName+std::to_string(iC) << "\" "
+          Base::file << "<Attribute Name=\"" << field.fieldName+std::to_string(iC) << "\" "
                << "AttributeType=\"Scalar\" Center=\"Node\">\n";
-          file << "<DataItem Dimensions=\""
+          Base::file << "<DataItem Dimensions=\""
                << gSD::pLength()[d::X];
 
           for(auto iD = 1; iD < L::dimD; ++iD) {
-            file << " " << gSD::sLength()[iD];
+            Base::file << " " << gSD::sLength()[iD];
           }
-          file << "\" ";
-          file << "NumberType=\"Double\" Precision=\"8\" Format=\"HDF\">\n";
-          file << fileNameHDF5 << ":/" << field.fieldName+std::to_string(iC) << "\n";
-          file << "</DataItem>\n";
-          file << "</Attribute>\n";
+          Base::file << "\" ";
+          Base::file << "NumberType=\"Double\" Precision=\"8\" Format=\"HDF\">\n";
+          Base::file << fileNameHDF5 << ":/" << field.fieldName+std::to_string(iC) << "\n";
+          Base::file << "</DataItem>\n";
+          Base::file << "</Attribute>\n";
         }
     }
 
-    template<unsigned int NumberComponents, DomainType initDomainType,
-             Architecture architecture>
-    void writeField(const Field<T, NumberComponents, initDomainType,
-                    architecture, false>& field) {
+    template<unsigned int NumberComponents, Architecture architecture>
+    void writeField(const Field<T, NumberComponents, architecture, false>& field) {
     }
 
   private:
-    using Base::file;
-    using Base::filePrefix;
-    using Base::fileFormat;
-    using Base::rankMPI;
-
-    using Base::getFileName;
-    using Base::open;
-    using Base::write;
-
     std::string fileName;
     std::string fileNameHDF5;
 
@@ -443,66 +490,66 @@ namespace lbm {
       std::ostringstream number;
 
       number << iteration;
-      std::string fileNameR =  filePrefix + "-" + number.str() + ".h5";
+      std::string fileNameR =  Base::filePrefix + "-" + number.str() + ".h5";
 
       return fileNameR;
     }
 
     void writeHeader() {
-      INSTRUMENT_ON("Writer<T, InputOutput::XDMF, InputOutputDataFormat::Generic>::writeHeader",2)
+      INSTRUMENT_ON("Writer<T, InputOutput::XDMF, InputOutputFormat::Generic>::writeHeader",2)
 
-        file << "<?xml version=\"1.0\"?>\n";
-      file << "<!DOCTYPE Xdmf SYSTEM \"Xdmf.dtd\" []>\n";
-      file << "<Xdmf>\n";
-      file << "<Domain>\n";
-      file << "<Grid Name=\"grid\" GridType=\"Uniform\">\n";
-      file << "<Topology TopologyType=\"" << L::dimD << "DCoRectMesh\" Dimensions=\""
+        Base::file << "<?xml version=\"1.0\"?>\n";
+      Base::file << "<!DOCTYPE Xdmf SYSTEM \"Xdmf.dtd\" []>\n";
+      Base::file << "<Xdmf>\n";
+      Base::file << "<Domain>\n";
+      Base::file << "<Grid Name=\"grid\" GridType=\"Uniform\">\n";
+      Base::file << "<Topology TopologyType=\"" << L::dimD << "DCoRectMesh\" Dimensions=\""
            << gSD::pLength()[d::X];
 
       for(auto iD = 1; iD < L::dimD; ++iD) {
-        file << " " << gSD::sLength()[iD];
+        Base::file << " " << gSD::sLength()[iD];
       }
-      file << "\" />\n";
-      file << "<Geometry GeometryType=\"Origin_Dx";
+      Base::file << "\" />\n"
+                 << "<Geometry GeometryType=\"Origin_Dx";
       if(L::dimD >= 2) {
-        file << "Dy";
+        Base::file << "Dy";
       }
       if(L::dimD == 3) {
-        file << "Dz";
+        Base::file << "Dz";
       }
-      file << "\">\n";
-      file << "<DataItem Dimensions=\"" << L::dimD
-           << "\" NumberType=\"Integer\" Format=\"XML\">"
-           << "0";
+      Base::file << "\">\n"
+                 << "<DataItem Dimensions=\"" << L::dimD
+                 << "\" NumberType=\"Integer\" Format=\"XML\">"
+                 << "0";
 
       for(auto iD = 1; iD < L::dimD; ++iD) {
-        file << " 0";
+        Base::file << " 0";
       }
-      file << "</DataItem>\n";
+      Base::file << "</DataItem>\n";
 
-      file << "<DataItem Dimensions=\"" << L::dimD
-           << "\" NumberType=\"Integer\" Format=\"XML\">"
-           << "1";
+      Base::file << "<DataItem Dimensions=\"" << L::dimD
+                 << "\" NumberType=\"Integer\" Format=\"XML\">"
+                 << "1";
 
       for(auto iD = 1; iD < L::dimD; ++iD) {
-        file << " 1";
+        Base::file << " 1";
       }
-      file << "</DataItem>\n";
-      file << "</Geometry>\n";
+      Base::file << "</DataItem>\n"
+                 << "</Geometry>\n";
     }
 
     void writeFooter() {
-      INSTRUMENT_ON("Writer<T, InputOutput::XDMF, InputOutputDataFormat::Generic>::writeFooter",2)
-        file << "</Grid>\n";
-      file << "</Domain>\n";
-      file << "</Xdmf>\n";
+      { INSTRUMENT_ON("Writer<T, InputOutput::XDMF, InputOutputFormat::Generic>::writeFooter",2) }
+        Base::file << "</Grid>\n"
+                   << "</Domain>\n"
+                   << "</Xdmf>\n";
     }
 
   };
 
-
-  typedef Writer<dataT, inputOutput, inputOutputType, inputOutputDataFormat> Writer_;
-
+  typedef FieldWriter<dataT, InputOutput::HDF5> FieldWriter_;
+  typedef ScalarAnalysisWriter<dataT, InputOutputFormat::ascii> ScalarAnalysisWriter_;
+  typedef SpectralAnalysisWriter<dataT, InputOutputFormat::ascii> SpectralAnalysisWriter_;
 }
 
 #endif // WRITER_H

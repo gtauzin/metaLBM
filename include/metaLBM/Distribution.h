@@ -14,9 +14,9 @@ namespace lbm {
 
   template <class T, DomainType initDomainType, Architecture architecture>
   class Distribution
-    : public Field<T, L::dimQ, initDomainType, architecture, true> {
+    : public Field<T, L::dimQ, architecture, true> {
   private:
-    using Base = Field<T, L::dimQ, initDomainType, architecture, true>;
+    using Base = Field<T, L::dimQ, architecture, true>;
     DynamicArray<T, architecture> haloArrayPrevious;
     DynamicArray<T, architecture> haloArrayNext;
 

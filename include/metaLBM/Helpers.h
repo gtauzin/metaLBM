@@ -14,6 +14,40 @@
 
 namespace lbm {
 
+  template <class T>
+  constexpr T& Min(T &a, T &b) {
+    return a > b ? b : a;
+  }
+
+  template <class T>
+  constexpr T& arrayMin_impl(T *begin, T *end) {
+    return begin + 1 == end
+      ? *begin
+      : Min(*begin, arrayMin_impl(begin + 1, end));
+  }
+
+  template <class T, std::size_t N>
+  constexpr T &arrayMin(T(&arr)[N]) {
+    return arrayMin_impl(arr, arr + N);
+  }
+
+  template <class T>
+  constexpr T& Max(T &a, T &b) {
+    return a > b ? a : b;
+  }
+
+  template <class T>
+  constexpr T& arrayMax_impl(T *begin, T *end) {
+    return begin + 1 == end
+      ? *begin
+      : Max(*begin, arrayMin_impl(begin + 1, end));
+  }
+
+  template <class T, std::size_t N>
+  constexpr T &arrayMax(T(&arr)[N]) {
+    return arrayMin_impl(arr, arr + N);
+  }
+
   template<int Begin, int End, int Step = 1>
   struct UnrolledFor {
     template<typename F>

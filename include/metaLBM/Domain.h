@@ -8,6 +8,9 @@
 
 namespace lbm {
 
+  constexpr int globalLength[] = {globalLengthX/2, L::dimD>1 ? globalLengthY/2: 1,
+                                  L::dimD>2 ? globalLengthZ/2: 1};
+
   /**
    * Domain defining space where DynamicArray lives and providing them
    * with a multi-dimensional index.
@@ -34,8 +37,8 @@ namespace lbm {
 
     HOST DEVICE
     static inline constexpr Position pEnd() {
-      return ProjectPadRealAndLeave1<unsigned int, L::dimD>::Do({{lengthX_g/NPROCS,
-            lengthY_g, lengthZ_g}});
+      return ProjectPadRealAndLeave1<unsigned int, L::dimD>::Do({{globalLengthX/NPROCS,
+            globalLengthY, globalLengthZ}});
     }
 
     HOST DEVICE
@@ -56,8 +59,8 @@ namespace lbm {
 
     HOST DEVICE
     static inline constexpr Position sEnd() {
-      return ProjectAndLeave1<unsigned int, L::dimD>::Do({{lengthX_g/NPROCS,
-            lengthY_g, lengthZ_g}});
+      return ProjectAndLeave1<unsigned int, L::dimD>::Do({{globalLengthX/NPROCS,
+            globalLengthY, globalLengthZ}});
     }
 
     HOST DEVICE
@@ -125,7 +128,8 @@ namespace lbm {
 
     HOST DEVICE
     static inline constexpr Position sEnd() {
-      return ProjectAndLeave1<unsigned int, L::dimD>::Do({{lengthX_g, lengthY_g, lengthZ_g}});
+      return ProjectAndLeave1<unsigned int, L::dimD>::Do({{globalLengthX, globalLengthY,
+              globalLengthZ}});
     }
 
     HOST DEVICE

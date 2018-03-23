@@ -170,6 +170,17 @@ namespace lbm {
       }
     }
 
+  MultiDynamicArray(U ** multiArrayPtr_in,
+                    const unsigned int numberElements_in)
+      : Base(multiArrayPtr_in[0])
+      , numberElements(numberElements_in)
+    {
+      for(auto iC = 0; iC < NumberComponents; ++iC) {
+        sMultiArrayPtr[iC] = Base::data(iC*numberElements);
+      }
+    }
+
+
     ~MultiDynamicArray() {
       Base::~DynamicArray<U, Architecture::CPU>();
     }

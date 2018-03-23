@@ -24,47 +24,24 @@ namespace lbm {
   template<class T>
   class Force<T, ForceType::Generic> {
   protected:
-    MathVector<T, L::dimD> force;
-
     MathVector<T, L::dimD> amplitude;
 
     Force(const MathVector<T, 3>& amplitude_in)
-      : force{(T) 0}
-      , amplitude{(T) 0}
+      : amplitude{(T) 0}
     {
       for(auto iD = 0; iD < L::dimD; ++iD) {
         amplitude[iD] = amplitude_in[iD];
       }
     }
 
-  public:
     #pragma omp declare simd
     DEVICE HOST
-    inline const MathVector<T, L::dimD>& getForce(){
-      return force;
-    }
-
-
-  };
-
-
-    template<class T>
-  class Force<T, ForceType::GenericTimeDependent>
-    : public Force<T, ForceType::Generic> {
-  protected:
-    using Force<T, ForceType::Generic>::force;
-    using Force<T, ForceType::Generic>::amplitude;
-
-  public:
-    using Force<T, ForceType::Generic>::Force;
-
-    #pragma omp declare simd
-    DEVICE HOST
-      inline void setForce(T * localForceArray[L::dimD],
-                           const Position& iP,
-                           const Position& offset) {
+    inline void setForce(T * localForceArray[L::dimD],
+                         const Position& iP,
+                         MathVector<T, L::dimD>& force) {
+      auto index = lSD::getIndex(iP);
       for(auto iD = 0; iD < L::dimD; ++iD) {
-        force[iD] = localForceArray[iD][lSD::getIndex(iP)];
+        force[iD] = localForceArray[iD][index];
       }
     }
 
@@ -72,6 +49,23 @@ namespace lbm {
     DEVICE HOST
     inline void update(const unsigned int iteration) {
     }
+
+  };
+
+
+  template<class T>
+  class Force<T, ForceType::GenericTimeDependent>
+    : public Force<T, ForceType::Generic> {
+  private:
+    using Base = Force<T, ForceType::Generic>;
+
+  protected:
+    using Base::amplitude;
+
+    using Base::Force;
+
+    using Base::setForce;
+    using Base::update;
 
   };
 
@@ -79,33 +73,16 @@ namespace lbm {
   template<class T>
   class Force<T, ForceType::GenericTimeIndependent>
     : public Force<T, ForceType::Generic> {
+  private:
+    using Base = Force<T, ForceType::Generic>;
+
   protected:
-    using Force<T, ForceType::Generic>::force;
-    using Force<T, ForceType::Generic>::amplitude;
+    using Base::amplitude;
 
-  public:
-    using Force<T, ForceType::Generic>::Force;
+    using Base::Force;
 
-    #pragma omp declare simd
-    DEVICE HOST
-      inline void setForce(T * localForceArray[L::dimD],
-                           const Position& iP,
-                           const Position& offset) {
-      for(auto iD = 0; iD < L::dimD; ++iD) {
-        force[iD] = localForceArray[iD][hSD::getIndexLocal(iP)];
-      }
-    }
-
-    #pragma omp declare simd
-    DEVICE HOST
-    inline void update(const unsigned int iteration) {
-    }
-
-    #pragma omp declare simd
-    DEVICE HOST
-    inline void setLocalForceArray(double * localForcePtr[L::dimD],
-                                   const unsigned int offsetX) {
-    }
+    using Base::setForce;
+    using Base::update;
 
   };
 
@@ -113,27 +90,46 @@ namespace lbm {
   class Force<T, ForceType::Constant>
     : public Force<T, ForceType::GenericTimeIndependent> {
   private:
-    using Force<T, ForceType::GenericTimeIndependent>::force;
-    using Force<T, ForceType::GenericTimeIndependent>::amplitude;
+    using Base = Force<T, ForceType::GenericTimeIndependent>;
+
+    using Base::amplitude;
 
   public:
     Force(const MathVector<T, 3>& amplitude_in,
           const MathVector<T, 3>& waveLength_in,
           const unsigned int kMin_in, const unsigned int kMax_in)
-      : Force<T, ForceType::GenericTimeIndependent>(amplitude_in)
+      : Base(amplitude_in)
     {}
 
     #pragma omp declare simd
     DEVICE HOST
-    inline void setForce(Position iP,
-                         const Position& offset) {
-      iP += offset;
+    inline void setForce(const Position& iP,
+                         MathVector<T, L::dimD>& force) {
       force = amplitude;
     }
 
-    using Force<T, ForceType::GenericTimeIndependent>::setForce;
-    using Force<T, ForceType::GenericTimeIndependent>::getForce;
-    using Force<T, ForceType::GenericTimeIndependent>::update;
+    #pragma omp declare simd
+    HOST
+    inline void setLocalForceArray(double * localForcePtr[L::dimD],
+                                   const Position& offset) {
+      Computation<Architecture::CPU, L::dimD> computationLocal(lSD::sStart(),
+                                                               lSD::sEnd());
+
+      computationLocal.Do
+        ([=] HOST (const Position& iP) {
+          auto index = lSD::getIndex(iP);
+
+          MathVector<T, L::dimD> force;
+          setForce(iP+offset, force);
+          for(auto iD = 0; iD < L::dimD; ++iD) {
+            localForcePtr[iD][index] = force[iD];
+          }
+        });
+
+    }
+
+    using Base::setForce;
+    using Base::update;
 
   };
 
@@ -141,16 +137,18 @@ namespace lbm {
   template<class T>
   class Force<T, ForceType::Sinusoidal>
     : public Force<T, ForceType::GenericTimeIndependent> {
+  private:
+    using Base = Force<T, ForceType::GenericTimeIndependent>;
+
   protected:
-    using Force<T, ForceType::GenericTimeIndependent>::force;
-    using Force<T, ForceType::GenericTimeIndependent>::amplitude;
+    using Base::amplitude;
     MathVector<T, L::dimD> waveLength;
 
   public:
     Force(const MathVector<T, 3>& amplitude_in,
           const MathVector<T, 3>& waveLength_in,
           const unsigned int kMin_in, const unsigned int kMax_in)
-      : Force<T, ForceType::GenericTimeIndependent>(amplitude_in)
+      : Base(amplitude_in)
       , waveLength{(T) 0}
     {
       for(auto iD = 0; iD < L::dimD; ++iD) {
@@ -160,53 +158,84 @@ namespace lbm {
 
     #pragma omp declare simd
     DEVICE HOST
-    inline void setForce(Position iP,
-                         const Position& offset) {
-      iP += offset;
+    inline void setForce(const Position& iP,
+                         MathVector<T, L::dimD>& force) {
       for(auto iD = 0; iD < L::dimD; ++iD) {
         force[iD] = amplitude[iD] * sin(iP[iD]*2*M_PI/waveLength[iD]);
       }
     }
 
-    using Force<T, ForceType::GenericTimeIndependent>::setForce;
-    using Force<T, ForceType::GenericTimeIndependent>::getForce;
-    using Force<T, ForceType::GenericTimeIndependent>::update;
+    #pragma omp declare simd
+    HOST
+    inline void setLocalForceArray(double * localForcePtr[L::dimD],
+                                   const Position& offset) {
+      Computation<Architecture::CPU, L::dimD> computationLocal(lSD::sStart(),
+                                                               lSD::sEnd());
+      computationLocal.Do
+        ([=] HOST (const Position& iP) {
+          MathVector<T, L::dimD> force;
+
+          auto index = lSD::getIndex(iP);
+          setForce(iP+offset, force);
+          for(auto iD = 0; iD < L::dimD; ++iD) {
+            localForcePtr[iD][index] = force[iD];
+          }
+        });
+
+    }
+
+    using Base::setForce;
+    using Base::update;
   };
 
   template<class T>
   class Force<T, ForceType::Kolmogorov>
-    : public Force<T, ForceType::Sinusoidal> {
+    : public Force<T, ForceType::GenericTimeIndependent> {
   private:
-    using Force<T, ForceType::Sinusoidal>::force;
+    using Base = Force<T, ForceType::GenericTimeIndependent>;
 
-    using Force<T, ForceType::Sinusoidal>::amplitude;
-    using Force<T, ForceType::Sinusoidal>::waveLength;
+    using Base::amplitude;
+    MathVector<T, L::dimD> waveLength;
 
   public:
     Force(const MathVector<T, 3>& amplitude_in,
           const MathVector<T, 3>& waveLength_in,
           const unsigned int kMin_in, const unsigned int kMax_in)
-      : Force<T, ForceType::Sinusoidal>(amplitude_in, waveLength_in,
-                                        kMin_in, kMax_in)
-    {}
-
-    #pragma omp declare simd
-    DEVICE HOST
-    inline void setForce(Position iP,
-                         const Position& offset) {
-      iP += offset;
-      force[d::X] = amplitude[d::X] * sin(iP[d::Y]*2*M_PI/waveLength[d::X]);
+      : Base(amplitude_in)
+      , waveLength{(T) 0}
+    {
+      for(auto iD = 0; iD < L::dimD; ++iD) {
+        waveLength[iD] =  waveLength_in[iD];
+      }
     }
 
     #pragma omp declare simd
     DEVICE HOST
-    inline void setForce(const Position& iP) {
+    inline void setForce(const Position& iP,
+                         MathVector<T, L::dimD>& force) {
       force[d::X] = amplitude[d::X] * sin(iP[d::Y]*2*M_PI/waveLength[d::X]);
     }
 
-    using Force<T, ForceType::Sinusoidal>::setForce;
-    using Force<T, ForceType::Sinusoidal>::getForce;
-    using Force<T, ForceType::Sinusoidal>::update;
+    HOST
+    inline void setLocalForceArray(double * localForcePtr[L::dimD],
+                                   const Position& offset) {
+      Computation<Architecture::CPU, L::dimD> computationLocal(lSD::sStart(),
+                                                               lSD::sEnd());
+      computationLocal.Do
+        ([=] HOST (const Position& iP) {
+          MathVector<T, L::dimD> force;
+          //std::cout << ""
+          auto index = lSD::getIndex(iP);
+          setForce(iP+offset, force);
+          for(auto iD = 0; iD < L::dimD; ++iD) {
+            localForcePtr[iD][index] = force[iD];
+          }
+        });
+
+    }
+
+    using Base::setForce;
+    using Base::update;
   };
 
 
@@ -221,7 +250,6 @@ namespace lbm {
     const unsigned int kMin, kMax;
 
   protected:
-    using Base::force;
     using Base::amplitude;
 
   public:
@@ -233,30 +261,19 @@ namespace lbm {
       , kMax(kMax_in)
     {}
 
-    #pragma omp declare simd
-    DEVICE HOST
-    inline void setForce(Position iP,
-                         const Position& offset){
-      iP += offset;
-      for(auto iD = 0; iD < L::dimD; ++iD) {
-        //force[iD] = amplitude[iD] * sin(iP[iD]*2*M_PI/waveLength[iD]);
-      }
-    }
+    inline void setLocalForceArray(double * * localForcePtr,
+                                   const Position& offset) {
+      Computation<Architecture::CPU, L::dimD> computationFourier(lFD::start(), lFD::end());
 
-    inline void setLocalForceArray(double * localForcePtr[L::dimD],
-                                   const unsigned int offsetX) {
-
-
-      Computation<Architecture::CPU, L::dimD> computation(lFD::start(), lFD::end());
-
-      computation.Do([=] HOST (const Position& iFP) {
+      computationFourier.Do
+        ([=] HOST (const Position& iFP) {
           int kNormSquared;
           WaveNumber iK{{0}};
           Position iFP_symmetric{{0}};
           WaveNumber iK_symmetric{{0}};
 
-          iK[d::X] = iFP[d::X]+offsetX <= gSD::sLength()[d::X]/2 ?
-            iFP[d::X]+offsetX : iFP[d::X]+offsetX-gSD::sLength()[d::X];
+          iK[d::X] = iFP[d::X]+offset[d::X] <= gSD::sLength()[d::X]/2 ?
+            iFP[d::X]+offset[d::X] : iFP[d::X]+offset[d::X]-gSD::sLength()[d::X];
           iK[d::Y] = iFP[d::Y] <= gSD::sLength()[d::Y]/2 ?
             iFP[d::Y] : iFP[d::Y]-gSD::sLength()[d::Y];
           iK[d::Z] = iFP[d::Z] <= gSD::sLength()[d::Z]/2 ?
@@ -269,7 +286,7 @@ namespace lbm {
             for(auto iD = 0; iD < L::dimD; ++iD) {
               fftw_complex * fourierForcePtr = ((fftw_complex *) localForcePtr[iD]);
 
-              fourierForcePtr[index][0] = 1;
+              fourierForcePtr[index][0] = amplitude[iD];
               fourierForcePtr[index][1] = 0;
 
               if(iFP[L::dimD-1] == 0) {
@@ -278,15 +295,15 @@ namespace lbm {
                   iFP_symmetric[d::Y] = gSD::sLength()[d::Y] - iFP[d::Y];
 
                   iK_symmetric[d::X]
-                    = iFP_symmetric[d::X]+offsetX <= gSD::sLength()[d::X]/2 ?
-                    iFP_symmetric[d::X]+offsetX :
-                    iFP_symmetric[d::X]+offsetX - gSD::sLength()[d::X];
+                    = iFP_symmetric[d::X]+offset[d::X] <= gSD::sLength()[d::X]/2 ?
+                    iFP_symmetric[d::X]+offset[d::X] :
+                    iFP_symmetric[d::X]+offset[d::X] - gSD::sLength()[d::X];
                   iK_symmetric[d::Y]
                     = iFP_symmetric[d::Y] <= gSD::sLength()[d::Y]/2 ?
                     iFP_symmetric[d::Y] : iFP_symmetric[d::Y]-gSD::sLength()[d::Y];
 
                   auto index_symmetric = lFD::getIndex(iFP_symmetric);
-                  fourierForcePtr[index_symmetric][0] = 1;
+                  fourierForcePtr[index_symmetric][0] = amplitude[iD];
                   fourierForcePtr[index_symmetric][1] = 0;
                 }
               }
@@ -294,16 +311,16 @@ namespace lbm {
           }
         });
 
-      FourierTransformer<double, Architecture::CPU, PartitionningType::OneD,
-                         L::dimD, L::dimD> fftTransformer(localForcePtr,
-                                                          Cast<unsigned int,
-                                                          ptrdiff_t, 3>::Do(gSD::sLength()).data());
-    fftTransformer.executeBackwardFFT();
+      Curl<double, Architecture::CPU, PartitionningType::OneD, 3, 3>
+        curlTransformer(localForcePtr,
+                        Cast<unsigned int,ptrdiff_t, 3>::Do(gSD::sLength()).data(),
+                        offset);
+      //TO DO: CAN I CURL IN PLACE??? NO!!!!! THEN MAKE IT WORK FOR 2D TOO...
+      curlTransformer.executeFourier();
 
     }
 
     using Base::setForce;
-    using Base::getForce;
     using Base::update;
   };
 

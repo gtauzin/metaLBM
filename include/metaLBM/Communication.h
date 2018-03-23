@@ -40,6 +40,7 @@ namespace lbm {
     const MathVector<int, 3> sizeMPI;
     const std::string processorName;
 
+    Computation<Architecture::CPU, L::dimD> computationLocal;
     const unsigned int rightXRankMPI;
     const unsigned int leftXRankMPI;
     MPI_Status statusXMPI[4];
@@ -62,6 +63,7 @@ namespace lbm {
       : rankMPI(rankMPI_in)
       , sizeMPI(sizeMPI_in)
       , processorName(processorName_in)
+      , computationLocal(lSD::sStart(), lSD::sEnd())
       , leftXRankMPI((rankMPI_in[d::X] + sizeMPI_in[d::X] - 1) % sizeMPI_in[d::X])
       , rightXRankMPI((rankMPI_in[d::X] + 1) % sizeMPI_in[d::X])
       , statusXMPI()
@@ -111,28 +113,47 @@ namespace lbm {
                  0, MPI_COMM_WORLD);
     }
 
-    HOST
-    T reduce(T * localPtr) {
-      T localSum = (T) 0;
-      for(auto iZ = lSD::sStart()[d::Z]; iZ < lSD::sEnd()[d::Z]; ++iZ) {
-        for(auto iY = lSD::sStart()[d::Y]; iY < lSD::sEnd()[d::Y]; ++iY) {
-          for(auto iX = lSD::sStart()[d::X]; iX < lSD::sEnd()[d::X]; ++iX) {
-            localSum
-              += localPtr[lSD::getIndex(Position({iX, iY, iZ}))];
-          }
-        }
-      }
 
+    HOST
+    void reduce(T& localSum) {
       MPI_Barrier(MPI_COMM_WORLD);
 
-      T globalSum = (T) 0;
-      MPI_Reduce(&localSum, &globalSum, 1, MPI_DOUBLE,
+      //T globalSum = (T) 0;
+      MPI_Reduce(MPI_IN_PLACE, &localSum, 1, MPI_DOUBLE,
                  MPI_SUM, 0, MPI_COMM_WORLD);
 
       MPI_Barrier(MPI_COMM_WORLD);
 
-      return globalSum;
+      //return globalSum;
     }
+
+    HOST
+    T reduce(T * localPtr) {
+      T localSum = (T) 0;
+      computationLocal.Do
+        ([&] HOST (const Position& iP) {
+          localSum += localPtr[lSD::getIndex(iP)];
+        });
+
+      reduce(localSum);
+      return localSum;
+    }
+
+    template<unsigned int NumberComponents>
+    HOST
+    void reduceAll(T localArray[NumberComponents]) {
+      MPI_Barrier(MPI_COMM_WORLD);
+
+      //T globalArray[NumberComponents] = {(T) 0};
+      MPI_Allreduce(MPI_IN_PLACE, localArray, NumberComponents,
+                    MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+
+      MPI_Barrier(MPI_COMM_WORLD);
+
+      //return globalArray;
+    }
+
 
   };
 
@@ -893,6 +914,9 @@ namespace lbm {
     using Base::sendAndReceiveHaloY;
     using Base::sendAndReceiveHaloZ;
   };
+
+typedef Communication<dataT, latticeT, algorithmT,
+                      memoryL, partitionningT, implementationT, L::dimD> Communication_;
 
 }
 

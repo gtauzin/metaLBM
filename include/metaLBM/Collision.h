@@ -1,13 +1,13 @@
 #ifndef COLLISION_H
 #define COLLISION_H
 
-
 #include "Commons.h"
 #include "Options.h"
 #include "Domain.h"
 #include "Lattice.h"
 #include "MathVector.h"
 #include "Helpers.h"
+#include "Moment.h"
 #include "Equilibrium.h"
 #include "Force.h"
 #include "ForcingScheme.h"
@@ -23,85 +23,106 @@ namespace lbm {
   protected:
     T tau;
 
-    Force_ force;
+    Force_ forcing;
     ForcingScheme_ forcingScheme;
-    Equilibrium_ equilibrium;
+
+    T density;
+    MathVector<T, L::dimD> velocity;
+    T velocity2;
+    MathVector<T, L::dimD> force;
+    T entropy;
+
 
     Collision(const T tau_in,
               const MathVector<T, 3>& amplitude_in,
               const MathVector<T, 3>& waveLength_in,
               const unsigned int kMin_in, const unsigned int kMax_in)
       : tau(tau_in)
-      , force(amplitude_in,
-              waveLength_in,
-              kMin_in, kMax_in)
+      , forcing(amplitude_in, waveLength_in, kMin_in, kMax_in)
       , forcingScheme(tau_in)
-      , equilibrium()
+      , density()
+      , velocity{{0}}
+      , velocity2()
+      , force{{0}}
+      , entropy()
     {}
 
   public:
     #pragma omp declare simd
     DEVICE HOST
-      inline void setForce(T * localForceArray[L::dimD],
-                           const Position& iP,
-                           const Position& offset) {
-      INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::setForce",4)
+    inline const T& getDensity() {
+      return density;
+    }
 
-        force.setForce(localForceArray, iP, offset);
+    #pragma omp declare simd
+    DEVICE HOST
+    inline const MathVector<T, L::dimD>& getVelocity() {
+      return velocity;
     }
 
     #pragma omp declare simd
     DEVICE HOST
     inline const MathVector<T, L::dimD>& getForce() {
-      return force.getForce();
+      return force;
+    }
+
+    #pragma omp declare simd
+    DEVICE HOST
+    inline void calculateMoments(const T * haloDistributionPtr,
+                                 const Position& iP) {
+      { INSTRUMENT_OFF("Moment<T>::calculateMoments",4) }
+
+      Moment_::calculateDensity(haloDistributionPtr, iP, density);
+      Moment_::calculateVelocity(haloDistributionPtr, iP, density, velocity);
+
+      velocity2 = velocity.norm2();
+    }
+
+    #pragma omp declare simd
+    DEVICE HOST
+    inline void setForce(T * localForceArray[L::dimD],
+                         const Position& iP,
+                         const Position& offset) {
+      { INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::setForce",4) }
+
+      forcing.setForce(localForceArray, iP-L::halo(), force);
+      forcingScheme.setVariables(force, density, velocity);
     }
 
     #pragma omp declare simd
     DEVICE HOST
     inline const MathVector<T, L::dimD> getHydrodynamicVelocity() {
-      return forcingScheme.calculateHydrodynamicVelocity(getForce());
+      return forcingScheme.calculateHydrodynamicVelocity(force, density, velocity);
     }
 
     #pragma omp declare simd
     DEVICE HOST
-    inline T calculate(const T * f,
+    inline T calculate(const T * haloDistributionPtr,
                        const Position& iP,
                        const unsigned int iQ) {
       INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::calculate",4)
-        return ( (T) 1.0 - (T) tau) * f[hSD::getIndex(iP, iQ)]
-        + forcingScheme.calculateCollisionSource(getForce(), iQ)
-        + (T) tau * equilibrium.calculate(iQ);
+        return ( (T) 1.0 - (T) 1.0/tau) * haloDistributionPtr[hSD::getIndex(iP, iQ)]
+        + forcingScheme.calculateCollisionSource(force, density, velocity, velocity2, iQ)
+        + (T) 1.0/tau * Equilibrium_::calculate(density, velocity, velocity2, iQ);
     }
 
     #pragma omp declare simd
     DEVICE HOST
     inline void update(const unsigned int iteration) {
-      force.update(iteration);
+      forcing.update(iteration);
     }
 
-
-    #pragma omp declare simd
-    DEVICE HOST
-    inline void setVariables(const T * f,
-                             const Position& iP,
-                             const T density, const MathVector<T, L::dimD>& velocity) {
-      INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::setVariables",4)
-
-      forcingScheme.setVariables(getForce(), density, velocity);
-      equilibrium.setVariables(density,
-                               forcingScheme.calculateEquilibriumVelocity(getForce()));
-    }
   };
 
 
   template <class T>
   class Collision<T, CollisionType::BGK>
     : public Collision<T, CollisionType::GenericSRT> {
-
+  private:
+    using Base = Collision<T, CollisionType::GenericSRT>;
   protected:
-    using Collision<T, CollisionType::GenericSRT>::tau;
-    using Collision<T, CollisionType::GenericSRT>::equilibrium;
-    using Collision<T, CollisionType::GenericSRT>::forcingScheme;
+    using Base::tau;
+    using Base::forcingScheme;
 
     T alpha;
 
@@ -110,18 +131,19 @@ namespace lbm {
               const MathVector<T, 3>& amplitude_in,
               const MathVector<T, 3>& waveLength_in,
               const unsigned int kMin_in, const unsigned int kMax_in)
-      : Collision<T, CollisionType::GenericSRT>(tau_in, amplitude_in, waveLength_in,
+      : Base(tau_in, amplitude_in, waveLength_in,
                                                 kMin_in, kMax_in)
       , alpha( (T) 2)
     {}
-    using Collision<T, CollisionType::GenericSRT>::update;
-    using Collision<T, CollisionType::GenericSRT>::setVariables;
-    using Collision<T, CollisionType::GenericSRT>::setForce;
+    using Base::update;
+    using Base::setForce;
 
-    using Collision<T, CollisionType::GenericSRT>::calculate;
+    using Base::calculate;
 
-    using Collision<T, CollisionType::GenericSRT>::getHydrodynamicVelocity;
-    using Collision<T, CollisionType::GenericSRT>::getForce;
+    using Base::getHydrodynamicVelocity;
+    using Base::getDensity;
+    using Base::getVelocity;
+    using Base::getForce;
 
     DEVICE HOST
     inline T getAlpha() {
@@ -133,54 +155,59 @@ namespace lbm {
   template <class T>
   class Collision<T, CollisionType::ELBM>
     : public Collision<T, CollisionType::BGK> {
+  private:
+    using Base = Collision<T, CollisionType::BGK>;
 
   public:
     Collision(const T tau_in,
               const MathVector<T, 3>& amplitude_in,
               const MathVector<T, 3>& waveLength_in,
               const unsigned int kMin_in, const unsigned int kMax_in)
-      : Collision<T, CollisionType::BGK>(tau_in, amplitude_in, waveLength_in,
+      : Base(tau_in, amplitude_in, waveLength_in,
                                          kMin_in, kMax_in)
       , beta( (T) 1.0/(2.0 * tau_in))
     {}
 
-    using Collision<T, CollisionType::BGK>::setForce;
+    using Base::setForce;
 
     #pragma omp declare simd
     DEVICE HOST
-    inline void setVariables(const T * f,
+    inline void setVariables(const T * haloDistributionPtr,
                              const Position& iP,
                              const T density,
                              const MathVector<T, L::dimD>& velocity) {
       INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::setVariables",4)
 
-        Collision<T, CollisionType::BGK>::setVariables(f, iP, density, velocity);
+        Base::setVariables(haloDistributionPtr, iP,
+                                                       density, velocity);
 
       for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
-        f_Forced[iQ] = f[hSD::getIndex(iP-uiL::celerity()[iQ], iQ)]
-          + forcingScheme.calculateCollisionSource(getForce(), iQ);
-        f_NonEq[iQ] = f[hSD::getIndex(iP-uiL::celerity()[iQ], iQ)]
-          - equilibrium.calculate(iQ);
+        f_Forced[iQ] = haloDistributionPtr[hSD::getIndex(iP-uiL::celerity()[iQ], iQ)]
+          + forcingScheme.calculateCollisionSource(Base::force, Base::density,
+                                                   Base::velocity, Base::velocity2, iQ);
+        f_NonEq[iQ] = haloDistributionPtr[hSD::getIndex(iP-uiL::celerity()[iQ], iQ)]
+          - Equilibrium_::calculate(Base::density, Base::velocity, Base::velocity2, iQ);
       }
 
       calculateAlpha();
-      tau = (T) 1.0/(alpha*beta);
+      tau = (T) 1.0/(Base::alpha*beta);
     }
 
-    using Collision<T, CollisionType::BGK>::update;
-    using Collision<T, CollisionType::BGK>::calculate;
+    using Base::update;
+    using Base::calculate;
 
-    using Collision<T, CollisionType::BGK>::getHydrodynamicVelocity;
-    using Collision<T, CollisionType::BGK>::getForce;
-
-    using Collision<T, CollisionType::BGK>::getAlpha;
+    using Base::getHydrodynamicVelocity;
+    using Base::getDensity;
+    using Base::getVelocity;
+    using Base::getForce;
+    using Base::getAlpha;
 
   protected:
-    using Collision<T, CollisionType::BGK>::forcingScheme;
-    using Collision<T, CollisionType::BGK>::equilibrium;
+    using Base::forcingScheme;
+    using Base::equilibrium;
 
-    using Collision<T, CollisionType::BGK>::tau;
-    using Collision<T, CollisionType::BGK>::alpha;
+    using Base::tau;
+
     const T beta;
 
     MathVector<T, L::dimQ> f_Forced;
@@ -235,7 +262,7 @@ namespace lbm {
         std::shared_ptr<RootFinderFunctor<T>>(new EntropicStepFunctor<T>(f_Forced, f_NonEq));
       const T tolerance = 1e-5;
       const int iterationMax = 20;
-      T alphaR = alpha;
+      T alphaR = Base::alpha;
 
       bool hasConverged = NewtonRaphsonSolver(entropicStepFunctor,
                                               tolerance, iterationMax,
@@ -254,19 +281,19 @@ namespace lbm {
       INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::calculateAlpha",5)
 
         if(isDeviationSmall( (T) 1.0e-3)) {
-          alpha = 2.0;
+          Base::alpha = 2.0;
         }
 
         else {
           T alphaMax = calculateAlphaMax();
 
           if(alphaMax < 2.) {
-            alpha = 0.95 * alphaMax;
+            Base::alpha = 0.95 * alphaMax;
           }
 
           else {
             T alphaMin = 1.;
-            alpha = solveAlpha(alphaMin, alphaMax);
+            Base::alpha = solveAlpha(alphaMin, alphaMax);
 
           }
         }
@@ -277,48 +304,53 @@ namespace lbm {
   template <class T>
   class Collision<T, CollisionType::Approached_ELBM>
     : public Collision<T, CollisionType::ELBM> {
+  private:
+    using Base = Collision<T, CollisionType::ELBM>;
+
   public:
     Collision(const T tau_in,
               const MathVector<T, 3>& amplitude_in,
               const MathVector<T, 3>& waveLength_in,
               const unsigned int kMin_in, const unsigned int kMax_in)
-      : Collision<T, CollisionType::ELBM>(tau_in, amplitude_in, waveLength_in,
+      : Base(tau_in, amplitude_in, waveLength_in,
                                           kMin_in, kMax_in)
     {}
 
-    using Collision<T, CollisionType::ELBM>::update;
-    using Collision<T, CollisionType::ELBM>::setForce;
-    using Collision<T, CollisionType::ELBM>::setVariables;
+    using Base::update;
+    using Base::setForce;
+    using Base::setVariables;
 
-    using Collision<T, CollisionType::ELBM>::calculate;
+    using Base::calculate;
 
-    using Collision<T, CollisionType::ELBM>::getHydrodynamicVelocity;
-    using Collision<T, CollisionType::ELBM>::getForce;
-    using Collision<T, CollisionType::ELBM>::getAlpha;
+    using Base::getHydrodynamicVelocity;
+    using Base::getDensity;
+    using Base::getVelocity;
+    using Base::getForce;
+    using Base::getAlpha;
 
   private:
-    using Collision<T, CollisionType::ELBM>::tau;
-    using Collision<T, CollisionType::ELBM>::alpha;
-    using Collision<T, CollisionType::ELBM>::forcingScheme;
-    using Collision<T, CollisionType::ELBM>::equilibrium;
-    using Collision<T, CollisionType::ELBM>::f_Forced;
-    using Collision<T, CollisionType::ELBM>::f_NonEq;
+    using Base::tau;
+    using Base::alpha;
+    using Base::forcingScheme;
+    using Base::equilibrium;
+    using Base::f_Forced;
+    using Base::f_NonEq;
 
-    using Collision<T, CollisionType::ELBM>::isDeviationSmall;
-    using Collision<T, CollisionType::ELBM>::calculateAlphaMax;
-    using Collision<T, CollisionType::ELBM>::solveAlpha;
+    using Base::isDeviationSmall;
+    using Base::calculateAlphaMax;
+    using Base::solveAlpha;
 
     #pragma omp declare simd
     DEVICE HOST
     inline T approximateAlpha() {
-      INSTRUMENT_OFF("Collision<T, CollisionType::Approached_ELBM>::approximateAlpha",6)
+      { INSTRUMENT_OFF("Collision<T, CollisionType::Approached_ELBM>::approximateAlpha",6) }
 
-        T a1 = 0.0;
+      T a1 = 0.0;
       T a2 = 0.0;
       T a3 = 0.0;
       T a4 = 0.0;
 
-      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+      for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
         T temp = f_NonEq[iQ]/f_Forced[iQ];
         a1 += f_NonEq[iQ]*temp;
         a2 += f_NonEq[iQ]*temp*temp;
@@ -340,7 +372,7 @@ namespace lbm {
     #pragma omp declare simd
     DEVICE HOST
     inline void calculateAlpha() {
-      INSTRUMENT_OFF("Collision<T, CollisionType::Approached_ELBM>::calculateAlpha",5)
+      { INSTRUMENT_OFF("Collision<T, CollisionType::Approached_ELBM>::calculateAlpha",5) }
 
         if(isRelativeDeviationSmall( (T) 1.0e-3)) {
           T alphaApproximated = approximateAlpha();
@@ -366,34 +398,39 @@ namespace lbm {
   template <class T>
   class Collision<T, CollisionType::ForcedNR_ELBM>
     : public Collision<T, CollisionType::ELBM> {
+  private:
+    using Base = Collision<T, CollisionType::ELBM>;
+
   public:
-    using Collision<T, CollisionType::ELBM>::update;
-    using Collision<T, CollisionType::ELBM>::setForce;
-    using Collision<T, CollisionType::ELBM>::setVariables;
+    using Base::update;
+    using Base::setForce;
+    using Base::setVariables;
 
-    using Collision<T, CollisionType::ELBM>::calculate;
+    using Base::calculate;
 
-    using Collision<T, CollisionType::ELBM>::getHydrodynamicVelocity;
-    using Collision<T, CollisionType::ELBM>::getForce;
-    using Collision<T, CollisionType::ELBM>::getAlpha;
+    using Base::getHydrodynamicVelocity;
+    using Base::getDensity;
+    using Base::getVelocity;
+    using Base::getForce;
+    using Base::getAlpha;
 
   private:
-    using Collision<T, CollisionType::ELBM>::alpha;
-    using Collision<T, CollisionType::ELBM>::forcingScheme;
-    using Collision<T, CollisionType::ELBM>::equilibrium;
+    using Base::alpha;
+    using Base::forcingScheme;
+    using Base::equilibrium;
 
-    using Collision<T, CollisionType::ELBM>::f_Forced;
-    using Collision<T, CollisionType::ELBM>::f_NonEq;
+    using Base::f_Forced;
+    using Base::f_NonEq;
 
-    using Collision<T, CollisionType::ELBM>::isDeviationSmall;
-    using Collision<T, CollisionType::ELBM>::calculateAlphaMax;
+    using Base::isDeviationSmall;
+    using Base::calculateAlphaMax;
 
     #pragma omp declare simd
     DEVICE HOST
     inline T solveAlpha(const T alphaMin, const T alphaMax) {
-      INSTRUMENT_OFF("Collision<T, CollisionType::ForcedNR_ELBM>::solveAlpha",6)
+      { INSTRUMENT_OFF("Collision<T, CollisionType::ForcedNR_ELBM>::solveAlpha",6) }
 
-        std::shared_ptr<RootFinderFunctor<T>> entropicStepFunctor =
+      std::shared_ptr<RootFinderFunctor<T>> entropicStepFunctor =
         std::shared_ptr<RootFinderFunctor<T>>(new EntropicStepFunctor<T>(f_Forced, f_NonEq));
       const T tolerance = 1e-5;
       const int iterationMax = 20;
@@ -430,36 +467,40 @@ namespace lbm {
   template <class T>
   class Collision<T, CollisionType::ForcedBNR_ELBM>
     : public Collision<T, CollisionType::ForcedNR_ELBM> {
+  private:
+    using Base = Collision<T, CollisionType::ForcedNR_ELBM>;
+
   public:
-    using Collision<T, CollisionType::ForcedNR_ELBM>::update;
-    using Collision<T, CollisionType::ForcedNR_ELBM>::setForce;
-    using Collision<T, CollisionType::ForcedNR_ELBM>::setVariables;
+    using Base::update;
+    using Base::setForce;
+    using Base::setVariables;
 
-    using Collision<T, CollisionType::ForcedNR_ELBM>::calculate;
+    using Base::calculate;
 
-    using Collision<T, CollisionType::ForcedNR_ELBM>::getHydrodynamicVelocity;
-    using Collision<T, CollisionType::ForcedNR_ELBM>::getForce;
-    using Collision<T, CollisionType::ForcedNR_ELBM>::getAlpha;
+    using Base::getHydrodynamicVelocity;
+    using Base::getDensity;
+    using Base::getVelocity;
+    using Base::getForce;
+    using Base::getAlpha;
 
   private:
-    using Collision<T, CollisionType::ForcedNR_ELBM>::alpha;
-    using Collision<T, CollisionType::ForcedNR_ELBM>::f_Forced;
-    using Collision<T, CollisionType::ForcedNR_ELBM>::f_NonEq;
+    using Base::alpha;
+    using Base::f_Forced;
+    using Base::f_NonEq;
 
+    using Base::forcingScheme;
+    using Base::equilibrium;
 
-    using Collision<T, CollisionType::ForcedNR_ELBM>::forcingScheme;
-    using Collision<T, CollisionType::ForcedNR_ELBM>::equilibrium;
-
-    using Collision<T, CollisionType::ForcedNR_ELBM>::isDeviationSmall;
-    using Collision<T, CollisionType::ForcedNR_ELBM>::calculateAlphaMax;
-    using Collision<T, CollisionType::ForcedNR_ELBM>::calculateAlpha;
+    using Base::isDeviationSmall;
+    using Base::calculateAlphaMax;
+    using Base::calculateAlpha;
 
     #pragma omp declare simd
     DEVICE HOST
     inline T solveAlpha(const T alphaMin, const T alphaMax) {
-      INSTRUMENT_OFF("Collision<T, CollisionType::ForcedBNR_ELBM>::solveAlpha",6)
+      { INSTRUMENT_OFF("Collision<T, CollisionType::ForcedBNR_ELBM>::solveAlpha",6) }
 
-        std::shared_ptr<RootFinderFunctor<T>> entropicStepFunctor =
+      std::shared_ptr<RootFinderFunctor<T>> entropicStepFunctor =
         std::shared_ptr<RootFinderFunctor<T>>(new EntropicStepFunctor<T>(f_Forced, f_NonEq));
       const T tolerance = 1e-5;
       const int iterationMax = 20;
