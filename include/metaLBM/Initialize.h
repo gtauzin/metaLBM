@@ -82,7 +82,8 @@ namespace lbm {
     Force<T, forceT> force(forceAmplitude, forceWaveLength, forcekMin, forcekMax);
 
     if(writeForce) {
-      force.setLocalForceArray(forceFieldR.getMultiData(), gFD::offset(rankMPI));
+      force.setLocalForceArray(forceFieldR.getMultiData(), numberElements,
+                               gFD::offset(rankMPI));
     }
 
     return forceFieldR;
@@ -97,57 +98,44 @@ namespace lbm {
     return alphaFieldR;
   }
 
-  template<class T, Architecture architecture>
-  MultiDynamicArray<T, Architecture::CPU, L::dimQ>
-    initLocalDistributionStart(const Field<T, 1, architecture, true>& densityField,
-                               const Field<T, L::dimD, architecture, true>& velocityField) {
-    INSTRUMENT_ON("initLocalDistributionStart<T>",2)
-
-      Field<T, L::dimQ, architecture, true> distributionFieldR("distribution",
-                                                               densityField.numberElements);
-
-    Position iP;
-    for(auto iZ = lSD::sStart()[d::Z]; iZ < lSD::sEnd()[d::Z]; iZ++) {
-      for(auto iY = lSD::sStart()[d::Y]; iY < lSD::sEnd()[d::Y]; iY++) {
-        for(auto iX = lSD::sStart()[d::X]; iX < lSD::sEnd()[d::X]; iX++) {
-          iP =  Position({iX, iY, iZ});
-
-          T density = densityField.getLocalValue(iP);
-          MathVector<T, L::dimD> velocity = velocityField.getLocalVector(iP);
-          T velocity2 = velocity.norm2();
-
-          for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
-            distributionFieldR.setLocalValue(iP, Equilibrium_::calculate(density, velocity,
-                                                                         velocity2, iQ), iQ);
-          }
-        }
-      }
-    }
-
-    return distributionFieldR.getLocalArray();
-  }
-
-  template<class T>
-  MultiDynamicArray<T, Architecture::CPU, L::dimQ> initLocalDistributionRestart(const unsigned int numberElements) {
-    INSTRUMENT_ON("initLocalDistributionRestart<T>",2)
-
-      ReaderDimQ_ reader(prefix);
-    return reader.readArray("distribution", startIteration);
-  }
-
 
   template<class T, Architecture architecture>
-  MultiDynamicArray<T, Architecture::CPU, L::dimQ>
-    initLocalDistribution(const Field<T, 1, architecture, true>& densityField,
-                          const Field<T, L::dimD, architecture, true>& velocityField) {
-    INSTRUMENT_ON("initLocalDistribution<T>",2)
+  Distribution<T, architecture>
+  initLocalDistribution(const Field<T, 1, architecture, true>& densityField,
+                        const Field<T, L::dimD, architecture, true>& velocityField,
+                        const MathVector<int, 3>& rankMPI) {
+    { INSTRUMENT_ON("initLocalDistribution<T>",2) }
+    Distribution<T, architecture> distributionR("distribution",
+                                                densityField.numberElements);
 
     if(startIteration == 0) {
-      return initLocalDistributionStart<T>(densityField, velocityField);
+
+      Position iP;
+      for(auto iZ = lSD::sStart()[d::Z]; iZ < lSD::sEnd()[d::Z]; iZ++) {
+        for(auto iY = lSD::sStart()[d::Y]; iY < lSD::sEnd()[d::Y]; iY++) {
+          for(auto iX = lSD::sStart()[d::X]; iX < lSD::sEnd()[d::X]; iX++) {
+            iP =  Position({iX, iY, iZ});
+
+            T density = densityField.getLocalValue(iP);
+            MathVector<T, L::dimD> velocity = velocityField.getLocalVector(iP);
+            T velocity2 = velocity.norm2();
+
+            for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
+              distributionR.setLocalValue(iP, Equilibrium_::calculate(density, velocity,
+                                                                      velocity2, iQ), iQ);
+            }
+        }
+        }
+      }
+
     }
+
     else {
-      return initLocalDistributionRestart<T>(densityField.numberElements);
+      DistributionReader_ distributionReader(prefix, rankMPI);
+      distributionReader.readDistribution(distributionR);
     }
+
+    return distributionR;
   }
 
 

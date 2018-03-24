@@ -28,18 +28,18 @@ namespace lbm {
   public:
     TotalEnergy<T> totalEnergy;
     TotalEnstrophy<T> totalEnstrophy;
-    ScalarAnalysisWriter_& scalarAnalysisWriter;
     Communication_& communication;
+    ScalarAnalysisWriter_ scalarAnalysisWriter;
     Computation<Architecture::CPU, L::dimD> computationLocal;
 
     ScalarAnalysisList(FieldList<T, architecture>& fieldList_in,
-                       ScalarAnalysisWriter_& scalarAnalysisWriter_in,
-                       Communication_& communication_in)
+                       Communication_& communication_in,
+                       const std::string& prefix_in)
       : totalEnergy(fieldList_in.density.getMultiData(),
                     fieldList_in.velocity.getMultiData())
       , totalEnstrophy(fieldList_in.vorticity.getMultiData())
-      , scalarAnalysisWriter(scalarAnalysisWriter_in)
       , communication(communication_in)
+      , scalarAnalysisWriter(prefix_in, communication_in.rankMPI)
       , computationLocal(lSD::sStart(), lSD::sEnd())
     {
       writeAnalysesHeader();
@@ -51,6 +51,10 @@ namespace lbm {
       totalEnstrophy(iP);
     }
 
+    inline bool getIsAnalyzed(const unsigned int iteration) {
+      return scalarAnalysisWriter.getIsAnalyzed(iteration);
+    }
+
     inline void writeAnalyses(const unsigned int iteration) {
       resetAnalyses();
       computationLocal.Do(*this);
@@ -58,10 +62,12 @@ namespace lbm {
       reduceAnalyses();
 
       T scalarList[] = {totalEnergy.scalar, totalEnstrophy.scalar};
-
+      scalarAnalysisWriter.openFile(iteration);
       scalarAnalysisWriter.writeAnalysis<2>(iteration, scalarList);
+      scalarAnalysisWriter.closeFile();
     }
 
+  private:
     inline void resetAnalyses() {
       totalEnergy.reset();
       totalEnstrophy.reset();
@@ -95,24 +101,41 @@ namespace lbm {
 
   public:
     EnergySpectra<T, gFD::maxWaveNumber()> energySpectra;
-    SpectralAnalysisWriter_& spectralAnalysisWriter;
     Communication_& communication;
+    SpectralAnalysisWriter_ spectralAnalysisWriter;
     Position offset;
     Computation<Architecture::CPU, L::dimD> computationFourier;
 
 
     SpectralAnalysisList(FieldList<T, architecture>& fieldList_in,
-                         SpectralAnalysisWriter_& spectralAnalysisWriter_in,
-                         Communication_& communication_in)
+                         Communication_& communication_in,
+                         const std::string& prefix_in)
       : energySpectra(fieldList_in.velocity.getMultiData())
-      , spectralAnalysisWriter(spectralAnalysisWriter_in)
       , communication(communication_in)
-      , offset(gFD::offset(communication.getRankMPI()))
+      , spectralAnalysisWriter(prefix_in, communication_in.rankMPI)
+      , offset(gFD::offset(communication.rankMPI))
       , computationFourier(lFD::start(), lFD::end())
     {
       writeAnalysesHeader();
     }
 
+    inline bool getIsAnalyzed(const unsigned int iteration) {
+      return spectralAnalysisWriter.getIsAnalyzed(iteration);
+    }
+
+    inline void writeAnalyses(const unsigned int iteration) {
+      resetAnalyses();
+      computationFourier.Do(*this);
+      normalizeAnalyses();
+      reduceAnalyses();
+
+      T * spectraList[1] = {energySpectra.spectra};
+      spectralAnalysisWriter.openFile(iteration);
+      spectralAnalysisWriter.writeAnalysis<1, gFD::maxWaveNumber()>(iteration, spectraList);
+      spectralAnalysisWriter.closeFile();
+    }
+
+  private:
     HOST
     void operator()(const Position& iFP) {
       auto index = lFD::getIndex(iFP);
@@ -128,24 +151,12 @@ namespace lbm {
       energySpectra(iFP, index, iK, kNorm);
     }
 
-    //template<unsigned int MaxWaveNumber>
-    inline void writeAnalyses(const unsigned int iteration) {
-      resetAnalyses();
-      computationFourier.Do(*this);
-      normalizeAnalyses();
-      reduceAnalyses();
-
-      T * spectraList[] = {energySpectra.spectra};
-
-      spectralAnalysisWriter.writeAnalysis<1, gFD::maxWaveNumber()>(iteration, spectraList);
-    }
-
     inline void resetAnalyses() {
       energySpectra.reset();
     }
 
     inline void reduceAnalyses() {
-      communication.reduce(energySpectra.spectra);
+      communication.reduceAll(energySpectra.spectra, gFD::maxWaveNumber());
     }
 
     inline void normalizeAnalyses() {
@@ -153,7 +164,7 @@ namespace lbm {
     }
 
     inline void writeAnalysesHeader() {
-      std::string header = "iteration";
+      std::string header = "iteration wavenumber";
       header += " " + std::string(energySpectra.analysisName);
       spectralAnalysisWriter.writeHeader(header);
     }

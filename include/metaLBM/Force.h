@@ -262,7 +262,12 @@ namespace lbm {
     {}
 
     inline void setLocalForceArray(double * * localForcePtr,
+                                   const unsigned int numberElements,
                                    const Position& offset) {
+
+      MultiDynamicArray<double, Architecture::CPU, 2*L::dimD-3> tempArray(numberElements);
+      double * * tempForcePtr = tempArray.multiData();
+
       Computation<Architecture::CPU, L::dimD> computationFourier(lFD::start(), lFD::end());
 
       computationFourier.Do
@@ -284,10 +289,10 @@ namespace lbm {
             auto index = lFD::getIndex(iFP);
 
             for(auto iD = 0; iD < L::dimD; ++iD) {
-              fftw_complex * fourierForcePtr = ((fftw_complex *) localForcePtr[iD]);
+              fftw_complex * fourierTempForcePtr = ((fftw_complex *) tempForcePtr[iD]);
 
-              fourierForcePtr[index][0] = amplitude[iD];
-              fourierForcePtr[index][1] = 0;
+              fourierTempForcePtr[index][0] = amplitude[iD];
+              fourierTempForcePtr[index][1] = 0;
 
               if(iFP[L::dimD-1] == 0) {
                 iFP_symmetric[d::X] = gSD::sLength()[d::X] - iFP[d::X];
@@ -303,20 +308,19 @@ namespace lbm {
                     iFP_symmetric[d::Y] : iFP_symmetric[d::Y]-gSD::sLength()[d::Y];
 
                   auto index_symmetric = lFD::getIndex(iFP_symmetric);
-                  fourierForcePtr[index_symmetric][0] = amplitude[iD];
-                  fourierForcePtr[index_symmetric][1] = 0;
+                  fourierTempForcePtr[index_symmetric][0] = amplitude[iD];
+                  fourierTempForcePtr[index_symmetric][1] = 0;
                 }
               }
             }
           }
         });
 
-      Curl<double, Architecture::CPU, PartitionningType::OneD, 3, 3>
-        curlTransformer(localForcePtr,
-                        Cast<unsigned int,ptrdiff_t, 3>::Do(gSD::sLength()).data(),
-                        offset);
-      //TO DO: CAN I CURL IN PLACE??? NO!!!!! THEN MAKE IT WORK FOR 2D TOO...
-      curlTransformer.executeFourier();
+      MakeIncompressible<double, Architecture::CPU, PartitionningType::OneD, L::dimD>
+        makeIncompressible(tempForcePtr, localForcePtr,
+                           Cast<unsigned int,ptrdiff_t, 3>::Do(gSD::sLength()).data(),
+                           offset);
+      makeIncompressible.executeFourier();
 
     }
 

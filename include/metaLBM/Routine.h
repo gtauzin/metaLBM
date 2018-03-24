@@ -22,8 +22,7 @@ namespace lbm {
     Communication_ communication;
 
     FieldWriter_ fieldWriter;
-    ScalarAnalysisWriter_ scalarAnalysisWriter;
-    SpectralAnalysisWriter_ spectralAnalysisWriter;
+    DistributionWriter_ distributionWriter;
 
     double initialMass;
     double finalMass;
@@ -34,15 +33,14 @@ namespace lbm {
     double totalTime;
 
     FieldList<T, architecture> fieldList;
-    Distribution<T, DomainType::LocalSpace, architecture> distribution;
+    Distribution<T, architecture> distribution;
 
     Curl<double, Architecture::CPU, PartitionningType::OneD,
          L::dimD, L::dimD> curlVelocity;
     ScalarAnalysisList<T, architecture> scalarAnalysisList;
     SpectralAnalysisList<T, architecture> spectralAnalysisList;
 
-    Algorithm<dataT, algorithmT, DomainType::LocalSpace, architecture,
-              implementation> algorithm;
+    Algorithm<dataT, algorithmT, architecture, implementation> algorithm;
     Computation<Architecture::CPU, L::dimD> computationLocal;
 
   public:
@@ -51,9 +49,8 @@ namespace lbm {
             const std::string& processorName_in,
             const unsigned int numberElements_in)
       : communication(rankMPI_in, sizeMPI_in, processorName_in)
-      , fieldWriter(prefix, rankMPI_in, sizeMPI_in)
-      , scalarAnalysisWriter(prefix, rankMPI_in, sizeMPI_in)
-      , spectralAnalysisWriter(prefix, rankMPI_in, sizeMPI_in)
+      , fieldWriter(prefix, rankMPI_in)
+      , distributionWriter(prefix, rankMPI_in)
       , initialMass(0.0)
       , finalMass(0.0)
       , differenceMass(0.0)
@@ -65,11 +62,11 @@ namespace lbm {
       , curlVelocity(fieldList.velocity.getMultiData(), fieldList.vorticity.getMultiData(),
                      Cast<unsigned int,ptrdiff_t, 3>::Do(gSD::sLength()).data(),
                      gFD::offset(rankMPI_in))
-      , distribution("distribution",
-                     initLocalDistribution<T, architecture>(fieldList.density,
-                                                            fieldList.velocity))
-      , scalarAnalysisList(fieldList, scalarAnalysisWriter, communication)
-      , spectralAnalysisList(fieldList, spectralAnalysisWriter, communication)
+      , distribution(initLocalDistribution<T, architecture>(fieldList.density,
+                                                            fieldList.velocity,
+                                                            rankMPI_in))
+      , scalarAnalysisList(fieldList, communication, prefix)
+      , spectralAnalysisList(fieldList, communication, prefix)
       , algorithm(fieldList, distribution, communication)
       , computationLocal(lSD::sStart(), lSD::sEnd())
       {}
@@ -87,8 +84,8 @@ namespace lbm {
 
       for(int iteration = startIteration+1; iteration <= endIteration; ++iteration) {
         algorithm.isStored = fieldWriter.getIsWritten(iteration)
-        || scalarAnalysisWriter.getIsAnalyzed(iteration)
-        || spectralAnalysisWriter.getIsAnalyzed(iteration);
+        || scalarAnalysisList.getIsAnalyzed(iteration)
+        || spectralAnalysisList.getIsAnalyzed(iteration);
 
         algorithm.iterate(iteration);
 
@@ -112,7 +109,7 @@ namespace lbm {
 
       communication.printInputs();
 
-      if (communication.getRankMPI() == MathVector<int, 3>({0, 0, 0})) {
+      if (communication.rankMPI == MathVector<int, 3>({0, 0, 0})) {
         std::cout.precision(15);
         std::cout << "-------------------OPTIONS-------------------" << std::endl
                   << "Lattice         : D" << L::dimD << "Q" << L::dimQ << std::endl
@@ -130,7 +127,7 @@ namespace lbm {
     }
 
     void printOutputs() {
-      if (communication.getRankMPI() == MathVector<int, 3>({0, 0, 0})) {
+      if (communication.rankMPI == MathVector<int, 3>({0, 0, 0})) {
         std::cout << "--------------------OUTPUTS-------------------" << std::endl
                   << "Total time      : " << totalTime << " s" << std::endl
                   << "Comp time       : " << computationTime << " s" << std::endl
@@ -160,31 +157,27 @@ namespace lbm {
         if(writeVorticity) curlVelocity.executeSpace();
 
         fieldList.writeFields();
+        fieldWriter.closeFile();
+      }
 
-      if(fieldWriter.getIsBackedUp(iteration)) {
+      if(distributionWriter.getIsBackedUp(iteration)) {
         algorithm.pack();
-        fieldWriter.writeField(distribution);
+        distributionWriter.openFile(iteration);
+        distributionWriter.writeDistribution(distribution);
+        distributionWriter.closeFile();
       }
 
-      fieldWriter.closeFile();
-      }
     }
 
     void writeAnalyses(const unsigned int iteration) {
       { INSTRUMENT_ON("Routine<T>::writeFields",2) }
 
-      if(scalarAnalysisWriter.getIsAnalyzed(iteration)) {
-        scalarAnalysisWriter.openFile(iteration);
-
+      if(scalarAnalysisList.getIsAnalyzed(iteration)) {
         scalarAnalysisList.writeAnalyses(iteration);
-        scalarAnalysisWriter.closeFile();
       }
 
-      if(spectralAnalysisWriter.getIsAnalyzed(iteration)) {
-        spectralAnalysisWriter.openFile(iteration);
-
+      if(spectralAnalysisList.getIsAnalyzed(iteration)) {
         spectralAnalysisList.writeAnalyses(iteration);
-        spectralAnalysisWriter.closeFile();
       }
     }
 

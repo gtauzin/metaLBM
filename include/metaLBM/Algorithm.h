@@ -20,7 +20,7 @@
 
 namespace lbm {
 
-  template<class T, AlgorithmType algorithmType, DomainType initDomainType,
+  template<class T, AlgorithmType algorithmType,
     Architecture architecture, Implementation implementation>
   class Algorithm {
   public:
@@ -29,10 +29,8 @@ namespace lbm {
   };
 
 
-  template<class T, DomainType initDomainType,
-           Architecture architecture, Implementation implementation>
-    class Algorithm<T, AlgorithmType::Generic, initDomainType,
-    architecture, implementation> {
+  template<class T, Architecture architecture, Implementation implementation>
+  class Algorithm<T, AlgorithmType::Generic, architecture, implementation> {
   protected:
     T * localDensity_Ptr;
     T * * localVelocity_Ptr;
@@ -60,7 +58,7 @@ namespace lbm {
     bool isStored;
 
     Algorithm(FieldList<T, architecture>& fieldList_in,
-              Distribution<T, initDomainType, architecture>& distribution_in,
+              Distribution<T, architecture>& distribution_in,
               Communication<T, latticeT, algorithmT, memoryL,
               partitionningT, implementation, L::dimD>& communication_in)
       : localDensity_Ptr(fieldList_in.density.getLocalData())
@@ -131,15 +129,11 @@ namespace lbm {
   };
 
 
-  template<class T, DomainType initDomainType,
-           Architecture architecture, Implementation implementation>
-    class Algorithm<T, AlgorithmType::Pull, initDomainType,
-                    architecture, implementation>
-    : public Algorithm<T, AlgorithmType::Generic, initDomainType,
-                       architecture, implementation> {
+  template<class T, Architecture architecture, Implementation implementation>
+  class Algorithm<T, AlgorithmType::Pull, architecture, implementation>
+    : public Algorithm<T, AlgorithmType::Generic, architecture, implementation> {
   private:
-    using Base = Algorithm<T, AlgorithmType::Generic, initDomainType,
-                           architecture, implementation>;
+    using Base = Algorithm<T, AlgorithmType::Generic, architecture, implementation>;
 
     using Base::localDensity_Ptr;
     using Base::localVelocity_Ptr;
@@ -173,7 +167,7 @@ namespace lbm {
     void operator()(const Position& iP) {
       collision.calculateMoments(haloDistributionPrevious_Ptr, iP);
 
-      collision.setForce(localForce_Ptr, iP, gSD::sOffset(communication.getRankMPI()));
+      collision.setForce(localForce_Ptr, iP, gSD::sOffset(communication.rankMPI));
 
       for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
         haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)] =

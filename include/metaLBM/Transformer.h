@@ -206,12 +206,6 @@ namespace lbm {
       , computationFourier(lFD::start(), lFD::end())
     {}
 
-    Curl(double * * localSpacePtr_in,
-         const ptrdiff_t globalLength_in[3],
-         const Position& offset_in)
-      : Curl(localSpacePtr_in, localSpacePtr_in, globalLength_in, offset_in)
-    {}
-
     HOST
     inline void executeFourier() {
       computationFourier.Do
@@ -265,6 +259,91 @@ namespace lbm {
 
   };
 
+
+
+
+
+
+
+  template<class T, Architecture architecture, PartitionningType partitionningType,
+           unsigned int Dimension>
+  class MakeIncompressible {};
+
+  template<>
+  class MakeIncompressible<double, Architecture::CPU, PartitionningType::OneD, 2> {
+  private:
+    ForwardFFT<double, Architecture::CPU, PartitionningType::OneD, 2, 2> forwardIn;
+    BackwardFFT<double, Architecture::CPU, PartitionningType::OneD, 2, 1> backwardOut;
+    const Position& offset;
+    Computation<Architecture::CPU, L::dimD> computationFourier;
+
+  public:
+    MakeIncompressible(double * * localSpaceInPtr_in,
+                       double * * localSpaceOutPtr_in,
+                       const ptrdiff_t globalLength_in[3],
+                       const Position& offset_in)
+      : forwardIn(localSpaceInPtr_in, localSpaceInPtr_in, globalLength_in)
+      , backwardOut(localSpaceOutPtr_in, localSpaceOutPtr_in, globalLength_in)
+      , offset(offset_in)
+      , computationFourier(lFD::start(), lFD::end())
+    {}
+
+    HOST
+    inline void executeFourier() {
+      computationFourier.Do
+        ([=] HOST (const Position& iFP) {
+          auto index = lFD::getIndex(iFP);
+
+          WaveNumber iK{{0}};
+          iK[d::X] = iFP[d::X]+offset[d::X] <= gSD::sLength()[d::X]/2 ?
+            iFP[d::X]+offset[d::X] : iFP[d::X]+offset[d::X]-gSD::sLength()[d::X];
+          iK[d::Y] = iFP[d::Y] <= gSD::sLength()[d::Y]/2 ?
+            iFP[d::Y] : iFP[d::Y]-gSD::sLength()[d::Y];
+
+          ((fftw_complex *) (backwardOut.localFourierPtr[d::X]))[index][p::Re]
+            = - iK[d::Y] * ((fftw_complex *) (forwardIn.localFourierPtr[0]))[index][p::Im];
+
+          ((fftw_complex *) (backwardOut.localFourierPtr[d::X]))[index][p::Im]
+            = iK[d::Y] * ((fftw_complex *) (forwardIn.localFourierPtr[0]))[index][p::Re];
+
+          ((fftw_complex *) (backwardOut.localFourierPtr[d::Y]))[index][p::Re]
+            = iK[d::X] * ((fftw_complex *) (forwardIn.localFourierPtr[0]))[index][p::Im];
+
+          ((fftw_complex *) (backwardOut.localFourierPtr[d::Y]))[index][p::Im]
+            = - iK[d::X] * ((fftw_complex *) (forwardIn.localFourierPtr[0]))[index][p::Re];
+
+        });
+
+      backwardOut.execute();
+    }
+
+    HOST
+    inline void executeSpace() {
+      forwardIn.execute();
+      executeFourier();
+    }
+
+
+  };
+
+
+  template<>
+  class MakeIncompressible<double, Architecture::CPU, PartitionningType::OneD, 3>
+    : public Curl<double, Architecture::CPU, PartitionningType::OneD, 3, 3> {
+  private:
+    using Base = Curl<double, Architecture::CPU, PartitionningType::OneD, 3, 3>;
+
+  public:
+    MakeIncompressible(double * * localSpaceInPtr_in,
+                       double * * localSpaceOutPtr_in,
+                       const ptrdiff_t globalLength_in[3],
+                       const Position& offset_in)
+      : Base(localSpaceInPtr_in, localSpaceOutPtr_in, globalLength_in, offset_in)
+    {}
+
+    using Base::executeFourier;
+    using Base::executeSpace;
+  };
 
 
 }

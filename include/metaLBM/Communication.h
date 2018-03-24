@@ -85,11 +85,6 @@ namespace lbm {
                 << ", left MPI #" << leftXRankMPI << std::endl;
     }
 
-    DEVICE HOST
-    MathVector<int, 3> getRankMPI() {
-      return rankMPI;
-    }
-
     HOST
     void sendGlobalToLocal(T * globalPtr,
                            T * localPtr,
@@ -139,21 +134,16 @@ namespace lbm {
       return localSum;
     }
 
-    template<unsigned int NumberComponents>
     HOST
-    void reduceAll(T localArray[NumberComponents]) {
+    void reduceAll(T * localArray, unsigned int numberComponents) {
       MPI_Barrier(MPI_COMM_WORLD);
 
-      //T globalArray[NumberComponents] = {(T) 0};
-      MPI_Allreduce(MPI_IN_PLACE, localArray, NumberComponents,
+      MPI_Allreduce(MPI_IN_PLACE, localArray, numberComponents,
                     MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
 
       MPI_Barrier(MPI_COMM_WORLD);
-
-      //return globalArray;
     }
-
 
   };
 
@@ -339,10 +329,12 @@ namespace lbm {
     {}
 
     using Base::printInputs;
-    using Base::getRankMPI;
+    using Base::rankMPI;
+    using Base::sizeMPI;
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
     using Base::reduce;
+    using Base::reduceAll;
   };
 
 
@@ -436,10 +428,12 @@ namespace lbm {
     {}
 
     using Base::printInputs;
-    using Base::getRankMPI;
+    using Base::rankMPI;
+    using Base::sizeMPI;
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
     using Base::reduce;
+    using Base::reduceAll;
 
   protected:
     HOST
@@ -603,10 +597,12 @@ namespace lbm {
     using Base::Communication;
 
     using Base::printInputs;
-    using Base::getRankMPI;
+    using Base::rankMPI;
+    using Base::sizeMPI;
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
     using Base::reduce;
+    using Base::reduceAll;
   };
 
 
@@ -663,10 +659,12 @@ namespace lbm {
   using Base::Communication;
 
     using Base::printInputs;
-    using Base::getRankMPI;
+    using Base::rankMPI;
+    using Base::sizeMPI;
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
     using Base::reduce;
+    using Base::reduceAll;
 
   protected:
     HOST
@@ -718,10 +716,12 @@ namespace lbm {
     using Base::Communication;
 
     using Base::printInputs;
-    using Base::getRankMPI;
+    using Base::rankMPI;
+    using Base::sizeMPI;
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
     using Base::reduce;
+    using Base::reduceAll;
 
   protected:
     HOST
@@ -763,10 +763,12 @@ namespace lbm {
     {}
 
     using Base::printInputs;
-    using Base::getRankMPI;
+    using Base::rankMPI;
+    using Base::sizeMPI;
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
     using Base::reduce;
+    using Base::reduceAll;
 
     HOST
     inline void communicateHalos(T * haloDistributionPtr) {
@@ -792,10 +794,12 @@ namespace lbm {
   public:
     using Base::Communication;
     using Base::printInputs;
-    using Base::getRankMPI;
+    using Base::rankMPI;
+    using Base::sizeMPI;
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
     using Base::reduce;
+    using Base::reduceAll;
 
   private:
     using Base::sendAndReceiveHaloX;
@@ -815,10 +819,12 @@ namespace lbm {
   public:
     using Base::Communication;
     using Base::printInputs;
-    using Base::getRankMPI;
+    using Base::rankMPI;
+    using Base::sizeMPI;
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
     using Base::reduce;
+    using Base::reduceAll;
 
     HOST
     inline void communicateHalos(T * haloDistributionPtr) {
@@ -846,10 +852,13 @@ namespace lbm {
   public:
     using Base::Communication;
     using Base::printInputs;
-    using Base::getRankMPI;
+    using Base::rankMPI;
+    using Base::sizeMPI;
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
     using Base::reduce;
+    using Base::reduceAll;
+
     using Base::communicateHalos;
 
   private:
@@ -872,10 +881,12 @@ namespace lbm {
     using Base::Communication;
 
     using Base::printInputs;
-    using Base::getRankMPI;
+    using Base::rankMPI;
+    using Base::sizeMPI;
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
     using Base::reduce;
+    using Base::reduceAll;
 
   private:
     using Base::sendAndReceiveHaloX;
@@ -895,10 +906,12 @@ namespace lbm {
     using Base::Communication;
 
     using Base::printInputs;
-    using Base::getRankMPI;
+    using Base::rankMPI;
+    using Base::sizeMPI;
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
     using Base::reduce;
+    using Base::reduceAll;
 
     HOST
     inline void communicateHalos(T * haloDistributionPtr) {

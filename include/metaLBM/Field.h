@@ -62,7 +62,7 @@ namespace lbm {
 
   FieldAllocator(const std::string& fieldName_in, const unsigned int numberElements_in)
     : Base(fieldName_in, numberElements_in)
-      , localArray(numberElements_in)
+    , localArray(numberElements_in)
     {}
 
   };

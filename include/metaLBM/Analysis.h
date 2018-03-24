@@ -137,7 +137,7 @@ namespace lbm {
     using Base = AnalysisSpectral<T, MaxWaveNumber>;
 
     T * * localVelocityPtr;
-    T * spectraRef;
+    T (&spectraRef)[MaxWaveNumber];
 
   public:
     static constexpr auto analysisName = "energy_spectra";

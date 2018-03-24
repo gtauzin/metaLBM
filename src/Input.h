@@ -12,12 +12,12 @@ namespace lbm {
   typedef MathVector<dataT, 3> Vector;
 
   constexpr LatticeType latticeT = LatticeType::D3Q27;
-  constexpr int globalLengthX = 8;
-  constexpr int globalLengthY = 8;
-  constexpr int globalLengthZ = 8;
+  constexpr int globalLengthX = 16;
+  constexpr int globalLengthY = 16;
+  constexpr int globalLengthZ = 16;
 
   constexpr unsigned int startIteration = 0;
-  constexpr unsigned int endIteration = 1;
+  constexpr unsigned int endIteration = 10;
   constexpr unsigned int writeStep = 1;
   constexpr unsigned int backUpStep = 10;
 

@@ -12,7 +12,7 @@
 
 namespace lbm {
 
-  template <class T, DomainType initDomainType, Architecture architecture>
+  template <class T, Architecture architecture>
   class Distribution
     : public Field<T, L::dimQ, architecture, true> {
   private:
@@ -26,9 +26,8 @@ namespace lbm {
   public:
     using Base::fieldName;
 
-    Distribution(const std::string& fieldName_in,
-                 const unsigned int numberElements_in)
-      : Base(fieldName_in, numberElements_in)
+    Distribution(const unsigned int numberElements_in)
+      : Base("distribution", numberElements_in)
       , haloArrayPrevious(hSD::volume()*L::dimQ)
       , haloArrayNext(hSD::volume()*L::dimQ)
     {}

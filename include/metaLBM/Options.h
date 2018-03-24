@@ -5,6 +5,8 @@
 
 namespace lbm {
   enum d {X, Y, Z};
+  std::string dName = "XYZ";
+
   enum p {Re, Im};
 
   enum class LatticeType {Generic, D1Q3, D2Q5, D2Q9, D2Q37, D3Q15, D3Q19, D3Q27};
