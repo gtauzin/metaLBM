@@ -73,7 +73,6 @@ find_library(FFTW_MPI_LIBRARY_DIRS
   NO_DEFAULT_PATH)
 
 if(FFTW_WITH_THREADS)
-  message(STATUS "ALIVE")
   find_library(FFTW_THREAD_LIBRARY_DIRS
     NAMES         fftw3_threads
     PATHS         ${FFTW_LIBRARY_SEARCH_DIRS}
