@@ -148,7 +148,7 @@ namespace lbm {
 
   protected:
     using Base::dArrayPtr;
-    U * * sMultiArrayPtr;
+    U * sMultiArrayPtr[NumberComponents];
     unsigned int numberElements;
 
   public:
@@ -212,12 +212,6 @@ namespace lbm {
     U ** multiData() {
       return sMultiArrayPtr;
     }
-
-    DEVICE HOST
-    const U ** multiData() const {
-      return sMultiArrayPtr;
-    }
-
 
   };
 
