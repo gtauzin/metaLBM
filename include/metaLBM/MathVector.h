@@ -15,39 +15,39 @@ namespace lbm {
   public:
     StaticArray<U, NumberComponents> sArray;
 
-    DEVICE HOST
+    HOST DEVICE
     U& operator[] (int i) {
       return sArray[i];
     }
 
-    DEVICE HOST
+    HOST DEVICE
     const U& operator[] (int i) const {
       return sArray[i];
     }
 
-    DEVICE HOST
+    HOST DEVICE
     U * data() {
       return sArray.data();
     }
 
-    DEVICE HOST
+    HOST DEVICE
     const U * data() const {
       return sArray.data();
     }
 
-    DEVICE HOST
+    HOST DEVICE
     MathVector<U, NumberComponents>& operator=(const MathVector<U, NumberComponents> other){
       sArray = other.sArray;
       return *this;
     }
 
-    DEVICE HOST
+    HOST DEVICE
     MathVector<U, NumberComponents>& operator=(const U other[NumberComponents]){
       sArray = other;
       return *this;
     }
 
-    DEVICE HOST
+    HOST DEVICE
     inline U sum() {
       U sumR = 0;
       for(auto iC = 0; iC < NumberComponents; ++iC) {
@@ -57,7 +57,7 @@ namespace lbm {
       return sumR;
     }
 
-    DEVICE HOST
+    HOST DEVICE
     inline U dot(const MathVector<U, NumberComponents>& other){
       U dotR = sArray[0]*other[0];
       for(auto iC = 1; iC < NumberComponents; ++iC) {
@@ -67,7 +67,7 @@ namespace lbm {
       return dotR;
     }
 
-    DEVICE HOST
+    HOST DEVICE
     inline U norm2() const {
       U norm2R = sArray[0]*sArray[0];
       for(auto iC = 1; iC < NumberComponents; ++iC) {
@@ -77,13 +77,13 @@ namespace lbm {
       return norm2R;
     }
 
-    DEVICE HOST
+    HOST
     inline U norm() const {
       return sqrt(norm2());
     }
 
 
-    DEVICE HOST
+    HOST DEVICE
     inline U volume(){
       U volumeR = sArray[0];
       for(auto iC = 1; iC < NumberComponents; ++iC) {
@@ -120,7 +120,7 @@ namespace lbm {
 
 
   template<class U, unsigned int NumberComponents>
-  DEVICE HOST
+  HOST DEVICE
   bool operator==(MathVector<U, NumberComponents> const &lhs,
                   MathVector<U, NumberComponents> const &rhs) {
     return lhs.sArray == rhs.sArray;
@@ -128,7 +128,7 @@ namespace lbm {
 
 
   template<class U, unsigned int NumberComponents>
-  DEVICE HOST
+  HOST DEVICE
   MathVector<U, NumberComponents>& operator+=(MathVector<U, NumberComponents>& lhs,
                                               const MathVector<U, NumberComponents>& rhs)
   {
@@ -140,7 +140,7 @@ namespace lbm {
   }
 
   template<class U, unsigned int NumberComponents>
-  DEVICE HOST
+  HOST DEVICE
   MathVector<U, NumberComponents> operator+(const MathVector<U, NumberComponents>& mV_a,
                                             const MathVector<U, NumberComponents>& mV_b)
   {
@@ -152,7 +152,7 @@ namespace lbm {
   }
 
   template<class U>
-  DEVICE HOST
+  HOST DEVICE
   constexpr MathVector<U, 3> operator+(const MathVector<U, 3>& mV_a,
                                        const MathVector<U, 3>& mV_b)
   {
@@ -161,7 +161,7 @@ namespace lbm {
 
 
   template<class U, unsigned int NumberComponents>
-  DEVICE HOST
+  HOST DEVICE
   MathVector<U, NumberComponents>& operator*=(MathVector<U, NumberComponents>& mV,
                                               const U factor) {
     for(auto iC = 0; iC < NumberComponents; ++iC) {
@@ -172,7 +172,7 @@ namespace lbm {
   }
 
   template<class U, class V, unsigned int NumberComponents>
-  DEVICE HOST
+  HOST DEVICE
   MathVector<U, NumberComponents> operator*(const MathVector<U, NumberComponents>& mV,
                                             const V factor)
   {
@@ -185,7 +185,7 @@ namespace lbm {
   }
 
   template<class U, class V, unsigned int NumberComponents>
-  DEVICE HOST
+  HOST DEVICE
   MathVector<U, NumberComponents> operator*(const V factor,
                                             const MathVector<U, NumberComponents>& mV)
   {
@@ -199,7 +199,7 @@ namespace lbm {
 
 
   template<class U, unsigned int NumberComponents>
-  DEVICE HOST
+  HOST DEVICE
   MathVector<U, NumberComponents>& operator/=(MathVector<U, NumberComponents>& mV,
                                               const U factor)
   {
@@ -211,7 +211,7 @@ namespace lbm {
   }
 
   template<class U, unsigned int NumberComponents>
-  DEVICE HOST
+  HOST DEVICE
   MathVector<U, NumberComponents> operator/(const MathVector<U, NumberComponents>& mV,
                                             const U factor)
   {
@@ -224,7 +224,7 @@ namespace lbm {
   }
 
   template<class U, unsigned int NumberComponents>
-  DEVICE HOST
+  HOST DEVICE
   MathVector<U, NumberComponents>& operator-=(MathVector<U, NumberComponents>& lhs,
                                               const MathVector<U, NumberComponents>& rhs)
   {
@@ -236,7 +236,7 @@ namespace lbm {
   }
 
   template<class U, unsigned int NumberComponents>
-  DEVICE HOST
+  HOST DEVICE
   MathVector<U, NumberComponents> operator-(const MathVector<U, NumberComponents>& mV_a,
                                             const MathVector<U, NumberComponents>& mV_b)
   {
@@ -249,7 +249,7 @@ namespace lbm {
   }
 
   template<unsigned int NumberComponents>
-  DEVICE HOST
+  HOST DEVICE
   MathVector<unsigned int, NumberComponents> operator-(const MathVector<unsigned int, NumberComponents>& mV_a,
                                                        const MathVector<unsigned int, NumberComponents>& mV_b)
   {
@@ -262,7 +262,7 @@ namespace lbm {
   }
 
   template<class U, unsigned int NumberComponents>
-  DEVICE HOST
+  HOST DEVICE
   MathVector<unsigned int, NumberComponents> operator-(const MathVector<unsigned int, NumberComponents>& mV_a,
                                                        const MathVector<U, NumberComponents>& mV_b)
   {
@@ -275,7 +275,7 @@ namespace lbm {
   }
 
   template<class U, unsigned int NumberComponents>
-  DEVICE HOST
+  HOST DEVICE
   MathVector<unsigned int, NumberComponents> operator-(const MathVector<U, NumberComponents>& mV_a,
                                                        const MathVector<unsigned int, NumberComponents>& mV_b)
   {
@@ -287,7 +287,7 @@ namespace lbm {
     return mV_result;
   }
 
-  DEVICE HOST
+  HOST DEVICE
   MathVector<unsigned int, 3> operator-(const MathVector<unsigned int, 3>& mV_a,
                                         const MathVector<unsigned int, 3>& mV_b)
   {
@@ -295,7 +295,7 @@ namespace lbm {
   }
 
   template<unsigned int NumberComponents>
-  DEVICE HOST
+  HOST DEVICE
   MathVector<unsigned int, 3> operator-(const MathVector<unsigned int, 3>& mV_a,
                                         const MathVector<unsigned int, NumberComponents>& mV_b)
   {
@@ -308,7 +308,7 @@ namespace lbm {
   }
 
   template<unsigned int NumberComponents>
-  DEVICE HOST
+  HOST DEVICE
   MathVector<unsigned int, 3> operator-(const MathVector<unsigned int, NumberComponents>& mV_a,
                                         const MathVector<unsigned int, 3>& mV_b)
   {
@@ -323,7 +323,7 @@ namespace lbm {
 
   template<class T, class U, unsigned int Dimension>
   struct Project {
-    DEVICE HOST
+    HOST DEVICE
     static inline MathVector<T, Dimension> Do(const MathVector<U, 3>& mV) {
 
       MathVector<T, Dimension> mVProjected{{ (T) 0 }};
@@ -339,7 +339,7 @@ namespace lbm {
 
   template<class T, unsigned int Dimension>
   struct ProjectAndLeave1 {
-    DEVICE HOST
+    HOST DEVICE
     static inline MathVector<T, 3> Do(const MathVector<T, 3>& mV) {
 
       MathVector<T, 3> mVProjected = { (T) 1, (T) 1, (T) 1};
@@ -355,7 +355,7 @@ namespace lbm {
 
   template<class T, unsigned int Dimension>
   struct ProjectPadRealAndLeave1 {
-    DEVICE HOST
+    HOST DEVICE
     static inline MathVector<T, 3> Do(const MathVector<T, 3>& mV) {
 
       MathVector<T, 3> mVProjected = { (T) 1, (T) 1, (T) 1};
@@ -373,7 +373,7 @@ namespace lbm {
 
   template<class T, unsigned int Dimension>
   struct ProjectAndLeave0 {
-    DEVICE HOST
+    HOST DEVICE
     static inline MathVector<T, 3> Do(const MathVector<T, 3>& mV) {
 
       MathVector<T, 3> mVProjected = { (T) 0, (T) 0, (T) 0};
@@ -388,7 +388,7 @@ namespace lbm {
 
   template<class T, unsigned int Dimension>
   struct ProjectPadComplexAndLeave1 {
-    DEVICE HOST
+    HOST DEVICE
     static inline MathVector<T, 3> Do(const MathVector<T, 3>& mV) {
 
       MathVector<T, 3> mVProjected = { (T) 1, (T) 1, (T) 1};
@@ -405,7 +405,7 @@ namespace lbm {
 
   template<class T, class U, unsigned int NumberComponents>
   struct Cast {
-    DEVICE HOST
+    HOST DEVICE
     static inline MathVector<U, NumberComponents> Do(const MathVector<T, NumberComponents>& mV) {
 
       MathVector<U, NumberComponents> mVCasted = {{(U) 0}};

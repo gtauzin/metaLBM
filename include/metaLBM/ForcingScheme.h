@@ -146,7 +146,7 @@ namespace lbm {
 
     #pragma omp declare simd
     DEVICE HOST
-    inline T setVariables(const MathVector<T, L::dimD>& force,
+      inline void setVariables(const MathVector<T, L::dimD>& force,
                           const T& density,
                           const MathVector<T, L::dimD>& velocity) {
       deltaVelocity = velocity + 1.0/density * force;

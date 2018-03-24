@@ -148,7 +148,7 @@ namespace lbm {
 
   protected:
     using Base::dArrayPtr;
-    U * sMultiArrayPtr[NumberComponents];
+    U * * sMultiArrayPtr;
     unsigned int numberElements;
 
   public:

@@ -49,7 +49,6 @@ int main(int argc, char* argv[]) {
                                                3>::Do(gSD::sLength()).data(),
                                                MPI_COMM_WORLD,
                                                &lX_fftw, &startX_fftw);
-
   #endif
 
   MathVector<int, 3> sizeMPI = {1, 1, 1};

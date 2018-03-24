@@ -105,8 +105,7 @@ namespace lbm {
                         const Field<T, L::dimD, architecture, true>& velocityField,
                         const MathVector<int, 3>& rankMPI) {
     { INSTRUMENT_ON("initLocalDistribution<T>",2) }
-    Distribution<T, architecture> distributionR("distribution",
-                                                densityField.numberElements);
+    Distribution<T, architecture> distributionR(densityField.numberElements);
 
     if(startIteration == 0) {
 

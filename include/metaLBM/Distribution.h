@@ -32,13 +32,6 @@ namespace lbm {
       , haloArrayNext(hSD::volume()*L::dimQ)
     {}
 
-    Distribution(const std::string& fieldName_in,
-                 const MultiDynamicArray<T, Architecture::CPU, L::dimQ>& initArray_in)
-      : Base(fieldName_in, initArray_in)
-      , haloArrayPrevious(hSD::volume()*L::dimQ)
-      , haloArrayNext(hSD::volume()*L::dimQ)
-    {}
-
     using Base::getLocalData;
 
     DEVICE HOST
