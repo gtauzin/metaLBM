@@ -32,12 +32,12 @@ int main(int argc, char* argv[]) {
     int provided;
     MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided);
     {
-    int useThreadsFFTW = (provided >= MPI_THREAD_FUNNELED);
+      int useThreadsFFTW = (provided >= MPI_THREAD_FUNNELED);
 
-    if(useThreadsFFTW) useThreadsFFTW = fftw_init_threads();
-    fftw_mpi_init();
+      if(useThreadsFFTW) useThreadsFFTW = fftw_init_threads();
+      fftw_mpi_init();
 
-    if (useThreadsFFTW) fftw_plan_with_nthreads(NTHREADS);
+      if (useThreadsFFTW) fftw_plan_with_nthreads(NTHREADS);
 
       ptrdiff_t lX_fftw;
       ptrdiff_t startX_fftw;
@@ -50,7 +50,7 @@ int main(int argc, char* argv[]) {
                                                MPI_COMM_WORLD,
                                                &lX_fftw, &startX_fftw);
 
-#endif
+  #endif
 
   MathVector<int, 3> sizeMPI = {1, 1, 1};
   MPI_Comm_size(MPI_COMM_WORLD, &sizeMPI[d::X]);

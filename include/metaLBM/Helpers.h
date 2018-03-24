@@ -15,11 +15,13 @@
 namespace lbm {
 
   template <class T>
+  HOST DEVICE
   constexpr T& Min(T &a, T &b) {
     return a > b ? b : a;
   }
 
   template <class T>
+  HOST DEVICE
   constexpr T& arrayMin_impl(T *begin, T *end) {
     return begin + 1 == end
       ? *begin
@@ -27,16 +29,19 @@ namespace lbm {
   }
 
   template <class T, std::size_t N>
+  HOST DEVICE
   constexpr T &arrayMin(T(&arr)[N]) {
     return arrayMin_impl(arr, arr + N);
   }
 
   template <class T>
+  HOST DEVICE
   constexpr T& Max(T &a, T &b) {
     return a > b ? a : b;
   }
 
   template <class T>
+  HOST DEVICE
   constexpr T& arrayMax_impl(T *begin, T *end) {
     return begin + 1 == end
       ? *begin
@@ -44,6 +49,7 @@ namespace lbm {
   }
 
   template <class T, std::size_t N>
+  HOST DEVICE
   constexpr T &arrayMax(T(&arr)[N]) {
     return arrayMin_impl(arr, arr + N);
   }
