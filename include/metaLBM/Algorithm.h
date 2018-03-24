@@ -160,7 +160,6 @@ namespace lbm {
              partitionningT, implementation, L::dimD> periodicBoundary;
 
   public:
-    //using Base::isStored;
     using Base::Algorithm;
 
     HOST DEVICE
@@ -168,6 +167,8 @@ namespace lbm {
       collision.calculateMoments(haloDistributionPrevious_Ptr, iP);
 
       collision.setForce(localForce_Ptr, iP, gSD::sOffset(communication.rankMPI));
+      collision.calculateRelaxationTime(haloDistributionNext_Ptr,
+                                        haloDistributionPrevious_Ptr, iP);
 
       for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
         haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)] =

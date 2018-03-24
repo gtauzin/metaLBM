@@ -33,22 +33,17 @@ namespace lbm {
     Computation<Architecture::CPU, L::dimD> computationLocal;
 
     ScalarAnalysisList(FieldList<T, architecture>& fieldList_in,
-                       Communication_& communication_in,
-                       const std::string& prefix_in)
+                       Communication_& communication_in)
       : totalEnergy(fieldList_in.density.getMultiData(),
                     fieldList_in.velocity.getMultiData())
       , totalEnstrophy(fieldList_in.vorticity.getMultiData())
       , communication(communication_in)
-      , scalarAnalysisWriter(prefix_in, communication_in.rankMPI)
+      , scalarAnalysisWriter(prefix)
       , computationLocal(lSD::sStart(), lSD::sEnd())
     {
-      writeAnalysesHeader();
-    }
-
-    HOST
-    void operator()(const Position& iP) {
-      totalEnergy(iP);
-      totalEnstrophy(iP);
+      if(communication.rankMPI[d::X] == 0) {
+        writeAnalysesHeader();
+      }
     }
 
     inline bool getIsAnalyzed(const unsigned int iteration) {
@@ -57,14 +52,21 @@ namespace lbm {
 
     inline void writeAnalyses(const unsigned int iteration) {
       resetAnalyses();
-      computationLocal.Do(*this);
+      computationLocal.Do
+        ([&] HOST (const Position& iP) {
+          totalEnergy(iP);
+          totalEnstrophy(iP);
+        });
+
       normalizeAnalyses();
       reduceAnalyses();
 
-      T scalarList[] = {totalEnergy.scalar, totalEnstrophy.scalar};
-      scalarAnalysisWriter.openFile(iteration);
-      scalarAnalysisWriter.writeAnalysis<2>(iteration, scalarList);
-      scalarAnalysisWriter.closeFile();
+      if(communication.rankMPI[d::X] == 0) {
+        T scalarList[] = {totalEnergy.scalar, totalEnstrophy.scalar};
+        scalarAnalysisWriter.openFile(iteration);
+        scalarAnalysisWriter.writeAnalysis<2>(iteration, scalarList);
+        scalarAnalysisWriter.closeFile();
+      }
     }
 
   private:
@@ -108,15 +110,16 @@ namespace lbm {
 
 
     SpectralAnalysisList(FieldList<T, architecture>& fieldList_in,
-                         Communication_& communication_in,
-                         const std::string& prefix_in)
+                         Communication_& communication_in)
       : energySpectra(fieldList_in.velocity.getMultiData())
       , communication(communication_in)
-      , spectralAnalysisWriter(prefix_in, communication_in.rankMPI)
+      , spectralAnalysisWriter(prefix)
       , offset(gFD::offset(communication.rankMPI))
       , computationFourier(lFD::start(), lFD::end())
     {
-      writeAnalysesHeader();
+      if(communication.rankMPI[d::X] == 0) {
+        writeAnalysesHeader();
+      }
     }
 
     inline bool getIsAnalyzed(const unsigned int iteration) {
@@ -125,32 +128,33 @@ namespace lbm {
 
     inline void writeAnalyses(const unsigned int iteration) {
       resetAnalyses();
-      computationFourier.Do(*this);
+      computationFourier.Do
+        ([&] HOST (const Position& iFP) {
+          auto index = lFD::getIndex(iFP);
+
+          iK[d::X] = iFP[d::X]+offset[d::X] <= gSD::sLength()[d::X]/2 ?
+            iFP[d::X]+offset[d::X] : iFP[d::X]+offset[d::X]-gSD::sLength()[d::X];
+          iK[d::Y] = iFP[d::Y] <= gSD::sLength()[d::Y]/2 ?
+            iFP[d::Y] : iFP[d::Y]-gSD::sLength()[d::Y];
+          iK[d::Z] = iFP[d::Z] <= gSD::sLength()[d::Z]/2 ?
+            iFP[d::Z] : iFP[d::Z]-gSD::sLength()[d::Z];
+          kNorm = iK.norm();
+
+          energySpectra(iFP, index, iK, kNorm);
+        });
+
       normalizeAnalyses();
       reduceAnalyses();
 
-      T * spectraList[1] = {energySpectra.spectra};
-      spectralAnalysisWriter.openFile(iteration);
-      spectralAnalysisWriter.writeAnalysis<1, gFD::maxWaveNumber()>(iteration, spectraList);
-      spectralAnalysisWriter.closeFile();
+      if(communication.rankMPI[d::X] == 0) {
+        T * spectraList[1] = {energySpectra.spectra};
+        spectralAnalysisWriter.openFile(iteration);
+        spectralAnalysisWriter.writeAnalysis<1, gFD::maxWaveNumber()>(iteration, spectraList);
+        spectralAnalysisWriter.closeFile();
+      }
     }
 
   private:
-    HOST
-    void operator()(const Position& iFP) {
-      auto index = lFD::getIndex(iFP);
-
-      iK[d::X] = iFP[d::X]+offset[d::X] <= gSD::sLength()[d::X]/2 ?
-        iFP[d::X]+offset[d::X] : iFP[d::X]+offset[d::X]-gSD::sLength()[d::X];
-      iK[d::Y] = iFP[d::Y] <= gSD::sLength()[d::Y]/2 ?
-        iFP[d::Y] : iFP[d::Y]-gSD::sLength()[d::Y];
-      iK[d::Z] = iFP[d::Z] <= gSD::sLength()[d::Z]/2 ?
-        iFP[d::Z] : iFP[d::Z]-gSD::sLength()[d::Z];
-      kNorm = iK.norm();
-
-      energySpectra(iFP, index, iK, kNorm);
-    }
-
     inline void resetAnalyses() {
       energySpectra.reset();
     }

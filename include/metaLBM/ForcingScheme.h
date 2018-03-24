@@ -68,7 +68,7 @@ namespace lbm {
     inline T calculateCollisionSource(const MathVector<T, L::dimD>& force,
                                       const T& density,
                                       const MathVector<T, L::dimD>& velocity,
-                                      const T& velocity2,
+                                      const T& velocity2, const T equilibrium_iQ,
                                       const unsigned int iQ) const {
       INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::Guo>::calculateCollisionSource",5)
 
@@ -110,7 +110,7 @@ namespace lbm {
     inline T calculateCollisionSource(const MathVector<T, L::dimD>& force,
                                       const T& density,
                                       const MathVector<T, L::dimD>& velocity,
-                                      const T& velocity2,
+                                      const T& velocity2, const T equilibrium_iQ,
                                       const unsigned int iQ) const {
       INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::ShanChen>::calculateCollisionSource",5)
 
@@ -158,13 +158,13 @@ namespace lbm {
     inline T calculateCollisionSource(const MathVector<T, L::dimD>& force,
                                       const T& density,
                                       const MathVector<T, L::dimD>& velocity,
-                                      const T& velocity2,
+                                      const T& velocity2, const T equilibrium_iQ,
                                       const unsigned int iQ) const {
       { INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::ExactDifferenceMethod>::calculateCollisionSource",5) }
 
         return Equilibrium_::calculate(density, velocity + 1.0/density * force,
                                        (velocity + 1.0/density * force).norm2(), iQ)
-          - Equilibrium_::calculate(density, velocity, velocity2, iQ);
+          - equilibrium_iQ;
     }
 
   };

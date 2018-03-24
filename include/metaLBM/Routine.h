@@ -23,15 +23,6 @@ namespace lbm {
 
     FieldWriter_ fieldWriter;
     DistributionWriter_ distributionWriter;
-
-    double initialMass;
-    double finalMass;
-    double differenceMass;
-    double computationTime;
-    double communicationTime;
-    double writeTime;
-    double totalTime;
-
     FieldList<T, architecture> fieldList;
     Distribution<T, architecture> distribution;
 
@@ -43,6 +34,14 @@ namespace lbm {
     Algorithm<dataT, algorithmT, architecture, implementation> algorithm;
     Computation<Architecture::CPU, L::dimD> computationLocal;
 
+    double initialMass;
+    double finalMass;
+    double differenceMass;
+    double computationTime;
+    double communicationTime;
+    double writeTime;
+    double totalTime;
+
   public:
     Routine(const MathVector<int, 3>& rankMPI_in,
             const MathVector<int, 3>& sizeMPI_in,
@@ -51,13 +50,6 @@ namespace lbm {
       : communication(rankMPI_in, sizeMPI_in, processorName_in)
       , fieldWriter(prefix, rankMPI_in)
       , distributionWriter(prefix, rankMPI_in)
-      , initialMass(0.0)
-      , finalMass(0.0)
-      , differenceMass(0.0)
-      , computationTime(0.0)
-      , communicationTime(0.0)
-      , writeTime(0.0)
-      , totalTime(0.0)
       , fieldList(rankMPI_in, numberElements_in, fieldWriter)
       , curlVelocity(fieldList.velocity.getMultiData(), fieldList.vorticity.getMultiData(),
                      Cast<unsigned int,ptrdiff_t, 3>::Do(gSD::sLength()).data(),
@@ -65,12 +57,18 @@ namespace lbm {
       , distribution(initLocalDistribution<T, architecture>(fieldList.density,
                                                             fieldList.velocity,
                                                             rankMPI_in))
-      , scalarAnalysisList(fieldList, communication, prefix)
-      , spectralAnalysisList(fieldList, communication, prefix)
+      , scalarAnalysisList(fieldList, communication)
+      , spectralAnalysisList(fieldList, communication)
       , algorithm(fieldList, distribution, communication)
       , computationLocal(lSD::sStart(), lSD::sEnd())
-      {}
-
+      , initialMass(0.0)
+      , finalMass(0.0)
+      , differenceMass(0.0)
+      , computationTime(0.0)
+      , communicationTime(0.0)
+      , writeTime(0.0)
+      , totalTime(0.0)
+    {}
 
     void compute() {
       { INSTRUMENT_ON("Routine<T>::compute",1) }

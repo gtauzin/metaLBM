@@ -21,7 +21,7 @@ namespace lbm {
   template <class T>
   class Collision<T, CollisionType::GenericSRT> {
   protected:
-    T tau;
+    const T tau;
 
     Force_ forcing;
     ForcingScheme_ forcingScheme;
@@ -48,25 +48,21 @@ namespace lbm {
     {}
 
   public:
-    #pragma omp declare simd
     DEVICE HOST
     inline const T& getDensity() {
       return density;
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     inline const MathVector<T, L::dimD>& getVelocity() {
       return velocity;
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     inline const MathVector<T, L::dimD>& getForce() {
       return force;
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     inline void calculateMoments(const T * haloDistributionPtr,
                                  const Position& iP) {
@@ -78,7 +74,6 @@ namespace lbm {
       velocity2 = velocity.norm2();
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     inline void setForce(T * localForceArray[L::dimD],
                          const Position& iP,
@@ -89,24 +84,31 @@ namespace lbm {
       forcingScheme.setVariables(force, density, velocity);
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     inline const MathVector<T, L::dimD> getHydrodynamicVelocity() {
       return forcingScheme.calculateHydrodynamicVelocity(force, density, velocity);
     }
 
-    #pragma omp declare simd
+    DEVICE HOST
+    inline void calculateRelaxationTime(const T * haloDistributionNext_Ptr,
+                                        const T * haloDistributionPrevious_Ptr,
+                                        const Position& iP) {
+      { INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::calculate",4) }
+    }
+
     DEVICE HOST
     inline T calculate(const T * haloDistributionPtr,
                        const Position& iP,
                        const unsigned int iQ) {
-      INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::calculate",4)
+      { INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::calculate",4) }
+      T equilibrium_iQ = Equilibrium_::calculate(density, velocity, velocity2, iQ);
+
         return ( (T) 1.0 - (T) 1.0/tau) * haloDistributionPtr[hSD::getIndex(iP, iQ)]
-        + forcingScheme.calculateCollisionSource(force, density, velocity, velocity2, iQ)
-        + (T) 1.0/tau * Equilibrium_::calculate(density, velocity, velocity2, iQ);
+        + forcingScheme.calculateCollisionSource(force, density, velocity, velocity2,
+                                                 equilibrium_iQ, iQ)
+        + (T) 1.0/tau * equilibrium_iQ;
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     inline void update(const unsigned int iteration) {
       forcing.update(iteration);
@@ -131,10 +133,10 @@ namespace lbm {
               const MathVector<T, 3>& amplitude_in,
               const MathVector<T, 3>& waveLength_in,
               const unsigned int kMin_in, const unsigned int kMax_in)
-      : Base(tau_in, amplitude_in, waveLength_in,
-                                                kMin_in, kMax_in)
+      : Base(tau_in, amplitude_in, waveLength_in, kMin_in, kMax_in)
       , alpha( (T) 2)
     {}
+
     using Base::update;
     using Base::setForce;
 
@@ -170,23 +172,25 @@ namespace lbm {
 
     using Base::setForce;
 
-    #pragma omp declare simd
     DEVICE HOST
     inline void setVariables(const T * haloDistributionPtr,
                              const Position& iP,
                              const T density,
                              const MathVector<T, L::dimD>& velocity) {
-      INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::setVariables",4)
+      { INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::setVariables",4) }
 
-        Base::setVariables(haloDistributionPtr, iP,
-                                                       density, velocity);
+        Base::setVariables(haloDistributionPtr, iP, density, velocity);
 
-      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+      for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
+        T equilibrium_iQ = Equilibrium_::calculate(Base::density, Base::velocity,
+                                                   Base::velocity2, iQ);
+
         f_Forced[iQ] = haloDistributionPtr[hSD::getIndex(iP-uiL::celerity()[iQ], iQ)]
           + forcingScheme.calculateCollisionSource(Base::force, Base::density,
-                                                   Base::velocity, Base::velocity2, iQ);
+                                                   Base::velocity, Base::velocity2,
+                                                   equilibrium_iQ, iQ);
         f_NonEq[iQ] = haloDistributionPtr[hSD::getIndex(iP-uiL::celerity()[iQ], iQ)]
-          - Equilibrium_::calculate(Base::density, Base::velocity, Base::velocity2, iQ);
+          - equilibrium_iQ;
       }
 
       calculateAlpha();
@@ -213,7 +217,6 @@ namespace lbm {
     MathVector<T, L::dimQ> f_Forced;
     MathVector<T, L::dimQ> f_NonEq;
 
-    #pragma omp declare simd
     DEVICE HOST
     inline bool isDeviationSmall(const T error) {
       INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::isDeviationSmall",6)
@@ -232,7 +235,6 @@ namespace lbm {
       return isDeviationSmallR;
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     T calculateAlphaMax() {
       INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::calculateAlphaMax",6)
@@ -253,7 +255,6 @@ namespace lbm {
       return alphaMaxR;
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     inline T solveAlpha(const T alphaMin, const T alphaMax) {
       INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::solveAlpha",6)
@@ -275,7 +276,6 @@ namespace lbm {
       return alphaR;
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     inline void calculateAlpha() {
       INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::calculateAlpha",5)

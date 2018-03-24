@@ -28,7 +28,6 @@ int main(int argc, char* argv[]) {
   {
     unsigned int numberElements = lSD::pVolume();
 
-
   #else
     int provided;
     MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided);

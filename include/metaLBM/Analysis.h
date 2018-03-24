@@ -151,6 +151,9 @@ namespace lbm {
     HOST
     void operator()(const Position& iFP, const unsigned int index,
                     const WaveNumber& iK, const unsigned int kNorm) {
+      // std::cout << "iK: " << iK << ", index: " << index
+      //           << ", iFP: " << iFP << std::endl;
+
       T coefficient = (T) 1;
       if(iK[L::dimD-1] == 0) {
         coefficient = (T) 0.5;
@@ -158,13 +161,12 @@ namespace lbm {
 
       T energy = (T) 0;
       for(auto iD = 0; iD < L::dimD; ++iD) {
-        fftw_complex * fourierForcePtr = ((fftw_complex *) localVelocityPtr[iD]);
-
-        energy += fourierForcePtr[index][p::Re]*fourierForcePtr[index][p::Re];
-        energy += fourierForcePtr[index][p::Im]*fourierForcePtr[index][p::Im];
+        fftw_complex * fourierVelocityPtr = ((fftw_complex *) localVelocityPtr[iD]);
+        energy += fourierVelocityPtr[index][p::Re]*fourierVelocityPtr[index][p::Re];
+        energy += fourierVelocityPtr[index][p::Im]*fourierVelocityPtr[index][p::Im];
       }
 
-      spectraRef[kNorm] += coefficient * energy;
+      if(kNorm < MaxWaveNumber) spectraRef[kNorm] += coefficient * energy;
     }
 
     using Base::reset;

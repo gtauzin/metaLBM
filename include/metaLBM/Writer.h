@@ -24,55 +24,34 @@ namespace lbm {
   template <class T>
   class Writer<T, InputOutput::Generic, InputOutputFormat::Generic> {
   protected:
-    static constexpr auto writeFolder = "../output/";
+    const std::string writeFolder;
     const std::string writerFolder;
     const std::string fileExtension;
     const std::string filePrefix;
     const std::string fileFormat;
-
-    const MathVector<int, 3> rankMPI;
 
     std::ofstream file;
 
     Writer(const std::string& writerFolder_in,
            const std::string& filePrefix_in,
            const std::string& fileExtension_in,
-           const std::string& fileFormat_in,
-           const MathVector<int, 3>& rankMPI_in)
-      : writerFolder(writerFolder_in)
+           const std::string& fileFormat_in)
+      : writeFolder("../output/")
+      , writerFolder(writerFolder_in)
       , fileExtension(fileExtension_in)
       , filePrefix(filePrefix_in)
       , fileFormat(fileFormat_in)
-      , rankMPI(rankMPI_in)
-    {
-      if(rankMPI[d::X] == 0) {
-        int dirError = mkdir(writeFolder, S_IRWXU | S_IRWXG
-                             | S_IROTH | S_IXOTH);
-        dirError = mkdir((writeFolder+writerFolder).c_str(), S_IRWXU | S_IRWXG
-                         | S_IROTH | S_IXOTH);
-        if (dirError == -1)
-          {
-            std::cout << "Error creating directory! It probably already exists..."
-                      << std::endl;
-          }
-      }
-    }
+    {}
 
-    std::string getFileName(const unsigned int iteration) {
+    inline std::string getFileName(const unsigned int iteration) {
       std::ostringstream number;
 
       number << iteration;
-      std::string fileName =  writeFolder + writerFolder
-        + filePrefix + "-" + number.str() + fileExtension;
-
-      return fileName;
+      return writeFolder + writerFolder + filePrefix + "-" + number.str() + fileExtension;
     }
 
-    std::string getFileName() {
-      std::string fileName =  writeFolder + writerFolder
-        + filePrefix + fileExtension;
-
-      return fileName;
+    inline std::string getFileName() {
+      return writeFolder + writerFolder + filePrefix + fileExtension;
     }
 
 
@@ -93,9 +72,8 @@ namespace lbm {
   public:
     Writer(const std::string& writerFolder_in,
            const std::string& filePrefix_in,
-           const std::string& fileExtension_in,
-           const MathVector<int, 3>& rankMPI_in)
-      : Base(writerFolder_in, filePrefix_in, fileExtension_in, "ascii", rankMPI_in)
+           const std::string& fileExtension_in)
+      : Base(writerFolder_in, filePrefix_in, fileExtension_in, "ascii")
     {}
 
     using Base::getIsWritten;
@@ -138,10 +116,9 @@ namespace lbm {
   public:
     Writer(const std::string& writerFolder_in,
            const std::string& filePrefix_in,
-           const std::string& fileExtension_in,
-           const MathVector<int, 3> rankMPI_in)
+           const std::string& fileExtension_in)
       : Base(writerFolder_in, filePrefix_in, fileExtension_in,
-             "binary", rankMPI_in)
+             "binary")
     {}
 
     using Base::getIsWritten;
@@ -169,12 +146,11 @@ namespace lbm {
   class ScalarAnalysisWriter
     : public Writer<T, InputOutput::Generic, inputOutputFormat> {
   private:
-  using Base = Writer<T, InputOutput::Generic, inputOutputFormat>;
+    using Base = Writer<T, InputOutput::Generic, inputOutputFormat>;
 
   public:
-  ScalarAnalysisWriter(const std::string& filePrefix_in,
-                       const MathVector<int, 3>& rankMPI_in)
-    : Base(filePrefix_in+"/", "observables", ".dat", rankMPI_in)
+    ScalarAnalysisWriter(const std::string& filePrefix_in)
+      : Base(filePrefix_in+"/", "observables", ".dat")
     {}
 
     inline bool getIsAnalyzed(const unsigned int iteration) {
@@ -183,12 +159,7 @@ namespace lbm {
 
 
     inline void openFile(const unsigned int iteration) {
-      std::string fileName = "/dev/null";
-
-      if(Base::rankMPI[d::X] == 0) {
-        fileName = Base::getFileName();
-        Base::openAndAppend(fileName);
-      }
+      Base::openAndAppend(Base::getFileName());
     }
 
     inline void closeFile() {
@@ -199,44 +170,36 @@ namespace lbm {
     void writeAnalysis(const unsigned int iteration, T * data) {
       { INSTRUMENT_ON("Writer<T, InputOutputFormat>::writeAnalysis<NumberScalarAnalysis>",3) }
 
-      if(Base::rankMPI[d::X] == 0) {
+      Base::write(iteration);
+      Base::file << " ";
 
-        Base::write(iteration);
+      for(auto iS = 0; iS < NumberScalarAnalyses; ++iS) {
+        Base::write(data[iS]);
         Base::file << " ";
-
-        for(auto iS = 0; iS < NumberScalarAnalyses; ++iS) {
-          Base::write(data[iS]);
-          Base::file << " ";
-        }
-        Base::file << std::endl;
       }
+      Base::file << std::endl;
     }
 
     void writeHeader(const std::string& header) {
       { INSTRUMENT_ON("AnalysisWriter::writeHeader",2) }
-      std::string fileName = "/dev/null";
+      Base::openAndTruncate(Base::getFileName());
 
-      if(Base::rankMPI[d::X] == 0) {
-        fileName = Base::getFileName();
-        Base::openAndTruncate(fileName);
+      Base::file << header << std::endl;
 
-        Base::file << header << std::endl;
-
-        closeFile();
-      }
+      closeFile();
     }
 
   };
 
   template <class T, InputOutputFormat inputOutputFormat>
-    class SpectralAnalysisWriter
+  class SpectralAnalysisWriter
     : public Writer<T, InputOutput::Generic, inputOutputFormat> {
   private:
-  using Base = Writer<T, InputOutput::Generic, inputOutputFormat>;
+    using Base = Writer<T, InputOutput::Generic, inputOutputFormat>;
+
   public:
-    SpectralAnalysisWriter(const std::string& filePrefix_in,
-                           const MathVector<int, 3>& rankMPI_in)
-      : Base(filePrefix_in+"/", "spectra", ".dat", rankMPI_in)
+    SpectralAnalysisWriter(const std::string& filePrefix_in)
+      : Base(filePrefix_in+"/", "spectra", ".dat")
     {}
 
     inline bool getIsAnalyzed(const unsigned int iteration) {
@@ -244,13 +207,7 @@ namespace lbm {
     }
 
     inline void openFile(const unsigned int iteration) {
-      std::string fileName = "/dev/null";
-
-      if(Base::rankMPI[d::X] == 0) {
-        fileName = Base::getFileName();
-        Base::openAndAppend(fileName);
-      }
-
+      Base::openAndAppend(Base::getFileName());
     }
 
     inline void closeFile() {
@@ -261,37 +218,28 @@ namespace lbm {
     void writeAnalysis(const unsigned int iteration, T * data[NumberSpectralAnalyses]) {
       { INSTRUMENT_ON("Writer<T, InputOutput::DAT, writerFileFromat>::writeAnalysis<NumberComponents>",3) }
 
-      std::cout << Base::rankMPI[d::X] << std::endl;
-      // if(Base::rankMPI[d::X] == 1) {
+      for(auto kNorm = 0; kNorm < MaxWaveNumber; ++kNorm) {
+        Base::write(iteration);
+        Base::file << " ";
 
-      //   for(auto kNorm = 0; kNorm < MaxWaveNumber; ++kNorm) {
-      //     Base::write(iteration);
-      //     Base::file << " ";
+        Base::write(kNorm);
+          Base::file << " ";
 
-      //     Base::write(kNorm);
-      //     Base::file << " ";
-
-      //     for(auto iS = 0; iS < NumberSpectralAnalyses; ++iS) {
-      //       Base::write(data[iS][kNorm]);
-      //       Base::file << " ";
-      //     }
-      //     Base::file << std::endl;
-      //   }
-      // }
+          for(auto iS = 0; iS < NumberSpectralAnalyses; ++iS) {
+            Base::write(data[iS][kNorm]);
+            Base::file << " ";
+          }
+          Base::file << std::endl;
+      }
     }
 
     void writeHeader(const std::string& header) {
       { INSTRUMENT_ON("AnalysisWriter::writeHeader",2) }
-      std::string fileName = "/dev/null";
+      Base::openAndTruncate(Base::getFileName());
 
-      if(Base::rankMPI[d::X] == 0) {
-        fileName = Base::getFileName();
-        Base::openAndTruncate(fileName);
+      Base::file << header << std::endl;
 
-        Base::file << header << std::endl;
-
-        closeFile();
-      }
+      closeFile();
     }
 
   };
@@ -316,14 +264,29 @@ namespace lbm {
     hid_t fileSpaceHDF5;
     hid_t propertyListHDF5;
     FieldWriter<T, InputOutput::XDMF> writerXDMF;
+    const MathVector<int, 3> rankMPI;
 
   public:
     FieldWriter(const std::string& filePrefix_in,
                 const MathVector<int, 3>& rankMPI_in,
                 const std::string& name_in = "field")
-      : Base(filePrefix_in+"/", name_in, ".h5", "binary", rankMPI_in)
-      , writerXDMF(filePrefix_in, rankMPI_in, name_in)
-    {}
+      : Base(filePrefix_in+"/", name_in, ".h5", "binary")
+      , rankMPI(rankMPI_in)
+      , writerXDMF(filePrefix_in, name_in)
+    {
+      if(rankMPI[d::X] == 0) {
+        int dirError = mkdir(Base::writeFolder.c_str(), S_IRWXU | S_IRWXG
+                             | S_IROTH | S_IXOTH);
+        dirError = mkdir((Base::writeFolder+Base::writerFolder).c_str(), S_IRWXU | S_IRWXG
+                         | S_IROTH | S_IXOTH);
+        if (dirError == -1)
+          {
+            std::cout << "Error creating directory! It probably already exists..."
+                      << std::endl;
+          }
+      }
+
+    }
 
     using Base::getIsWritten;
 
@@ -331,7 +294,7 @@ namespace lbm {
       std::string fileName = Base::getFileName(iteration);
       open(fileName);
 
-      if(Base::rankMPI[d::X] == 0) {
+      if(rankMPI[d::X] == 0) {
         writerXDMF.openFile(iteration);
       }
     }
@@ -339,13 +302,13 @@ namespace lbm {
     inline void closeFile() {
       statusHDF5 = H5Fclose(fileHDF5);
 
-      if(Base::rankMPI[d::X] == 0) {
+      if(rankMPI[d::X] == 0) {
         writerXDMF.closeFile();
       }
     }
 
     template<unsigned int NumberComponents, Architecture architecture>
-      void writeField(Field<T, NumberComponents, architecture, true>& field) {
+    void writeField(Field<T, NumberComponents, architecture, true>& field) {
       { INSTRUMENT_ON("Writer<T, InputOutput::HDF5, writerFileFromat>::writeField<NumberComponents>",3) }
 
       std::string fieldName = field.fieldName;
@@ -375,7 +338,7 @@ namespace lbm {
 
         H5Sselect_hyperslab(fileSpaceHDF5, H5S_SELECT_SET,
                             Project<hsize_t,
-                            unsigned int, L::dimD>::Do(gSD::pOffset(Base::rankMPI)).data(),
+                            unsigned int, L::dimD>::Do(gSD::pOffset(rankMPI)).data(),
                             NULL,
                             Project<hsize_t,
                             unsigned int, L::dimD>::Do(lSD::pLength()).data(), NULL);
@@ -390,7 +353,7 @@ namespace lbm {
         statusHDF5 = H5Sclose(dataSpaceHDF5);
         statusHDF5 = H5Sclose(fileSpaceHDF5);
 
-        if(Base::rankMPI[d::X] == 0) {
+        if(rankMPI[d::X] == 0) {
           writerXDMF.write(fieldName, NumberComponents);
         }
 
@@ -439,54 +402,54 @@ namespace lbm {
     }
 
     template<Architecture architecture>
-      void writeDistribution(Distribution<T, architecture>& distribution) {
+    void writeDistribution(Distribution<T, architecture>& distribution) {
       { INSTRUMENT_ON("Writer<T, InputOutput::HDF5, writerFileFromat>::writeField<NumberComponents>",3) }
 
-        Base::propertyListHDF5 = H5Pcreate(H5P_DATASET_XFER);
-        for(auto iC = 0; iC < L::dimQ; ++iC) {
-          Base::fileSpaceHDF5 = H5Screate_simple(L::dimD,
-                                                 Project<hsize_t,
-                                                 unsigned int, L::dimD>::Do(gSD::pLength()).data(),
-                                                 NULL);
+      Base::propertyListHDF5 = H5Pcreate(H5P_DATASET_XFER);
+      for(auto iC = 0; iC < L::dimQ; ++iC) {
+        Base::fileSpaceHDF5 = H5Screate_simple(L::dimD,
+                                               Project<hsize_t,
+                                               unsigned int, L::dimD>::Do(gSD::pLength()).data(),
+                                               NULL);
 
-          Base::dataSetHDF5 = H5Dcreate2(Base::fileHDF5, (distribution.fieldName+std::to_string(iC)).c_str(),
-                                         H5T_NATIVE_DOUBLE, Base::fileSpaceHDF5, H5P_DEFAULT,
-                                         H5P_DEFAULT, H5P_DEFAULT);
+        Base::dataSetHDF5 = H5Dcreate2(Base::fileHDF5, (distribution.fieldName+std::to_string(iC)).c_str(),
+                                       H5T_NATIVE_DOUBLE, Base::fileSpaceHDF5, H5P_DEFAULT,
+                                       H5P_DEFAULT, H5P_DEFAULT);
 
-          Base::statusHDF5 = H5Sclose(Base::fileSpaceHDF5);
+        Base::statusHDF5 = H5Sclose(Base::fileSpaceHDF5);
 
-          Base::dataSpaceHDF5 = H5Screate_simple(L::dimD,
-                                                 Project<hsize_t,
-                                                 unsigned int, L::dimD>::Do(lSD::pLength()).data(),
-                                                 NULL);
+        Base::dataSpaceHDF5 = H5Screate_simple(L::dimD,
+                                               Project<hsize_t,
+                                               unsigned int, L::dimD>::Do(lSD::pLength()).data(),
+                                               NULL);
 
-          Base::fileSpaceHDF5 = H5Dget_space(Base::dataSetHDF5);
+        Base::fileSpaceHDF5 = H5Dget_space(Base::dataSetHDF5);
 
-          H5Sselect_hyperslab(Base::fileSpaceHDF5, H5S_SELECT_SET,
-                              Project<hsize_t,
-                              unsigned int, L::dimD>::Do(gSD::pOffset(Base::rankMPI)).data(),
-                              NULL,
-                              Project<hsize_t,
-                              unsigned int, L::dimD>::Do(lSD::pLength()).data(), NULL);
+        H5Sselect_hyperslab(Base::fileSpaceHDF5, H5S_SELECT_SET,
+                            Project<hsize_t,
+                            unsigned int, L::dimD>::Do(gSD::pOffset(Base::rankMPI)).data(),
+                            NULL,
+                            Project<hsize_t,
+                            unsigned int, L::dimD>::Do(lSD::pLength()).data(), NULL);
 
-          H5Pset_dxpl_mpio(Base::propertyListHDF5, H5FD_MPIO_COLLECTIVE);
+        H5Pset_dxpl_mpio(Base::propertyListHDF5, H5FD_MPIO_COLLECTIVE);
 
-          Base::statusHDF5 = H5Dwrite(Base::dataSetHDF5, H5T_NATIVE_DOUBLE,
-                                      Base::dataSpaceHDF5, Base::fileSpaceHDF5,
-                                      Base::propertyListHDF5,
-                                      distribution.getMultiData()[iC]);
+        Base::statusHDF5 = H5Dwrite(Base::dataSetHDF5, H5T_NATIVE_DOUBLE,
+                                    Base::dataSpaceHDF5, Base::fileSpaceHDF5,
+                                    Base::propertyListHDF5,
+                                    distribution.getMultiData()[iC]);
 
-          Base::statusHDF5 = H5Dclose(Base::dataSetHDF5);
-          Base::statusHDF5 = H5Sclose(Base::dataSpaceHDF5);
-          Base::statusHDF5 = H5Sclose(Base::fileSpaceHDF5);
+        Base::statusHDF5 = H5Dclose(Base::dataSetHDF5);
+        Base::statusHDF5 = H5Sclose(Base::dataSpaceHDF5);
+        Base::statusHDF5 = H5Sclose(Base::fileSpaceHDF5);
 
-          if(Base::rankMPI[d::X] == 0) {
-            Base::writerXDMF.write(distribution.fieldName+std::to_string(iC), L::dimQ);
-          }
-
+        if(Base::rankMPI[d::X] == 0) {
+          Base::writerXDMF.write(distribution.fieldName+std::to_string(iC), L::dimQ);
         }
 
-        Base::statusHDF5 = H5Pclose(Base::propertyListHDF5);
+      }
+
+      Base::statusHDF5 = H5Pclose(Base::propertyListHDF5);
 
     }
 
@@ -504,10 +467,9 @@ namespace lbm {
 
   public:
     FieldWriter(const std::string& filePrefix_in,
-                const MathVector<int, 3>& rankMPI_in,
                 const std::string& name_in)
       : Base(filePrefix_in+"/", name_in,
-             ".xmf", rankMPI_in)
+             ".xmf")
       , fileName("/dev/null")
       , fileNameHDF5("/dev/null")
     {}
@@ -527,19 +489,19 @@ namespace lbm {
     void write(const std::string& name, unsigned int numberComponents) {
       { INSTRUMENT_ON("Writer<T, InputOutput::XDMF, writerFileFromat>::writeField<NumberComponents>",3) }
 
-          Base::file << "<Attribute Name=\"" << name << "\" "
-               << "AttributeType=\"Scalar\" Center=\"Node\">\n";
-          Base::file << "<DataItem Dimensions=\""
-               << gSD::pLength()[d::X];
+      Base::file << "<Attribute Name=\"" << name << "\" "
+                 << "AttributeType=\"Scalar\" Center=\"Node\">\n";
+      Base::file << "<DataItem Dimensions=\""
+                 << gSD::pLength()[d::X];
 
-          for(auto iD = 1; iD < L::dimD; ++iD) {
-            Base::file << " " << gSD::sLength()[iD];
-          }
-          Base::file << "\" ";
-          Base::file << "NumberType=\"Double\" Precision=\"8\" Format=\"HDF\">\n";
-          Base::file << fileNameHDF5 << ":/" << name << "\n";
-          Base::file << "</DataItem>\n";
-          Base::file << "</Attribute>\n";
+      for(auto iD = 1; iD < L::dimD; ++iD) {
+        Base::file << " " << gSD::sLength()[iD];
+      }
+      Base::file << "\" ";
+      Base::file << "NumberType=\"Double\" Precision=\"8\" Format=\"HDF\">\n";
+      Base::file << fileNameHDF5 << ":/" << name << "\n";
+      Base::file << "</DataItem>\n";
+      Base::file << "</Attribute>\n";
     }
 
   private:
@@ -564,7 +526,7 @@ namespace lbm {
       Base::file << "<Domain>\n";
       Base::file << "<Grid Name=\"grid\" GridType=\"Uniform\">\n";
       Base::file << "<Topology TopologyType=\"" << L::dimD << "DCoRectMesh\" Dimensions=\""
-           << gSD::pLength()[d::X];
+                 << gSD::pLength()[d::X];
 
       for(auto iD = 1; iD < L::dimD; ++iD) {
         Base::file << " " << gSD::sLength()[iD];
@@ -600,9 +562,9 @@ namespace lbm {
 
     void writeFooter() {
       { INSTRUMENT_ON("Writer<T, InputOutput::XDMF, InputOutputFormat::Generic>::writeFooter",2) }
-        Base::file << "</Grid>\n"
-                   << "</Domain>\n"
-                   << "</Xdmf>\n";
+      Base::file << "</Grid>\n"
+                 << "</Domain>\n"
+                 << "</Xdmf>\n";
     }
 
   };
