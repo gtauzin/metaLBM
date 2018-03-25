@@ -128,25 +128,17 @@ namespace lbm {
 
   protected:
     using Base::dArrayPtr;
-    U * sMultiArrayPtr[NumberComponents];
+    DynamicArray<U *, Architecture::CPUPinned> sMultiArray;
     unsigned int numberElements;
 
   public:
     MultiDynamicArray(const unsigned int numberElements_in)
       : Base(NumberComponents*numberElements_in)
+      , sMultiArray(NumberComponents)
       , numberElements(numberElements_in)
     {
       for(auto iC = 0; iC < NumberComponents; ++iC) {
-        sMultiArrayPtr[iC] = Base::data(iC*numberElements);
-      }
-    }
-
-    MultiDynamicArray(const MultiDynamicArray& multiArray_in)
-      : Base(multiArray_in)
-      , numberElements(multiArray_in.numberElements)
-    {
-      for(auto iC = 0; iC < NumberComponents; ++iC) {
-        sMultiArrayPtr[iC] = Base::data(iC*numberElements);
+        sMultiArray[iC] = Base::data(iC*numberElements);
       }
     }
 
@@ -165,20 +157,82 @@ namespace lbm {
 
     DEVICE HOST
     U * operator[] (int iC) {
-      return sMultiArrayPtr[iC];
+      return sMultiArray[iC];
     }
 
     DEVICE HOST
     const U * operator[] (int iC) const {
-      return sMultiArrayPtr[iC];
+      return sMultiArray[iC];
     }
 
     DEVICE HOST
     U ** multiData() {
-      return sMultiArrayPtr;
+      return sMultiArray.data();
     }
 
   };
+
+
+
+  // template<class U, unsigned int NumberComponents>
+  // class MultiDynamicArray<U, Architecture::CPUPinned, NumberComponents>
+  //   : public DynamicArray<U, Architecture::CPUPinned> {
+  // private:
+  //   using Base = DynamicArray<U, Architecture::CPUPinned>;
+
+  // protected:
+  //   using Base::dArrayPtr;
+  //   U * sMultiArrayPtr[NumberComponents];
+  //   unsigned int numberElements;
+
+  // public:
+  //   MultiDynamicArray(const unsigned int numberElements_in)
+  //     : Base(NumberComponents*numberElements_in)
+  //     , numberElements(numberElements_in)
+  //   {
+  //     for(auto iC = 0; iC < NumberComponents; ++iC) {
+  //       sMultiArrayPtr[iC] = Base::data(iC*numberElements);
+  //     }
+  //   }
+
+  //   MultiDynamicArray(const MultiDynamicArray& multiArray_in)
+  //     : Base(multiArray_in)
+  //     , numberElements(multiArray_in.numberElements)
+  //   {
+  //     for(auto iC = 0; iC < NumberComponents; ++iC) {
+  //       sMultiArrayPtr[iC] = Base::data(iC*numberElements);
+  //     }
+  //   }
+
+  //   void copyFrom(const MultiDynamicArray& other) {
+  //     Base::copyFrom(other);
+  //   }
+
+  //   void copyTo(MultiDynamicArray& other) const {
+  //     Base::copyTo(other);
+  //   }
+
+  //   DEVICE HOST
+  //   inline unsigned int getNumberElements() {
+  //     return numberElements;
+  //   }
+
+  //   DEVICE HOST
+  //   U * operator[] (int iC) {
+  //     return sMultiArrayPtr[iC];
+  //   }
+
+  //   DEVICE HOST
+  //   const U * operator[] (int iC) const {
+  //     return sMultiArrayPtr[iC];
+  //   }
+
+  //   DEVICE HOST
+  //   U ** multiData() {
+  //     return sMultiArrayPtr;
+  //   }
+
+  // };
 
 
 
