@@ -89,7 +89,7 @@ namespace lbm {
     #pragma omp declare simd
     HOST DEVICE
     static inline constexpr unsigned int maxWaveNumber() {
-      return arrayMax(globalLength);
+      return arrayMax(globalLength)/2;
     }
 
     #pragma omp declare simd

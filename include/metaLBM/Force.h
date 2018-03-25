@@ -34,7 +34,6 @@ namespace lbm {
       }
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     inline void setForce(T * localForceArray[L::dimD],
                          const Position& iP,
@@ -45,7 +44,6 @@ namespace lbm {
       }
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     inline void update(const unsigned int iteration) {
     }
@@ -101,16 +99,15 @@ namespace lbm {
       : Base(amplitude_in)
     {}
 
-    #pragma omp declare simd
     DEVICE HOST
     inline void setForce(const Position& iP,
                          MathVector<T, L::dimD>& force) {
       force = amplitude;
     }
 
-    #pragma omp declare simd
     HOST
-    inline void setLocalForceArray(double * localForcePtr[L::dimD],
+    inline void setLocalForceArray(double * * localForcePtr,
+                                   const unsigned int numberElements,
                                    const Position& offset) {
       Computation<Architecture::CPU, L::dimD> computationLocal(lSD::sStart(),
                                                                lSD::sEnd());
@@ -156,7 +153,6 @@ namespace lbm {
       }
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     inline void setForce(const Position& iP,
                          MathVector<T, L::dimD>& force) {
@@ -165,9 +161,9 @@ namespace lbm {
       }
     }
 
-    #pragma omp declare simd
     HOST
-    inline void setLocalForceArray(double * localForcePtr[L::dimD],
+    inline void setLocalForceArray(double * * localForcePtr,
+                                   const unsigned int numberElements,
                                    const Position& offset) {
       Computation<Architecture::CPU, L::dimD> computationLocal(lSD::sStart(),
                                                                lSD::sEnd());
@@ -209,7 +205,6 @@ namespace lbm {
       }
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     inline void setForce(const Position& iP,
                          MathVector<T, L::dimD>& force) {
@@ -217,7 +212,8 @@ namespace lbm {
     }
 
     HOST
-    inline void setLocalForceArray(double * localForcePtr[L::dimD],
+    inline void setLocalForceArray(double * * localForcePtr,
+                                   const unsigned int numberElements,
                                    const Position& offset) {
       Computation<Architecture::CPU, L::dimD> computationLocal(lSD::sStart(),
                                                                lSD::sEnd());
@@ -288,7 +284,7 @@ namespace lbm {
           if (kNormSquared >= kMin*kMin && kNormSquared <= kMax*kMax) {
             auto index = lFD::getIndex(iFP);
 
-            for(auto iD = 0; iD < L::dimD; ++iD) {
+            for(auto iD = 0; iD < 2*L::dimD-3; ++iD) {
               fftw_complex * fourierTempForcePtr = ((fftw_complex *) tempForcePtr[iD]);
 
               fourierTempForcePtr[index][0] = amplitude[iD];

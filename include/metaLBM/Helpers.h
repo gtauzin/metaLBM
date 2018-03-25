@@ -51,7 +51,7 @@ namespace lbm {
   template <class T, std::size_t N>
   HOST DEVICE
   constexpr T &arrayMax(T(&arr)[N]) {
-    return arrayMin_impl(arr, arr + N);
+    return arrayMax_impl(arr, arr + N);
   }
 
   template<int Begin, int End, int Step = 1>

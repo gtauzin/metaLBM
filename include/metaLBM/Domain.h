@@ -8,8 +8,8 @@
 
 namespace lbm {
 
-  constexpr int globalLength[] = {globalLengthX/2, L::dimD>1 ? globalLengthY/2: 1,
-                                  L::dimD>2 ? globalLengthZ/2: 1};
+  constexpr int globalLength[] = {globalLengthX, L::dimD>1 ? globalLengthY: 1,
+                                  L::dimD>2 ? globalLengthZ: 1};
 
   /**
    * Domain defining space where DynamicArray lives and providing them

@@ -76,8 +76,8 @@ namespace lbm {
     }
 
     inline void reduceAnalyses() {
-      communication.reduce(totalEnergy.scalar);
-      communication.reduce(totalEnstrophy.scalar);
+      communication.reduce(&(totalEnergy.scalar), 1);
+      communication.reduce(&(totalEnstrophy.scalar), 1);
     }
 
     inline void normalizeAnalyses() {
@@ -160,7 +160,7 @@ namespace lbm {
     }
 
     inline void reduceAnalyses() {
-      communication.reduceAll(energySpectra.spectra, gFD::maxWaveNumber());
+      communication.reduce(energySpectra.spectra, gFD::maxWaveNumber());
     }
 
     inline void normalizeAnalyses() {

@@ -110,16 +110,20 @@ namespace lbm {
 
 
     HOST
-    void reduce(T& localSum) {
+    void reduce(T * localSumPtr, unsigned int numberComponents) {
       MPI_Barrier(MPI_COMM_WORLD);
 
-      //T globalSum = (T) 0;
-      MPI_Reduce(MPI_IN_PLACE, &localSum, 1, MPI_DOUBLE,
-                 MPI_SUM, 0, MPI_COMM_WORLD);
+      if(rankMPI[d::X] == 0) {
+        MPI_Reduce(MPI_IN_PLACE, localSumPtr, numberComponents, MPI_DOUBLE,
+                   MPI_SUM, 0, MPI_COMM_WORLD);
+      }
+      else {
+        MPI_Reduce(localSumPtr, localSumPtr, numberComponents, MPI_DOUBLE,
+                   MPI_SUM, 0, MPI_COMM_WORLD);
+      }
 
       MPI_Barrier(MPI_COMM_WORLD);
 
-      //return globalSum;
     }
 
     HOST
@@ -130,19 +134,8 @@ namespace lbm {
           localSum += localPtr[lSD::getIndex(iP)];
         });
 
-      reduce(localSum);
+      reduce(&localSum, 1);
       return localSum;
-    }
-
-    HOST
-    void reduceAll(T * localArray, unsigned int numberComponents) {
-      MPI_Barrier(MPI_COMM_WORLD);
-
-      MPI_Allreduce(MPI_IN_PLACE, localArray, numberComponents,
-                    MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-
-
-      MPI_Barrier(MPI_COMM_WORLD);
     }
 
   };
@@ -334,7 +327,6 @@ namespace lbm {
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
     using Base::reduce;
-    using Base::reduceAll;
   };
 
 
@@ -433,7 +425,6 @@ namespace lbm {
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
     using Base::reduce;
-    using Base::reduceAll;
 
   protected:
     HOST
@@ -602,7 +593,7 @@ namespace lbm {
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
     using Base::reduce;
-    using Base::reduceAll;
+
   };
 
 
@@ -664,7 +655,6 @@ namespace lbm {
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
     using Base::reduce;
-    using Base::reduceAll;
 
   protected:
     HOST
@@ -721,7 +711,6 @@ namespace lbm {
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
     using Base::reduce;
-    using Base::reduceAll;
 
   protected:
     HOST
@@ -768,7 +757,6 @@ namespace lbm {
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
     using Base::reduce;
-    using Base::reduceAll;
 
     HOST
     inline void communicateHalos(T * haloDistributionPtr) {
@@ -799,7 +787,6 @@ namespace lbm {
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
     using Base::reduce;
-    using Base::reduceAll;
 
   private:
     using Base::sendAndReceiveHaloX;
@@ -824,7 +811,6 @@ namespace lbm {
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
     using Base::reduce;
-    using Base::reduceAll;
 
     HOST
     inline void communicateHalos(T * haloDistributionPtr) {
@@ -857,7 +843,6 @@ namespace lbm {
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
     using Base::reduce;
-    using Base::reduceAll;
 
     using Base::communicateHalos;
 
@@ -886,7 +871,6 @@ namespace lbm {
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
     using Base::reduce;
-    using Base::reduceAll;
 
   private:
     using Base::sendAndReceiveHaloX;
@@ -911,7 +895,6 @@ namespace lbm {
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
     using Base::reduce;
-    using Base::reduceAll;
 
     HOST
     inline void communicateHalos(T * haloDistributionPtr) {

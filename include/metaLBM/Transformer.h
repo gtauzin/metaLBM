@@ -260,11 +260,6 @@ namespace lbm {
   };
 
 
-
-
-
-
-
   template<class T, Architecture architecture, PartitionningType partitionningType,
            unsigned int Dimension>
   class MakeIncompressible {};
@@ -272,8 +267,8 @@ namespace lbm {
   template<>
   class MakeIncompressible<double, Architecture::CPU, PartitionningType::OneD, 2> {
   private:
-    ForwardFFT<double, Architecture::CPU, PartitionningType::OneD, 2, 2> forwardIn;
-    BackwardFFT<double, Architecture::CPU, PartitionningType::OneD, 2, 1> backwardOut;
+    double * * localSpaceInPtr;
+    BackwardFFT<double, Architecture::CPU, PartitionningType::OneD, 2, 2> backwardOut;
     const Position& offset;
     Computation<Architecture::CPU, L::dimD> computationFourier;
 
@@ -282,7 +277,7 @@ namespace lbm {
                        double * * localSpaceOutPtr_in,
                        const ptrdiff_t globalLength_in[3],
                        const Position& offset_in)
-      : forwardIn(localSpaceInPtr_in, localSpaceInPtr_in, globalLength_in)
+      : localSpaceInPtr(localSpaceInPtr_in)
       , backwardOut(localSpaceOutPtr_in, localSpaceOutPtr_in, globalLength_in)
       , offset(offset_in)
       , computationFourier(lFD::start(), lFD::end())
@@ -301,28 +296,21 @@ namespace lbm {
             iFP[d::Y] : iFP[d::Y]-gSD::sLength()[d::Y];
 
           ((fftw_complex *) (backwardOut.localFourierPtr[d::X]))[index][p::Re]
-            = - iK[d::Y] * ((fftw_complex *) (forwardIn.localFourierPtr[0]))[index][p::Im];
+            = - iK[d::Y] * ((fftw_complex *) (localSpaceInPtr[0]))[index][p::Im];
 
           ((fftw_complex *) (backwardOut.localFourierPtr[d::X]))[index][p::Im]
-            = iK[d::Y] * ((fftw_complex *) (forwardIn.localFourierPtr[0]))[index][p::Re];
+            = iK[d::Y] * ((fftw_complex *) (localSpaceInPtr[0]))[index][p::Re];
 
           ((fftw_complex *) (backwardOut.localFourierPtr[d::Y]))[index][p::Re]
-            = iK[d::X] * ((fftw_complex *) (forwardIn.localFourierPtr[0]))[index][p::Im];
+            = iK[d::X] * ((fftw_complex *) (localSpaceInPtr[0]))[index][p::Im];
 
           ((fftw_complex *) (backwardOut.localFourierPtr[d::Y]))[index][p::Im]
-            = - iK[d::X] * ((fftw_complex *) (forwardIn.localFourierPtr[0]))[index][p::Re];
+            = - iK[d::X] * ((fftw_complex *) (localSpaceInPtr[0]))[index][p::Re];
 
         });
 
       backwardOut.execute();
     }
-
-    HOST
-    inline void executeSpace() {
-      forwardIn.execute();
-      executeFourier();
-    }
-
 
   };
 
@@ -342,7 +330,6 @@ namespace lbm {
     {}
 
     using Base::executeFourier;
-    using Base::executeSpace;
   };
 
 

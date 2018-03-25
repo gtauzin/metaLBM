@@ -33,7 +33,7 @@ namespace lbm {
     }
 
     inline void normalize() {
-      scalar /= lSD::sVolume();
+      scalar /= gSD::sVolume();
     }
   };
 
