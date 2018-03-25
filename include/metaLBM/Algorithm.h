@@ -33,11 +33,11 @@ namespace lbm {
   class Algorithm<T, AlgorithmType::Generic, architecture, implementation> {
   protected:
     T * localDensity_Ptr;
-    T * * localVelocity_Ptr;
-    T * * localForce_Ptr;
+    T * localVelocity_Ptr[L::dimD];
+    T * localForce_Ptr[L::dimD];
     T * localAlpha_Ptr;
 
-    T * * localDistribution_Ptr;
+    T * localDistribution_Ptr[L::dimQ];
     T * haloDistributionPrevious_Ptr;
     T * haloDistributionNext_Ptr;
 

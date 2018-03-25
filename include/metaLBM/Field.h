@@ -62,7 +62,7 @@ namespace lbm {
 
   FieldAllocator(const std::string& fieldName_in, const unsigned int numberElements_in)
     : Base(fieldName_in, numberElements_in)
-    , localArray(numberElements_in)
+      , localArray(numberElements_in)
     {}
 
   };
@@ -142,8 +142,7 @@ namespace lbm {
     }
 
     Field(const std::string& fieldName_in,
-          const MultiDynamicArray<T, Architecture::CPUPinned,
-          NumberComponents>& localArray_in)
+          const MultiDynamicArray<T, Architecture::CPU, NumberComponents>& localArray_in)
       : Base(fieldName_in, localArray_in.size()/NumberComponents)
     {
       localArray.copyFrom(localArray_in);

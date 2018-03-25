@@ -101,7 +101,7 @@ namespace lbm {
 
   template<class T, Architecture architecture>
   Distribution<T, architecture>
-  initLocalDistribution(const Field<T, 1, architecture, true>& densityField,
+  initLocalDistribution(Field<T, 1, architecture, true>& densityField,
                         const Field<T, L::dimD, architecture, true>& velocityField,
                         const MathVector<int, 3>& rankMPI) {
     { INSTRUMENT_ON("initLocalDistribution<T>",2) }
