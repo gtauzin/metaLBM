@@ -16,7 +16,7 @@ namespace lbm {
     inline void operator()(const Position& iP,
                            T * * local, T * halo) {
       for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
-            local[iQ][hSD::getIndexLocal(iP)] = halo[hSD::getIndex(iP, iQ)];
+        local[iQ][hSD::getIndexLocal(iP)] = halo[hSD::getIndex(iP, iQ)];
       }
     }
   };
@@ -28,7 +28,7 @@ namespace lbm {
     inline void operator()(const Position& iP,
                            T * halo, T * * local) {
       for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
-            halo[hSD::getIndex(iP, iQ)] = local[iQ][hSD::getIndexLocal(iP)];
+        halo[hSD::getIndex(iP, iQ)] = local[0][hSD::getIndexLocal(iP)];
       }
     }
   };
@@ -127,14 +127,6 @@ namespace lbm {
                              T * f) {
     }
   };
-
-
-  // template<class T, PartitionningType partitionningType>
-  // class Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-  //                partitionningType, 2>
-  //   : public Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-  //                     PartitionningType::Generic, 0> {
-  // };
 
   template<class T>
   class Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
