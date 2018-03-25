@@ -78,13 +78,6 @@ namespace lbm {
       , requestZMPI()
     {}
 
-    void printInputs() {
-      std::cout << "MPI #" << rankMPI << " of " << sizeMPI
-                << " running on host " << processorName << std::endl
-                << "Right MPI #" << rightXRankMPI
-                << ", left MPI #" << leftXRankMPI << std::endl;
-    }
-
     HOST
     void sendGlobalToLocal(T * globalPtr,
                            T * localPtr,
@@ -321,7 +314,6 @@ namespace lbm {
 
     {}
 
-    using Base::printInputs;
     using Base::rankMPI;
     using Base::sizeMPI;
     using Base::sendGlobalToLocal;
@@ -419,7 +411,6 @@ namespace lbm {
 
     {}
 
-    using Base::printInputs;
     using Base::rankMPI;
     using Base::sizeMPI;
     using Base::sendGlobalToLocal;
@@ -587,7 +578,6 @@ namespace lbm {
   public:
     using Base::Communication;
 
-    using Base::printInputs;
     using Base::rankMPI;
     using Base::sizeMPI;
     using Base::sendGlobalToLocal;
@@ -647,9 +637,8 @@ namespace lbm {
     using Base::sendToLeftBeginZ;
     using Base::receivedFromRightBeginZ;
 
-  using Base::Communication;
+    using Base::Communication;
 
-    using Base::printInputs;
     using Base::rankMPI;
     using Base::sizeMPI;
     using Base::sendGlobalToLocal;
@@ -705,7 +694,6 @@ namespace lbm {
   public:
     using Base::Communication;
 
-    using Base::printInputs;
     using Base::rankMPI;
     using Base::sizeMPI;
     using Base::sendGlobalToLocal;
@@ -751,7 +739,6 @@ namespace lbm {
                                        processorName_in)
     {}
 
-    using Base::printInputs;
     using Base::rankMPI;
     using Base::sizeMPI;
     using Base::sendGlobalToLocal;
@@ -781,7 +768,7 @@ namespace lbm {
 
   public:
     using Base::Communication;
-    using Base::printInputs;
+
     using Base::rankMPI;
     using Base::sizeMPI;
     using Base::sendGlobalToLocal;
@@ -805,7 +792,7 @@ namespace lbm {
 
   public:
     using Base::Communication;
-    using Base::printInputs;
+
     using Base::rankMPI;
     using Base::sizeMPI;
     using Base::sendGlobalToLocal;
@@ -837,7 +824,7 @@ namespace lbm {
 
   public:
     using Base::Communication;
-    using Base::printInputs;
+
     using Base::rankMPI;
     using Base::sizeMPI;
     using Base::sendGlobalToLocal;
@@ -865,7 +852,6 @@ namespace lbm {
 
     using Base::Communication;
 
-    using Base::printInputs;
     using Base::rankMPI;
     using Base::sizeMPI;
     using Base::sendGlobalToLocal;
@@ -889,7 +875,6 @@ namespace lbm {
   public:
     using Base::Communication;
 
-    using Base::printInputs;
     using Base::rankMPI;
     using Base::sizeMPI;
     using Base::sendGlobalToLocal;

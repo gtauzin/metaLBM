@@ -72,7 +72,7 @@ namespace lbm {
 
     void compute() {
       { INSTRUMENT_ON("Routine<T>::compute",1) }
-      //algorithm.unpack();
+      algorithm.unpack();
 
       writeFields(startIteration);
       writeAnalyses(startIteration);
@@ -104,9 +104,6 @@ namespace lbm {
 
   protected:
     void printInputs() {
-
-      communication.printInputs();
-
       if (communication.rankMPI == MathVector<int, 3>({0, 0, 0})) {
         std::cout.precision(15);
         std::cout << "-------------------OPTIONS-------------------" << std::endl

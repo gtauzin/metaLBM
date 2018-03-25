@@ -62,10 +62,7 @@ namespace lbm {
               Communication<T, latticeT, algorithmT, memoryL,
               partitionningT, implementation, L::dimD>& communication_in)
       : localDensity_Ptr(fieldList_in.density.getLocalData())
-      , localVelocity_Ptr(fieldList_in.velocity.getMultiData())
-      , localForce_Ptr(fieldList_in.force.getMultiData())
       , localAlpha_Ptr(fieldList_in.alpha.getLocalData())
-      , localDistribution_Ptr(distribution_in.getMultiData())
       , haloDistributionPrevious_Ptr(distribution_in.getHaloDataPrevious())
       , haloDistributionNext_Ptr(distribution_in.getHaloDataNext())
       , communication(communication_in)
@@ -78,7 +75,17 @@ namespace lbm {
       , dtCommunication()
       , dtTotal()
       , isStored(false)
-    {}
+    {
+      for(auto iD = 0; iD < L::dimD; ++iD) {
+        localVelocity_Ptr[iD] = fieldList_in.velocity.getMultiData()[iD];
+        localForce_Ptr[iD] = fieldList_in.force.getMultiData()[iD];
+      }
+
+      for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
+        localDistribution_Ptr[iQ] = distribution_in.getMultiData()[iQ];
+      }
+
+    }
 
     HOST
     void pack() {
