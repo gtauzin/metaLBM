@@ -14,7 +14,7 @@ namespace lbm {
   public:
     DEVICE HOST
     inline void operator()(const Position& iP,
-                           T * local[L::dimQ], T * halo) {
+                           T * * local, T * halo) {
       for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
             local[iQ][hSD::getIndexLocal(iP)] = halo[hSD::getIndex(iP, iQ)];
       }
@@ -26,7 +26,7 @@ namespace lbm {
   public:
     DEVICE HOST
     inline void operator()(const Position& iP,
-                           T * halo, T * local[L::dimQ]) {
+                           T * halo, T * * local) {
       for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
             halo[hSD::getIndex(iP, iQ)] = local[iQ][hSD::getIndexLocal(iP)];
       }

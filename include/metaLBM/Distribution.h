@@ -35,13 +35,13 @@ namespace lbm {
     using Base::getLocalData;
 
     DEVICE HOST
-    T * getHaloDataPrevious(const unsigned int offset = 0) {
-      return haloArrayPrevious.data(offset);
+    T * getHaloDataPrevious() {
+      return haloArrayPrevious.data();
     }
 
     DEVICE HOST
-    T * getHaloDataNext(const unsigned int offset = 0) {
-      return haloArrayNext.data(offset);
+    T * getHaloDataNext() {
+      return haloArrayNext.data();
     }
 
     DynamicArray<T, architecture>& getHaloArrayPrevious() {
