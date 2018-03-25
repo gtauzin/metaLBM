@@ -72,7 +72,7 @@ namespace lbm {
 
     void compute() {
       { INSTRUMENT_ON("Routine<T>::compute",1) }
-      initializeLocalDistribution();
+      //algorithm.unpack();
 
       writeFields(startIteration);
       writeAnalyses(startIteration);
@@ -139,11 +139,6 @@ namespace lbm {
                   << "% mass diff.    : " << differenceMass << std::endl
                   << "----------------------------------------------" << std::endl;
       }
-    }
-
-    void initializeLocalDistribution() {
-      { INSTRUMENT_ON("Routine<T>::initializeLocalDistribution",2) }
-      algorithm.unpack();
     }
 
     void writeFields(const unsigned int iteration) {
