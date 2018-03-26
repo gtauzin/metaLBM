@@ -18,15 +18,8 @@ namespace lbm {
 
   template <PartitionningType partitionningType, unsigned int NumberComponents>
   struct Domain<DomainType::LocalFourier, partitionningType,
-                MemoryLayout::Generic, NumberComponents>
-    : public Domain<DomainType::Generic, PartitionningType::Generic,
-                    MemoryLayout::Generic, 1> {
-  private:
-    using Base = Domain<DomainType::Generic, PartitionningType::Generic,
-                        MemoryLayout::Generic, 1>;
+                MemoryLayout::Generic, NumberComponents> {
   public:
-    using Base::numberElements;
-
     #pragma omp declare simd
     HOST DEVICE
     static inline constexpr Position start() {
@@ -69,8 +62,6 @@ namespace lbm {
                         MemoryLayout::Generic, 1>;
 
   public:
-    using Base::numberElements;
-
     #pragma omp declare simd
     HOST DEVICE
     static inline constexpr Position start() {

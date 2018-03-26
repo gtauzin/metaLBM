@@ -6,6 +6,10 @@
 #include "Lattice.h"
 #include "MathVector.h"
 
+namespace alloc {
+  unsigned int numberElements;
+}
+
 namespace lbm {
 
   constexpr int globalLength[] = {globalLengthX, L::dimD>1 ? globalLengthY: 1,
@@ -25,27 +29,10 @@ namespace lbm {
             MemoryLayout memoryLayout, unsigned int NumberComponents>
     struct Domain {};
 
-  template<>
-  struct Domain<DomainType::Generic, PartitionningType::Generic,
-                MemoryLayout::Generic, 1> {
-  public:
-    static unsigned int numberElements;
-  };
-
-  unsigned int Domain<DomainType::Generic, PartitionningType::Generic,
-                      MemoryLayout::Generic, 1>::numberElements;
-
   template <unsigned int NumberComponents>
   struct Domain<DomainType::LocalSpace, PartitionningType::Generic,
-                MemoryLayout::Generic, NumberComponents>
-    : public Domain<DomainType::Generic, PartitionningType::Generic,
-                    MemoryLayout::Generic, 1> {
-  private:
-    using Base = Domain<DomainType::Generic, PartitionningType::Generic,
-                        MemoryLayout::Generic, 1>;
+                MemoryLayout::Generic, NumberComponents> {
   public:
-    using Base::numberElements;
-
     HOST DEVICE
     static inline constexpr Position pStart() {
       return Position({0, 0, 0});
@@ -97,18 +84,18 @@ namespace lbm {
     HOST DEVICE
     static inline unsigned int getIndex(const Position& iP,
                                         const unsigned int iC) {
-      return iC * numberElements + getIndex(iP);
+      return iC * alloc::numberElements + getIndex(iP);
     }
 
     HOST DEVICE
     static inline unsigned int getIndex(const unsigned int index,
                                         const unsigned int iC) {
-      return iC * numberElements + index;
+      return iC * alloc::numberElements + index;
     }
 
     HOST DEVICE
     static inline unsigned int getIndex(const unsigned int iC) {
-      return iC * numberElements;
+      return iC * alloc::numberElements;
     }
 
   };
@@ -124,8 +111,6 @@ namespace lbm {
                         MemoryLayout::Generic, NumberComponents>;
 
   public:
-    using Base::numberElements;
-
     HOST DEVICE
     static inline constexpr Position pStart() {
       return Position({0, 0, 0});
@@ -205,8 +190,6 @@ namespace lbm {
                         MemoryLayout::Generic, L::dimQ>;
 
   public:
-    using Base::numberElements;
-
     HOST DEVICE
     static inline constexpr Position start() {
       return Position({0, 0, 0});
@@ -240,7 +223,7 @@ namespace lbm {
     HOST DEVICE
     static inline unsigned int getIndexLocal(const Position& iP,
                                              const unsigned int iC) {
-      return iC*numberElements + getIndexLocal(iP);
+      return iC*alloc::numberElements + getIndexLocal(iP);
     }
 
   };
@@ -256,8 +239,6 @@ namespace lbm {
                         MemoryLayout::Generic, L::dimQ>;
 
   public:
-    using Base::numberElements;
-
     using Base::start;
     using Base::end;
     using Base::length;
@@ -289,8 +270,6 @@ namespace lbm {
                         MemoryLayout::Generic, L::dimQ>;
 
   public:
-    using Base::numberElements;
-
     using Base::start;
     using Base::end;
     using Base::length;
@@ -323,8 +302,6 @@ namespace lbm {
                         MemoryLayout::Generic, NumberComponents>;
 
   public:
-    using Base::numberElements;
-
     HOST DEVICE
     static inline constexpr Position start() {
       return Position({0, 0, 0});

@@ -45,8 +45,7 @@ namespace lbm {
   public:
     Routine(const MathVector<int, 3>& rankMPI_in,
             const MathVector<int, 3>& sizeMPI_in,
-            const std::string& processorName_in,
-            const unsigned int numberElements_in)
+            const std::string& processorName_in)
       : communication(rankMPI_in, sizeMPI_in, processorName_in)
       , fieldWriter(prefix, rankMPI_in)
       , distributionWriter(prefix, rankMPI_in)

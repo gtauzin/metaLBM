@@ -59,7 +59,7 @@ namespace lbm {
 
     FieldAllocator(const std::string& fieldName_in)
       : Base(fieldName_in)
-      , localArray(lSD::numberElements*NumberComponents)
+      , localArray(alloc::numberElements*NumberComponents)
     {}
 
   };
@@ -80,7 +80,7 @@ namespace lbm {
 
     FieldAllocator(const std::string& fieldName_in)
       : Base(fieldName_in)
-      , localArray(lSD::numberElements*NumberComponents)
+      , localArray(alloc::numberElements*NumberComponents)
     {}
 
   };
@@ -148,7 +148,7 @@ namespace lbm {
 
     DEVICE HOST
     T * getLocalData(const unsigned int iC = 0) {
-      return localArray.data(iC*lSD::numberElements);
+      return localArray.data(iC*alloc::numberElements);
     }
 
 

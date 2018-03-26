@@ -94,9 +94,9 @@ int main(int argc, char* argv[]) {
   // MPI_Comm_free(&localComm);
   // MPI_Info_free(&info);
 
-    Routine<dataT, Architecture::GPU, implementationT> routine(rankMPI, sizeMPI,
-                                                               std::string(hostname),
-                                                               numberElements);
+  alloc::numberElements = numberElements;
+  Routine<dataT, Architecture::GPU, implementationT> routine(rankMPI, sizeMPI,
+                                                             std::string(hostname));
 
   routine.compute();
 

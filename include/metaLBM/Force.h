@@ -257,7 +257,7 @@ namespace lbm {
     inline void setLocalForceArray(double * localForcePtr,
                                    const Position& offset) {
 
-      DynamicArray<double, Architecture::CPU> tempArray((2*L::dimD-3)*lSD::numberElements);
+      DynamicArray<double, Architecture::CPU> tempArray((2*L::dimD-3)*alloc::numberElements);
 
       Computation<Architecture::CPU, L::dimD> computationFourier(lFD::start(), lFD::end());
 
@@ -281,7 +281,7 @@ namespace lbm {
 
             for(auto iD = 0; iD < 2*L::dimD-3; ++iD) {
               fftw_complex * fourierTempForcePtr
-                = ((fftw_complex *) tempArray.data(iD*lSD::numberElements));
+                = ((fftw_complex *) tempArray.data(iD*alloc::numberElements));
 
               fourierTempForcePtr[index][0] = amplitude[iD];
               fourierTempForcePtr[index][1] = 0;
