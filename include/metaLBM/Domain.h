@@ -2,18 +2,12 @@
 #define DOMAIN_H
 
 #include "Options.h"
+#include "Allocation.h"
 #include "Helpers.h"
 #include "Lattice.h"
 #include "MathVector.h"
 
-namespace alloc {
-  unsigned int numberElements;
-}
-
 namespace lbm {
-
-  constexpr int globalLength[] = {globalLengthX, L::dimD>1 ? globalLengthY: 1,
-                                  L::dimD>2 ? globalLengthZ: 1};
 
   /**
    * Domain defining space where DynamicArray lives and providing them
@@ -84,18 +78,18 @@ namespace lbm {
     HOST DEVICE
     static inline unsigned int getIndex(const Position& iP,
                                         const unsigned int iC) {
-      return iC * alloc::numberElements + getIndex(iP);
+      return iC * ::alloc::numberElements + getIndex(iP);
     }
 
     HOST DEVICE
     static inline unsigned int getIndex(const unsigned int index,
                                         const unsigned int iC) {
-      return iC * alloc::numberElements + index;
+      return iC * ::alloc::numberElements + index;
     }
 
     HOST DEVICE
     static inline unsigned int getIndex(const unsigned int iC) {
-      return iC * alloc::numberElements;
+      return iC * ::alloc::numberElements;
     }
 
   };

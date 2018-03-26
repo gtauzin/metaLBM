@@ -16,7 +16,6 @@ namespace lbm {
   template <class T, LatticeType latticeType>
   class Equilibrium<T, latticeType, EquilibriumType::Incompressible> {
   public:
-    #pragma omp declare simd
     DEVICE HOST
     static inline T calculate(const T& density,
                               const MathVector<T, L::dimD>& velocity,
@@ -43,7 +42,6 @@ namespace lbm {
   class Equilibrium<T, LatticeType::D1Q3, EquilibriumType::Incompressible>
     : public Equilibrium<T, LatticeType::Generic, EquilibriumType::Incompressible> {
   public:
-    #pragma omp declare simd
     DEVICE HOST
     static inline T calculate(const T& density,
                               const MathVector<T, L::dimD>& velocity,
@@ -68,7 +66,6 @@ namespace lbm {
   class Equilibrium<T, LatticeType::D2Q9, EquilibriumType::Incompressible>
     : public Equilibrium<T, LatticeType::D1Q3, EquilibriumType::Incompressible> {
   public:
-    #pragma omp declare simd
     DEVICE HOST
     static inline T calculate(const T& density,
                               const MathVector<T, L::dimD>& velocity,
@@ -94,7 +91,6 @@ namespace lbm {
   class Equilibrium<T, LatticeType::D3Q27, EquilibriumType::Incompressible>
     : public Equilibrium<T, LatticeType::D1Q3, EquilibriumType::Incompressible> {
   public:
-    #pragma omp declare simd
     DEVICE HOST
     static inline T calculate(const T& density,
                               const MathVector<T, L::dimD>& velocity,

@@ -340,7 +340,6 @@ namespace lbm {
     using Base::calculateAlphaMax;
     using Base::solveAlpha;
 
-    #pragma omp declare simd
     DEVICE HOST
     inline T approximateAlpha() {
       { INSTRUMENT_OFF("Collision<T, CollisionType::Approached_ELBM>::approximateAlpha",6) }
@@ -369,7 +368,6 @@ namespace lbm {
       return alphaR;
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     inline void calculateAlpha() {
       { INSTRUMENT_OFF("Collision<T, CollisionType::Approached_ELBM>::calculateAlpha",5) }
@@ -425,7 +423,6 @@ namespace lbm {
     using Base::isDeviationSmall;
     using Base::calculateAlphaMax;
 
-    #pragma omp declare simd
     DEVICE HOST
     inline T solveAlpha(const T alphaMin, const T alphaMax) {
       { INSTRUMENT_OFF("Collision<T, CollisionType::ForcedNR_ELBM>::solveAlpha",6) }
@@ -446,7 +443,6 @@ namespace lbm {
       return alphaR;
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     inline T calculateAlpha() {
       INSTRUMENT_OFF("Collision<T, CollisionType::ForcedNR_ELBM>::calculateAlpha",5)
@@ -495,7 +491,6 @@ namespace lbm {
     using Base::calculateAlphaMax;
     using Base::calculateAlpha;
 
-    #pragma omp declare simd
     DEVICE HOST
     inline T solveAlpha(const T alphaMin, const T alphaMax) {
       { INSTRUMENT_OFF("Collision<T, CollisionType::ForcedBNR_ELBM>::solveAlpha",6) }

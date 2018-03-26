@@ -24,7 +24,6 @@ namespace lbm {
       , fNeq(fNeq_in)
     {}
 
-#pragma omp declare simd
     inline T evaluateFunction(T const& alpha) {
       T entropicStepFunction = 0.0;
 
@@ -37,7 +36,6 @@ namespace lbm {
       return entropicStepFunction;
     }
 
-#pragma omp declare simd
     inline T evaluateDerivative(T const& alpha) {
       T entropicStepFunctionDerivative = 0.0;
 

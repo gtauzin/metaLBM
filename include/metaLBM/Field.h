@@ -7,6 +7,7 @@
 
 #include "Commons.h"
 #include "Options.h"
+#include "Allocation.h"
 #include "Domain.h"
 #include "DynamicArray.cuh"
 #include "MathVector.h"

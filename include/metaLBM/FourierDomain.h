@@ -20,31 +20,26 @@ namespace lbm {
   struct Domain<DomainType::LocalFourier, partitionningType,
                 MemoryLayout::Generic, NumberComponents> {
   public:
-    #pragma omp declare simd
     HOST DEVICE
     static inline constexpr Position start() {
       return Position({0, 0, 0});
     }
 
-    #pragma omp declare simd
     HOST DEVICE
     static inline constexpr Position end() {
       return ProjectPadComplexAndLeave1<unsigned int, L::dimD>::Do(lSD::sLength());
     }
 
-    #pragma omp declare simd
     HOST DEVICE
     static inline constexpr Position length() {
       return end();
     }
 
-    #pragma omp declare simd
     HOST DEVICE
     static inline unsigned int volume() {
       return length()[d::X]*length()[d::Y]*length()[d::Z];
     }
 
-    #pragma omp declare simd
     HOST DEVICE
       static inline unsigned int getIndex(const Position& iP) {
       return length()[d::Z] * (length()[d::Y] * iP[d::X] + iP[d::Y]) + iP[d::Z];
@@ -62,37 +57,31 @@ namespace lbm {
                         MemoryLayout::Generic, 1>;
 
   public:
-    #pragma omp declare simd
     HOST DEVICE
     static inline constexpr Position start() {
       return Position({0, 0, 0});
     }
 
-    #pragma omp declare simd
     HOST DEVICE
     static inline constexpr Position end() {
       return ProjectPadComplexAndLeave1<unsigned int, L::dimD>::Do(gSD::sLength());
     }
 
-    #pragma omp declare simd
     HOST DEVICE
     static inline constexpr Position length() {
       return end();
     }
 
-    #pragma omp declare simd
     HOST DEVICE
     static inline constexpr unsigned int volume() {
       return length()[d::X]*length()[d::Y]*length()[d::Z];
     }
 
-    #pragma omp declare simd
     HOST DEVICE
     static inline constexpr unsigned int maxWaveNumber() {
-      return arrayMax(globalLength)/2;
+      return arrayMax(alloc::globalLengthInt)/2;
     }
 
-    #pragma omp declare simd
     HOST DEVICE
     static inline Position offset(const MathVector<int, 3>& rankMPI) {
       Position offsetR{{0}};
@@ -103,7 +92,6 @@ namespace lbm {
       return offsetR;
   }
 
-    #pragma omp declare simd
     HOST DEVICE
     static inline unsigned int getIndex(const Position& iP) {
       const unsigned int localLengthX = Base::length()[d::X];

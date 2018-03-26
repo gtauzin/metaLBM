@@ -14,7 +14,6 @@ namespace lbm {
   private:
   public:
 
-    #pragma omp declare simd
     DEVICE HOST
     static inline void calculateDensity(const T * haloDistributionPtr,
                                         const Position& iP,
@@ -28,7 +27,6 @@ namespace lbm {
       }
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     static inline void calculateVelocity(const T * haloDistributionPtr,
                                   const Position& iP,
@@ -46,7 +44,6 @@ namespace lbm {
       velocity /= density;
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     static inline T calculateEntropy(const T * haloDistributionPtr,
                               const Position& iP,

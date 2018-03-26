@@ -30,7 +30,6 @@ int main(int argc, char* argv[]) {
   #ifndef USE_FFTW
     MPI_Init(&argc, &argv);
     {
-      unsigned int numberElements = lSD::pVolume();
 
   #else
     int provided;
@@ -42,17 +41,6 @@ int main(int argc, char* argv[]) {
       fftw_mpi_init();
 
       if (useThreadsFFTW) fftw_plan_with_nthreads(NTHREADS);
-
-      ptrdiff_t lX_fftw;
-      ptrdiff_t startX_fftw;
-
-      unsigned int numberElements
-        = (unsigned int) 2*fftw_mpi_local_size(L::dimD,
-                                               Cast<unsigned int,
-                                               ptrdiff_t,
-                                               3>::Do(gSD::sLength()).data(),
-                                               MPI_COMM_WORLD,
-                                               &lX_fftw, &startX_fftw);
 
   #endif
 
@@ -94,7 +82,6 @@ int main(int argc, char* argv[]) {
   // MPI_Comm_free(&localComm);
   // MPI_Info_free(&info);
 
-  alloc::numberElements = numberElements;
   Routine<dataT, Architecture::GPU, implementationT> routine(rankMPI, sizeMPI,
                                                              std::string(hostname));
 

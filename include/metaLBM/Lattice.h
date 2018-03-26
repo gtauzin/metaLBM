@@ -28,7 +28,6 @@ namespace lbm {
     static constexpr int dimD = 1;
     static constexpr int dimQ = 3;
 
-    #pragma omp declare simd
     DEVICE HOST
     static inline constexpr Position halo() {
       return Position({1, 0, 0});
@@ -37,7 +36,6 @@ namespace lbm {
     static constexpr T inv_cs2 = (T)3;
     static constexpr T cs2 = (T)1/inv_cs2;
 
-    #pragma omp declare simd
     DEVICE HOST
     static inline constexpr MathVector<MathVector<T, dimD>, dimQ> celerity() {
       return
@@ -48,7 +46,6 @@ namespace lbm {
         };
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     static inline constexpr MathVector<T, dimQ> weight() {
       return
@@ -66,7 +63,6 @@ namespace lbm {
     static constexpr int dimD = 2;
     static constexpr int dimQ = 5;
 
-    #pragma omp declare simd
     DEVICE HOST
     static inline constexpr Position halo() {
       return Position({1, 1, 0});
@@ -75,7 +71,6 @@ namespace lbm {
     static constexpr T inv_cs2 = (T)3;
     static constexpr T cs2 = (T)1/inv_cs2;
 
-    #pragma omp declare simd
     DEVICE HOST
     static inline constexpr MathVector<MathVector<T, dimD>, dimQ> celerity() {
       return
@@ -88,7 +83,6 @@ namespace lbm {
         };
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     static inline constexpr MathVector<T, dimQ> weight() {
       return
@@ -109,7 +103,6 @@ namespace lbm {
     static constexpr int dimD = 2;
     static constexpr int dimQ = 9;
 
-    #pragma omp declare simd
     DEVICE HOST
     static inline constexpr Position halo() {
       return Position({1, 1, 0});
@@ -118,7 +111,6 @@ namespace lbm {
     static constexpr T inv_cs2 = (T)3;
     static constexpr T cs2 = (T)1/inv_cs2;
 
-    #pragma omp declare simd
     DEVICE HOST
     static inline constexpr MathVector<MathVector<T, dimD>, dimQ> celerity() {
       return
@@ -135,7 +127,6 @@ namespace lbm {
         };
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     static inline constexpr MathVector<T, dimQ> weight() {
       return
@@ -157,7 +148,6 @@ namespace lbm {
     static constexpr int dimD = 2;
     static constexpr int dimQ = 37;
 
-    #pragma omp declare simd
     DEVICE HOST
     static inline constexpr Position halo() {
       return Position({3, 3, 0});
@@ -166,7 +156,6 @@ namespace lbm {
     static constexpr T inv_cs2 = (T)3;
     static constexpr T cs2 = (T)1/inv_cs2;
 
-    #pragma omp declare simd
     DEVICE HOST
     static inline constexpr MathVector<MathVector<T, dimD>, dimQ> celerity() {
       return
@@ -211,7 +200,6 @@ namespace lbm {
         };
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     static inline constexpr MathVector<T, dimQ> weight() {
       return
@@ -243,7 +231,6 @@ namespace lbm {
     static constexpr int dimD = 3;
     static constexpr int dimQ = 15;
 
-    #pragma omp declare simd
     DEVICE HOST
     static inline constexpr Position halo() {
       return Position({1, 1, 1});
@@ -252,7 +239,6 @@ namespace lbm {
     static constexpr T inv_cs2 = (T)3;
     static constexpr T cs2 = (T)1/inv_cs2;
 
-    #pragma omp declare simd
     DEVICE HOST
     static inline constexpr MathVector<MathVector<T, dimD>, dimQ> celerity() {
       return
@@ -275,7 +261,6 @@ namespace lbm {
         };
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     static inline constexpr MathVector<T, dimQ> weight() {
       return
@@ -298,7 +283,6 @@ namespace lbm {
     static constexpr int dimD = 3;
     static constexpr int dimQ = 19;
 
-    #pragma omp declare simd
     DEVICE HOST
     static inline constexpr Position halo() {
       return Position({1, 1, 1});
@@ -307,7 +291,6 @@ namespace lbm {
     static constexpr T inv_cs2 = (T)3;
     static constexpr T cs2 = (T)1/inv_cs2;
 
-    #pragma omp declare simd
     DEVICE HOST
     static inline constexpr MathVector<MathVector<T, dimD>, dimQ> celerity() {
       return
@@ -335,7 +318,6 @@ namespace lbm {
         };
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     static inline constexpr MathVector<T, dimQ> weight() {
       return
@@ -360,7 +342,6 @@ namespace lbm {
     static constexpr int dimD = 3;
     static constexpr int dimQ = 27;
 
-    #pragma omp declare simd
     DEVICE HOST
     static inline constexpr Position halo() {
       return Position({1, 1, 1});
@@ -369,7 +350,6 @@ namespace lbm {
     static constexpr T inv_cs2 = (T)3;
     static constexpr T cs2 = (T)1/inv_cs2;
 
-    #pragma omp declare simd
     DEVICE HOST
     static inline constexpr MathVector<MathVector<T, dimD>, dimQ> celerity() {
       return
@@ -404,7 +384,6 @@ namespace lbm {
         };
     }
 
-    #pragma omp declare simd
     DEVICE HOST
     static inline constexpr MathVector<T, dimQ> weight() {
       return

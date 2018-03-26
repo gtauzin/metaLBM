@@ -49,8 +49,6 @@ namespace lbm {
       INSTRUMENT_OFF("Computation<Architecture::CPU, 2>::Do<Callback>",1)
 
       Position iP{{0}};
-      #pragma omp parallel for schedule(static) num_threads(NTHREADS)
-      //#pragma omp simd
       for(auto iX = start[d::X]; iX < end[d::X]; ++iX) {
         iP[d::X] = iX;
         function(iP, arguments...);
@@ -74,9 +72,7 @@ namespace lbm {
     INSTRUMENT_OFF("Computation<Architecture::CPU, 2>::Do<Callback>",2)
 
     Position iP{{0}};
-#pragma omp parallel for schedule(static) num_threads(NTHREADS)
     for(auto iX = start[d::X]; iX < end[d::X]; ++iX) {
-      //#pragma omp simd
       iP[d::X] = iX;
       for(auto iY = start[d::Y]; iY < end[d::Y]; ++iY) {
         iP[d::Y] = iY;
@@ -102,13 +98,10 @@ namespace lbm {
       INSTRUMENT_OFF("Computation<Architecture::CPU, 2>::Do<Callback>",3)
 
       Position iP{{0}};
-    #pragma omp parallel for schedule(static) num_threads(NTHREADS)
       for(auto iX = start[d::X]; iX < end[d::X]; ++iX) {
         iP[d::X] = iX;
-      //#pragma omp simd
         for(auto iY = start[d::Y]; iY < end[d::Y]; ++iY) {
           iP[d::Y] = iY;
-        //#pragma omp simd
           for(auto iZ = start[d::Z]; iZ < end[d::Z]; ++iZ) {
             iP[d::Z] = iZ;
             function(iP, arguments...);

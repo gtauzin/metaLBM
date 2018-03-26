@@ -56,7 +56,7 @@
   #define CUDA_CALL(call)
 
   #define HOST
-  #define DEVICE //#pragma omp declare simd
+  #define DEVICE
   #define CONSTANT
   #define GLOBAL
 #endif // __NVCC__

@@ -5,6 +5,7 @@
 
 #include "Commons.h"
 #include "Options.h"
+#include "Allocation.h"
 #include "MathVector.h"
 #include "FieldList.h"
 #include "Distribution.h"
