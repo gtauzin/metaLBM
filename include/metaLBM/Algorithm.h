@@ -40,6 +40,7 @@ namespace lbm {
     T * localDistribution_Ptr;
     T * haloDistributionPrevious_Ptr;
     T * haloDistributionNext_Ptr;
+    const unsigned int numberElements;
 
     Packer<T> packer;
     Unpacker<T> unpacker;
@@ -59,6 +60,7 @@ namespace lbm {
 
     Algorithm(FieldList<T, architecture>& fieldList_in,
               Distribution<T, architecture>& distribution_in,
+              const unsigned int numberElements_in,
               Communication<T, latticeT, algorithmT, memoryL,
               partitionningT, implementation, L::dimD>& communication_in)
       : localDensity_Ptr(fieldList_in.density.getLocalData())
@@ -68,6 +70,7 @@ namespace lbm {
       , localDistribution_Ptr(distribution_in.getLocalData())
       , haloDistributionPrevious_Ptr(distribution_in.getHaloDataPrevious())
       , haloDistributionNext_Ptr(distribution_in.getHaloDataNext())
+      , numberElements(numberElements_in)
       , communication(communication_in)
       , collision(relaxationTime, forceAmplitude, forceWaveLength, forcekMin, forcekMax)
       , computationLocal(lSD::sStart()+L::halo(),
@@ -83,13 +86,13 @@ namespace lbm {
     HOST
     void pack() {
       computationLocal.Do(packer, localDistribution_Ptr,
-                          haloDistributionNext_Ptr);
+                          haloDistributionNext_Ptr, numberElements);
     }
 
     HOST
     void unpack() {
       computationLocal.Do(unpacker, haloDistributionNext_Ptr,
-                          localDistribution_Ptr);
+                          localDistribution_Ptr, numberElements);
     }
 
     double getCommunicationTime() {
@@ -114,7 +117,7 @@ namespace lbm {
 
       localDensity_Ptr[indexLocal] = collision.getDensity();
       for(auto iD = 0; iD < L::dimD; ++iD) {
-        localVelocity_Ptr[lSD::getIndex(indexLocal, iD)]
+        (localVelocity_Ptr+iD*numberElements)[indexLocal]
           = collision.getHydrodynamicVelocity()[iD];
       }
 
@@ -122,7 +125,7 @@ namespace lbm {
 
       if(writeForce) {
         for(auto iD = 0; iD < L::dimD; ++iD) {
-          localForce_Ptr[lSD::getIndex(indexLocal, iD)] = collision.getForce()[iD];
+          (localForce_Ptr+iD*numberElements)[indexLocal] = collision.getForce()[iD];
         }
       }
     }
@@ -144,6 +147,7 @@ namespace lbm {
     using Base::localDistribution_Ptr;
     using Base::haloDistributionPrevious_Ptr;
     using Base::haloDistributionNext_Ptr;
+    using Base::numberElements;
 
     using Base::communication;
     using Base::collision;
@@ -155,8 +159,6 @@ namespace lbm {
     using Base::dtCommunication;
     using Base::dtTotal;
 
-    using Base::storeLocalFields;
-
     Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
              partitionningT, implementation, L::dimD> periodicBoundary;
 
@@ -167,7 +169,8 @@ namespace lbm {
     void operator()(const Position& iP) {
       collision.calculateMoments(haloDistributionPrevious_Ptr, iP);
 
-      collision.setForce(localForce_Ptr, iP, gSD::sOffset(communication.rankMPI));
+      collision.setForce(localForce_Ptr, iP,
+                         numberElements, gSD::sOffset(communication.rankMPI));
       collision.calculateRelaxationTime(haloDistributionNext_Ptr,
                                         haloDistributionPrevious_Ptr, iP);
 
@@ -178,7 +181,7 @@ namespace lbm {
       }
 
       if(Base::isStored) {
-        storeLocalFields(iP);
+        Base::storeLocalFields(iP);
       }
     }
 

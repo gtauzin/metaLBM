@@ -22,10 +22,12 @@ namespace lbm {
   class AnalysisScalar {
   public:
     T scalar;
+    const unsigned int numberElements;
 
   protected:
-    AnalysisScalar()
+    AnalysisScalar(const unsigned int numberElements_in)
       : scalar((T) 0)
+      , numberElements(numberElements_in)
     {}
 
     inline void reset() {
@@ -50,8 +52,9 @@ namespace lbm {
   public:
     static constexpr auto analysisName = "total_energy";
 
-    TotalEnergy(T * localDensityPtr_in, T * localVelocityPtr_in)
-      : Base()
+    TotalEnergy(T * localDensityPtr_in, T * localVelocityPtr_in,
+                const unsigned int numberElements_in)
+      : Base(numberElements_in)
       , scalarRef(Base::scalar)
       , localDensityPtr(localDensityPtr_in)
       , localVelocityPtr(localVelocityPtr_in)
@@ -63,8 +66,8 @@ namespace lbm {
       for(auto iD = 0; iD < L::dimD; ++iD) {
         scalarRef
           += 0.5*localDensityPtr[index]
-          *localVelocityPtr[lSD::getIndex(index, iD)]
-          *localVelocityPtr[lSD::getIndex(index, iD)];
+          *(localVelocityPtr+iD*Base::numberElements)[index]
+          *(localVelocityPtr+iD*Base::numberElements)[index];
       }
     }
 
@@ -86,8 +89,9 @@ namespace lbm {
   public:
     static constexpr auto analysisName = "total_enstrophy";
 
-    TotalEnstrophy(T * localVorticityPtr_in)
-      : Base()
+    TotalEnstrophy(T * localVorticityPtr_in,
+                   const unsigned int numberElements_in)
+      : Base(numberElements_in)
       , scalarRef(Base::scalar)
       , localVorticityPtr(localVorticityPtr_in)
     {}
@@ -97,8 +101,8 @@ namespace lbm {
       auto index = lSD::getIndex(iP);
       for(auto iD = 0; iD < 2*L::dimD-3; ++iD) {
         scalarRef
-          += 0.5*localVorticityPtr[lSD::getIndex(index, iD)]
-          *localVorticityPtr[lSD::getIndex(index, iD)];
+          += 0.5*(localVorticityPtr+iD*Base::numberElements)[index]
+          *(localVorticityPtr+iD*Base::numberElements)[index];
       }
     }
 
@@ -112,9 +116,11 @@ namespace lbm {
   class AnalysisSpectral {
   public:
     T spectra[maxWaveNumber];
+    const unsigned int numberElements;
 
   protected:
-    AnalysisSpectral()
+    AnalysisSpectral(const unsigned int numberElements_in)
+      : numberElements(numberElements_in)
     {
       reset();
     }
@@ -144,8 +150,9 @@ namespace lbm {
   public:
     static constexpr auto analysisName = "energy_spectra";
 
-    EnergySpectra(T * localVelocityPtr_in)
-      : Base()
+    EnergySpectra(T * localVelocityPtr_in,
+                  const unsigned int numberElements_in)
+      : Base(numberElements_in)
       , spectraRef(Base::spectra)
       , localVelocityPtr(localVelocityPtr_in)
     {}
@@ -163,7 +170,7 @@ namespace lbm {
 
       T energy = (T) 0;
       for(auto iD = 0; iD < L::dimD; ++iD) {
-        fftw_complex * fourierVelocityPtr = ((fftw_complex *) localVelocityPtr+lSD::getIndex(iD));
+        fftw_complex * fourierVelocityPtr = ((fftw_complex *) (localVelocityPtr+iD*Base::numberElements));
         energy += fourierVelocityPtr[index][p::Re]*fourierVelocityPtr[index][p::Re];
         energy += fourierVelocityPtr[index][p::Im]*fourierVelocityPtr[index][p::Im];
       }

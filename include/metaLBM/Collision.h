@@ -77,10 +77,11 @@ namespace lbm {
     DEVICE HOST
     inline void setForce(T * localForceArray,
                          const Position& iP,
+                         const unsigned int numberElements,
                          const Position& offset) {
       { INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::setForce",4) }
 
-      forcing.setForce(localForceArray, iP-L::halo(), force);
+      forcing.setForce(localForceArray, iP-L::halo(), numberElements, force);
       forcingScheme.setVariables(force, density, velocity);
     }
 

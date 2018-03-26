@@ -5,7 +5,6 @@
 
 #include "Commons.h"
 #include "Options.h"
-#include "Allocation.h"
 #include "MathVector.h"
 #include "FieldList.h"
 #include "Distribution.h"
@@ -26,6 +25,7 @@ namespace lbm {
     DistributionWriter_ distributionWriter;
     FieldList<T, architecture> fieldList;
     Distribution<T, architecture> distribution;
+    const unsigned int numberElements;
 
     Curl<double, Architecture::CPU, PartitionningType::OneD,
          L::dimD, L::dimD> curlVelocity;
@@ -46,20 +46,23 @@ namespace lbm {
   public:
     Routine(const MathVector<int, 3>& rankMPI_in,
             const MathVector<int, 3>& sizeMPI_in,
-            const std::string& processorName_in)
+            const std::string& processorName_in,
+            const unsigned int numberElements_in)
       : communication(rankMPI_in, sizeMPI_in, processorName_in)
       , fieldWriter(prefix, rankMPI_in)
       , distributionWriter(prefix, rankMPI_in)
-      , fieldList(rankMPI_in, fieldWriter)
+      , fieldList(rankMPI_in, numberElements_in, fieldWriter)
       , curlVelocity(fieldList.velocity.getLocalData(), fieldList.vorticity.getLocalData(),
-                     Cast<unsigned int,ptrdiff_t, 3>::Do(gSD::sLength()).data(),
+                     numberElements, Cast<unsigned int,
+                     ptrdiff_t, 3>::Do(gSD::sLength()).data(),
                      gFD::offset(rankMPI_in))
       , distribution(initLocalDistribution<T, architecture>(fieldList.density,
                                                             fieldList.velocity,
                                                             rankMPI_in))
-      , scalarAnalysisList(fieldList, communication)
-      , spectralAnalysisList(fieldList, communication)
-      , algorithm(fieldList, distribution, communication)
+      , numberElements(numberElements_in)
+      , scalarAnalysisList(fieldList, numberElements, communication)
+      , spectralAnalysisList(fieldList, numberElements, communication)
+      , algorithm(fieldList, distribution, numberElements, communication)
       , computationLocal(lSD::sStart(), lSD::sEnd())
       , initialMass(0.0)
       , finalMass(0.0)

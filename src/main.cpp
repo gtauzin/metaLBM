@@ -62,7 +62,8 @@ int main(int argc, char* argv[]) {
   MPI_Get_processor_name(hostname, &hostnameLength);
 
   Routine<dataT, Architecture::CPU, implementationT> routine(rankMPI, sizeMPI,
-                                                             std::string(hostname));
+                                                             std::string(hostname),
+                                                             numberElements);
 
   routine.compute();
 

@@ -79,7 +79,7 @@ namespace lbm {
 
     HOST DEVICE
     static inline constexpr unsigned int maxWaveNumber() {
-      return arrayMax(alloc::globalLengthInt)/2;
+      return arrayMax(globalLengthInt)/2;
     }
 
     HOST DEVICE

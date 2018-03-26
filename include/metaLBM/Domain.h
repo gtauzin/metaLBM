@@ -2,12 +2,19 @@
 #define DOMAIN_H
 
 #include "Options.h"
-#include "Allocation.h"
 #include "Helpers.h"
 #include "Lattice.h"
 #include "MathVector.h"
 
 namespace lbm {
+
+  constexpr int globalLengthInt[3] = {::lbm::globalLengthX,
+                                     ::lbm::L::dimD>1 ? ::lbm::globalLengthY: 1,
+                                     ::lbm::L::dimD>2 ? ::lbm::globalLengthZ: 1};
+
+  constexpr ptrdiff_t globalLengthPtrdiff_t[3] = {::lbm::globalLengthX,
+                                                 ::lbm::L::dimD>1 ? ::lbm::globalLengthY: 1,
+                                                 ::lbm::L::dimD>2 ? ::lbm::globalLengthZ: 1};
 
   /**
    * Domain defining space where DynamicArray lives and providing them
@@ -73,23 +80,6 @@ namespace lbm {
     HOST DEVICE
     static inline unsigned int getIndex(const Position& iP) {
       return pLength()[d::Z] * (pLength()[d::Y] * iP[d::X] + iP[d::Y]) + iP[d::Z];
-    }
-
-    HOST DEVICE
-    static inline unsigned int getIndex(const Position& iP,
-                                        const unsigned int iC) {
-      return iC * ::alloc::numberElements + getIndex(iP);
-    }
-
-    HOST DEVICE
-    static inline unsigned int getIndex(const unsigned int index,
-                                        const unsigned int iC) {
-      return iC * ::alloc::numberElements + index;
-    }
-
-    HOST DEVICE
-    static inline unsigned int getIndex(const unsigned int iC) {
-      return iC * ::alloc::numberElements;
     }
 
   };
@@ -212,12 +202,6 @@ namespace lbm {
     HOST DEVICE
     static inline unsigned int getIndexLocal(const Position& iP) {
       return Base::getIndex(iP - L::halo());
-    }
-
-    HOST DEVICE
-    static inline unsigned int getIndexLocal(const Position& iP,
-                                             const unsigned int iC) {
-      return iC*alloc::numberElements + getIndexLocal(iP);
     }
 
   };

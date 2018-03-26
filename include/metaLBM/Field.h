@@ -7,7 +7,6 @@
 
 #include "Commons.h"
 #include "Options.h"
-#include "Allocation.h"
 #include "Domain.h"
 #include "DynamicArray.cuh"
 #include "MathVector.h"
@@ -33,12 +32,14 @@ namespace lbm {
   template <class T, unsigned int NumberComponents>
   class FieldAllocator<T, NumberComponents, Architecture::Generic, true> {
   public:
+    const unsigned int numberElements;
     static constexpr bool IsWritten = true;
 
     const std::string fieldName;
 
-    FieldAllocator(const std::string& fieldName_in)
+    FieldAllocator(const std::string& fieldName_in, const unsigned int numberElements_in)
       : fieldName(fieldName_in)
+      , numberElements(numberElements_in)
 
     {}
 
@@ -55,12 +56,13 @@ namespace lbm {
     DynamicArray<T, Architecture::CPU> localArray;
 
   public:
+    using Base::numberElements;
     using Base::IsWritten;
     using Base::fieldName;
 
-    FieldAllocator(const std::string& fieldName_in)
-      : Base(fieldName_in)
-      , localArray(alloc::numberElements*NumberComponents)
+  FieldAllocator(const std::string& fieldName_in, const unsigned int numberElements_in)
+    : Base(fieldName_in, numberElements_in)
+    , localArray(numberElements_in*NumberComponents)
     {}
 
   };
@@ -75,13 +77,14 @@ namespace lbm {
     DynamicArray<T, Architecture::CPUPinned> localArray;
 
   public:
+    using Base::numberElements;
     using Base::IsWritten;
 
     using Base::fieldName;
 
-    FieldAllocator(const std::string& fieldName_in)
-      : Base(fieldName_in)
-      , localArray(alloc::numberElements*NumberComponents)
+    FieldAllocator(const std::string& fieldName_in, const unsigned int numberElements_in)
+      : Base(fieldName_in, numberElements_in)
+      , localArray(numberElements_in*NumberComponents)
     {}
 
   };
@@ -102,15 +105,17 @@ namespace lbm {
     using Base::localArray;
 
   public:
+    using Base::numberElements;
     using Base::IsWritten;
     using Base::fieldName;
 
-    Field(const std::string& fieldName_in)
-    : Base(fieldName_in)
+    Field(const std::string& fieldName_in, const unsigned int numberElements_in)
+    : Base(fieldName_in, numberElements_in)
     {}
 
-    Field(const std::string& fieldName_in, const T& value_in)
-      : Base(fieldName_in)
+  Field(const std::string& fieldName_in, const unsigned int numberElements_in,
+        const T& value_in)
+      : Base(fieldName_in, numberElements_in)
     {
       Computation<Architecture::CPU,
                   L::dimD> computationLocal(lSD::sStart(),
@@ -123,9 +128,9 @@ namespace lbm {
         });
     }
 
-    Field(const std::string& fieldName_in,
-          const MathVector<T, NumberComponents>& vector_in)
-      : Base(fieldName_in)
+  Field(const std::string& fieldName_in, const unsigned int numberElements_in,
+        const MathVector<T, NumberComponents>& vector_in)
+      : Base(fieldName_in, numberElements_in)
     {
       Computation<Architecture::CPU,
                   L::dimD> computationLocal(lSD::sStart(),
@@ -149,7 +154,7 @@ namespace lbm {
 
     DEVICE HOST
     T * getLocalData(const unsigned int iC = 0) {
-      return localArray.data(iC*alloc::numberElements);
+      return localArray.data(iC*numberElements);
     }
 
 
@@ -157,7 +162,7 @@ namespace lbm {
     inline void setLocalValue(const Position iP,
                               const T value,
                               const unsigned int iC = 0) {
-      localArray[lSD::getIndex(iP, iC)] = value;
+      (localArray.data(iC*numberElements))[lSD::getIndex(iP)] = value;
     }
 
     DEVICE HOST
@@ -171,7 +176,7 @@ namespace lbm {
     DEVICE HOST
     inline T getLocalValue(const Position& iP,
                            const unsigned int iC = 0) const {
-      return localArray[lSD::getIndex(iP, iC)];
+      return (localArray.data(iC*numberElements))[lSD::getIndex(iP)];
     }
 
     DEVICE HOST
@@ -191,22 +196,27 @@ namespace lbm {
     Architecture architecture>
   class Field<T, NumberComponents, architecture, false>  {
   public:
+    const unsigned int numberElements;
     static constexpr bool IsWritten = false;
 
     const std::string fieldName;
 
-  Field(const std::string& fieldName_in,
+  Field(const std::string& fieldName_in, const unsigned int numberElements_in,
         const MathVector<T, NumberComponents>& vector_in)
       : fieldName(fieldName_in)
+      , numberElements(numberElements_in)
     {}
 
-    Field(const std::string& fieldName_in, const T& value_in = (T) 0)
+    Field(const std::string& fieldName_in, const unsigned int numberElements_in,
+          const T& value_in = (T) 0)
       : fieldName(fieldName_in)
+      , numberElements(numberElements_in)
     {}
 
-    Field(const std::string& fieldName_in,
+    Field(const std::string& fieldName_in, const unsigned int numberElements_in,
           const DynamicArray<T, architecture>& globalArray_in)
       : fieldName(fieldName_in)
+      , numberElements(numberElements_in)
     {}
 
     T * getLocalData(const unsigned int iC = 0) {

@@ -30,6 +30,7 @@ namespace lbm {
   public:
     double * localSpacePtr;
     double * localFourierPtr;
+    const unsigned int numberElements;
 
   private:
     fftw_plan planForward[NumberComponents];
@@ -38,23 +39,26 @@ namespace lbm {
   public:
     ForwardFFT(double * localSpacePtr_in,
                double * localFourierPtr_in,
+               const unsigned int numberElements_in,
                const ptrdiff_t globalLength_in[3])
       : localSpacePtr(localSpacePtr_in)
       , localFourierPtr(localFourierPtr_in)
+      , numberElements(numberElements_in)
       , computationLocal(lSD::sStart(), lSD::sEnd())
     {
       for(auto iC = 0; iC < NumberComponents; ++iC) {
         planForward[iC] = fftw_mpi_plan_dft_r2c(Dimension,
                                                 globalLength_in,
-                                                localSpacePtr+lSD::getIndex(iC),
-                                                (fftw_complex *) (localFourierPtr+lSD::getIndex(iC)),
+                                                localSpacePtr+numberElements_in*iC,
+                                                (fftw_complex *) (localFourierPtr+numberElements_in*iC),
                                                 MPI_COMM_WORLD, FFTW_ESTIMATE);
       }
     }
 
     ForwardFFT(double * localSpacePtr_in,
+               const unsigned int numberElements_in,
                const ptrdiff_t globalLength_in[3])
-      : ForwardFFT(localSpacePtr_in, localSpacePtr_in, globalLength_in)
+      : ForwardFFT(localSpacePtr_in, localSpacePtr_in, numberElements_in, globalLength_in)
     {}
 
     ~ForwardFFT()
@@ -69,7 +73,7 @@ namespace lbm {
       for(auto iC = 0; iC < NumberComponents; ++iC) {
         fftw_execute(planForward[iC]);
         computationLocal.Do([=] HOST (const Position& iP) {
-            localSpacePtr[lSD::getIndex(iP, iC)] /= gSD::sVolume();
+            (localSpacePtr+numberElements*iC)[lSD::getIndex(iP)] /= gSD::sVolume();
           });
       }
     }
@@ -90,6 +94,7 @@ namespace lbm {
   public:
     BackwardFFT(double * localFourierPtr_in,
                 double * localSpacePtr_in,
+                const unsigned int numberElements_in,
                 const ptrdiff_t globalLength_in[3])
       : localFourierPtr(localFourierPtr_in)
       , localSpacePtr(localSpacePtr_in)
@@ -97,15 +102,16 @@ namespace lbm {
       for(auto iC = 0; iC < NumberComponents; ++iC) {
         planBackward[iC] = fftw_mpi_plan_dft_c2r(Dimension,
                                                  globalLength_in,
-                                                 (fftw_complex *) (localFourierPtr+lSD::getIndex(iC)),
-                                                 localSpacePtr+lSD::getIndex(iC),
+                                                 (fftw_complex *) (localFourierPtr+numberElements_in*iC),
+                                                 localSpacePtr+numberElements_in*iC,
                                                  MPI_COMM_WORLD, FFTW_ESTIMATE);
       }
     }
 
     BackwardFFT(double * localSpacePtr_in,
+                const unsigned int numberElements_in,
                 const ptrdiff_t globalLength_in[3])
-      : BackwardFFT(localSpacePtr_in, localSpacePtr_in, globalLength_in)
+      : BackwardFFT(localSpacePtr_in, localSpacePtr_in, numberElements_in, globalLength_in)
     {}
 
     ~BackwardFFT()
@@ -135,17 +141,21 @@ namespace lbm {
     ForwardFFT<double, Architecture::CPU, PartitionningType::OneD, 2, 2> forwardIn;
     BackwardFFT<double, Architecture::CPU, PartitionningType::OneD, 2, 2> backwardIn;
     BackwardFFT<double, Architecture::CPU, PartitionningType::OneD, 2, 1> backwardOut;
+    const unsigned int numberElements;
     const Position& offset;
     Computation<Architecture::CPU, L::dimD> computationFourier;
 
   public:
     Curl(double * localSpaceInPtr_in,
          double * localSpaceOutPtr_in,
+         const unsigned int numberElements_in,
          const ptrdiff_t globalLength_in[3],
          const Position& offset_in)
-      : forwardIn(localSpaceInPtr_in, localSpaceInPtr_in, globalLength_in)
-      , backwardIn(localSpaceInPtr_in, localSpaceInPtr_in, globalLength_in)
-      , backwardOut(localSpaceOutPtr_in, localSpaceOutPtr_in, globalLength_in)
+      : forwardIn(localSpaceInPtr_in, localSpaceInPtr_in, numberElements_in, globalLength_in)
+      , backwardIn(localSpaceInPtr_in, localSpaceInPtr_in, numberElements_in, globalLength_in)
+      , backwardOut(localSpaceOutPtr_in, localSpaceOutPtr_in,
+                    numberElements_in, globalLength_in)
+      , numberElements(numberElements_in)
       , offset(offset_in)
       , computationFourier(lFD::start(), lFD::end())
     {}
@@ -163,12 +173,12 @@ namespace lbm {
             iFP[d::Y] : iFP[d::Y]-gSD::sLength()[d::Y];
 
           ((fftw_complex *) (backwardOut.localFourierPtr))[index][p::Re]
-            = - iK[d::X] * ((fftw_complex *) (forwardIn.localFourierPtr+lSD::getIndex(d::Y)))[index][p::Im]
-            + iK[d::Y] * ((fftw_complex *) (forwardIn.localFourierPtr+lSD::getIndex(d::X)))[index][p::Im];
+            = - iK[d::X] * ((fftw_complex *) (forwardIn.localFourierPtr+numberElements*(d::Y)))[index][p::Im]
+            + iK[d::Y] * ((fftw_complex *) (forwardIn.localFourierPtr+numberElements*(d::X)))[index][p::Im];
 
           ((fftw_complex *) (backwardOut.localFourierPtr))[index][p::Im]
-            = iK[d::X] * ((fftw_complex *) (forwardIn.localFourierPtr+lSD::getIndex(d::Y)))[index][p::Re]
-            - iK[d::Y] * ((fftw_complex *) (forwardIn.localFourierPtr+lSD::getIndex(d::X)))[index][p::Re];
+            = iK[d::X] * ((fftw_complex *) (forwardIn.localFourierPtr+numberElements*(d::Y)))[index][p::Re]
+            - iK[d::Y] * ((fftw_complex *) (forwardIn.localFourierPtr+numberElements*(d::X)))[index][p::Re];
         });
 
       backwardOut.execute();
@@ -192,16 +202,19 @@ namespace lbm {
     BackwardFFT<double, Architecture::CPU, PartitionningType::OneD, 3, 3> backwardOut;
 
     const Position& offset;
+    const unsigned int numberElements;
     Computation<Architecture::CPU, L::dimD> computationFourier;
 
   public:
     Curl(double * localSpaceInPtr_in,
          double * localSpaceOutPtr_in,
+         const unsigned int numberElements_in,
          const ptrdiff_t globalLength_in[3],
          const Position& offset_in)
-      : forwardIn(localSpaceInPtr_in, globalLength_in)
-      , backwardIn(localSpaceInPtr_in, globalLength_in)
-      , backwardOut(localSpaceOutPtr_in, globalLength_in)
+      : forwardIn(localSpaceInPtr_in, numberElements_in, globalLength_in)
+      , backwardIn(localSpaceInPtr_in, numberElements_in, globalLength_in)
+      , backwardOut(localSpaceOutPtr_in, numberElements_in, globalLength_in)
+      , numberElements(numberElements_in)
       , offset(offset_in)
       , computationFourier(lFD::start(), lFD::end())
     {}
@@ -220,31 +233,31 @@ namespace lbm {
           iK[d::Z] = iFP[d::Z] <= gSD::sLength()[d::Z]/2 ?
             iFP[d::Z] : iFP[d::Z]-gSD::sLength()[d::Z];
 
-          ((fftw_complex *) (backwardOut.localFourierPtr+lSD::getIndex(d::X)))[index][p::Re]
-            = - iK[d::Y] * ((fftw_complex *) (forwardIn.localFourierPtr+lSD::getIndex(d::Z)))[index][p::Im]
-            + iK[d::Z] * ((fftw_complex *) (forwardIn.localFourierPtr+lSD::getIndex(d::Y)))[index][p::Im];
+          ((fftw_complex *) (backwardOut.localFourierPtr+numberElements*(d::X)))[index][p::Re]
+            = - iK[d::Y] * ((fftw_complex *) (forwardIn.localFourierPtr+numberElements*(d::Z)))[index][p::Im]
+            + iK[d::Z] * ((fftw_complex *) (forwardIn.localFourierPtr+numberElements*(d::Y)))[index][p::Im];
 
-          ((fftw_complex *) (backwardOut.localFourierPtr+lSD::getIndex(d::X)))[index][p::Im]
-            = iK[d::Y] * ((fftw_complex *) (forwardIn.localFourierPtr+lSD::getIndex(d::Z)))[index][p::Re]
-            - iK[d::Z] * ((fftw_complex *) (forwardIn.localFourierPtr+lSD::getIndex(d::Y)))[index][p::Re];
-
-
-          ((fftw_complex *) (backwardOut.localFourierPtr+lSD::getIndex(d::Y)))[index][p::Re]
-            = - iK[d::Z] * ((fftw_complex *) (forwardIn.localFourierPtr+lSD::getIndex(d::X)))[index][p::Im]
-            + iK[d::X] * ((fftw_complex *) (forwardIn.localFourierPtr+lSD::getIndex(d::Z)))[index][p::Im];
-
-          ((fftw_complex *) (backwardOut.localFourierPtr+lSD::getIndex(d::Y)))[index][p::Im]
-            = iK[d::Z] * ((fftw_complex *) (forwardIn.localFourierPtr+lSD::getIndex(d::X)))[index][p::Re]
-            - iK[d::X] * ((fftw_complex *) (forwardIn.localFourierPtr+lSD::getIndex(d::Z)))[index][p::Re];
+          ((fftw_complex *) (backwardOut.localFourierPtr+numberElements*(d::X)))[index][p::Im]
+            = iK[d::Y] * ((fftw_complex *) (forwardIn.localFourierPtr+numberElements*(d::Z)))[index][p::Re]
+            - iK[d::Z] * ((fftw_complex *) (forwardIn.localFourierPtr+numberElements*(d::Y)))[index][p::Re];
 
 
-          ((fftw_complex *) (backwardOut.localFourierPtr+lSD::getIndex(d::Z)))[index][p::Re]
-            = - iK[d::X] * ((fftw_complex *) (forwardIn.localFourierPtr+lSD::getIndex(d::Y)))[index][p::Im]
-            + iK[d::Y] * ((fftw_complex *) (forwardIn.localFourierPtr+lSD::getIndex(d::X)))[index][p::Im];
+          ((fftw_complex *) (backwardOut.localFourierPtr+numberElements*(d::Y)))[index][p::Re]
+            = - iK[d::Z] * ((fftw_complex *) (forwardIn.localFourierPtr+numberElements*(d::X)))[index][p::Im]
+            + iK[d::X] * ((fftw_complex *) (forwardIn.localFourierPtr+numberElements*(d::Z)))[index][p::Im];
 
-          ((fftw_complex *) (backwardOut.localFourierPtr+lSD::getIndex(d::Z)))[index][p::Im]
-            = iK[d::X] * ((fftw_complex *) (forwardIn.localFourierPtr+lSD::getIndex(d::Y)))[index][p::Re]
-            - iK[d::Y] * ((fftw_complex *) (forwardIn.localFourierPtr+lSD::getIndex(d::X)))[index][p::Re];
+          ((fftw_complex *) (backwardOut.localFourierPtr+numberElements*(d::Y)))[index][p::Im]
+            = iK[d::Z] * ((fftw_complex *) (forwardIn.localFourierPtr+numberElements*(d::X)))[index][p::Re]
+            - iK[d::X] * ((fftw_complex *) (forwardIn.localFourierPtr+numberElements*(d::Z)))[index][p::Re];
+
+
+          ((fftw_complex *) (backwardOut.localFourierPtr+numberElements*(d::Z)))[index][p::Re]
+            = - iK[d::X] * ((fftw_complex *) (forwardIn.localFourierPtr+numberElements*(d::Y)))[index][p::Im]
+            + iK[d::Y] * ((fftw_complex *) (forwardIn.localFourierPtr+numberElements*(d::X)))[index][p::Im];
+
+          ((fftw_complex *) (backwardOut.localFourierPtr+numberElements*(d::Z)))[index][p::Im]
+            = iK[d::X] * ((fftw_complex *) (forwardIn.localFourierPtr+numberElements*(d::Y)))[index][p::Re]
+            - iK[d::Y] * ((fftw_complex *) (forwardIn.localFourierPtr+numberElements*(d::X)))[index][p::Re];
         });
 
       backwardOut.execute();
@@ -269,16 +282,20 @@ namespace lbm {
   private:
     double * localSpaceInPtr;
     BackwardFFT<double, Architecture::CPU, PartitionningType::OneD, 2, 2> backwardOut;
+    const unsigned int numberElements;
     const Position& offset;
     Computation<Architecture::CPU, L::dimD> computationFourier;
 
   public:
     MakeIncompressible(double * localSpaceInPtr_in,
                        double * localSpaceOutPtr_in,
+                       const unsigned int numberElements_in,
                        const ptrdiff_t globalLength_in[3],
                        const Position& offset_in)
       : localSpaceInPtr(localSpaceInPtr_in)
-      , backwardOut(localSpaceOutPtr_in, localSpaceOutPtr_in, globalLength_in)
+      , backwardOut(localSpaceOutPtr_in, localSpaceOutPtr_in,
+                    numberElements_in, globalLength_in)
+      , numberElements(numberElements_in)
       , offset(offset_in)
       , computationFourier(lFD::start(), lFD::end())
     {}
@@ -295,16 +312,16 @@ namespace lbm {
           iK[d::Y] = iFP[d::Y] <= gSD::sLength()[d::Y]/2 ?
             iFP[d::Y] : iFP[d::Y]-gSD::sLength()[d::Y];
 
-          ((fftw_complex *) (backwardOut.localFourierPtr+lSD::getIndex(d::X)))[index][p::Re]
+          ((fftw_complex *) (backwardOut.localFourierPtr+numberElements*(d::X)))[index][p::Re]
             = - iK[d::Y] * ((fftw_complex *) (localSpaceInPtr))[index][p::Im];
 
-          ((fftw_complex *) (backwardOut.localFourierPtr+lSD::getIndex(d::X)))[index][p::Im]
+          ((fftw_complex *) (backwardOut.localFourierPtr+numberElements*(d::X)))[index][p::Im]
             = iK[d::Y] * ((fftw_complex *) (localSpaceInPtr))[index][p::Re];
 
-           ((fftw_complex *) (backwardOut.localFourierPtr+lSD::getIndex(d::Y)))[index][p::Re]
+           ((fftw_complex *) (backwardOut.localFourierPtr+numberElements*(d::Y)))[index][p::Re]
             = iK[d::X] * ((fftw_complex *) (localSpaceInPtr))[index][p::Im];
 
-           ((fftw_complex *) (backwardOut.localFourierPtr+lSD::getIndex(d::Y)))[index][p::Im]
+           ((fftw_complex *) (backwardOut.localFourierPtr+numberElements*(d::Y)))[index][p::Im]
             = - iK[d::X] * ((fftw_complex *) (localSpaceInPtr))[index][p::Re];
 
         });
@@ -324,9 +341,11 @@ namespace lbm {
   public:
     MakeIncompressible(double * localSpaceInPtr_in,
                        double * localSpaceOutPtr_in,
+                       const unsigned int numberElements_in,
                        const ptrdiff_t globalLength_in[3],
                        const Position& offset_in)
-      : Base(localSpaceInPtr_in, localSpaceOutPtr_in, globalLength_in, offset_in)
+      : Base(localSpaceInPtr_in, localSpaceOutPtr_in, numberElements_in,
+             globalLength_in, offset_in)
     {}
 
     using Base::executeFourier;

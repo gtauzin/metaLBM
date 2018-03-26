@@ -30,12 +30,13 @@ namespace lbm {
     Field<T, 2*L::dimD-3, architecture, writeVorticity> vorticity;
     FieldWriter_& fieldWriter;
 
-    FieldList(const MathVector<int, 3>& rankMPI_in, FieldWriter_& fieldWriter_in)
-      : density(initLocalDensity<T, architecture>(rankMPI_in))
-      , velocity(initLocalVelocity<T, architecture>())
-      , force(initLocalForce<T, architecture>(rankMPI_in))
-      , alpha(initLocalAlpha<T, architecture>())
-      , vorticity("vorticity", 0)
+    FieldList(const MathVector<int, 3>& rankMPI_in, const unsigned int numberElements_in,
+              FieldWriter_& fieldWriter_in)
+      : density(initLocalDensity<T, architecture>(numberElements_in, rankMPI_in))
+      , velocity(initLocalVelocity<T, architecture>(numberElements_in))
+      , force(initLocalForce<T, architecture>(numberElements_in, rankMPI_in))
+      , alpha(initLocalAlpha<T, architecture>(numberElements_in))
+      , vorticity("vorticity", numberElements_in, 0)
       , fieldWriter(fieldWriter_in)
     {}
 
