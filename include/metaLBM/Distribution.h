@@ -26,8 +26,10 @@ namespace lbm {
   public:
     using Base::fieldName;
 
-    Distribution(const unsigned int numberElements_in)
-      : Base("distribution", numberElements_in)
+    using Base::setLocalValue;
+
+    Distribution()
+      : Base("distribution")
       , haloArrayPrevious(hSD::volume()*L::dimQ)
       , haloArrayNext(hSD::volume()*L::dimQ)
     {}

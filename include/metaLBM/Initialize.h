@@ -18,11 +18,10 @@
 namespace lbm {
 
   template<class T, Architecture architecture>
-    Field<T, 1, architecture, true> initLocalDensity(const unsigned int numberElements,
-                                                     const MathVector<int, 3>& rankMPI) {
+    Field<T, 1, architecture, true> initLocalDensity(const MathVector<int, 3>& rankMPI) {
     { INSTRUMENT_ON("initLocalDensity<T>",2) }
 
-    Field<T, 1, architecture, true> densityFieldR("density", numberElements, initDensityValue);
+    Field<T, 1, architecture, true> densityFieldR("density", initDensityValue);
 
     switch(initDensityT){
     case InitDensityType::Homogeneous: {
@@ -49,13 +48,13 @@ namespace lbm {
   }
 
   template<class T, Architecture architecture>
-  Field<T, L::dimD, architecture, true> initLocalVelocity(const unsigned int numberElements) {
+  Field<T, L::dimD, architecture, true> initLocalVelocity() {
     INSTRUMENT_ON("initLocalVelocity<T>",2)
 
     MathVector<T, L::dimD> initVelocityVectorProjected{{ (T) 0 }};
     initVelocityVectorProjected = Project<T, T, L::dimD>::Do(initVelocityVector);
 
-    Field<T, L::dimD, architecture, true> velocityFieldR("velocity", numberElements,
+    Field<T, L::dimD, architecture, true> velocityFieldR("velocity",
                                                          initVelocityVectorProjected);
 
     switch(initVelocityT){
@@ -73,17 +72,15 @@ namespace lbm {
 
   template<class T, Architecture architecture>
   Field<T, L::dimD, architecture, writeForce>
-  initLocalForce(const unsigned int numberElements,
-                 const MathVector<int, 3>& rankMPI) {
+  initLocalForce(const MathVector<int, 3>& rankMPI) {
     { INSTRUMENT_ON("initLocalForce<T>",2) }
 
-    Field<T, L::dimD, architecture, writeForce> forceFieldR("force", numberElements, 0);
+    Field<T, L::dimD, architecture, writeForce> forceFieldR("force", 0);
 
     Force<T, forceT> force(forceAmplitude, forceWaveLength, forcekMin, forcekMax);
 
     if(writeForce) {
-      force.setLocalForceArray(forceFieldR.getMultiData(), numberElements,
-                               gFD::offset(rankMPI));
+      force.setLocalForceArray(forceFieldR.getLocalData(), gFD::offset(rankMPI));
     }
 
     return forceFieldR;
@@ -91,21 +88,22 @@ namespace lbm {
 
   template<class T, Architecture architecture>
   Field<T, 1, architecture, writeAlpha>
-  initLocalAlpha(const unsigned int numberElements) {
+  initLocalAlpha() {
     { INSTRUMENT_ON("initLocalAlpha<T>",2) }
 
-    Field<T, 1, architecture, writeAlpha> alphaFieldR("alpha", numberElements, (T) 2);
+    Field<T, 1, architecture, writeAlpha> alphaFieldR("alpha", (T) 2);
     return alphaFieldR;
   }
 
 
   template<class T, Architecture architecture>
   Distribution<T, architecture>
-  initLocalDistribution(Field<T, 1, architecture, true>& densityField,
+  initLocalDistribution(const Field<T, 1, architecture, true>& densityField,
                         const Field<T, L::dimD, architecture, true>& velocityField,
                         const MathVector<int, 3>& rankMPI) {
     { INSTRUMENT_ON("initLocalDistribution<T>",2) }
-    Distribution<T, architecture> distributionR(densityField.numberElements);
+
+    Distribution<T, architecture> distributionR;
 
     if(startIteration == 0) {
 

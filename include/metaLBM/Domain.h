@@ -23,13 +23,29 @@ namespace lbm {
 
   template <DomainType domainType, PartitionningType partitionningType,
             MemoryLayout memoryLayout, unsigned int NumberComponents>
-  struct Domain {};
+    struct Domain {};
 
+  template<>
+  struct Domain<DomainType::Generic, PartitionningType::Generic,
+                MemoryLayout::Generic, 1> {
+  public:
+    static unsigned int numberElements;
+  };
+
+  unsigned int Domain<DomainType::Generic, PartitionningType::Generic,
+                      MemoryLayout::Generic, 1>::numberElements;
 
   template <unsigned int NumberComponents>
   struct Domain<DomainType::LocalSpace, PartitionningType::Generic,
-                MemoryLayout::Generic, NumberComponents> {
+                MemoryLayout::Generic, NumberComponents>
+    : public Domain<DomainType::Generic, PartitionningType::Generic,
+                    MemoryLayout::Generic, 1> {
+  private:
+    using Base = Domain<DomainType::Generic, PartitionningType::Generic,
+                        MemoryLayout::Generic, 1>;
   public:
+    using Base::numberElements;
+
     HOST DEVICE
     static inline constexpr Position pStart() {
       return Position({0, 0, 0});
@@ -78,6 +94,23 @@ namespace lbm {
       return pLength()[d::Z] * (pLength()[d::Y] * iP[d::X] + iP[d::Y]) + iP[d::Z];
     }
 
+    HOST DEVICE
+    static inline unsigned int getIndex(const Position& iP,
+                                        const unsigned int iC) {
+      return iC * numberElements + getIndex(iP);
+    }
+
+    HOST DEVICE
+    static inline unsigned int getIndex(const unsigned int index,
+                                        const unsigned int iC) {
+      return iC * numberElements + index;
+    }
+
+    HOST DEVICE
+    static inline unsigned int getIndex(const unsigned int iC) {
+      return iC * numberElements;
+    }
+
   };
 
 
@@ -91,6 +124,7 @@ namespace lbm {
                         MemoryLayout::Generic, NumberComponents>;
 
   public:
+    using Base::numberElements;
 
     HOST DEVICE
     static inline constexpr Position pStart() {
@@ -169,7 +203,10 @@ namespace lbm {
   private:
     using Base = Domain<DomainType::LocalSpace, PartitionningType::Generic,
                         MemoryLayout::Generic, L::dimQ>;
+
   public:
+    using Base::numberElements;
+
     HOST DEVICE
     static inline constexpr Position start() {
       return Position({0, 0, 0});
@@ -200,6 +237,12 @@ namespace lbm {
       return Base::getIndex(iP - L::halo());
     }
 
+    HOST DEVICE
+    static inline unsigned int getIndexLocal(const Position& iP,
+                                             const unsigned int iC) {
+      return iC*numberElements + getIndexLocal(iP);
+    }
+
   };
 
 
@@ -213,6 +256,8 @@ namespace lbm {
                         MemoryLayout::Generic, L::dimQ>;
 
   public:
+    using Base::numberElements;
+
     using Base::start;
     using Base::end;
     using Base::length;
@@ -244,6 +289,8 @@ namespace lbm {
                         MemoryLayout::Generic, L::dimQ>;
 
   public:
+    using Base::numberElements;
+
     using Base::start;
     using Base::end;
     using Base::length;
@@ -276,6 +323,8 @@ namespace lbm {
                         MemoryLayout::Generic, NumberComponents>;
 
   public:
+    using Base::numberElements;
+
     HOST DEVICE
     static inline constexpr Position start() {
       return Position({0, 0, 0});
@@ -309,6 +358,9 @@ namespace lbm {
       return iC * volume() + getIndex(iP);
     }
   };
+
+  typedef Domain<DomainType::Generic, PartitionningType::Generic,
+                 MemoryLayout::Generic, 1> BaseDomain_;
 
   typedef Domain<DomainType::GlobalSpace, PartitionningType::Generic,
                  MemoryLayout::Generic, 1> gSD;

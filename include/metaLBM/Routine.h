@@ -50,8 +50,8 @@ namespace lbm {
       : communication(rankMPI_in, sizeMPI_in, processorName_in)
       , fieldWriter(prefix, rankMPI_in)
       , distributionWriter(prefix, rankMPI_in)
-      , fieldList(rankMPI_in, numberElements_in, fieldWriter)
-      , curlVelocity(fieldList.velocity.getMultiData(), fieldList.vorticity.getMultiData(),
+      , fieldList(rankMPI_in, fieldWriter)
+      , curlVelocity(fieldList.velocity.getLocalData(), fieldList.vorticity.getLocalData(),
                      Cast<unsigned int,ptrdiff_t, 3>::Do(gSD::sLength()).data(),
                      gFD::offset(rankMPI_in))
       , distribution(initLocalDistribution<T, architecture>(fieldList.density,

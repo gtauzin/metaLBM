@@ -135,64 +135,6 @@ namespace lbm {
   }
 
 
-  template<class U, Architecture architecture,
-           unsigned int NumberComponents>
-  class MultiDynamicArray {};
-
-
-  template<class U, unsigned int NumberComponents>
-  class MultiDynamicArray<U, Architecture::CPU, NumberComponents>
-    : public DynamicArray<U, Architecture::CPU> {
-  private:
-    using Base = DynamicArray<U, Architecture::CPU>;
-
-  protected:
-    using Base::dArrayPtr;
-    DynamicArray<U *, Architecture::CPU> sMultiArray;
-    unsigned int numberElements;
-
-  public:
-    MultiDynamicArray(const unsigned int numberElements_in)
-      : Base(NumberComponents*numberElements_in)
-      , sMultiArray(NumberComponents)
-      , numberElements(numberElements_in)
-    {
-      for(auto iC = 0; iC < NumberComponents; ++iC) {
-        sMultiArray[iC] = Base::data(iC*numberElements);
-      }
-    }
-
-    void copyFrom(const MultiDynamicArray& other) {
-      Base::copyFrom(other);
-    }
-
-    void copyTo(MultiDynamicArray& other) const {
-      Base::copyTo(other);
-    }
-
-    DEVICE HOST
-    inline unsigned int getNumberElements() {
-      return numberElements;
-    }
-
-    DEVICE HOST
-    U * operator[] (int iC) {
-      return sMultiArray[iC];
-    }
-
-    DEVICE HOST
-    const U * operator[] (int iC) const {
-      return sMultiArray[iC];
-    }
-
-    DEVICE HOST
-    U ** multiData() {
-      return sMultiArray.data();
-    }
-
-  };
-
-
   /* template<class U, unsigned int NumberComponents> */
   /* class MultiDynamicArray<U, Architecture::CPU, NumberComponents> */
   /*   : public DynamicArray<U, Architecture::CPU> { */

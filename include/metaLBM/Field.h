@@ -32,14 +32,12 @@ namespace lbm {
   template <class T, unsigned int NumberComponents>
   class FieldAllocator<T, NumberComponents, Architecture::Generic, true> {
   public:
-    const unsigned int numberElements;
     static constexpr bool IsWritten = true;
 
     const std::string fieldName;
 
-    FieldAllocator(const std::string& fieldName_in, const unsigned int numberElements_in)
+    FieldAllocator(const std::string& fieldName_in)
       : fieldName(fieldName_in)
-      , numberElements(numberElements_in)
 
     {}
 
@@ -53,16 +51,15 @@ namespace lbm {
     using Base = FieldAllocator<T, NumberComponents, Architecture::Generic, true>;
 
   protected:
-    MultiDynamicArray<T, Architecture::CPU, NumberComponents> localArray;
+    DynamicArray<T, Architecture::CPU> localArray;
 
   public:
-    using Base::numberElements;
     using Base::IsWritten;
     using Base::fieldName;
 
-  FieldAllocator(const std::string& fieldName_in, const unsigned int numberElements_in)
-    : Base(fieldName_in, numberElements_in)
-      , localArray(numberElements_in)
+    FieldAllocator(const std::string& fieldName_in)
+      : Base(fieldName_in)
+      , localArray(lSD::numberElements*NumberComponents)
     {}
 
   };
@@ -74,17 +71,16 @@ namespace lbm {
   private:
     using Base = FieldAllocator<T, NumberComponents, Architecture::Generic, true>;
   protected:
-    MultiDynamicArray<T, Architecture::CPUPinned, NumberComponents> localArray;
+    DynamicArray<T, Architecture::CPUPinned> localArray;
 
   public:
-    using Base::numberElements;
     using Base::IsWritten;
 
     using Base::fieldName;
 
-    FieldAllocator(const std::string& fieldName_in, const unsigned int numberElements_in)
-      : Base(fieldName_in, numberElements_in)
-      , localArray(numberElements_in)
+    FieldAllocator(const std::string& fieldName_in)
+      : Base(fieldName_in)
+      , localArray(lSD::numberElements*NumberComponents)
     {}
 
   };
@@ -105,17 +101,15 @@ namespace lbm {
     using Base::localArray;
 
   public:
-    using Base::numberElements;
     using Base::IsWritten;
     using Base::fieldName;
 
-    Field(const std::string& fieldName_in, const unsigned int numberElements_in)
-    : Base(fieldName_in, numberElements_in)
+    Field(const std::string& fieldName_in)
+    : Base(fieldName_in)
     {}
 
-  Field(const std::string& fieldName_in, const unsigned int numberElements_in,
-        const T& value_in)
-      : Base(fieldName_in, numberElements_in)
+    Field(const std::string& fieldName_in, const T& value_in)
+      : Base(fieldName_in)
     {
       Computation<Architecture::CPU,
                   L::dimD> computationLocal(lSD::sStart(),
@@ -128,9 +122,9 @@ namespace lbm {
         });
     }
 
-  Field(const std::string& fieldName_in, const unsigned int numberElements_in,
-        const MathVector<T, NumberComponents>& vector_in)
-      : Base(fieldName_in, numberElements_in)
+    Field(const std::string& fieldName_in,
+          const MathVector<T, NumberComponents>& vector_in)
+      : Base(fieldName_in)
     {
       Computation<Architecture::CPU,
                   L::dimD> computationLocal(lSD::sStart(),
@@ -142,24 +136,19 @@ namespace lbm {
     }
 
     Field(const std::string& fieldName_in,
-          const MultiDynamicArray<T, Architecture::CPU, NumberComponents>& localArray_in)
-      : Base(fieldName_in, localArray_in.size()/NumberComponents)
+          const DynamicArray<T, Architecture::CPU>& localArray_in)
+      : Base(fieldName_in, localArray_in.size())
     {
       localArray.copyFrom(localArray_in);
     }
 
-    inline MultiDynamicArray<T, Architecture::CPU, NumberComponents>& getLocalArray() {
+    inline DynamicArray<T, Architecture::CPU>& getLocalArray() {
       return localArray;
     }
 
     DEVICE HOST
-    T ** getMultiData() {
-      return localArray.multiData();
-    }
-
-    DEVICE HOST
-    T * getLocalData(const unsigned int offset = 0) {
-      return localArray.data(offset);
+    T * getLocalData(const unsigned int iC = 0) {
+      return localArray.data(iC*lSD::numberElements);
     }
 
 
@@ -167,7 +156,7 @@ namespace lbm {
     inline void setLocalValue(const Position iP,
                               const T value,
                               const unsigned int iC = 0) {
-      localArray[iC][lSD::getIndex(iP)] = value;
+      localArray[lSD::getIndex(iP, iC)] = value;
     }
 
     DEVICE HOST
@@ -181,7 +170,7 @@ namespace lbm {
     DEVICE HOST
     inline T getLocalValue(const Position& iP,
                            const unsigned int iC = 0) const {
-      return localArray[iC][lSD::getIndex(iP)];
+      return localArray[lSD::getIndex(iP, iC)];
     }
 
     DEVICE HOST
@@ -201,40 +190,30 @@ namespace lbm {
     Architecture architecture>
   class Field<T, NumberComponents, architecture, false>  {
   public:
-    const unsigned int numberElements;
     static constexpr bool IsWritten = false;
 
     const std::string fieldName;
 
-  Field(const std::string& fieldName_in, const unsigned int numberElements_in,
+  Field(const std::string& fieldName_in,
         const MathVector<T, NumberComponents>& vector_in)
       : fieldName(fieldName_in)
-      , numberElements(numberElements_in)
     {}
 
-    Field(const std::string& fieldName_in, const unsigned int numberElements_in,
-          const T& value_in = (T) 0)
+    Field(const std::string& fieldName_in, const T& value_in = (T) 0)
       : fieldName(fieldName_in)
-      , numberElements(numberElements_in)
     {}
 
-    Field(const std::string& fieldName_in, const unsigned int numberElements_in,
+    Field(const std::string& fieldName_in,
           const DynamicArray<T, architecture>& globalArray_in)
       : fieldName(fieldName_in)
-      , numberElements(numberElements_in)
     {}
 
-    DEVICE HOST
-    T ** getMultiData() {
+    T * getLocalData(const unsigned int iC = 0) {
       return NULL;
     }
 
-    T * getLocalData(const unsigned int offset = 0) {
-      return NULL;
-    }
-
-    MultiDynamicArray<T, Architecture::CPU, NumberComponents> getLocalArray() {
-      return MultiDynamicArray<T, Architecture::CPU, NumberComponents>();
+    DynamicArray<T, Architecture::CPU> getLocalArray() {
+      return DynamicArray<T, Architecture::CPU>();
     }
 
     DEVICE HOST

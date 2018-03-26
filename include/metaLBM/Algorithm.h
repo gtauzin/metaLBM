@@ -33,11 +33,11 @@ namespace lbm {
   class Algorithm<T, AlgorithmType::Generic, architecture, implementation> {
   protected:
     T * localDensity_Ptr;
-    T * localVelocity_Ptr[L::dimD];
-    T * localForce_Ptr[L::dimD];
+    T * localVelocity_Ptr;
+    T * localForce_Ptr;
     T * localAlpha_Ptr;
 
-    T * localDistribution_Ptr[L::dimQ];
+    T * localDistribution_Ptr;
     T * haloDistributionPrevious_Ptr;
     T * haloDistributionNext_Ptr;
 
@@ -62,7 +62,10 @@ namespace lbm {
               Communication<T, latticeT, algorithmT, memoryL,
               partitionningT, implementation, L::dimD>& communication_in)
       : localDensity_Ptr(fieldList_in.density.getLocalData())
+      , localVelocity_Ptr(fieldList_in.velocity.getLocalData())
+      , localForce_Ptr(fieldList_in.force.getLocalData())
       , localAlpha_Ptr(fieldList_in.alpha.getLocalData())
+      , localDistribution_Ptr(distribution_in.getLocalData())
       , haloDistributionPrevious_Ptr(distribution_in.getHaloDataPrevious())
       , haloDistributionNext_Ptr(distribution_in.getHaloDataNext())
       , communication(communication_in)
@@ -75,17 +78,7 @@ namespace lbm {
       , dtCommunication()
       , dtTotal()
       , isStored(false)
-    {
-      for(auto iD = 0; iD < L::dimD; ++iD) {
-        localVelocity_Ptr[iD] = fieldList_in.velocity.getMultiData()[iD];
-        localForce_Ptr[iD] = fieldList_in.force.getMultiData()[iD];
-      }
-
-      for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
-        localDistribution_Ptr[iQ] = distribution_in.getMultiData()[iQ];
-      }
-
-    }
+    {}
 
     HOST
     void pack() {
@@ -121,14 +114,15 @@ namespace lbm {
 
       localDensity_Ptr[indexLocal] = collision.getDensity();
       for(auto iD = 0; iD < L::dimD; ++iD) {
-        localVelocity_Ptr[iD][indexLocal] = collision.getHydrodynamicVelocity()[iD];
+        localVelocity_Ptr[lSD::getIndex(indexLocal, iD)]
+          = collision.getHydrodynamicVelocity()[iD];
       }
 
       if(writeAlpha) localAlpha_Ptr[indexLocal] = collision.getAlpha();
 
       if(writeForce) {
         for(auto iD = 0; iD < L::dimD; ++iD) {
-          localForce_Ptr[iD][indexLocal] = collision.getForce()[iD];
+          localForce_Ptr[lSD::getIndex(indexLocal, iD)] = collision.getForce()[iD];
         }
       }
     }

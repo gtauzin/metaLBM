@@ -75,7 +75,7 @@ namespace lbm {
     }
 
     DEVICE HOST
-    inline void setForce(T * localForceArray[L::dimD],
+    inline void setForce(T * localForceArray,
                          const Position& iP,
                          const Position& offset) {
       { INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::setForce",4) }

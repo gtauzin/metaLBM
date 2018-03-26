@@ -34,9 +34,9 @@ namespace lbm {
 
     ScalarAnalysisList(FieldList<T, architecture>& fieldList_in,
                        Communication_& communication_in)
-      : totalEnergy(fieldList_in.density.getMultiData(),
-                    fieldList_in.velocity.getMultiData())
-      , totalEnstrophy(fieldList_in.vorticity.getMultiData())
+      : totalEnergy(fieldList_in.density.getLocalData(),
+                    fieldList_in.velocity.getLocalData())
+      , totalEnstrophy(fieldList_in.vorticity.getLocalData())
       , communication(communication_in)
       , scalarAnalysisWriter(prefix)
       , computationLocal(lSD::sStart(), lSD::sEnd())
@@ -111,7 +111,7 @@ namespace lbm {
 
     SpectralAnalysisList(FieldList<T, architecture>& fieldList_in,
                          Communication_& communication_in)
-      : energySpectra(fieldList_in.velocity.getMultiData())
+      : energySpectra(fieldList_in.velocity.getLocalData())
       , communication(communication_in)
       , spectralAnalysisWriter(prefix)
       , offset(gFD::offset(communication.rankMPI))

@@ -61,6 +61,8 @@ int main(int argc, char* argv[]) {
   char hostname[MPI_MAX_PROCESSOR_NAME];
   MPI_Get_processor_name(hostname, &hostnameLength);
 
+  BaseDomain_::numberElements = numberElements;
+
   Routine<dataT, Architecture::CPU, implementationT> routine(rankMPI, sizeMPI,
                                                              std::string(hostname),
                                                              numberElements);

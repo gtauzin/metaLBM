@@ -35,12 +35,12 @@ namespace lbm {
     }
 
     DEVICE HOST
-    inline void setForce(T * localForceArray[L::dimD],
+    inline void setForce(T * localForceArray,
                          const Position& iP,
                          MathVector<T, L::dimD>& force) {
       auto index = lSD::getIndex(iP);
       for(auto iD = 0; iD < L::dimD; ++iD) {
-        force[iD] = localForceArray[iD][index];
+        force[iD] = localForceArray[lSD::getIndex(index, iD)];
       }
     }
 
@@ -106,8 +106,7 @@ namespace lbm {
     }
 
     HOST
-    inline void setLocalForceArray(double * * localForcePtr,
-                                   const unsigned int numberElements,
+    inline void setLocalForceArray(double * localForcePtr,
                                    const Position& offset) {
       Computation<Architecture::CPU, L::dimD> computationLocal(lSD::sStart(),
                                                                lSD::sEnd());
@@ -119,7 +118,7 @@ namespace lbm {
           MathVector<T, L::dimD> force;
           setForce(iP+offset, force);
           for(auto iD = 0; iD < L::dimD; ++iD) {
-            localForcePtr[iD][index] = force[iD];
+            localForcePtr[lSD::getIndex(index, iD)] = force[iD];
           }
         });
 
@@ -162,8 +161,7 @@ namespace lbm {
     }
 
     HOST
-    inline void setLocalForceArray(double * * localForcePtr,
-                                   const unsigned int numberElements,
+    inline void setLocalForceArray(double * localForcePtr,
                                    const Position& offset) {
       Computation<Architecture::CPU, L::dimD> computationLocal(lSD::sStart(),
                                                                lSD::sEnd());
@@ -174,7 +172,7 @@ namespace lbm {
           auto index = lSD::getIndex(iP);
           setForce(iP+offset, force);
           for(auto iD = 0; iD < L::dimD; ++iD) {
-            localForcePtr[iD][index] = force[iD];
+            localForcePtr[lSD::getIndex(index, iD)] = force[iD];
           }
         });
 
@@ -212,8 +210,7 @@ namespace lbm {
     }
 
     HOST
-    inline void setLocalForceArray(double * * localForcePtr,
-                                   const unsigned int numberElements,
+    inline void setLocalForceArray(double * localForcePtr,
                                    const Position& offset) {
       Computation<Architecture::CPU, L::dimD> computationLocal(lSD::sStart(),
                                                                lSD::sEnd());
@@ -224,7 +221,7 @@ namespace lbm {
           auto index = lSD::getIndex(iP);
           setForce(iP+offset, force);
           for(auto iD = 0; iD < L::dimD; ++iD) {
-            localForcePtr[iD][index] = force[iD];
+            localForcePtr[lSD::getIndex(index, iD)] = force[iD];
           }
         });
 
@@ -257,12 +254,10 @@ namespace lbm {
       , kMax(kMax_in)
     {}
 
-    inline void setLocalForceArray(double * * localForcePtr,
-                                   const unsigned int numberElements,
+    inline void setLocalForceArray(double * localForcePtr,
                                    const Position& offset) {
 
-      MultiDynamicArray<double, Architecture::CPU, 2*L::dimD-3> tempArray(numberElements);
-      double * * tempForcePtr = tempArray.multiData();
+      DynamicArray<double, Architecture::CPU> tempArray((2*L::dimD-3)*lSD::numberElements);
 
       Computation<Architecture::CPU, L::dimD> computationFourier(lFD::start(), lFD::end());
 
@@ -285,7 +280,8 @@ namespace lbm {
             auto index = lFD::getIndex(iFP);
 
             for(auto iD = 0; iD < 2*L::dimD-3; ++iD) {
-              fftw_complex * fourierTempForcePtr = ((fftw_complex *) tempForcePtr[iD]);
+              fftw_complex * fourierTempForcePtr
+                = ((fftw_complex *) tempArray.data(iD*lSD::numberElements));
 
               fourierTempForcePtr[index][0] = amplitude[iD];
               fourierTempForcePtr[index][1] = 0;
@@ -313,7 +309,7 @@ namespace lbm {
         });
 
       MakeIncompressible<double, Architecture::CPU, PartitionningType::OneD, L::dimD>
-        makeIncompressible(tempForcePtr, localForcePtr,
+        makeIncompressible(tempArray.data(), localForcePtr,
                            Cast<unsigned int,ptrdiff_t, 3>::Do(gSD::sLength()).data(),
                            offset);
       makeIncompressible.executeFourier();

@@ -44,13 +44,13 @@ namespace lbm {
     using Base = AnalysisScalar<T>;
 
     T& scalarRef;
-    T * * localDensityPtr;
-    T * * localVelocityPtr;
+    T * localDensityPtr;
+    T * localVelocityPtr;
 
   public:
     static constexpr auto analysisName = "total_energy";
 
-    TotalEnergy(T * * localDensityPtr_in, T * * localVelocityPtr_in)
+    TotalEnergy(T * localDensityPtr_in, T * localVelocityPtr_in)
       : Base()
       , scalarRef(Base::scalar)
       , localDensityPtr(localDensityPtr_in)
@@ -62,8 +62,9 @@ namespace lbm {
       auto index = lSD::getIndex(iP);
       for(auto iD = 0; iD < L::dimD; ++iD) {
         scalarRef
-          += 0.5*localDensityPtr[0][index]
-          *localVelocityPtr[iD][index]*localVelocityPtr[iD][index];
+          += 0.5*localDensityPtr[index]
+          *localVelocityPtr[lSD::getIndex(index, iD)]
+          *localVelocityPtr[lSD::getIndex(index, iD)];
       }
     }
 
@@ -79,13 +80,13 @@ namespace lbm {
   private:
     using Base = AnalysisScalar<T>;
 
-    T * * localVorticityPtr;
+    T * localVorticityPtr;
     T& scalarRef;
 
   public:
     static constexpr auto analysisName = "total_enstrophy";
 
-    TotalEnstrophy(T * localVorticityPtr_in[L::dimD])
+    TotalEnstrophy(T * localVorticityPtr_in)
       : Base()
       , scalarRef(Base::scalar)
       , localVorticityPtr(localVorticityPtr_in)
@@ -96,7 +97,8 @@ namespace lbm {
       auto index = lSD::getIndex(iP);
       for(auto iD = 0; iD < 2*L::dimD-3; ++iD) {
         scalarRef
-          += 0.5*localVorticityPtr[iD][index]*localVorticityPtr[iD][index];
+          += 0.5*localVorticityPtr[lSD::getIndex(index, iD)]
+          *localVorticityPtr[lSD::getIndex(index, iD)];
       }
     }
 
@@ -136,13 +138,13 @@ namespace lbm {
   private:
     using Base = AnalysisSpectral<T, MaxWaveNumber>;
 
-    T * * localVelocityPtr;
+    T * localVelocityPtr;
     T (&spectraRef)[MaxWaveNumber];
 
   public:
     static constexpr auto analysisName = "energy_spectra";
 
-    EnergySpectra(T * * localVelocityPtr_in)
+    EnergySpectra(T * localVelocityPtr_in)
       : Base()
       , spectraRef(Base::spectra)
       , localVelocityPtr(localVelocityPtr_in)
@@ -161,7 +163,7 @@ namespace lbm {
 
       T energy = (T) 0;
       for(auto iD = 0; iD < L::dimD; ++iD) {
-        fftw_complex * fourierVelocityPtr = ((fftw_complex *) localVelocityPtr[iD]);
+        fftw_complex * fourierVelocityPtr = ((fftw_complex *) localVelocityPtr+lSD::getIndex(iD));
         energy += fourierVelocityPtr[index][p::Re]*fourierVelocityPtr[index][p::Re];
         energy += fourierVelocityPtr[index][p::Im]*fourierVelocityPtr[index][p::Im];
       }

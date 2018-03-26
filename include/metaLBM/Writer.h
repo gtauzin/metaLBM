@@ -347,7 +347,7 @@ namespace lbm {
 
         statusHDF5 = H5Dwrite(dataSetHDF5, H5T_NATIVE_DOUBLE,
                               dataSpaceHDF5, fileSpaceHDF5, propertyListHDF5,
-                              field.getMultiData()[iC]);
+                              field.getLocalData(iC));
 
         statusHDF5 = H5Dclose(dataSetHDF5);
         statusHDF5 = H5Sclose(dataSpaceHDF5);
@@ -437,7 +437,7 @@ namespace lbm {
         Base::statusHDF5 = H5Dwrite(Base::dataSetHDF5, H5T_NATIVE_DOUBLE,
                                     Base::dataSpaceHDF5, Base::fileSpaceHDF5,
                                     Base::propertyListHDF5,
-                                    distribution.getMultiData()[iC]);
+                                    distribution.getLocalData(iC));
 
         Base::statusHDF5 = H5Dclose(Base::dataSetHDF5);
         Base::statusHDF5 = H5Sclose(Base::dataSpaceHDF5);
