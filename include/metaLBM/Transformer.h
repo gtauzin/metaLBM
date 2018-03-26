@@ -30,11 +30,9 @@ namespace lbm {
   public:
     double * localSpacePtr;
     double * localFourierPtr;
-    const unsigned int numberElements;
 
   private:
     fftw_plan planForward[NumberComponents];
-    Computation<Architecture::CPU, L::dimD> computationLocal;
 
   public:
     ForwardFFT(double * localSpacePtr_in,
@@ -43,8 +41,6 @@ namespace lbm {
                const ptrdiff_t globalLength_in[3])
       : localSpacePtr(localSpacePtr_in)
       , localFourierPtr(localFourierPtr_in)
-      , numberElements(numberElements_in)
-      , computationLocal(lSD::sStart(), lSD::sEnd())
     {
       for(auto iC = 0; iC < NumberComponents; ++iC) {
         planForward[iC] = fftw_mpi_plan_dft_r2c(Dimension,
@@ -72,9 +68,6 @@ namespace lbm {
     inline void execute() {
       for(auto iC = 0; iC < NumberComponents; ++iC) {
         fftw_execute(planForward[iC]);
-        computationLocal.Do([=] HOST (const Position& iP) {
-            (localSpacePtr+numberElements*iC)[lSD::getIndex(iP)] /= gSD::sVolume();
-          });
       }
     }
 
@@ -87,9 +80,11 @@ namespace lbm {
   public:
     double * localFourierPtr;
     double * localSpacePtr;
+    const unsigned int numberElements;
 
   private:
     fftw_plan planBackward[NumberComponents];
+    Computation<Architecture::CPU, L::dimD> computationLocal;
 
   public:
     BackwardFFT(double * localFourierPtr_in,
@@ -98,6 +93,8 @@ namespace lbm {
                 const ptrdiff_t globalLength_in[3])
       : localFourierPtr(localFourierPtr_in)
       , localSpacePtr(localSpacePtr_in)
+      , numberElements(numberElements_in)
+      , computationLocal(lSD::sStart(), lSD::sEnd())
     {
       for(auto iC = 0; iC < NumberComponents; ++iC) {
         planBackward[iC] = fftw_mpi_plan_dft_c2r(Dimension,
@@ -118,6 +115,9 @@ namespace lbm {
     {
       for(auto iC = 0; iC < NumberComponents; ++iC) {
         fftw_destroy_plan(planBackward[iC]);
+        computationLocal.Do([=] HOST (const Position& iP) {
+            (localSpacePtr+numberElements*iC)[lSD::getIndex(iP)] /= gSD::sVolume();
+          });
       }
     }
 
