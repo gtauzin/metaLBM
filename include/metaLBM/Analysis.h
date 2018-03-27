@@ -146,23 +146,27 @@ namespace lbm {
 
     T * localVelocityPtr;
     T (&spectraRef)[MaxWaveNumber];
+    ForwardFFT<double, Architecture::CPU, PartitionningType::OneD,
+               L::dimD, L::dimD> forward;
+    BackwardFFT<double, Architecture::CPU, PartitionningType::OneD,
+                L::dimD, L::dimD> backward;
 
   public:
     static constexpr auto analysisName = "energy_spectra";
 
     EnergySpectra(T * localVelocityPtr_in,
-                  const unsigned int numberElements_in)
+                  const unsigned int numberElements_in,
+                  const ptrdiff_t globalLength_in[3])
       : Base(numberElements_in)
       , spectraRef(Base::spectra)
       , localVelocityPtr(localVelocityPtr_in)
+      , forward(localVelocityPtr_in, numberElements_in, globalLength_in)
+      , backward(localVelocityPtr_in, numberElements_in, globalLength_in)
     {}
 
     HOST
     void operator()(const Position& iFP, const unsigned int index,
                     const WaveNumber& iK, const unsigned int kNorm) {
-      // std::cout << "iK: " << iK << ", index: " << index
-      //           << ", iFP: " << iFP << std::endl;
-
       T coefficient = (T) 1;
       if(iK[L::dimD-1] == 0) {
         coefficient = (T) 0.5;
@@ -176,6 +180,14 @@ namespace lbm {
       }
 
       if(kNorm < MaxWaveNumber) spectraRef[kNorm] += coefficient * energy;
+    }
+
+    void executeForward() {
+      forward.execute();
+    }
+
+    void executeBackward() {
+      backward.execute();
     }
 
     using Base::reset;

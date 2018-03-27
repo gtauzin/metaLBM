@@ -11,18 +11,18 @@ namespace lbm {
   typedef double dataT;
   typedef MathVector<dataT, 3> Vector;
 
-  constexpr LatticeType latticeT = LatticeType::D3Q27;
-  constexpr int globalLengthX = 128;
-  constexpr int globalLengthY = 128;
-  constexpr int globalLengthZ = 128;
+  constexpr LatticeType latticeT = LatticeType::D2Q9;
+  constexpr int globalLengthX = 64;
+  constexpr int globalLengthY = 64;
+  constexpr int globalLengthZ = 64;
 
   constexpr unsigned int startIteration = 0;
-  constexpr unsigned int endIteration = 10;
+  constexpr unsigned int endIteration = 2;
   constexpr unsigned int writeStep = 1;
-  constexpr unsigned int backUpStep = 10;
+  constexpr unsigned int backUpStep = 101;
 
   constexpr unsigned int scalarAnalysisStep = 2;
-  constexpr unsigned int spectralAnalysisStep = 5;
+  constexpr unsigned int spectralAnalysisStep = 1;
 
   constexpr unsigned int successiveWriteStep = 2;
 
@@ -31,7 +31,7 @@ namespace lbm {
   constexpr Implementation implementationT = Implementation::MPI;
   constexpr MemoryLayout memoryL = MemoryLayout::AoS;
 
-  constexpr dataT relaxationTime = 0.85;
+  constexpr dataT relaxationTime = 0.55;
   constexpr CollisionType collisionT = CollisionType::BGK;
   constexpr EquilibriumType equilibriumT = EquilibriumType::Incompressible;
 
@@ -41,9 +41,9 @@ namespace lbm {
   constexpr Vector initVelocityVector = { {0.0, 0.0, 0.0} };
 
   constexpr ForcingSchemeType forcingSchemeT = ForcingSchemeType::ExactDifferenceMethod;
-  constexpr ForceType forceT = ForceType::ConstantShell;
+  constexpr ForceType forceT = ForceType::Kolmogorov;
 
-  constexpr Vector forceAmplitude = { {0.00001, 0.00001, 0.00001} };
+  constexpr Vector forceAmplitude = { {100, 100, 100} };
   constexpr Vector forceWaveLength = { {32.0, 32.0, 32.0} };
   constexpr int forcekMin = 1;
   constexpr int forcekMax = 2;

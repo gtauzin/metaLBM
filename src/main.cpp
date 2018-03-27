@@ -1,4 +1,4 @@
-#define NPROCS 1
+#define NPROCS 2
 #define NTHREADS 1
 
 #include <mpi.h>

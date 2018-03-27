@@ -258,10 +258,11 @@ namespace lbm {
       , kMax(kMax_in)
     {}
 
-    inline void setLocalForceArray(double * localForcePtr,
+    inline void setLocalForceArray(double * localPtr,
                                    const unsigned int numberElements,
                                    const Position& offset) {
       DynamicArray<double, Architecture::CPU> tempArray((2*L::dimD-3)*numberElements);
+      double * spaceTempPtr = tempArray.data();
 
       Computation<Architecture::CPU, L::dimD> computationFourier(lFD::start(), lFD::end());
 
@@ -271,6 +272,7 @@ namespace lbm {
           WaveNumber iK{{0}};
           Position iFP_symmetric{{0}};
           WaveNumber iK_symmetric{{0}};
+          auto index = lFD::getIndex(iFP);
 
           iK[d::X] = iFP[d::X]+offset[d::X] <= gSD::sLength()[d::X]/2 ?
             iFP[d::X]+offset[d::X] : iFP[d::X]+offset[d::X]-gSD::sLength()[d::X];
@@ -281,14 +283,13 @@ namespace lbm {
 
           kNormSquared = iK.norm2();
           if (kNormSquared >= kMin*kMin && kNormSquared <= kMax*kMax) {
-            auto index = lFD::getIndex(iFP);
 
             for(auto iD = 0; iD < 2*L::dimD-3; ++iD) {
-              fftw_complex * fourierTempForcePtr
-                = ((fftw_complex *) tempArray.data(iD*numberElements));
+              fftw_complex * fourierTempPtr
+                = ((fftw_complex *) spaceTempPtr+iD*numberElements);
 
-              fourierTempForcePtr[index][0] = amplitude[iD];
-              fourierTempForcePtr[index][1] = 0;
+              fourierTempPtr[index][p::Re] = amplitude[iD];
+              fourierTempPtr[index][p::Im] = 0;
 
               if(iFP[L::dimD-1] == 0) {
                 iFP_symmetric[d::X] = gSD::sLength()[d::X] - iFP[d::X];
@@ -304,16 +305,17 @@ namespace lbm {
                     iFP_symmetric[d::Y] : iFP_symmetric[d::Y]-gSD::sLength()[d::Y];
 
                   auto index_symmetric = lFD::getIndex(iFP_symmetric);
-                  fourierTempForcePtr[index_symmetric][0] = amplitude[iD];
-                  fourierTempForcePtr[index_symmetric][1] = 0;
+                  fourierTempPtr[index_symmetric][p::Re] = amplitude[iD];
+                  fourierTempPtr[index_symmetric][p::Im] = 0;
                 }
               }
+
             }
           }
         });
 
       MakeIncompressible<double, Architecture::CPU, PartitionningType::OneD, L::dimD>
-        makeIncompressible(tempArray.data(), localForcePtr, numberElements,
+        makeIncompressible(tempArray.data(), localPtr, numberElements,
                            globalLengthPtrdiff_t, offset);
       makeIncompressible.executeFourier();
 

@@ -53,6 +53,7 @@ namespace lbm {
 
     inline void writeAnalyses(const unsigned int iteration) {
       resetAnalyses();
+
       computationLocal.Do
         ([&] HOST (const Position& iP) {
           totalEnergy(iP);
@@ -113,7 +114,8 @@ namespace lbm {
     SpectralAnalysisList(FieldList<T, architecture>& fieldList_in,
                          const unsigned int numberElements_in,
                          Communication_& communication_in)
-      : energySpectra(fieldList_in.velocity.getLocalData(), numberElements_in)
+      : energySpectra(fieldList_in.velocity.getLocalData(),
+                      numberElements_in, globalLengthPtrdiff_t)
       , communication(communication_in)
       , spectralAnalysisWriter(prefix)
       , offset(gFD::offset(communication.rankMPI))
@@ -130,6 +132,8 @@ namespace lbm {
 
     inline void writeAnalyses(const unsigned int iteration) {
       resetAnalyses();
+
+      forwardTransformAnalyses();
       computationFourier.Do
         ([&] HOST (const Position& iFP) {
           auto index = lFD::getIndex(iFP);
@@ -144,6 +148,7 @@ namespace lbm {
 
           energySpectra(iFP, index, iK, kNorm);
         });
+      backwardTransformAnalyses();
 
       normalizeAnalyses();
       reduceAnalyses();
@@ -159,6 +164,14 @@ namespace lbm {
   private:
     inline void resetAnalyses() {
       energySpectra.reset();
+    }
+
+    inline void forwardTransformAnalyses() {
+      energySpectra.executeForward();
+    }
+
+    inline void backwardTransformAnalyses() {
+      energySpectra.executeBackward();
     }
 
     inline void reduceAnalyses() {

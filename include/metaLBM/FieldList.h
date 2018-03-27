@@ -29,6 +29,8 @@ namespace lbm {
     Field<T, 1, architecture, writeAlpha> alpha;
     Field<T, 2*L::dimD-3, architecture, writeVorticity> vorticity;
     FieldWriter_& fieldWriter;
+    Curl<double, Architecture::CPU, PartitionningType::OneD,
+         L::dimD, L::dimD> curlVelocity;
 
     FieldList(const MathVector<int, 3>& rankMPI_in, const unsigned int numberElements_in,
               FieldWriter_& fieldWriter_in)
@@ -37,10 +39,16 @@ namespace lbm {
       , force(initLocalForce<T, architecture>(numberElements_in, rankMPI_in))
       , alpha(initLocalAlpha<T, architecture>(numberElements_in))
       , vorticity("vorticity", numberElements_in, 0)
+      , curlVelocity(velocity.getLocalData(), vorticity.getLocalData(),
+                     numberElements_in, Cast<unsigned int,
+                     ptrdiff_t, 3>::Do(gSD::sLength()).data(),
+                     gFD::offset(rankMPI_in))
       , fieldWriter(fieldWriter_in)
     {}
 
     inline void writeFields() {
+      if(writeVorticity) curlVelocity.executeSpace();
+
       fieldWriter.writeField(density);
       fieldWriter.writeField(velocity);
       fieldWriter.writeField(alpha);
