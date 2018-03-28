@@ -20,6 +20,7 @@
   #define DEVICE __device__
   #define CONSTANT __constant__
   #define GLOBAL __global__
+  #define INLINE __forceinline__
 
   #ifdef USE_NVTX
     #include <nvToolsExt.h>
@@ -59,6 +60,8 @@
   #define DEVICE
   #define CONSTANT
   #define GLOBAL
+  #define INLINE __always_inline
+
 #endif // __NVCC__
 
 

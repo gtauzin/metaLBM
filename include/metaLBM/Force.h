@@ -34,12 +34,13 @@ namespace lbm {
       }
     }
 
-    DEVICE HOST
-    inline void setForce(T * localForceArray,
-                         const Position& iP,
-                         const unsigned int numberElements,
-                         MathVector<T, L::dimD>& force) {
+    DEVICE HOST INLINE
+    void setForce(T * localForceArray,
+                  const Position& iP,
+                  const unsigned int numberElements,
+                  MathVector<T, L::dimD>& force) {
       auto index = lSD::getIndex(iP);
+      #pragma unroll
       for(auto iD = 0; iD < L::dimD; ++iD) {
         force[iD] = (localForceArray+iD*numberElements)[index];
       }
@@ -207,7 +208,7 @@ namespace lbm {
     }
 
     DEVICE HOST
-    inline void setForce(const Position& iP,
+    void setForce(const Position& iP,
                          MathVector<T, L::dimD>& force) {
       force[d::X] = amplitude[d::X] * sin(iP[d::Y]*2*M_PI/waveLength[d::X]);
     }

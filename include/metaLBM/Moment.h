@@ -14,21 +14,22 @@ namespace lbm {
   private:
   public:
 
-    DEVICE HOST
-    static inline void calculateDensity(const T * haloDistributionPtr,
+    DEVICE HOST INLINE
+    static void calculateDensity(const T * haloDistributionPtr,
                                         const Position& iP,
                                         T& density) {
       { INSTRUMENT_OFF("Moment<T>::calculateDensity",5)}
 
       density = haloDistributionPtr[hSD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)];
 
+      #pragma unroll
       for(auto iQ = 1; iQ < L::dimQ; ++iQ) {
         density += haloDistributionPtr[hSD::getIndex(iP-uiL::celerity()[iQ], iQ)];
       }
     }
 
-    DEVICE HOST
-    static inline void calculateVelocity(const T * haloDistributionPtr,
+    DEVICE HOST INLINE
+    static void calculateVelocity(const T * haloDistributionPtr,
                                   const Position& iP,
                                   T& density,
                                   MathVector<T, L::dimD>& velocity) {
@@ -37,6 +38,7 @@ namespace lbm {
        velocity = L::celerity()[0]
         * haloDistributionPtr[hSD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)];
 
+       #pragma unroll
        for(auto iQ = 1; iQ < L::dimQ; ++iQ) {
          velocity += L::celerity()[iQ]
            * haloDistributionPtr[hSD::getIndex(iP-uiL::celerity()[iQ], iQ)];

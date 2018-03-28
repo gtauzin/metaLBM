@@ -48,23 +48,23 @@ namespace lbm {
     {}
 
   public:
-    DEVICE HOST
-    inline const T& getDensity() {
+    DEVICE HOST INLINE
+    const T& getDensity() {
       return density;
     }
 
-    DEVICE HOST
-    inline const MathVector<T, L::dimD>& getVelocity() {
+    DEVICE HOST INLINE
+    const MathVector<T, L::dimD>& getVelocity() {
       return velocity;
     }
 
-    DEVICE HOST
-    inline const MathVector<T, L::dimD>& getForce() {
+    DEVICE HOST INLINE
+    const MathVector<T, L::dimD>& getForce() {
       return force;
     }
 
     DEVICE HOST
-    inline void calculateMoments(const T * haloDistributionPtr,
+    void calculateMoments(const T * haloDistributionPtr,
                                  const Position& iP) {
       { INSTRUMENT_OFF("Moment<T>::calculateMoments",4) }
 
@@ -74,11 +74,11 @@ namespace lbm {
       velocity2 = velocity.norm2();
     }
 
-    DEVICE HOST
-    inline void setForce(T * localForceArray,
-                         const Position& iP,
-                         const unsigned int numberElements,
-                         const Position& offset) {
+    DEVICE HOST INLINE
+    void setForce(T * localForceArray,
+                  const Position& iP,
+                  const unsigned int numberElements,
+                  const Position& offset) {
       { INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::setForce",4) }
 
       forcing.setForce(localForceArray, iP-L::halo(), numberElements, force);

@@ -11,25 +11,25 @@ namespace lbm {
   typedef double dataT;
   typedef MathVector<dataT, 3> Vector;
 
-  constexpr LatticeType latticeT = LatticeType::D2Q9;
-  constexpr int globalLengthX = 64;
-  constexpr int globalLengthY = 64;
-  constexpr int globalLengthZ = 64;
+  constexpr LatticeType latticeT = LatticeType::D3Q19;
+  constexpr int globalLengthX = 32;
+  constexpr int globalLengthY = 32;
+  constexpr int globalLengthZ = 32;
 
   constexpr unsigned int startIteration = 0;
-  constexpr unsigned int endIteration = 2;
-  constexpr unsigned int writeStep = 1;
-  constexpr unsigned int backUpStep = 101;
+  constexpr unsigned int endIteration = 500;
+  constexpr unsigned int writeStep = 1001;
+  constexpr unsigned int backUpStep = 1001;
 
-  constexpr unsigned int scalarAnalysisStep = 2;
-  constexpr unsigned int spectralAnalysisStep = 1;
+  constexpr unsigned int scalarAnalysisStep = 1001;
+  constexpr unsigned int spectralAnalysisStep = 1001;
 
   constexpr unsigned int successiveWriteStep = 2;
 
   constexpr AlgorithmType algorithmT = AlgorithmType::Pull;
   constexpr PartitionningType partitionningT = PartitionningType::OneD;
   constexpr Implementation implementationT = Implementation::MPI;
-  constexpr MemoryLayout memoryL = MemoryLayout::AoS;
+  constexpr MemoryLayout memoryL = MemoryLayout::SoA;
 
   constexpr dataT relaxationTime = 0.55;
   constexpr CollisionType collisionT = CollisionType::BGK;
@@ -40,7 +40,7 @@ namespace lbm {
   constexpr InitVelocityType initVelocityT = InitVelocityType::Homogeneous;
   constexpr Vector initVelocityVector = { {0.0, 0.0, 0.0} };
 
-  constexpr ForcingSchemeType forcingSchemeT = ForcingSchemeType::ExactDifferenceMethod;
+  constexpr ForcingSchemeType forcingSchemeT = ForcingSchemeType::ShanChen;
   constexpr ForceType forceT = ForceType::Kolmogorov;
 
   constexpr Vector forceAmplitude = { {100, 100, 100} };

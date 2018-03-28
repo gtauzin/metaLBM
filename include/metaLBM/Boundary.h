@@ -48,8 +48,8 @@ namespace lbm {
   class Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
                  PartitionningType::Generic, Implementation::Generic, Dimension> {
   public:
-    DEVICE HOST
-    inline void applyX(const Position& iP,
+    DEVICE HOST INLINE
+    void applyX(const Position& iP,
                               T * f) {
       { INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyX",5) }
 
@@ -57,6 +57,7 @@ namespace lbm {
       Position iP_Destination = {L::halo()[d::X] + lSD::sLength()[d::X],
                                                     iP[d::Y], iP[d::Z]};
 
+      #pragma unroll
       for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
         f[hSD::getIndex(iP_Destination, iQ)] = f[hSD::getIndex(iP_Origin, iQ)];
       }
@@ -65,21 +66,22 @@ namespace lbm {
             iP[d::Y], iP[d::Z]});
       iP_Destination =  Position({0, iP[d::Y], iP[d::Z]});
 
-        for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
+      #pragma unroll
+      for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
           f[hSD::getIndex(iP_Destination, iQ)] = f[hSD::getIndex(iP_Origin, iQ)];
         }
     }
 
-    DEVICE HOST
-    inline void applyY(const Position& iP,
-                              T * f) {
+    DEVICE HOST INLINE
+    void applyY(const Position& iP,
+                T * f) {
       INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyY",5)
 
       Position iP_Origin = {iP[d::X], L::halo()[d::Y], iP[d::Z]};
       Position iP_Destination = {iP[d::X],
                                                     L::halo()[d::Y] + lSD::sLength()[d::Y],
                                                     iP[d::Z]};
-
+      #pragma unroll
       for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
         f[hSD::getIndex(iP_Destination, iQ)] = f[hSD::getIndex(iP_Origin, iQ)];
       }
@@ -88,13 +90,14 @@ namespace lbm {
             L::halo()[d::Y]+ lSD::sLength()[d::Y] -1, iP[d::Z]});
       iP_Destination =  Position({iP[d::X], 0, iP[d::Z]});
 
+      #pragma unroll
       for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
         f[hSD::getIndex(iP_Destination, iQ)] = f[hSD::getIndex(iP_Origin, iQ)];
       }
     }
 
-    DEVICE HOST
-    inline void applyZ(const Position& iP,
+    DEVICE HOST INLINE
+    void applyZ(const Position& iP,
                        T * f) {
       { INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyZ",5) }
 
@@ -102,6 +105,7 @@ namespace lbm {
       Position iP_Destination = {iP[d::X], iP[d::Y],
             L::halo()[d::Z] + lSD::sLength()[d::Z]};
 
+      #pragma unroll
       for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
         f[hSD::getIndex(iP_Destination, iQ)] = f[hSD::getIndex(iP_Origin, iQ)];
       }
@@ -110,6 +114,7 @@ namespace lbm {
             L::halo()[d::Z] + lSD::sLength()[d::Z] - 1});
       iP_Destination =  Position({iP[d::X], iP[d::Y], 0});
 
+      #pragma unroll
       for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
         f[hSD::getIndex(iP_Destination, iQ)] = f[hSD::getIndex(iP_Origin, iQ)];
       }

@@ -26,8 +26,8 @@ namespace lbm {
     {}
 
   public:
-    DEVICE HOST
-      inline MathVector<T, L::dimD>
+    DEVICE HOST INLINE
+    MathVector<T, L::dimD>
       calculateHydrodynamicVelocity(const MathVector<T, L::dimD>& force,
                                     const T& density,
                                     const MathVector<T, L::dimD>& velocity) const {
@@ -36,10 +36,10 @@ namespace lbm {
       return velocity + 0.5/density * force;
     }
 
-    DEVICE HOST
-    inline T setVariables(const MathVector<T, L::dimD>& force,
-                          const T& density,
-                          const MathVector<T, L::dimD>& velocity) {
+    DEVICE HOST INLINE
+    T setVariables(const MathVector<T, L::dimD>& force,
+                   const T& density,
+                   const MathVector<T, L::dimD>& velocity) {
     }
   };
 
@@ -53,8 +53,8 @@ namespace lbm {
   public:
     using Base::ForcingScheme;
 
-    DEVICE HOST
-    inline MathVector<T, L::dimD>
+    DEVICE HOST INLINE
+    MathVector<T, L::dimD>
     calculateEquilibriumVelocity(const MathVector<T, L::dimD>& force,
                                  const T& density,
                                  const MathVector<T, L::dimD>& velocity) const {
@@ -63,12 +63,12 @@ namespace lbm {
       return velocity + 0.5/density * force;
     }
 
-    DEVICE HOST
-    inline T calculateCollisionSource(const MathVector<T, L::dimD>& force,
-                                      const T& density,
-                                      const MathVector<T, L::dimD>& velocity,
-                                      const T& velocity2, const T equilibrium_iQ,
-                                      const unsigned int iQ) const {
+    DEVICE HOST INLINE
+    T calculateCollisionSource(const MathVector<T, L::dimD>& force,
+                               const T& density,
+                               const MathVector<T, L::dimD>& velocity,
+                               const T& velocity2, const T equilibrium_iQ,
+                               const unsigned int iQ) const {
       INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::Guo>::calculateCollisionSource",5)
 
       T celerity_iQDotVelocity = L::celerity()[iQ].dot(velocity);
@@ -93,22 +93,24 @@ namespace lbm {
 
   public:
     using Base::ForcingScheme;
-    using Base::calculateVelocityHydroForcing;
     using Base::setVariables;
 
-    DEVICE HOST
-    inline MathVector<T, L::dimD> calculateEquilibriumVelocity(const MathVector<T, L::dimD>& force, const T& density, const MathVector<T, L::dimD>& velocity) const {
+    DEVICE HOST INLINE
+    MathVector<T, L::dimD>
+      calculateEquilibriumVelocity(const MathVector<T, L::dimD>& force,
+                                   const T& density,
+                                   const MathVector<T, L::dimD>& velocity) const {
       { INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::ShanChen>::calculateEquilibriumVelocity",5) }
 
       return velocity + tau/density * force;
     }
 
-    DEVICE HOST
-    inline T calculateCollisionSource(const MathVector<T, L::dimD>& force,
-                                      const T& density,
-                                      const MathVector<T, L::dimD>& velocity,
-                                      const T& velocity2, const T equilibrium_iQ,
-                                      const unsigned int iQ) const {
+    DEVICE HOST INLINE
+    T calculateCollisionSource(const MathVector<T, L::dimD>& force,
+                               const T& density,
+                               const MathVector<T, L::dimD>& velocity,
+                               const T& velocity2, const T equilibrium_iQ,
+                               const unsigned int iQ) const {
       INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::ShanChen>::calculateCollisionSource",5)
 
       return 0.0;
@@ -133,27 +135,30 @@ namespace lbm {
       , deltaVelocity2()
     {}
 
-    DEVICE HOST
-    inline MathVector<T, L::dimD> calculateEquilibriumVelocity(const MathVector<T, L::dimD>& force, const T& density, const MathVector<T, L::dimD>& velocity) const {
+    DEVICE HOST INLINE
+    MathVector<T, L::dimD>
+      calculateEquilibriumVelocity(const MathVector<T, L::dimD>& force,
+                                   const T& density,
+                                   const MathVector<T, L::dimD>& velocity) const {
       { INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::ExactDifferenceMethod>::calculateEquilibriumVelocity",5) }
 
       return velocity;
     }
 
-    DEVICE HOST
-      inline void setVariables(const MathVector<T, L::dimD>& force,
-                          const T& density,
-                          const MathVector<T, L::dimD>& velocity) {
+    DEVICE HOST INLINE
+    void setVariables(const MathVector<T, L::dimD>& force,
+                      const T& density,
+                      const MathVector<T, L::dimD>& velocity) {
       deltaVelocity = velocity + 1.0/density * force;
       deltaVelocity2 = deltaVelocity.norm2();
     }
 
-    DEVICE HOST
-    inline T calculateCollisionSource(const MathVector<T, L::dimD>& force,
-                                      const T& density,
-                                      const MathVector<T, L::dimD>& velocity,
-                                      const T& velocity2, const T equilibrium_iQ,
-                                      const unsigned int iQ) const {
+    DEVICE HOST INLINE
+    T calculateCollisionSource(const MathVector<T, L::dimD>& force,
+                               const T& density,
+                               const MathVector<T, L::dimD>& velocity,
+                               const T& velocity2, const T equilibrium_iQ,
+                               const unsigned int iQ) const {
       { INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::ExactDifferenceMethod>::calculateCollisionSource",5) }
 
         return Equilibrium_::calculate(density, velocity + 1.0/density * force,

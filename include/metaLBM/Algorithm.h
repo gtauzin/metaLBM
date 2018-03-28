@@ -174,6 +174,7 @@ namespace lbm {
       collision.calculateRelaxationTime(haloDistributionNext_Ptr,
                                         haloDistributionPrevious_Ptr, iP);
 
+      #pragma unroll
       for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
         haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)] =
           collision.calculate(haloDistributionPrevious_Ptr,

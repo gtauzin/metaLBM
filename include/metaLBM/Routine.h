@@ -71,8 +71,8 @@ namespace lbm {
       { INSTRUMENT_ON("Routine<T>::compute",1) }
       algorithm.unpack();
 
-      writeFields(startIteration);
-      writeAnalyses(startIteration);
+      //writeFields(startIteration);
+      //writeAnalyses(startIteration);
       printInputs();
 
       initialMass = communication.reduce(fieldList.density.getLocalData());
