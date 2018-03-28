@@ -11,18 +11,18 @@ namespace lbm {
   typedef double dataT;
   typedef MathVector<dataT, 3> Vector;
 
-  constexpr LatticeType latticeT = LatticeType::D2Q9;
-  constexpr int globalLengthX = 64;
-  constexpr int globalLengthY = 64;
-  constexpr int globalLengthZ = 64;
+  constexpr LatticeType latticeT = LatticeType::D3Q19;
+  constexpr int globalLengthX = 128;
+  constexpr int globalLengthY = 128;
+  constexpr int globalLengthZ = 128;
 
   constexpr unsigned int startIteration = 0;
-  constexpr unsigned int endIteration = 2;
-  constexpr unsigned int writeStep = 1;
-  constexpr unsigned int backUpStep = 101;
+  constexpr unsigned int endIteration = 50;
+  constexpr unsigned int writeStep = 51;
+  constexpr unsigned int backUpStep = 51;
 
-  constexpr unsigned int scalarAnalysisStep = 2;
-  constexpr unsigned int spectralAnalysisStep = 1;
+  constexpr unsigned int scalarAnalysisStep = 51;
+  constexpr unsigned int spectralAnalysisStep = 51;
 
   constexpr unsigned int successiveWriteStep = 2;
 
@@ -40,10 +40,10 @@ namespace lbm {
   constexpr InitVelocityType initVelocityT = InitVelocityType::Homogeneous;
   constexpr Vector initVelocityVector = { {0.0, 0.0, 0.0} };
 
-  constexpr ForcingSchemeType forcingSchemeT = ForcingSchemeType::ExactDifferenceMethod;
+  constexpr ForcingSchemeType forcingSchemeT = ForcingSchemeType::ShanChen;
   constexpr ForceType forceT = ForceType::Kolmogorov;
 
-  constexpr Vector forceAmplitude = { {100, 100, 100} };
+  constexpr Vector forceAmplitude = { {0.0001, 0.0001, 0.0001} };
   constexpr Vector forceWaveLength = { {32.0, 32.0, 32.0} };
   constexpr int forcekMin = 1;
   constexpr int forcekMax = 2;

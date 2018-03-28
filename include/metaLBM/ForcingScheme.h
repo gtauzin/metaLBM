@@ -37,9 +37,10 @@ namespace lbm {
     }
 
     DEVICE HOST
-    inline T setVariables(const MathVector<T, L::dimD>& force,
+    inline void setVariables(const MathVector<T, L::dimD>& force,
                           const T& density,
                           const MathVector<T, L::dimD>& velocity) {
+    
     }
   };
 
@@ -93,7 +94,6 @@ namespace lbm {
 
   public:
     using Base::ForcingScheme;
-    using Base::calculateVelocityHydroForcing;
     using Base::setVariables;
 
     DEVICE HOST
