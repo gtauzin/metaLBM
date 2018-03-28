@@ -27,6 +27,8 @@ namespace lbm {
     Distribution<T, architecture> distribution;
     const unsigned int numberElements;
 
+    Curl<double, Architecture::CPU, PartitionningType::OneD,
+         L::dimD, L::dimD> curlVelocity;
     ScalarAnalysisList<T, architecture> scalarAnalysisList;
     SpectralAnalysisList<T, architecture> spectralAnalysisList;
 
@@ -50,6 +52,10 @@ namespace lbm {
       , fieldWriter(prefix, rankMPI_in)
       , distributionWriter(prefix, rankMPI_in)
       , fieldList(rankMPI_in, numberElements_in, fieldWriter)
+      , curlVelocity(fieldList.velocity.getLocalData(), fieldList.vorticity.getLocalData(),
+                     numberElements, Cast<unsigned int,
+                     ptrdiff_t, 3>::Do(gSD::sLength()).data(),
+                     gFD::offset(rankMPI_in))
       , distribution(initLocalDistribution<T, architecture>(fieldList.density,
                                                             fieldList.velocity,
                                                             rankMPI_in))
@@ -71,8 +77,8 @@ namespace lbm {
       { INSTRUMENT_ON("Routine<T>::compute",1) }
       algorithm.unpack();
 
-      //writeFields(startIteration);
-      //writeAnalyses(startIteration);
+      writeFields(startIteration);
+      writeAnalyses(startIteration);
       printInputs();
 
       initialMass = communication.reduce(fieldList.density.getLocalData());
@@ -140,6 +146,9 @@ namespace lbm {
 
       if(fieldWriter.getIsWritten(iteration)) {
         fieldWriter.openFile(iteration);
+
+        if(writeVorticity) curlVelocity.executeSpace();
+
         fieldList.writeFields();
         fieldWriter.closeFile();
       }
