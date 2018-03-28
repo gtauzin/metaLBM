@@ -62,19 +62,17 @@
   #define GLOBAL
   #define INLINE __always_inline
 
-#endif // __NVCC__
+  #ifdef USE_SCOREP
+    #include <scorep/SCOREP_User.h>
 
-
-#ifdef USE_SCOREP
-  #include <scorep/SCOREP_User.h>
-
-  #define INSTRUMENT_ON(name,colorID) {                                          \
+    #define INSTRUMENT_ON(name,colorID) {                                          \
       SCOREP_USER_REGION(name,SCOREP_USER_REGION_TYPE_FUNCTION)                  \
     }
 
-#else // USE_SCOREP
-  #define INSTRUMENT_ON(name,colorID)
-#endif  // USE_SCOREP
+  #else // USE_SCOREP
+    #define INSTRUMENT_ON(name,colorID)
+  #endif  // USE_SCOREP
+#endif // __NVCC__
 
 #define INSTRUMENT_OFF(name,colorID)
 
