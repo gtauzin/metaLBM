@@ -12,9 +12,9 @@ namespace lbm {
   typedef MathVector<dataT, 3> Vector;
 
   constexpr LatticeType latticeT = LatticeType::D3Q19;
-  constexpr int globalLengthX = 32;
-  constexpr int globalLengthY = 32;
-  constexpr int globalLengthZ = 32;
+  constexpr int globalLengthX = 256;
+  constexpr int globalLengthY = 256;
+  constexpr int globalLengthZ = 256;
 
   constexpr unsigned int startIteration = 0;
   constexpr unsigned int endIteration = 500;
@@ -29,7 +29,7 @@ namespace lbm {
   constexpr AlgorithmType algorithmT = AlgorithmType::Pull;
   constexpr PartitionningType partitionningT = PartitionningType::OneD;
   constexpr Implementation implementationT = Implementation::MPI;
-  constexpr MemoryLayout memoryL = MemoryLayout::SoA;
+  constexpr MemoryLayout memoryL = MemoryLayout::AoS;
 
   constexpr dataT relaxationTime = 0.55;
   constexpr CollisionType collisionT = CollisionType::BGK;

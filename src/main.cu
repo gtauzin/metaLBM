@@ -1,6 +1,3 @@
-#define NPROCS 1
-#define NTHREADS 1
-
 #include <mpi.h>
 #include <iostream>
 #include <string>
