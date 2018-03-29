@@ -4,7 +4,6 @@
 #include "Commons.h"
 #include "Options.h"
 #include "MathVector.h"
-#include "StaticArray.h"
 #include "Domain.h"
 
 namespace lbm {
@@ -40,8 +39,8 @@ namespace lbm {
 
 
   template<class T, BoundaryType boundaryType, AlgorithmType algorithmType,
-    PartitionningType partitionningType, Implementation implementation,
-    unsigned int Dimension>
+           PartitionningType partitionningType, Implementation implementation,
+           unsigned int Dimension>
   class Boundary {};
 
   template<class T, unsigned int Dimension>
@@ -120,10 +119,6 @@ namespace lbm {
       }
     }
   };
-
-  // template<class T, PartitionningType partitionningType>
-  // class Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-  //                partitionningType, 1> {};
 
   template<class T>
   class Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,

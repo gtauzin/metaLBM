@@ -174,6 +174,14 @@ namespace lbm {
     using Base::setForce;
 
     DEVICE HOST
+    inline void calculateRelaxationTime(const T * haloDistributionNext_Ptr,
+                                        const T * haloDistributionPrevious_Ptr,
+                                        const Position& iP) {
+      { INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::calculate",4) }
+    }
+
+
+    DEVICE HOST
     inline void setVariables(const T * haloDistributionPtr,
                              const Position& iP,
                              const T density,

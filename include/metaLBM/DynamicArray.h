@@ -6,7 +6,6 @@
 
 #include "Commons.h"
 #include "Options.h"
-#include "StaticArray.h"
 
 #ifdef USE_FFTW
   #include <fftw3-mpi.h>

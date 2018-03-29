@@ -6,7 +6,6 @@
 #include <sstream>
 
 #include "StaticArray.h"
-#include "Input.h"
 
 namespace lbm {
 

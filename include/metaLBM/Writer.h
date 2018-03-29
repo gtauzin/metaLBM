@@ -10,7 +10,6 @@
 
 #include "Commons.h"
 #include "Options.h"
-#include "StaticArray.h"
 #include "MathVector.h"
 #include "Domain.h"
 #include "Field.h"

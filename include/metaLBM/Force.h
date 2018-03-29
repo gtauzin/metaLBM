@@ -10,11 +10,8 @@
 #include "Commons.h"
 #include "Options.h"
 #include "MathVector.h"
-#include "StaticArray.h"
 #include "Lattice.h"
 #include "FourierDomain.h"
-
-// TODO: Functors
 
 namespace lbm {
 

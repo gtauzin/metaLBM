@@ -3,9 +3,7 @@
 
 #include <mpi.h>
 
-#ifdef USE_FFTW
-  #include <fftw3-mpi.h>
-#endif
+#include <fftw3-mpi.h>
 
 #include "Commons.h"
 #include "MathVector.h"
