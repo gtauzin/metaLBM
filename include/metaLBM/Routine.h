@@ -126,7 +126,7 @@ namespace lbm {
 
     void printOutputs() {
       if (communication.rankMPI == MathVector<int, 3>({0, 0, 0})) {
-        std::cout << "--------------------OUTPUTS-------------------" << std::endl
+        std::cout << "-------------------OUTPUTS-------------------" << std::endl
                   << "Total time      : " << totalTime << " s" << std::endl
                   << "Comp time       : " << computationTime << " s" << std::endl
                   << "Comm time       : " << communicationTime << " s" << std::endl;

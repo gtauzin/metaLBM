@@ -281,8 +281,8 @@ namespace lbm {
                          | S_IROTH | S_IXOTH);
         if (dirError == -1)
           {
-            std::cout << "Error creating directory! It probably already exists..."
-                      << std::endl;
+            //std::cout << "Error creating directory! It probably already exists..."
+            //          << std::endl;
           }
       }
 

@@ -37,9 +37,9 @@ namespace lbm {
     }
 
     DEVICE HOST INLINE
-    T setVariables(const MathVector<T, L::dimD>& force,
-                   const T& density,
-                   const MathVector<T, L::dimD>& velocity) {
+    void setVariables(const MathVector<T, L::dimD>& force,
+                      const T& density,
+                      const MathVector<T, L::dimD>& velocity) {
     }
   };
 

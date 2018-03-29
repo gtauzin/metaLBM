@@ -222,7 +222,6 @@ namespace lbm {
       computationLocal.Do
         ([=] HOST (const Position& iP) {
           MathVector<T, L::dimD> force;
-          //std::cout << ""
           auto index = lSD::getIndex(iP);
           setForce(iP+offset, force);
           for(auto iD = 0; iD < L::dimD; ++iD) {

@@ -51,6 +51,8 @@
 
     #define INSTRUMENT_ON(name,colorID) Tracer uniq_name_using_macros(name, colorID);
 
+  #else
+    #define INSTRUMENT_ON(name,colorID)
   #endif // USE_NVTX
 
 #else // __NVCC__

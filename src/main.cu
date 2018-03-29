@@ -86,7 +86,6 @@ int main(int argc, char* argv[]) {
 
   // MPI_Comm_rank(localComm, &localRank);
   int localRank = 0;
-  std::cout << "Local rank: " << localRank << std::endl;
   int numberDevices = 0;
   CUDA_CALL( cudaGetDeviceCount(&numberDevices); )
   CUDA_CALL( cudaSetDevice(localRank % numberDevices); )
