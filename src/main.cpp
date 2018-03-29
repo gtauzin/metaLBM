@@ -1,11 +1,8 @@
-#define NPROCS 1
-#define NTHREADS 1
-
 #include <mpi.h>
 #include <iostream>
 #include <string>
 
-#include "Input.h"
+#include "./Input.h"
 #include "metaLBM/MathVector.h"
 #include "metaLBM/Lattice.h"
 #include "metaLBM/Commons.h"
