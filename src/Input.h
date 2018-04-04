@@ -14,7 +14,7 @@ namespace lbm {
   constexpr int numProcs = NPROCS;
   constexpr int numThreads = NTHREADS;
 
-  constexpr LatticeType latticeT = LatticeType::D3Q19;
+  constexpr LatticeType latticeT = LatticeType::D3Q27;
   constexpr int globalLengthX = GLOBAL_LENGTH_X;
   constexpr int globalLengthY = GLOBAL_LENGTH_Y;
   constexpr int globalLengthZ = GLOBAL_LENGTH_Z;
@@ -32,7 +32,7 @@ namespace lbm {
   constexpr AlgorithmType algorithmT = AlgorithmType::Pull;
   constexpr PartitionningType partitionningT = PartitionningType::OneD;
   constexpr Implementation implementationT = Implementation::MPI;
-  constexpr MemoryLayout memoryL = MemoryLayout::AoS;
+  constexpr MemoryLayout memoryL = MemoryLayout::SoA;
 
   constexpr dataT relaxationTime = 0.75;
   constexpr CollisionType collisionT = CollisionType::BGK;
