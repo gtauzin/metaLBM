@@ -65,6 +65,11 @@ int main(int argc, char* argv[]) {
   MathVector<int, 3> sizeMPI{1, 1, 1};
   MPI_Comm_size(MPI_COMM_WORLD, &sizeMPI[d::X]);
 
+  if (sizeMPI[d::X] != numProcs) {
+    std::cout << "Compile-time and runtime number of process don't match\n";
+    MPI_Abort(MPI_COMM_WORLD, 1);
+  }
+
   MathVector<int, 3> rankMPI{0, 0, 0};
   MPI_Comm_rank(MPI_COMM_WORLD, &rankMPI[d::X]);
 
