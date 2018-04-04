@@ -283,7 +283,7 @@ namespace lbm {
 
             for(auto iD = 0; iD < 2*L::dimD-3; ++iD) {
               fftw_complex * fourierTempPtr
-                = ((fftw_complex *) spaceTempPtr+iD*numberElements);
+                = (fftw_complex *) (spaceTempPtr+iD*numberElements);
 
               fourierTempPtr[index][p::Re] = amplitude[iD];
               fourierTempPtr[index][p::Im] = 0;

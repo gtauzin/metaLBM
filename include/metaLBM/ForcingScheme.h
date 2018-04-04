@@ -43,6 +43,49 @@ namespace lbm {
     }
   };
 
+  template <class T>
+  class ForcingScheme<T, ForcingSchemeType::None>
+    : public ForcingScheme<T, ForcingSchemeType::Generic> {
+  private:
+    using Base = ForcingScheme<T, ForcingSchemeType::Generic>;
+
+  public:
+    using Base::ForcingScheme;
+
+    DEVICE HOST INLINE
+    MathVector<T, L::dimD>
+      calculateHydrodynamicVelocity(const MathVector<T, L::dimD>& force,
+                                    const T& density,
+                                    const MathVector<T, L::dimD>& velocity) const {
+      INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::Generic>::calculateHydrodynamicVelocity",5)
+
+        return velocity;
+    }
+
+
+    DEVICE HOST INLINE
+    MathVector<T, L::dimD>
+    calculateEquilibriumVelocity(const MathVector<T, L::dimD>& force,
+                                 const T& density,
+                                 const MathVector<T, L::dimD>& velocity) const {
+      INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::Guo>::calculateEquilibriumVelocity",5)
+
+        return velocity;
+    }
+
+    DEVICE HOST INLINE
+    T calculateCollisionSource(const MathVector<T, L::dimD>& force,
+                               const T& density,
+                               const MathVector<T, L::dimD>& velocity,
+                               const T& velocity2, const T equilibrium_iQ,
+                               const unsigned int iQ) const {
+      INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::Guo>::calculateCollisionSource",5)
+
+        return 0;
+    }
+
+  };
+
 
   template <class T>
   class ForcingScheme<T, ForcingSchemeType::Guo>

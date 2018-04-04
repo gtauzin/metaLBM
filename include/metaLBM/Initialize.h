@@ -131,7 +131,9 @@ namespace lbm {
 
     else {
       DistributionReader_ distributionReader(prefix, rankMPI);
+      distributionReader.openFile(startIteration);
       distributionReader.readDistribution(distributionR);
+      distributionReader.closeFile();
     }
 
     return distributionR;

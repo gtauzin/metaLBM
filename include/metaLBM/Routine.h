@@ -40,8 +40,11 @@ namespace lbm {
     double differenceMass;
     double computationTime;
     double communicationTime;
-    double writeTime;
+    double writeFieldTime;
+    double writeAnalysisTime;
     double totalTime;
+    std::chrono::duration<double> dtWriteField;
+    std::chrono::duration<double> dtWriteAnalysis;
 
   public:
     Routine(const MathVector<int, 3>& rankMPI_in,
@@ -69,16 +72,37 @@ namespace lbm {
       , differenceMass(0.0)
       , computationTime(0.0)
       , communicationTime(0.0)
-      , writeTime(0.0)
+      , writeFieldTime(0.0)
+      , writeAnalysisTime(0.0)
       , totalTime(0.0)
+      , dtWriteField()
+      , dtWriteAnalysis()
     {}
 
     void compute() {
       { INSTRUMENT_ON("Routine<T>::compute",1) }
       algorithm.unpack();
 
-      writeFields(startIteration);
-      writeAnalyses(startIteration);
+      auto t0 = std::chrono::high_resolution_clock::now();
+      auto t1 = std::chrono::high_resolution_clock::now();
+      auto t2 = std::chrono::high_resolution_clock::now();
+
+      if(writeFieldInit) {
+        t0 = std::chrono::high_resolution_clock::now();
+        writeFields(startIteration);
+        t1 = std::chrono::high_resolution_clock::now();
+        dtWriteField = (t1 - t0);
+        writeFieldTime += dtWriteField.count();
+      }
+
+      if(writeAnalysisInit) {
+        t0 = std::chrono::high_resolution_clock::now();
+        writeAnalyses(startIteration);
+        t1 = std::chrono::high_resolution_clock::now();
+        dtWriteAnalysis = (t1 - t0);
+        writeAnalysisTime += dtWriteAnalysis.count();
+      }
+
       printInputs();
 
       initialMass = communication.reduce(fieldList.density.getLocalData());
@@ -90,8 +114,19 @@ namespace lbm {
 
         algorithm.iterate(iteration);
 
+        if(algorithm.isStored) {
+          if(writeVorticity) curlVelocity.executeSpace();
+        }
+
+        t0 = std::chrono::high_resolution_clock::now();
         writeFields(iteration);
+        t1 = std::chrono::high_resolution_clock::now();
         writeAnalyses(iteration);
+        t2 = std::chrono::high_resolution_clock::now();
+        dtWriteField = (t1 - t0);
+        writeFieldTime += dtWriteField.count();
+        dtWriteAnalysis = (t2 - t1);
+        writeAnalysisTime += dtWriteAnalysis.count();
 
         communicationTime += algorithm.getCommunicationTime();
         computationTime += algorithm.getComputationTime();
@@ -127,9 +162,11 @@ namespace lbm {
     void printOutputs() {
       if (communication.rankMPI == MathVector<int, 3>({0, 0, 0})) {
         std::cout << "-------------------OUTPUTS-------------------" << std::endl
-                  << "Total time      : " << totalTime << " s" << std::endl
-                  << "Comp time       : " << computationTime << " s" << std::endl
-                  << "Comm time       : " << communicationTime << " s" << std::endl;
+                  << "Total time          : " << totalTime << " s" << std::endl
+                  << "Computat time       : " << computationTime << " s" << std::endl
+                  << "Communic time       : " << communicationTime << " s" << std::endl
+                  << "Analysis time       : " << writeAnalysisTime << " s" << std::endl
+                  << "Dump time           : " << writeFieldTime << " s" << std::endl;
 
         const double mlups = (gSD::sVolume() * 1e-6)/(totalTime / (endIteration-startIteration+1));
 
@@ -146,8 +183,6 @@ namespace lbm {
 
       if(fieldWriter.getIsWritten(iteration)) {
         fieldWriter.openFile(iteration);
-
-        if(writeVorticity) curlVelocity.executeSpace();
 
         fieldList.writeFields();
         fieldWriter.closeFile();

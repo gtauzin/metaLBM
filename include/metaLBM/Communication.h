@@ -423,7 +423,7 @@ namespace lbm {
       INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloX",4)
 
       MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginX, sizeStripeX,
-                  MPI_DOUBLE, leftXRankMPI, 17, MPI_COMM_WORLD, &requestXMPI[0]);
+                MPI_DOUBLE, leftXRankMPI, 17, MPI_COMM_WORLD, &requestXMPI[0]);
 
       MPI_Irecv(haloDistributionPtr+receivedFromRightBeginX, sizeStripeX,
                 MPI_DOUBLE, rightXRankMPI, 23, MPI_COMM_WORLD, &requestXMPI[1]);

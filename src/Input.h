@@ -12,17 +12,17 @@ namespace lbm {
   typedef MathVector<dataT, 3> Vector;
 
   constexpr LatticeType latticeT = LatticeType::D3Q19;
-  constexpr int globalLengthX = 256;
-  constexpr int globalLengthY = 256;
-  constexpr int globalLengthZ = 256;
+  constexpr int globalLengthX = 64;
+  constexpr int globalLengthY = 64;
+  constexpr int globalLengthZ = 64;
 
-  constexpr unsigned int startIteration = 0;
-  constexpr unsigned int endIteration = 500;
-  constexpr unsigned int writeStep = 1001;
-  constexpr unsigned int backUpStep = 1001;
+  constexpr unsigned int startIteration = 100;
+  constexpr unsigned int endIteration = 110;
+  constexpr unsigned int writeStep = 10;
+  constexpr unsigned int backUpStep = 10;
 
-  constexpr unsigned int scalarAnalysisStep = 1001;
-  constexpr unsigned int spectralAnalysisStep = 1001;
+  constexpr unsigned int scalarAnalysisStep = 1;
+  constexpr unsigned int spectralAnalysisStep = 10;
 
   constexpr unsigned int successiveWriteStep = 2;
 
@@ -31,7 +31,7 @@ namespace lbm {
   constexpr Implementation implementationT = Implementation::MPI;
   constexpr MemoryLayout memoryL = MemoryLayout::AoS;
 
-  constexpr dataT relaxationTime = 0.55;
+  constexpr dataT relaxationTime = 0.75;
   constexpr CollisionType collisionT = CollisionType::BGK;
   constexpr EquilibriumType equilibriumT = EquilibriumType::Incompressible;
 
@@ -40,10 +40,10 @@ namespace lbm {
   constexpr InitVelocityType initVelocityT = InitVelocityType::Homogeneous;
   constexpr Vector initVelocityVector = { {0.0, 0.0, 0.0} };
 
-  constexpr ForcingSchemeType forcingSchemeT = ForcingSchemeType::ShanChen;
+  constexpr ForcingSchemeType forcingSchemeT = ForcingSchemeType::None;
   constexpr ForceType forceT = ForceType::Kolmogorov;
 
-  constexpr Vector forceAmplitude = { {100, 100, 100} };
+  constexpr Vector forceAmplitude = { {1e-4, 1e-4, 1e-4} };
   constexpr Vector forceWaveLength = { {32.0, 32.0, 32.0} };
   constexpr int forcekMin = 1;
   constexpr int forcekMax = 2;
@@ -51,7 +51,9 @@ namespace lbm {
   constexpr BoundaryType boundaryT = BoundaryType::Generic;
 
   constexpr InputOutputFormat inputOutputFormatT = InputOutputFormat::ascii;
-  constexpr auto prefix = "test_serial";
+  constexpr auto prefix = "test_kolmogorov";
+  constexpr bool writeFieldInit = 0;
+  constexpr bool writeAnalysisInit = 1;
 
   constexpr bool writeForce = 1;
   constexpr bool writeEntropy = 1;

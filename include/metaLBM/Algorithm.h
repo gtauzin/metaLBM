@@ -176,9 +176,8 @@ namespace lbm {
 
       #pragma unroll
       for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
-        haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)] =
-          collision.calculate(haloDistributionPrevious_Ptr,
-                              iP-uiL::celerity()[iQ], iQ);
+        collision.collideAndStream(haloDistributionNext_Ptr,
+                                   haloDistributionPrevious_Ptr, iP, iQ);
       }
 
       if(Base::isStored) {
@@ -199,8 +198,7 @@ namespace lbm {
       communication.communicateHalos(haloDistributionPrevious_Ptr);
 
       // TODO: Run only at the boundaries
-      computationHalo.Do(periodicBoundary,
-                         haloDistributionPrevious_Ptr);
+      computationHalo.Do(periodicBoundary, haloDistributionPrevious_Ptr);
 
       //boundary.apply(f_Previous.haloData());
 

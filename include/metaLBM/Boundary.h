@@ -49,7 +49,7 @@ namespace lbm {
   public:
     DEVICE HOST INLINE
     void applyX(const Position& iP,
-                              T * f) {
+                T * f) {
       { INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyX",5) }
 
       Position iP_Origin = {L::halo()[d::X], iP[d::Y], iP[d::Z]};
@@ -78,8 +78,8 @@ namespace lbm {
 
       Position iP_Origin = {iP[d::X], L::halo()[d::Y], iP[d::Z]};
       Position iP_Destination = {iP[d::X],
-                                                    L::halo()[d::Y] + lSD::sLength()[d::Y],
-                                                    iP[d::Z]};
+                                 L::halo()[d::Y] + lSD::sLength()[d::Y],
+                                 iP[d::Z]};
       #pragma unroll
       for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
         f[hSD::getIndex(iP_Destination, iQ)] = f[hSD::getIndex(iP_Origin, iQ)];
@@ -89,6 +89,36 @@ namespace lbm {
             L::halo()[d::Y]+ lSD::sLength()[d::Y] -1, iP[d::Z]});
       iP_Destination =  Position({iP[d::X], 0, iP[d::Z]});
 
+      #pragma unroll
+      for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
+        f[hSD::getIndex(iP_Destination, iQ)] = f[hSD::getIndex(iP_Origin, iQ)];
+      }
+    }
+
+        DEVICE HOST INLINE
+    void applyYTop(const Position& iP,
+                   T * f) {
+      INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyYTop",5)
+
+      Position iP_Origin{iP[d::X],
+          L::halo()[d::Y]+ lSD::sLength()[d::Y] -1, iP[d::Z]};
+      Position iP_Destination{iP[d::X], 0, iP[d::Z]};
+
+      #pragma unroll
+      for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
+        f[hSD::getIndex(iP_Destination, iQ)] = f[hSD::getIndex(iP_Origin, iQ)];
+      }
+    }
+
+    DEVICE HOST INLINE
+    void applyYBottom(const Position& iP,
+                      T * f) {
+      INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyYBottom",5)
+
+      Position iP_Origin = {iP[d::X], L::halo()[d::Y], iP[d::Z]};
+      Position iP_Destination = {iP[d::X],
+                                 L::halo()[d::Y] + lSD::sLength()[d::Y],
+                                 iP[d::Z]};
       #pragma unroll
       for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
         f[hSD::getIndex(iP_Destination, iQ)] = f[hSD::getIndex(iP_Origin, iQ)];
