@@ -394,24 +394,8 @@ namespace lbm {
                               MemoryLayout::SoA, PartitionningType::Generic,
                               Implementation::MPI, 0>;
 
-    using Base::rightXRankMPI;
-    using Base::leftXRankMPI;
-
-    using Base::rightYRankMPI;
-    using Base::leftYRankMPI;
-
-    using Base::rightZRankMPI;
-    using Base::leftZRankMPI;
-
-
     typedef Domain<DomainType::HaloSpace, PartitionningType::Generic,
                    MemoryLayout::SoA, L::dimQ> hMLSD;
-
-    using Base::sizeStripeX;
-    using Base::sendToRightBeginX;
-    using Base::receivedFromLeftBeginX;
-    using Base::sendToLeftBeginX;
-    using Base::receivedFromRightBeginX;
 
   protected:
     HOST
@@ -419,14 +403,14 @@ namespace lbm {
       { INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloXRight",4) }
 
       for(auto iQ = faceQ+1; iQ < 2*L::faceQ+1; ++iQ) {
-        sendToRightBeginX = hMLSD::getIndex(Position({L::halo()[d::X]+lSD::sLength()[d::X]-1,
+        Base::sendToRightBeginX = hMLSD::getIndex(Position({L::halo()[d::X]+lSD::sLength()[d::X]-1,
                 hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
-        receivedFromLeftBeginX = hMLSD::getIndex(Position({0,
+        Base::receivedFromLeftBeginX = hMLSD::getIndex(Position({0,
                 hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
-        shmem_double_put(haloDistributionPtr+receivedFromLeftBeginX,
-                         haloDistributionPtr+sendToRightBeginX,
-                         sizeStripeX, rightXRankMPI);
+        shmem_double_put(haloDistributionPtr+Base::receivedFromLeftBeginX,
+                         haloDistributionPtr+Base::sendToRightBeginX,
+                         Base::sizeStripeX, Base::rightXRankMPI);
         shmem_barrier_all();
 
       }
@@ -436,26 +420,25 @@ namespace lbm {
       { INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloXLeft",4) }
 
       for(auto iQ = 1; iQ < L::faceQ+1; ++iQ) {
-        sendToLeftBeginX = hMLSD::getIndex(Position({L::halo()[d::X],
+        Base::sendToLeftBeginX = hMLSD::getIndex(Position({L::halo()[d::X],
                 hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
-        receivedFromRightBeginX = hMLSD::getIndex(Position({L::halo()[d::X]+lSD::sLength()[d::X],
+        Base::receivedFromRightBeginX = hMLSD::getIndex(Position({L::halo()[d::X]+lSD::sLength()[d::X],
                 hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
-        shmem_double_put(haloDistributionPtr+sendToLeftBeginX,
-                         haloDistributionPtr+receivedFromRightBeginX,
-                         sizeStripeX, leftXRankMPI);
+        shmem_double_put(haloDistributionPtr+Base::sendToLeftBeginX,
+                         haloDistributionPtr+Base::receivedFromRightBeginX,
+                         Base::sizeStripeX, Base::leftXRankMPI);
         shmem_barrier_all();
 
       }
     }
 
 
-    using Base::sendAndReceiveHaloY;
-
-    using Base::sendAndReceiveHaloZ;
-
-
+    using Base::sendAndReceiveHaloYBottom;
+    using Base::sendAndReceiveHaloYTop;
+    using Base::sendAndReceiveHaloZFront;
+    using Base::sendAndReceiveHaloZBack;
 
   public:
     using Base::Communication;
@@ -481,22 +464,6 @@ namespace lbm {
                         MemoryLayout::AoS, PartitionningType::Generic,
                                Implementation::MPI, 0>;
 
-    using Base::rightXRankMPI;
-    using Base::leftXRankMPI;
-    using Base::statusXMPI;
-    using Base::requestXMPI;
-
-    using Base::rightYRankMPI;
-    using Base::leftYRankMPI;
-    using Base::statusYMPI;
-    using Base::requestYMPI;
-
-    using Base::rightZRankMPI;
-    using Base::leftZRankMPI;
-    using Base::statusZMPI;
-    using Base::requestZMPI;
-
-
     typedef Domain<DomainType::HaloSpace, PartitionningType::Generic,
                    MemoryLayout::AoS, L::dimQ> hMLSD;
 
@@ -516,15 +483,23 @@ namespace lbm {
 
   protected:
     HOST
-    void sendAndReceiveHaloX(T * haloDistributionPtr) {
-      INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloX",4)
+    void sendAndReceiveHaloXRight(T * haloDistributionPtr) {
+      { INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloX",4) }
 
-      shmem_double_put(haloDistributionPtr+receivedFromLeftBeginX,
-                       haloDistributionPtr+sendToRightBeginX,
-                       sizeStripeX, rightXRankMPI);
-      shmem_double_put(haloDistributionPtr+sendToLeftBeginX,
-                       haloDistributionPtr+receivedFromRightBeginX,
-                       sizeStripeX, leftXRankMPI);
+      shmem_double_put(haloDistributionPtr+Base::receivedFromLeftBeginX,
+                       haloDistributionPtr+Base::sendToRightBeginX,
+                       Base::sizeStripeX, Base::rightXRankMPI);
+      shmem_barrier_all();
+
+    }
+
+    HOST
+    void sendAndReceiveHaloXLeft(T * haloDistributionPtr) {
+      { INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloX",4) }
+
+      shmem_double_put(haloDistributionPtr+Base::sendToLeftBeginX,
+                       haloDistributionPtr+Base::receivedFromRightBeginX,
+                       Base::sizeStripeX, Base::leftXRankMPI);
       shmem_barrier_all();
 
     }

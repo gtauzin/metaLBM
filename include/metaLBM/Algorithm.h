@@ -198,13 +198,13 @@ namespace lbm {
 
       // TODO: Run only at the boundaries
       Base::computationBottom.Do(periodicBoundary.applyYBottom,
-                                     haloDistributionPrevious_Ptr);
+                                 haloDistributionPrevious_Ptr);
       Base::computationTop.Do(periodicBoundary.applyYTop,
-                                  haloDistributionPrevious_Ptr);
+                              haloDistributionPrevious_Ptr);
       Base::computationFront.Do(periodicBoundary.applyZFront,
-                                    haloDistributionPrevious_Ptr);
+                                haloDistributionPrevious_Ptr);
       Base::computationBack.Do(periodicBoundary.applyZBack,
-                                   haloDistributionPrevious_Ptr);
+                               haloDistributionPrevious_Ptr);
 
       //boundary.apply(f_Previous.haloData());
 
