@@ -3,6 +3,7 @@
 
 #include "Commons.h"
 #include "Options.h"
+#include "Lattice.h"
 #include "MathVector.h"
 #include "Domain.h"
 
@@ -48,104 +49,56 @@ namespace lbm {
                  PartitionningType::Generic, Implementation::Generic, Dimension> {
   public:
     DEVICE HOST INLINE
-    void applyX(const Position& iP,
-                T * f) {
-      { INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyX",5) }
+    static void applyYBottom(const Position& iP, T * haloDistributionPtr) {
+      { INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyYBottom",5) }
 
-      Position iP_Origin = {L::halo()[d::X], iP[d::Y], iP[d::Z]};
-      Position iP_Destination = {L::halo()[d::X] + lSD::sLength()[d::X],
-                                                    iP[d::Y], iP[d::Z]};
+      Position iP_Destination = {iP[d::X], iP[d::Y] + lSD::sLength()[d::Y], iP[d::Z]};
 
       #pragma unroll
-      for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
-        f[hSD::getIndex(iP_Destination, iQ)] = f[hSD::getIndex(iP_Origin, iQ)];
-      }
-
-      iP_Origin =  Position({L::halo()[d::X]+ lSD::sLength()[d::X] -1,
-            iP[d::Y], iP[d::Z]});
-      iP_Destination =  Position({0, iP[d::Y], iP[d::Z]});
-
-      #pragma unroll
-      for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
-          f[hSD::getIndex(iP_Destination, iQ)] = f[hSD::getIndex(iP_Origin, iQ)];
-        }
-    }
-
-    DEVICE HOST INLINE
-    void applyY(const Position& iP,
-                T * f) {
-      INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyY",5)
-
-      Position iP_Origin = {iP[d::X], L::halo()[d::Y], iP[d::Z]};
-      Position iP_Destination = {iP[d::X],
-                                 L::halo()[d::Y] + lSD::sLength()[d::Y],
-                                 iP[d::Z]};
-      #pragma unroll
-      for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
-        f[hSD::getIndex(iP_Destination, iQ)] = f[hSD::getIndex(iP_Origin, iQ)];
-      }
-
-      iP_Origin =  Position({iP[d::X],
-            L::halo()[d::Y]+ lSD::sLength()[d::Y] -1, iP[d::Z]});
-      iP_Destination =  Position({iP[d::X], 0, iP[d::Z]});
-
-      #pragma unroll
-      for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
-        f[hSD::getIndex(iP_Destination, iQ)] = f[hSD::getIndex(iP_Origin, iQ)];
-      }
-    }
-
-        DEVICE HOST INLINE
-    void applyYTop(const Position& iP,
-                   T * f) {
-      INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyYTop",5)
-
-      Position iP_Origin{iP[d::X],
-          L::halo()[d::Y]+ lSD::sLength()[d::Y] -1, iP[d::Z]};
-      Position iP_Destination{iP[d::X], 0, iP[d::Z]};
-
-      #pragma unroll
-      for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
-        f[hSD::getIndex(iP_Destination, iQ)] = f[hSD::getIndex(iP_Origin, iQ)];
+      for(auto iQ : L::iQ_Bottom) {
+        haloDistributionPtr[hSD::getIndex(iP_Destination, iQ)]
+          = haloDistributionPtr[hSD::getIndex(iP, iQ)];
       }
     }
 
     DEVICE HOST INLINE
-    void applyYBottom(const Position& iP,
-                      T * f) {
-      INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyYBottom",5)
+    static void applyYTop(const Position& iP, T * haloDistributionPtr) {
+      { INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyYTop",5) }
 
-      Position iP_Origin = {iP[d::X], L::halo()[d::Y], iP[d::Z]};
-      Position iP_Destination = {iP[d::X],
-                                 L::halo()[d::Y] + lSD::sLength()[d::Y],
-                                 iP[d::Z]};
+      Position iP_Destination{iP[d::X],
+          iP[d::Y] - (L::halo()[d::Y]+lSD::sLength()[d::Y] - 1), iP[d::Z]};
+
       #pragma unroll
-      for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
-        f[hSD::getIndex(iP_Destination, iQ)] = f[hSD::getIndex(iP_Origin, iQ)];
+      for(auto iQ : L::iQ_Top) {
+        haloDistributionPtr[hSD::getIndex(iP_Destination, iQ)]
+          = haloDistributionPtr[hSD::getIndex(iP, iQ)];
       }
     }
 
     DEVICE HOST INLINE
-    void applyZ(const Position& iP,
-                       T * f) {
-      { INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyZ",5) }
+    static void applyZFront(const Position& iP, T * haloDistributionPtr) {
+      { INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyZFront",5) }
 
-      Position iP_Origin = {iP[d::X], iP[d::Y], L::halo()[d::Z]};
-      Position iP_Destination = {iP[d::X], iP[d::Y],
-            L::halo()[d::Z] + lSD::sLength()[d::Z]};
+      Position iP_Destination = {iP[d::X], iP[d::Y], iP[d::Z] + lSD::sLength()[d::Z]};
 
       #pragma unroll
-      for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
-        f[hSD::getIndex(iP_Destination, iQ)] = f[hSD::getIndex(iP_Origin, iQ)];
+      for(auto iQ : L::iQ_Front) {
+        haloDistributionPtr[hSD::getIndex(iP_Destination, iQ)]
+          = haloDistributionPtr[hSD::getIndex(iP, iQ)];
       }
+    }
 
-      iP_Origin =  Position({iP[d::X], iP[d::Y],
-            L::halo()[d::Z] + lSD::sLength()[d::Z] - 1});
-      iP_Destination =  Position({iP[d::X], iP[d::Y], 0});
+    DEVICE HOST INLINE
+    static void applyZBack(const Position& iP, T * haloDistributionPtr) {
+      { INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyZBack",5) }
+
+      Position iP_Destination{iP[d::X], iP[d::Y],
+          iP[d::Z] - (L::halo()[d::Z]+lSD::sLength()[d::Z] - 1)};
 
       #pragma unroll
-      for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
-        f[hSD::getIndex(iP_Destination, iQ)] = f[hSD::getIndex(iP_Origin, iQ)];
+      for(auto iQ : L::iQ_Back) {
+        haloDistributionPtr[hSD::getIndex(iP_Destination, iQ)]
+          = haloDistributionPtr[hSD::getIndex(iP, iQ)];
       }
     }
   };
@@ -156,10 +109,17 @@ namespace lbm {
     : public Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
                       PartitionningType::Generic, Implementation::Generic, 1> {
   public:
-    DEVICE HOST
-    inline void operator()(const Position& iP,
-                             T * f) {
-    }
+    DEVICE HOST INLINE
+    static void applyYBottom(const Position& iP, T * haloDistributionPtr) {}
+
+    DEVICE HOST INLINE
+    static void applyYTop(const Position& iP, T * haloDistributionPtr) {}
+
+    DEVICE HOST INLINE
+    static void applyZFront(const Position& iP, T * haloDistributionPtr) {}
+
+    DEVICE HOST INLINE
+    static void applyZBack(const Position& iP, T * haloDistributionPtr) {}
   };
 
   template<class T>
@@ -168,15 +128,18 @@ namespace lbm {
  : public Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
                       PartitionningType::Generic, Implementation::Generic, 2> {
   private:
-    using Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                   PartitionningType::Generic, Implementation::Generic, 2>::applyY;
+    using Base = Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
+                          PartitionningType::Generic, Implementation::Generic, 2>;
 
   public:
-    DEVICE HOST
-    inline void operator()(const Position& iP,
-                           T * f) {
-      applyY(iP, f);
-    }
+    using Base::applyYTop;
+    using Base::applyYBottom;
+
+    DEVICE HOST INLINE
+    static void applyZFront(const Position& iP, T * haloDistributionPtr) {}
+
+    DEVICE HOST INLINE
+    static void applyZBack(const Position& iP, T * haloDistributionPtr) {}
   };
 
   template<class T>
@@ -185,10 +148,17 @@ namespace lbm {
     : public Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
                       PartitionningType::Generic, Implementation::Generic, 2> {
   public:
-    DEVICE HOST
-    inline void operator()(const Position& iP,
-                             T * f) {
-    }
+    DEVICE HOST INLINE
+    static void applyYBottom(const Position& iP, T * haloDistributionPtr) {}
+
+    DEVICE HOST INLINE
+    static void applyYTop(const Position& iP, T * haloDistributionPtr) {}
+
+    DEVICE HOST INLINE
+    static void applyZFront(const Position& iP, T * haloDistributionPtr) {}
+
+    DEVICE HOST INLINE
+    static void applyZBack(const Position& iP, T * haloDistributionPtr) {}
   };
 
 
@@ -198,18 +168,15 @@ namespace lbm {
     : public Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
                       PartitionningType::Generic, Implementation::Generic, 3> {
   private:
-    using Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                   PartitionningType::Generic, Implementation::Generic, 3>::applyY;
-    using Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                   PartitionningType::Generic, Implementation::Generic, 3>::applyZ;
+    using Base = Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
+                   PartitionningType::Generic, Implementation::Generic, 3>;
 
   public:
-    DEVICE HOST
-    inline void operator()(const Position& iP,
-                             T * f) {
-      applyY(iP, f);
-      applyZ(iP, f);
-    }
+    using Base::applyYTop;
+    using Base::applyYBottom;
+    using Base::applyZFront;
+    using Base::applyZBack;
+
   };
 
   template<class T>
@@ -218,15 +185,18 @@ namespace lbm {
     : public Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
                       PartitionningType::Generic, Implementation::Generic, 3> {
   private:
-    using Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                   PartitionningType::Generic, Implementation::Generic, 3>::applyZ;
+    using Base = Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
+                          PartitionningType::Generic, Implementation::Generic, 3>;
 
   public:
-    DEVICE HOST
-    inline void operator()(const Position& iP,
-                             T * f) {
-      applyZ(iP, f);
-    }
+    DEVICE HOST INLINE
+    static void applyYBottom(const Position& iP, T * haloDistributionPtr) {}
+
+    DEVICE HOST INLINE
+    static void applyYTop(const Position& iP, T * haloDistributionPtr) {}
+
+    using Base::applyZFront;
+    using Base::applyZBack;
   };
 
 
@@ -236,10 +206,17 @@ namespace lbm {
     : public Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
                       PartitionningType::Generic, Implementation::Generic, 3> {
   public:
-    DEVICE HOST
-    inline void operator()(const Position& iP,
-                             T * f) {
-    }
+    DEVICE HOST INLINE
+    static void applyYBottom(const Position& iP, T * haloDistributionPtr) {}
+
+    DEVICE HOST INLINE
+    static void applyYTop(const Position& iP, T * haloDistributionPtr) {}
+
+    DEVICE HOST INLINE
+    static void applyZFront(const Position& iP, T * haloDistributionPtr) {}
+
+    DEVICE HOST INLINE
+    static void applyZBack(const Position& iP, T * haloDistributionPtr) {}
   };
 
 

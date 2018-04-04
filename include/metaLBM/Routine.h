@@ -130,12 +130,13 @@ namespace lbm {
 
         communicationTime += algorithm.getCommunicationTime();
         computationTime += algorithm.getComputationTime();
-        totalTime += algorithm.getTotalTime();
       }
 
       finalMass = communication.reduce(fieldList.density.getLocalData());
 
       differenceMass = fabs(initialMass-finalMass)/initialMass;
+      totalTime = computationTime + communicationTime
+        + writeFieldTime + writeAnalysisTime;
       printOutputs();
     }
 
@@ -145,35 +146,38 @@ namespace lbm {
       if (communication.rankMPI == MathVector<int, 3>({0, 0, 0})) {
         std::cout.precision(15);
         std::cout << "-------------------OPTIONS-------------------" << std::endl
-                  << "Lattice         : D" << L::dimD << "Q" << L::dimQ << std::endl
-                  << "Global lengths  : " << gSD::sLength() << std::endl
-                  << "Global memory   : " << gSD::sVolume()*sizeof(dataT) << "B" << std::endl
+                  << "Lattice                  : D" << L::dimD << "Q" << L::dimQ << std::endl
+                  << "Global lengths           : " << gSD::sLength() << std::endl
+                  << "Global memory            : " << gSD::sVolume()*sizeof(dataT) << "B"
+                  << std::endl
                   << "----------------------------------------------" << std::endl
-                  << "NPROCS          : " << NPROCS << "" << std::endl
+                  << "NPROCS                   : " << numProcs << "" << std::endl
+                  << "NTHREADS                 : " << numThreads << "" << std::endl
                   << "-------------------PARAMETERS-----------------" << std::endl
-                  << "Relaxation time : " << relaxationTime << std::endl
-                  << "Viscosity       : " << L::cs2 * (relaxationTime - 0.5) << std::endl
-                  << "Start iteration : " << startIteration << std::endl
-                  << "End iteration   : " << endIteration << std::endl
+                  << "Relaxation time          : " << relaxationTime << std::endl
+                  << "Viscosity                : " << L::cs2 * (relaxationTime - 0.5)
+                  << std::endl
+                  << "Start iteration          : " << startIteration << std::endl
+                  << "End iteration            : " << endIteration << std::endl
                   << "----------------------------------------------" << std::endl;
       }
     }
 
     void printOutputs() {
       if (communication.rankMPI == MathVector<int, 3>({0, 0, 0})) {
-        std::cout << "-------------------OUTPUTS-------------------" << std::endl
-                  << "Total time          : " << totalTime << " s" << std::endl
-                  << "Computat time       : " << computationTime << " s" << std::endl
-                  << "Communic time       : " << communicationTime << " s" << std::endl
-                  << "Analysis time       : " << writeAnalysisTime << " s" << std::endl
-                  << "Dump time           : " << writeFieldTime << " s" << std::endl;
+        std::cout << "-------------------OUTPUTS-_------------------" << std::endl
+                  << "Total time               : " << totalTime << " s" << std::endl
+                  << "Computatation time       : " << computationTime << " s" << std::endl
+                  << "Communication time       : " << communicationTime << " s" << std::endl
+                  << "Analysis time            : " << writeAnalysisTime << " s" << std::endl
+                  << "Write time               : " << writeFieldTime << " s" << std::endl;
 
         const double mlups = (gSD::sVolume() * 1e-6)/(totalTime / (endIteration-startIteration+1));
 
-        std::cout << "MLUPS           : " << mlups << std::endl
-                  << "Initial mass    : " << initialMass << std::endl
-                  << "Final mass      : " << finalMass << std::endl
-                  << "% mass diff.    : " << differenceMass << std::endl
+        std::cout << "MLUPS                   : " << mlups << std::endl
+                  << "Initial mass            : " << initialMass << std::endl
+                  << "Final mass              : " << finalMass << std::endl
+                  << "% mass diff.            : " << differenceMass << std::endl
                   << "----------------------------------------------" << std::endl;
       }
     }

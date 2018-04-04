@@ -15,11 +15,6 @@
 #include "Lattice.h"
 #include "Domain.h"
 #include "Boundary.h"
-
-#ifdef USE_NVSHMEM
-  #include <shmem.h>
-  #include <shmemx.h>
-#endif
 #include "Computation.h"
 
 
@@ -43,8 +38,10 @@ namespace lbm {
     Computation<Architecture::CPU, L::dimD> computationLocal;
     const unsigned int rightXRankMPI;
     const unsigned int leftXRankMPI;
-    MPI_Status statusXMPI[4];
-    MPI_Request requestXMPI[4];
+    MPI_Status statusXRightMPI[2];
+    MPI_Request requestXRightMPI[2];
+    MPI_Status statusXLeftMPI[2];
+    MPI_Request requestXLeftMPI[2];
 
     const unsigned int rightYRankMPI;
     const unsigned int leftYRankMPI;
@@ -66,8 +63,10 @@ namespace lbm {
       , computationLocal(lSD::sStart(), lSD::sEnd())
       , leftXRankMPI((rankMPI_in[d::X] + sizeMPI_in[d::X] - 1) % sizeMPI_in[d::X])
       , rightXRankMPI((rankMPI_in[d::X] + 1) % sizeMPI_in[d::X])
-      , statusXMPI()
-      , requestXMPI()
+      , statusXRightMPI()
+      , requestXRightMPI()
+      , statusXLeftMPI()
+      , requestXLeftMPI()
       , leftYRankMPI((rankMPI_in[d::Y] + sizeMPI_in[d::Y] - 1) % sizeMPI_in[d::Y])
       , rightYRankMPI((rankMPI_in[d::Y] + 1) % sizeMPI_in[d::Y])
       , statusYMPI()
@@ -147,8 +146,10 @@ namespace lbm {
                                Implementation::MPI, 0>;
     using Base::rightXRankMPI;
     using Base::leftXRankMPI;
-    using Base::statusXMPI;
-    using Base::requestXMPI;
+    using Base::statusXRightMPI;
+    using Base::requestXRightMPI;
+    using Base::statusXLeftMPI;
+    using Base::requestXLeftMPI;
 
     using Base::rightYRankMPI;
     using Base::leftYRankMPI;
@@ -184,108 +185,71 @@ namespace lbm {
 
   protected:
     HOST
-    void sendAndReceiveHaloX(T * haloDistributionPtr) {
-      INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloX",4)
+    void sendAndReceiveHaloXRight(T * haloDistributionPtr) {
+      INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloXRight",4)
 
-      for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
+      for(auto iQ : L::iQ_Right) {
         sendToRightBeginX = hMLSD::getIndex(Position({L::halo()[d::X]+lSD::sLength()[d::X]-1,
                 hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
         receivedFromLeftBeginX = hMLSD::getIndex(Position({0,
                 hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
+        MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginX, sizeStripeX,
+                  MPI_DOUBLE, leftXRankMPI, 17, MPI_COMM_WORLD, &requestXRightMPI[0]);
+
+        MPI_Isend(haloDistributionPtr+sendToRightBeginX, sizeStripeX,
+                  MPI_DOUBLE, rightXRankMPI, 17, MPI_COMM_WORLD, &requestXRightMPI[1]);
+
+        MPI_Waitall(2, requestXRightMPI, statusXRightMPI);
+      }
+    }
+
+    HOST
+    void sendAndReceiveHaloXLeft(T * haloDistributionPtr) {
+      INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloXLeft",4)
+
+      for(auto iQ : L::iQ_Left) {
         sendToLeftBeginX = hMLSD::getIndex(Position({L::halo()[d::X],
                 hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
         receivedFromRightBeginX = hMLSD::getIndex(Position({L::halo()[d::X]+lSD::sLength()[d::X],
                 hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
-        MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginX, sizeStripeX,
-                  MPI_DOUBLE, leftXRankMPI, 17, MPI_COMM_WORLD, &requestXMPI[0]);
-
         MPI_Irecv(haloDistributionPtr+receivedFromRightBeginX, sizeStripeX,
-                  MPI_DOUBLE, rightXRankMPI, 23, MPI_COMM_WORLD, &requestXMPI[1]);
-
-        MPI_Isend(haloDistributionPtr+sendToRightBeginX, sizeStripeX,
-                  MPI_DOUBLE, rightXRankMPI, 17, MPI_COMM_WORLD, &requestXMPI[2]);
+                  MPI_DOUBLE, rightXRankMPI, 23, MPI_COMM_WORLD, &requestXLeftMPI[0]);
 
         MPI_Isend(haloDistributionPtr+sendToLeftBeginX, sizeStripeX,
-                  MPI_DOUBLE, leftXRankMPI, 23, MPI_COMM_WORLD, &requestXMPI[3]);
+                  MPI_DOUBLE, leftXRankMPI, 23, MPI_COMM_WORLD, &requestXLeftMPI[1]);
 
-        MPI_Waitall(4, requestXMPI, statusXMPI);
+        MPI_Waitall(2, requestXLeftMPI, statusXLeftMPI);
       }
     }
 
-    HOST
-    void sendAndReceiveHaloY(T * haloDistributionPtr) {
-      INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloY",4)
 
-        //TODO - PACK AND UNPACK
-
-
-        // for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
-        //     sendToRightBeginY = hMLSD::getIndex(Position({hMLSD::start()[d::X],
-        //             L::halo()[d::Y]+lSD::sLength()[d::Y]-1,
-        //             hMLSD::start()[d::Z]}), iQ);
-        //     receivedFromLeftBeginY = hMLSD::getIndex(Position({hMLSD::start()[d::X], 0, hMLSD::start()[d::Z]}), iQ);
-
-        //     sendToLeftBeginY = hMLSD::getIndex(Position({hMLSD::start()[d::X],
-        //             L::halo()[d::Y], hMLSD::start()[d::Z]}), iQ);
-
-        //     receivedFromRightBeginY = hMLSD::getIndex(Position({hMLSD::start()[d::X], L::halo()[d::Y]+lSD::sLength()[d::Y], hMLSD::start()[d::Z]}), iQ);
-
-
-        //     MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginY, sizeStripeY,
-        //               MPI_DOUBLE, leftYRankMPI, 17, MPI_COMM_WORLD, &requestYMPI[0]);
-
-        //     MPI_Irecv(haloDistributionPtr+receivedFromRightBeginY, sizeStripeY,
-        //               MPI_DOUBLE, rightYRankMPI, 23, MPI_COMM_WORLD, &requestYMPI[1]);
-
-        //     MPI_Isend(haloDistributionPtr+sendToRightBeginY, sizeStripeY,
-        //               MPI_DOUBLE, rightYRankMPI, 17, MPI_COMM_WORLD, &requestYMPI[2]);
-
-        //     MPI_Isend(haloDistributionPtr+sendToLeftBeginY, sizeStripeY,
-        //               MPI_DOUBLE, leftYRankMPI, 23, MPI_COMM_WORLD, &requestYMPI[3]);
-
-        //     MPI_Waitall(4, requestYMPI, statusYMPI);
-        //   }
-        }
 
     HOST
-    void sendAndReceiveHaloZ(T * haloDistributionPtr) {
-      INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloZ",4)
+    void sendAndReceiveHaloYBottom(T * haloDistributionPtr) {
+      { INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloYBottom",4) }
+      //TODO - PACK AND UNPACK
+    }
 
-        //TODO: PACK AND UNPACK
+    HOST
+    void sendAndReceiveHaloYTop(T * haloDistributionPtr) {
+      { INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloYTop",4) }
+      //TODO - PACK AND UNPACK
+    }
 
-        // for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
-        //     sendToRightBeginZ = hMLSD::getIndex(Position({hMLSD::start()[d::X],
-        //             hMLSD::start()[d::Y],
-        //             L::halo()[d::Z]+lSD::sLength()[d::Z]-1}), iQ);
+    HOST
+    void sendAndReceiveHaloZFront(T * haloDistributionPtr) {
+      { INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloZFront",4) }
+      //TODO: PACK AND UNPACK
+    }
 
-        //     receivedFromLeftBeginZ = hMLSD::getIndex(Position({hMLSD::start()[d::X],
-        //             hMLSD::start()[d::Y], 0}), iQ);
-
-        //     sendToLeftBeginZ = hMLSD::getIndex(Position({hMLSD::start()[d::X],
-        //             hMLSD::start()[d::Y], L::halo()[d::Z]}), iQ);
-
-        //     receivedFromRightBeginZ = hMLSD::getIndex(Position({hMLSD::start()[d::X], hMLSD::start()[d::Y], L::halo()[d::Z]+lSD::sLength()[d::Z]}), iQ);
-
-
-        //     MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginZ, sizeStripeZ,
-        //               MPI_DOUBLE, leftZRankMPI, 17, MPI_COMM_WORLD, &requestZMPI[0]);
-
-        //     MPI_Irecv(haloDistributionPtr+receivedFromRightBeginZ, sizeStripeZ,
-        //               MPI_DOUBLE, rightZRankMPI, 23, MPI_COMM_WORLD, &requestZMPI[1]);
-
-        //     MPI_Isend(haloDistributionPtr+sendToRightBeginZ, sizeStripeZ,
-        //               MPI_DOUBLE, rightZRankMPI, 17, MPI_COMM_WORLD, &requestZMPI[2]);
-
-        //     MPI_Isend(haloDistributionPtr+sendToLeftBeginZ, sizeStripeZ,
-        //               MPI_DOUBLE, leftZRankMPI, 23, MPI_COMM_WORLD, &requestZMPI[3]);
-
-        //     MPI_Waitall(4, requestZMPI, statusZMPI);
-        //   }
-        }
-
+    HOST
+    void sendAndReceiveHaloZBack(T * haloDistributionPtr) {
+      { INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloZBack",4) }
+      //TODO: PACK AND UNPACK
+    }
 
   public:
     HOST
@@ -335,8 +299,10 @@ namespace lbm {
 
     using Base::rightXRankMPI;
     using Base::leftXRankMPI;
-    using Base::statusXMPI;
-    using Base::requestXMPI;
+    using Base::statusXRightMPI;
+    using Base::requestXRightMPI;
+    using Base::statusXLeftMPI;
+    using Base::requestXLeftMPI;
 
     using Base::rightYRankMPI;
     using Base::leftYRankMPI;
@@ -419,61 +385,55 @@ namespace lbm {
 
   protected:
     HOST
-    void sendAndReceiveHaloX(T * haloDistributionPtr) {
-      INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloX",4)
+    void sendAndReceiveHaloXRight(T * haloDistributionPtr) {
+      INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloXRight",4)
 
       MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginX, sizeStripeX,
-                MPI_DOUBLE, leftXRankMPI, 17, MPI_COMM_WORLD, &requestXMPI[0]);
-
-      MPI_Irecv(haloDistributionPtr+receivedFromRightBeginX, sizeStripeX,
-                MPI_DOUBLE, rightXRankMPI, 23, MPI_COMM_WORLD, &requestXMPI[1]);
+                MPI_DOUBLE, leftXRankMPI, 17, MPI_COMM_WORLD, &requestXRightMPI[0]);
 
       MPI_Isend(haloDistributionPtr+sendToRightBeginX, sizeStripeX,
-                MPI_DOUBLE, rightXRankMPI, 17, MPI_COMM_WORLD, &requestXMPI[2]);
+                MPI_DOUBLE, rightXRankMPI, 17, MPI_COMM_WORLD, &requestXRightMPI[1]);
+
+      MPI_Waitall(2, requestXRightMPI, statusXRightMPI);
+    }
+
+    HOST
+    void sendAndReceiveHaloXLeft(T * haloDistributionPtr) {
+      INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloXLeft",4)
+
+      MPI_Irecv(haloDistributionPtr+receivedFromRightBeginX, sizeStripeX,
+                MPI_DOUBLE, rightXRankMPI, 23, MPI_COMM_WORLD, &requestXLeftMPI[0]);
 
       MPI_Isend(haloDistributionPtr+sendToLeftBeginX, sizeStripeX,
-                MPI_DOUBLE, leftXRankMPI, 23, MPI_COMM_WORLD, &requestXMPI[3]);
+                MPI_DOUBLE, leftXRankMPI, 23, MPI_COMM_WORLD, &requestXLeftMPI[1]);
 
-      MPI_Waitall(4, requestXMPI, statusXMPI);
+      MPI_Waitall(2, requestXLeftMPI, statusXLeftMPI);
     }
 
     HOST
-    void sendAndReceiveHaloY(T * haloDistributionPtr) {
-      INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloY",4)
-
-      MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginY, sizeStripeY,
-                  MPI_DOUBLE, leftYRankMPI, 17, MPI_COMM_WORLD, &requestYMPI[0]);
-
-      MPI_Irecv(haloDistributionPtr+receivedFromRightBeginY, sizeStripeY,
-                MPI_DOUBLE, rightYRankMPI, 23, MPI_COMM_WORLD, &requestYMPI[1]);
-
-      MPI_Isend(haloDistributionPtr+sendToRightBeginY, sizeStripeY,
-                MPI_DOUBLE, rightYRankMPI, 17, MPI_COMM_WORLD, &requestYMPI[2]);
-
-      MPI_Isend(haloDistributionPtr+sendToLeftBeginY, sizeStripeY,
-                MPI_DOUBLE, leftYRankMPI, 23, MPI_COMM_WORLD, &requestYMPI[3]);
-
-      MPI_Waitall(4, requestYMPI, statusYMPI);
+    void sendAndReceiveHaloYBottom(T * haloDistributionPtr) {
+      { INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloYBottom",4) }
+      //TODO - PACK AND UNPACK
     }
 
     HOST
-    void sendAndReceiveHaloZ(T * haloDistributionPtr) {
-      INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloZ",4)
-
-        MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginZ, sizeStripeZ,
-                  MPI_DOUBLE, leftZRankMPI, 17, MPI_COMM_WORLD, &requestZMPI[0]);
-
-      MPI_Irecv(haloDistributionPtr+receivedFromRightBeginZ, sizeStripeZ,
-                MPI_DOUBLE, rightZRankMPI, 23, MPI_COMM_WORLD, &requestZMPI[1]);
-
-      MPI_Isend(haloDistributionPtr+sendToRightBeginZ, sizeStripeZ,
-                MPI_DOUBLE, rightZRankMPI, 17, MPI_COMM_WORLD, &requestZMPI[2]);
-
-      MPI_Isend(haloDistributionPtr+sendToLeftBeginZ, sizeStripeZ,
-                MPI_DOUBLE, leftZRankMPI, 23, MPI_COMM_WORLD, &requestZMPI[3]);
-
-      MPI_Waitall(4, requestZMPI, statusZMPI);
+    void sendAndReceiveHaloYTop(T * haloDistributionPtr) {
+      { INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloYTop",4) }
+      //TODO - PACK AND UNPACK
     }
+
+    HOST
+    void sendAndReceiveHaloZFront(T * haloDistributionPtr) {
+      { INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloZFront",4) }
+      //TODO: PACK AND UNPACK
+    }
+
+    HOST
+    void sendAndReceiveHaloZBack(T * haloDistributionPtr) {
+      { INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloZBack",4) }
+      //TODO: PACK AND UNPACK
+    }
+
   };
 
 #ifdef USE_NVSHMEM
@@ -492,18 +452,12 @@ namespace lbm {
 
     using Base::rightXRankMPI;
     using Base::leftXRankMPI;
-    using Base::statusXMPI;
-    using Base::requestXMPI;
 
     using Base::rightYRankMPI;
     using Base::leftYRankMPI;
-    using Base::statusYMPI;
-    using Base::requestYMPI;
 
     using Base::rightZRankMPI;
     using Base::leftZRankMPI;
-    using Base::statusZMPI;
-    using Base::requestZMPI;
 
 
     typedef Domain<DomainType::HaloSpace, PartitionningType::Generic,
@@ -529,45 +483,41 @@ namespace lbm {
 
   protected:
     HOST
-    void sendAndReceiveHaloX(T * haloDistributionPtr) {
-      INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloX",4)
-        //TODO: Replace with NVSHMEM directives
-        for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
-          sendToRightBeginX = hMLSD::getIndex(Position({L::halo()[d::X]+lSD::sLength()[d::X]-1,
-                  hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
-          receivedFromLeftBeginX = hMLSD::getIndex(Position({0,
-                  hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
+    void sendAndReceiveHaloXRight(T * haloDistributionPtr) {
+      { INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloXRight",4) }
 
-          sendToLeftBeginX = hMLSD::getIndex(Position({L::halo()[d::X],
-                  hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
+      for(auto iQ : L::iQ_Right) {
+        sendToRightBeginX = hMLSD::getIndex(Position({L::halo()[d::X]+lSD::sLength()[d::X]-1,
+                hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
+        receivedFromLeftBeginX = hMLSD::getIndex(Position({0,
+                hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
-          receivedFromRightBeginX = hMLSD::getIndex(Position({L::halo()[d::X]+lSD::sLength()[d::X],
-                  hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
+        shmem_double_put(haloDistributionPtr+receivedFromLeftBeginX,
+                         haloDistributionPtr+sendToRightBeginX,
+                         sizeStripeX, rightXRankMPI);
+        shmem_barrier_all();
 
-          /* MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginX, sizeStripeX, */
-          /*           MPI_DOUBLE, leftXRankMPI, 17, MPI_COMM_WORLD, &requestXMPI[0]); */
-
-          /* MPI_Irecv(haloDistributionPtr+receivedFromRightBeginX, sizeStripeX, */
-          /*           MPI_DOUBLE, rightXRankMPI, 23, MPI_COMM_WORLD, &requestXMPI[1]); */
-
-          /* MPI_Isend(haloDistributionPtr+sendToRightBeginX, sizeStripeX, */
-          /*           MPI_DOUBLE, rightXRankMPI, 17, MPI_COMM_WORLD, &requestXMPI[2]); */
-
-          /* MPI_Isend(haloDistributionPtr+sendToLeftBeginX, sizeStripeX, */
-          /*           MPI_DOUBLE, leftXRankMPI, 23, MPI_COMM_WORLD, &requestXMPI[3]); */
-
-          /* MPI_Waitall(4, requestXMPI, statusXMPI); */
-
-          shmem_double_put(haloDistributionPtr+receivedFromLeftBeginX,
-                           haloDistributionPtr+sendToRightBeginX,
-                           sizeStripeX, rightXRankMPI);
-          shmem_double_put(haloDistributionPtr+sendToLeftBeginX,
-                           haloDistributionPtr+receivedFromRightBeginX,
-                           sizeStripeX, leftXRankMPI);
-          shmem_barrier_all();
-
-        }
+      }
     }
+
+    void sendAndReceiveHaloXLeft(T * haloDistributionPtr) {
+      { INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloXLeft",4) }
+
+      for(auto iQ : L::iQ_Left) {
+        sendToLeftBeginX = hMLSD::getIndex(Position({L::halo()[d::X],
+                hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
+
+        receivedFromRightBeginX = hMLSD::getIndex(Position({L::halo()[d::X]+lSD::sLength()[d::X],
+                hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
+
+        shmem_double_put(haloDistributionPtr+sendToLeftBeginX,
+                         haloDistributionPtr+receivedFromRightBeginX,
+                         sizeStripeX, leftXRankMPI);
+        shmem_barrier_all();
+
+      }
+    }
+
 
     using Base::sendAndReceiveHaloY;
 
@@ -674,10 +624,10 @@ namespace lbm {
 
     }
 
-    using Base::sendAndReceiveHaloY;
-
-    using Base::sendAndReceiveHaloZ;
-
+    using Base::sendAndReceiveHaloYBottom;
+    using Base::sendAndReceiveHaloYTop;
+    using Base::sendAndReceiveHaloFrontZ;
+    using Base::sendAndReceiveHaloBackZ;
   };
 
 
@@ -701,17 +651,17 @@ namespace lbm {
     using Base::reduce;
 
   protected:
-    HOST
-    void sendAndReceiveHaloX(T * haloDistributionPtr) {
-    }
+    /* HOST */
+    /* void sendAndReceiveHaloX(T * haloDistributionPtr) { */
+    /* } */
 
-    HOST
-    void sendAndReceiveHaloY(T * haloDistributionPtr) {
-    }
+    /* HOST */
+    /* void sendAndReceiveHaloY(T * haloDistributionPtr) { */
+    /* } */
 
-    HOST
-    void sendAndReceiveHaloZ(T * haloDistributionPtr) {
-    }
+    /* HOST */
+    /* void sendAndReceiveHaloZ(T * haloDistributionPtr) { */
+    /* } */
   };
 #endif // USE_NVSHMEM
 
@@ -747,12 +697,10 @@ namespace lbm {
 
     HOST
     inline void communicateHalos(T * haloDistributionPtr) {
-      INSTRUMENT_ON("Communication<6>::communicateHalos",3)
-        sendAndReceiveHaloX(haloDistributionPtr);
+      { INSTRUMENT_ON("Communication<6>::communicateHalos",3) }
+      Base::sendAndReceiveHaloXRight(haloDistributionPtr);
+      Base::sendAndReceiveHaloXLeft(haloDistributionPtr);
     }
-
-  private:
-    using Base::sendAndReceiveHaloX;
   };
 
   template<class T, LatticeType latticeType, MemoryLayout memoryLayout,
@@ -774,9 +722,6 @@ namespace lbm {
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
     using Base::reduce;
-
-  private:
-    using Base::sendAndReceiveHaloX;
   };
 
   template<class T, LatticeType latticeType, MemoryLayout memoryLayout>
@@ -803,13 +748,12 @@ namespace lbm {
     inline void communicateHalos(T * haloDistributionPtr) {
       INSTRUMENT_ON("Communication<6>::communicateHalos",3)
 
-      sendAndReceiveHaloX(haloDistributionPtr);
-      sendAndReceiveHaloY(haloDistributionPtr);
+      Base::sendAndReceiveHaloXRight(haloDistributionPtr);
+      Base::sendAndReceiveHaloXLeft(haloDistributionPtr);
+      Base::sendAndReceiveHaloYBottom(haloDistributionPtr);
+      Base::sendAndReceiveHaloYTop(haloDistributionPtr);
     }
 
-  private:
-    using Base::sendAndReceiveHaloX;
-    using Base::sendAndReceiveHaloY;
   };
 
   template<class T, LatticeType latticeType, MemoryLayout memoryLayout>
@@ -832,10 +776,6 @@ namespace lbm {
     using Base::reduce;
 
     using Base::communicateHalos;
-
-  private:
-    using Base::sendAndReceiveHaloX;
-    using Base::sendAndReceiveHaloY;
   };
 
 
@@ -885,15 +825,14 @@ namespace lbm {
     inline void communicateHalos(T * haloDistributionPtr) {
       INSTRUMENT_ON("Communication<6>::communicateHalos",3)
 
-      sendAndReceiveHaloZ(haloDistributionPtr);
-      sendAndReceiveHaloY(haloDistributionPtr);
-      sendAndReceiveHaloX(haloDistributionPtr);
+      Base::sendAndReceiveHaloZFront(haloDistributionPtr);
+      Base::sendAndReceiveHaloZBack(haloDistributionPtr);
+      Base::sendAndReceiveHaloYBottom(haloDistributionPtr);
+      Base::sendAndReceiveHaloYTop(haloDistributionPtr);
+      Base::sendAndReceiveHaloXRight(haloDistributionPtr);
+      Base::sendAndReceiveHaloXLeft(haloDistributionPtr);
     }
 
-  private:
-    using Base::sendAndReceiveHaloX;
-    using Base::sendAndReceiveHaloY;
-    using Base::sendAndReceiveHaloZ;
   };
 
 typedef Communication<dataT, latticeT, algorithmT,

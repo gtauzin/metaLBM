@@ -19,13 +19,13 @@ namespace lbm {
   constexpr int globalLengthY = GLOBAL_LENGTH_Y;
   constexpr int globalLengthZ = GLOBAL_LENGTH_Z;
 
-  constexpr unsigned int startIteration = 100;
-  constexpr unsigned int endIteration = 110;
-  constexpr unsigned int writeStep = 10;
-  constexpr unsigned int backUpStep = 10;
+  constexpr unsigned int startIteration = 0;
+  constexpr unsigned int endIteration = 20;
+  constexpr unsigned int writeStep = 1;
+  constexpr unsigned int backUpStep = 100;
 
-  constexpr unsigned int scalarAnalysisStep = 1;
-  constexpr unsigned int spectralAnalysisStep = 10;
+  constexpr unsigned int scalarAnalysisStep = 100;
+  constexpr unsigned int spectralAnalysisStep = 100;
 
   constexpr unsigned int successiveWriteStep = 2;
 
@@ -38,7 +38,7 @@ namespace lbm {
   constexpr CollisionType collisionT = CollisionType::BGK;
   constexpr EquilibriumType equilibriumT = EquilibriumType::Incompressible;
 
-  constexpr InitDensityType initDensityT = InitDensityType::Homogeneous;
+  constexpr InitDensityType initDensityT = InitDensityType::Peak;
   constexpr dataT initDensityValue = 1.0;
   constexpr InitVelocityType initVelocityT = InitVelocityType::Homogeneous;
   constexpr Vector initVelocityVector = { {0.0, 0.0, 0.0} };
@@ -55,7 +55,7 @@ namespace lbm {
 
   constexpr InputOutputFormat inputOutputFormatT = InputOutputFormat::ascii;
   constexpr auto prefix = "test_kolmogorov";
-  constexpr bool writeFieldInit = 0;
+  constexpr bool writeFieldInit = 1;
   constexpr bool writeAnalysisInit = 1;
 
   constexpr bool writeForce = 1;

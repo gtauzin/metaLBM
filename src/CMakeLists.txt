@@ -4,7 +4,7 @@ function(gpu_target NPROCS NTHREADS X_SIZE Y_SIZE Z_SIZE)
   add_executable(${target_name} main.cu)
   target_link_libraries(${target_name} PRIVATE metalbm)
   target_compile_options(${target_name} PRIVATE --expt-extended-lambda)
-  target_compile_definitions(${target_name} PRIVATE 
+  target_compile_definitions(${target_name} PRIVATE
     NPROCS=${NPROCS}
     NTHREADS=${NTHREADS}
     GLOBAL_LENGTH_X=${X_SIZE}
@@ -18,7 +18,7 @@ function(cpu_target NPROCS NTHREADS X_SIZE Y_SIZE Z_SIZE)
   set(target_name cpulbm_${NPROCS}_${NTHREADS}_${X_SIZE}_${Y_SIZE}_${Z_SIZE})
   add_executable(${target_name} main.cpp)
   target_link_libraries(${target_name} PRIVATE metalbm)
-  target_compile_definitions(${target_name} PRIVATE 
+  target_compile_definitions(${target_name} PRIVATE
     NPROCS=${NPROCS}
     NTHREADS=${NTHREADS}
     GLOBAL_LENGTH_X=${X_SIZE}
@@ -27,7 +27,9 @@ function(cpu_target NPROCS NTHREADS X_SIZE Y_SIZE Z_SIZE)
   add_dependencies(cpulbm ${target_name})
 endfunction()
 
+message(STATUS "les params sont ${PARAMS}")
 foreach(params_list ${PARAMS})
+  message(STATUS "la liste est ${params_list}")
   separate_arguments(params_list) # convert " " to ";" (i.e. lists)
   list(GET params_list 0 NPROCS)
   list(GET params_list 1 NTHREADS)

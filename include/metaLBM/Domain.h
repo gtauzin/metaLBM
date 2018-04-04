@@ -262,15 +262,13 @@ namespace lbm {
     using Base::getIndex;
     using Base::getIndexLocal;
 
-    HOST DEVICE
-    static INLINE unsigned int getIndex(const Position& iP,
-                                        const unsigned int iC) {
+    HOST DEVICE INLINE
+    static unsigned int getIndex(const Position& iP, const unsigned int iC) {
       return iC * volume() + getIndex(iP);
     }
 
-    HOST DEVICE
-    static INLINE unsigned int getIndex(const unsigned int index,
-                                        const unsigned int iC) {
+    HOST DEVICE INLINE
+    static unsigned int getIndex(const unsigned int index, const unsigned int iC) {
       return iC * volume() + index;
     }
 
