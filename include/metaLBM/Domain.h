@@ -20,7 +20,7 @@ namespace lbm {
                                                  L::dimD>1 ? ::lbm::globalLengthY: 1,
                                                  L::dimD>2 ? ::lbm::globalLengthZ: 1};
 
-  constexpr Position localLength = {globalLengthX/NPROCS,
+  constexpr Position localLength = {globalLengthX/numProcs,
                                     L::dimD>1 ? globalLengthY: 1,
                                     L::dimD>2 ? globalLengthZ: 1};
 
@@ -49,7 +49,7 @@ namespace lbm {
 
     HOST DEVICE
     static INLINE constexpr Position pEnd() {
-      return ProjectPadRealAndLeave1<unsigned int, L::dimD>::Do({{globalLengthX/NPROCS,
+      return ProjectPadRealAndLeave1<unsigned int, L::dimD>::Do({{globalLengthX/numProcs,
             globalLengthY, globalLengthZ}});
     }
 
@@ -109,7 +109,7 @@ namespace lbm {
 
     HOST DEVICE
     static INLINE constexpr Position pEnd() {
-      return ProjectAndLeave1<unsigned int, L::dimD>::Do({{NPROCS * Base::pLength()[d::X], Base::pLength()[d::Y],Base::pLength()[d::Z]}});
+      return ProjectAndLeave1<unsigned int, L::dimD>::Do({{numProcs * Base::pLength()[d::X], Base::pLength()[d::Y],Base::pLength()[d::Z]}});
     }
 
     HOST DEVICE

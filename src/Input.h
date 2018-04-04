@@ -8,13 +8,16 @@
 #include "metaLBM/MathVector.h"
 
 namespace lbm {
-  typedef double dataT;
-  typedef MathVector<dataT, 3> Vector;
+  using dataT = double;
+  using Vector = MathVector<dataT, 3>;
+
+  constexpr int numProcs = NPROCS;
+  constexpr int numThreads = NTHREADS;
 
   constexpr LatticeType latticeT = LatticeType::D3Q19;
-  constexpr int globalLengthX = 64;
-  constexpr int globalLengthY = 64;
-  constexpr int globalLengthZ = 64;
+  constexpr int globalLengthX = GLOBAL_LENGTH_X;
+  constexpr int globalLengthY = GLOBAL_LENGTH_Y;
+  constexpr int globalLengthZ = GLOBAL_LENGTH_Z;
 
   constexpr unsigned int startIteration = 100;
   constexpr unsigned int endIteration = 110;

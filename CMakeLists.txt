@@ -13,8 +13,6 @@ target_compile_features(metalbm INTERFACE cxx_std_11)
 target_include_directories(metalbm INTERFACE
   "$<BUILD_INTERFACE:${metaLBM_SOURCE_DIR}/include>"
   $<INSTALL_INTERFACE:include>)
-target_compile_definitions(metalbm INTERFACE NPROCS=${NPROCS})
-target_compile_definitions(metalbm INTERFACE NTHREADS=${NTHREADS})
 
 find_package(MPI REQUIRED)
 target_link_libraries(metalbm INTERFACE MPI::MPI_CXX)
