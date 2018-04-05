@@ -1,5 +1,4 @@
-#ifndef COMPUTATION_CUH
-#define COMPUTATION_CUH
+#pragma once
 
 #include <stdio.h>
 
@@ -99,7 +98,6 @@ namespace lbm {
       CUDA_CALL ( cudaGetLastError(); )
       CUDA_CALL( cudaDeviceSynchronize(); )
     }
-
   };
 
  template<>
@@ -124,9 +122,6 @@ namespace lbm {
       CUDA_CALL ( cudaGetLastError(); )
       CUDA_CALL( cudaDeviceSynchronize(); )
     }
-
   };
 
 }
-
-#endif // COMPUTATION_CUH

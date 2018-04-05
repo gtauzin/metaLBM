@@ -20,12 +20,12 @@ namespace lbm {
   constexpr int globalLengthZ = GLOBAL_LENGTH_Z;
 
   constexpr unsigned int startIteration = 0;
-  constexpr unsigned int endIteration = 20;
+  constexpr unsigned int endIteration = 100;
   constexpr unsigned int writeStep = 1;
   constexpr unsigned int backUpStep = 100;
 
-  constexpr unsigned int scalarAnalysisStep = 100;
-  constexpr unsigned int spectralAnalysisStep = 100;
+  constexpr unsigned int scalarAnalysisStep = 1;
+  constexpr unsigned int spectralAnalysisStep = 1;
 
   constexpr unsigned int successiveWriteStep = 2;
 
@@ -34,19 +34,19 @@ namespace lbm {
   constexpr Implementation implementationT = Implementation::MPI;
   constexpr MemoryLayout memoryL = MemoryLayout::SoA;
 
-  constexpr dataT relaxationTime = 0.75;
-  constexpr CollisionType collisionT = CollisionType::BGK;
+  constexpr dataT relaxationTime = 0.50000001;
+  constexpr CollisionType collisionT = CollisionType::ForcedBNR_ELBM;
   constexpr EquilibriumType equilibriumT = EquilibriumType::Incompressible;
 
-  constexpr InitDensityType initDensityT = InitDensityType::Peak;
+  constexpr InitDensityType initDensityT = InitDensityType::Homogeneous;
   constexpr dataT initDensityValue = 1.0;
   constexpr InitVelocityType initVelocityT = InitVelocityType::Homogeneous;
   constexpr Vector initVelocityVector = { {0.0, 0.0, 0.0} };
 
-  constexpr ForcingSchemeType forcingSchemeT = ForcingSchemeType::None;
-  constexpr ForceType forceT = ForceType::Kolmogorov;
+  constexpr ForcingSchemeType forcingSchemeT = ForcingSchemeType::ExactDifferenceMethod;
+  constexpr ForceType forceT = ForceType::ConstantShell;
 
-  constexpr Vector forceAmplitude = { {1e-4, 1e-4, 1e-4} };
+  constexpr Vector forceAmplitude = { {1e1, 1e1, 1e1} };
   constexpr Vector forceWaveLength = { {32.0, 32.0, 32.0} };
   constexpr int forcekMin = 1;
   constexpr int forcekMax = 2;
@@ -54,13 +54,13 @@ namespace lbm {
   constexpr BoundaryType boundaryT = BoundaryType::Generic;
 
   constexpr InputOutputFormat inputOutputFormatT = InputOutputFormat::ascii;
-  constexpr auto prefix = "test_kolmogorov";
+  constexpr auto prefix = "test_elbm";
   constexpr bool writeFieldInit = 1;
   constexpr bool writeAnalysisInit = 1;
 
   constexpr bool writeForce = 1;
-  constexpr bool writeEntropy = 1;
-  constexpr bool writeAlpha = 0;
+  constexpr bool writeEntropy = 0;
+  constexpr bool writeAlpha = 1;
   constexpr bool writeVorticity = 1;
 
   constexpr bool analyzeTotalEnergy = 1;
