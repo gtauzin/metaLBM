@@ -1,5 +1,4 @@
-#ifndef FOURIERDOMAIN_H
-#define FOURIERDOMAIN_H
+#pragma once
 
 #include "Domain.h"
 
@@ -111,5 +110,3 @@ namespace lbm {
                  MemoryLayout::Generic, 1> lFD;
 
 }
-
-#endif // DOMAIN_H

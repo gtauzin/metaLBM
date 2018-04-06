@@ -1,5 +1,4 @@
-#ifndef BOUNDARY_H
-#define BOUNDARY_H
+#pragma once
 
 #include "Commons.h"
 #include "Options.h"
@@ -55,9 +54,9 @@ namespace lbm {
       Position iP_Destination = {iP[d::X], iP[d::Y] + lSD::sLength()[d::Y], iP[d::Z]};
 
       #pragma unroll
-      for(auto iQ : L::iQ_Bottom) {
-        haloDistributionPtr[hSD::getIndex(iP_Destination, iQ)]
-          = haloDistributionPtr[hSD::getIndex(iP, iQ)];
+      for(auto iQ = 0; iQ < L::faceQ; ++iQ) {
+        haloDistributionPtr[hSD::getIndex(iP_Destination, L::iQ_Bottom()[iQ])]
+          = haloDistributionPtr[hSD::getIndex(iP, L::iQ_Bottom()[iQ])];
       }
     }
 
@@ -69,9 +68,9 @@ namespace lbm {
           iP[d::Y] - (L::halo()[d::Y]+lSD::sLength()[d::Y] - 1), iP[d::Z]};
 
       #pragma unroll
-      for(auto iQ : L::iQ_Top) {
-        haloDistributionPtr[hSD::getIndex(iP_Destination, iQ)]
-          = haloDistributionPtr[hSD::getIndex(iP, iQ)];
+      for(auto iQ = 0; iQ < L::faceQ; ++iQ) {
+        haloDistributionPtr[hSD::getIndex(iP_Destination, L::iQ_Top()[iQ])]
+          = haloDistributionPtr[hSD::getIndex(iP, L::iQ_Top()[iQ])];
       }
     }
 
@@ -82,9 +81,9 @@ namespace lbm {
       Position iP_Destination = {iP[d::X], iP[d::Y], iP[d::Z] + lSD::sLength()[d::Z]};
 
       #pragma unroll
-      for(auto iQ : L::iQ_Front) {
-        haloDistributionPtr[hSD::getIndex(iP_Destination, iQ)]
-          = haloDistributionPtr[hSD::getIndex(iP, iQ)];
+      for(auto iQ = 0; iQ < L::faceQ; ++iQ) {
+        haloDistributionPtr[hSD::getIndex(iP_Destination, L::iQ_Front()[iQ])]
+          = haloDistributionPtr[hSD::getIndex(iP, L::iQ_Front()[iQ])];
       }
     }
 
@@ -96,9 +95,9 @@ namespace lbm {
           iP[d::Z] - (L::halo()[d::Z]+lSD::sLength()[d::Z] - 1)};
 
       #pragma unroll
-      for(auto iQ : L::iQ_Back) {
-        haloDistributionPtr[hSD::getIndex(iP_Destination, iQ)]
-          = haloDistributionPtr[hSD::getIndex(iP, iQ)];
+      for(auto iQ = 0; iQ < L::faceQ; ++iQ) {
+        haloDistributionPtr[hSD::getIndex(iP_Destination, L::iQ_Back()[iQ])]
+          = haloDistributionPtr[hSD::getIndex(iP, L::iQ_Back()[iQ])];
       }
     }
   };
@@ -248,5 +247,3 @@ namespace lbm {
   };
 
 }
-
-#endif // BOUNDARY_H

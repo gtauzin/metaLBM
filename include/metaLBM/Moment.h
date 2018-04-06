@@ -1,5 +1,4 @@
-#ifndef MOMENT_H
-#define MOMENT_H
+#pragma once
 
 #include "Commons.h"
 #include "Options.h"
@@ -68,5 +67,3 @@ namespace lbm {
   typedef Moment<dataT> Moment_;
 
 }
-
-#endif // MOMENT_H

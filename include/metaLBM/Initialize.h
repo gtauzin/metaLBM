@@ -1,5 +1,4 @@
-#ifndef INITIALIZE_H
-#define INITIALIZE_H
+#pragma once
 
 #include <iostream>
 #include <string>
@@ -141,5 +140,3 @@ namespace lbm {
 
 
 }
-
-#endif // INITIALIZE_H

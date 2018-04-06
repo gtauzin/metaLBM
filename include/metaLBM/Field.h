@@ -1,5 +1,4 @@
-#ifndef FIELD_H
-#define FIELD_H
+#pragma once
 
 #include <string>
 #include <fstream>
@@ -247,5 +246,3 @@ namespace lbm {
   };
 
 } // namespace lbm
-
-#endif // FIELD_H

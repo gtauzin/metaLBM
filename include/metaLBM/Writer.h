@@ -1,5 +1,4 @@
-#ifndef WRITER_H
-#define WRITER_H
+#pragma once
 
 #include <iostream>
 #include <string>
@@ -574,5 +573,3 @@ namespace lbm {
   typedef ScalarAnalysisWriter<dataT, InputOutputFormat::ascii> ScalarAnalysisWriter_;
   typedef SpectralAnalysisWriter<dataT, InputOutputFormat::ascii> SpectralAnalysisWriter_;
 }
-
-#endif // WRITER_H

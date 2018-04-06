@@ -1,5 +1,4 @@
-#ifndef ROUTINE_H
-#define ROUTINE_H
+#pragma once
 
 #include <chrono>
 
@@ -217,5 +216,3 @@ namespace lbm {
   };
 
 } // namespace lbm
-
-#endif // ROUTINE_H

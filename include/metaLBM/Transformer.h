@@ -1,5 +1,4 @@
-#ifndef TRANSFORMER_H
-#define TRANSFORMER_H
+#pragma once
 
 #include <mpi.h>
 
@@ -349,7 +348,4 @@ namespace lbm {
     using Base::executeFourier;
   };
 
-
 }
-
-#endif // TRANSFORMER_H

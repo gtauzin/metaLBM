@@ -1,5 +1,4 @@
-#ifndef FIELDLIST_H
-#define FIELDLIST_H
+#pragma once
 
 #include <string>
 #include <fstream>
@@ -60,5 +59,3 @@ namespace lbm {
 
 
 } // namespace lbm
-
-#endif // FIELDLIST_H

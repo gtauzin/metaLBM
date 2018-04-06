@@ -1,5 +1,4 @@
-#ifndef DYNAMICARRAY_CUH
-#define DYNAMICARRAY_CUH
+#pragma once
 
 #include <cstring>
 #include <stdlib.h>
@@ -121,5 +120,3 @@ namespace lbm {
 
 
 } // end namespace lbm
-
-#endif // DYNAMICARRAY_CUH

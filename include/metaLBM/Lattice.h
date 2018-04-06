@@ -1,5 +1,4 @@
-#ifndef LATTICE_H
-#define LATTICE_H
+#pragma once
 
 #include <iostream>
 #include <string>
@@ -37,10 +36,25 @@ namespace lbm {
     static constexpr T inv_cs2 = (T)3;
     static constexpr T cs2 = (T)1/inv_cs2;
 
-    static constexpr unsigned int iQ_Bottom[0] = {};
-    static constexpr unsigned int iQ_Top[0] = {};
-    static constexpr unsigned int iQ_Front[0] = {};
-    static constexpr unsigned int iQ_Back[0] = {};
+    DEVICE HOST
+    static inline constexpr MathVector<unsigned int, 0> iQ_Bottom() {
+      return {{}};
+    }
+
+    DEVICE HOST
+    static inline constexpr MathVector<unsigned int, 0> iQ_Top() {
+      return {{}};
+    }
+
+    DEVICE HOST
+    static inline constexpr MathVector<unsigned int, 0> iQ_Front() {
+      return {{}};
+    }
+
+    DEVICE HOST
+    static inline constexpr MathVector<unsigned int, 0> iQ_Back() {
+      return {{}};
+    }
 
     DEVICE HOST
     static inline constexpr MathVector<MathVector<T, dimD>, dimQ> celerity() {
@@ -61,11 +75,6 @@ namespace lbm {
     }
   };
 
-  template <class T> constexpr unsigned int Lattice<T, LatticeType::D1Q3>::iQ_Bottom[0];
-  template <class T> constexpr unsigned int Lattice<T, LatticeType::D1Q3>::iQ_Top[0];
-  template <class T> constexpr unsigned int Lattice<T, LatticeType::D1Q3>::iQ_Front[0];
-  template <class T> constexpr unsigned int Lattice<T, LatticeType::D1Q3>::iQ_Back[0];
-
 
   template <class T>
   struct Lattice<T, LatticeType::D2Q5>
@@ -83,10 +92,25 @@ namespace lbm {
     static constexpr T inv_cs2 = (T)3;
     static constexpr T cs2 = (T)1/inv_cs2;
 
-    static constexpr unsigned int iQ_Bottom[faceQ] = {3};
-    static constexpr unsigned int iQ_Top[faceQ] = {4};
-    static constexpr unsigned int iQ_Front[0] = {};
-    static constexpr unsigned int iQ_Back[0] = {};
+    DEVICE HOST
+    static inline constexpr MathVector<unsigned int, faceQ> iQ_Bottom() {
+      return {{3}};
+    }
+
+    DEVICE HOST
+    static inline constexpr MathVector<unsigned int, faceQ> iQ_Top() {
+      return {{4}};
+    }
+
+    DEVICE HOST
+    static inline constexpr MathVector<unsigned int, 0> iQ_Front() {
+      return {{}};
+    }
+
+    DEVICE HOST
+    static inline constexpr MathVector<unsigned int, 0> iQ_Back() {
+      return {{}};
+    }
 
     DEVICE HOST
     static inline constexpr MathVector<MathVector<T, dimD>, dimQ> celerity() {
@@ -111,11 +135,6 @@ namespace lbm {
     }
   };
 
-  template <class T> constexpr unsigned int Lattice<T, LatticeType::D2Q5>::iQ_Bottom[Lattice<T, LatticeType::D2Q5>::faceQ];
-  template <class T> constexpr unsigned int Lattice<T, LatticeType::D2Q5>::iQ_Top[Lattice<T, LatticeType::D2Q5>::faceQ];
-  template <class T> constexpr unsigned int Lattice<T, LatticeType::D2Q5>::iQ_Front[0];
-  template <class T> constexpr unsigned int Lattice<T, LatticeType::D2Q5>::iQ_Back[0];
-
 
   template <class T>
   struct Lattice<T, LatticeType::D2Q9> {
@@ -133,10 +152,25 @@ namespace lbm {
     static constexpr T inv_cs2 = (T)3;
     static constexpr T cs2 = (T)1/inv_cs2;
 
-    static constexpr unsigned int iQ_Bottom[faceQ] = {3, 4, 7};
-    static constexpr unsigned int iQ_Top[faceQ] = {1, 6, 8};
-    static constexpr unsigned int iQ_Front[0] = {};
-    static constexpr unsigned int iQ_Back[0] = {};
+    DEVICE HOST
+    static inline constexpr MathVector<T, dimQ> iQ_Bottom() {
+      return {{3, 4, 7}};
+    }
+
+    DEVICE HOST
+    static inline constexpr MathVector<T, dimQ> iQ_Top() {
+      return {{1, 6, 8}};
+    }
+
+    DEVICE HOST
+    static inline constexpr MathVector<unsigned int, 0> iQ_Front() {
+      return {{}};
+    }
+
+    DEVICE HOST
+    static inline constexpr MathVector<unsigned int, 0> iQ_Back() {
+      return {{}};
+    }
 
     DEVICE HOST
     static inline constexpr MathVector<MathVector<T, dimD>, dimQ> celerity() {
@@ -166,11 +200,6 @@ namespace lbm {
 
   };
 
-  template <class T> constexpr unsigned int Lattice<T, LatticeType::D2Q9>::iQ_Bottom[Lattice<T, LatticeType::D2Q9>::faceQ];
-  template <class T> constexpr unsigned int Lattice<T, LatticeType::D2Q9>::iQ_Top[Lattice<T, LatticeType::D2Q9>::faceQ];
-  template <class T> constexpr unsigned int Lattice<T, LatticeType::D2Q9>::iQ_Front[0];
-  template <class T> constexpr unsigned int Lattice<T, LatticeType::D2Q9>::iQ_Back[0];
-
 
   template <class T>
   struct Lattice<T, LatticeType::D3Q15>
@@ -189,10 +218,25 @@ namespace lbm {
     static constexpr T inv_cs2 = (T)3;
     static constexpr T cs2 = (T)1/inv_cs2;
 
-    static constexpr unsigned int iQ_Bottom[faceQ] = {2, 3, 9, 10, 11};
-    static constexpr unsigned int iQ_Top[faceQ] = {4, 5, 7, 8, 13};
-    static constexpr unsigned int iQ_Front[faceQ] = {2, 4, 8, 10, 12};
-    static constexpr unsigned int iQ_Back[faceQ] = {3, 5, 7, 9, 14};
+    DEVICE HOST
+    static inline constexpr MathVector<T, dimQ> iQ_Bottom() {
+      return {{2, 3, 9, 10, 11}};
+     }
+
+    DEVICE HOST
+    static inline constexpr MathVector<T, dimQ> iQ_Top() {
+      return {{4, 5, 7, 8, 13}};
+    }
+
+    DEVICE HOST
+    static inline constexpr MathVector<T, dimQ> iQ_Front() {
+      return {{2, 4, 8, 10, 12}};
+    }
+
+    DEVICE HOST
+    static inline constexpr MathVector<T, dimQ> iQ_Back() {
+      return {{3, 5, 7, 9, 14}};
+    }
 
     DEVICE HOST
     static inline constexpr MathVector<MathVector<T, dimD>, dimQ> celerity() {
@@ -229,11 +273,6 @@ namespace lbm {
     }
   };
 
-  template <class T> constexpr unsigned int Lattice<T, LatticeType::D3Q15>::iQ_Bottom[Lattice<T, LatticeType::D3Q15>::faceQ];
-  template <class T> constexpr unsigned int Lattice<T, LatticeType::D3Q15>::iQ_Top[Lattice<T, LatticeType::D3Q15>::faceQ];
-  template <class T> constexpr unsigned int Lattice<T, LatticeType::D3Q15>::iQ_Front[Lattice<T, LatticeType::D3Q15>::faceQ];
-  template <class T> constexpr unsigned int Lattice<T, LatticeType::D3Q15>::iQ_Back[Lattice<T, LatticeType::D3Q15>::faceQ];
-
 
   template <class T>
   struct Lattice<T, LatticeType::D3Q19>
@@ -252,10 +291,25 @@ namespace lbm {
     static constexpr T inv_cs2 = (T)3;
     static constexpr T cs2 = (T)1/inv_cs2;
 
-    static constexpr unsigned int iQ_Bottom[faceQ] = {2, 8, 11, 13, 14};
-    static constexpr unsigned int iQ_Top[faceQ] = {3, 7, 15, 17, 18};
-    static constexpr unsigned int iQ_Front[faceQ] = {4, 10, 12, 13, 18};
-    static constexpr unsigned int iQ_Back[faceQ] = {5, 9, 14, 16, 17};
+    DEVICE HOST
+    static inline constexpr MathVector<unsigned int, faceQ> iQ_Bottom() {
+      return {{2, 8, 11, 13, 14}};
+    }
+
+    DEVICE HOST
+    static inline constexpr MathVector<unsigned int, faceQ> iQ_Top() {
+      return {{3, 7, 15, 17, 18}};
+    }
+
+    DEVICE HOST
+    static inline constexpr MathVector<unsigned int, faceQ> iQ_Front() {
+      return {{4, 10, 12, 13, 18}};
+    }
+
+    DEVICE HOST
+    static inline constexpr MathVector<unsigned int, faceQ> iQ_Back() {
+      return {{5, 9, 14, 16, 17}};
+    }
 
     DEVICE HOST
     static inline constexpr MathVector<MathVector<T, dimD>, dimQ> celerity() {
@@ -298,11 +352,6 @@ namespace lbm {
     }
   };
 
-  template <class T> constexpr unsigned int Lattice<T, LatticeType::D3Q19>::iQ_Bottom[Lattice<T, LatticeType::D3Q19>::faceQ];
-  template <class T> constexpr unsigned int Lattice<T, LatticeType::D3Q19>::iQ_Top[Lattice<T, LatticeType::D3Q19>::faceQ];
-  template <class T> constexpr unsigned int Lattice<T, LatticeType::D3Q19>::iQ_Front[Lattice<T, LatticeType::D3Q19>::faceQ];
-  template <class T> constexpr unsigned int Lattice<T, LatticeType::D3Q19>::iQ_Back[Lattice<T, LatticeType::D3Q19>::faceQ];
-
 
   template <class T>
   struct Lattice<T, LatticeType::D3Q27>
@@ -321,10 +370,25 @@ namespace lbm {
     static constexpr T inv_cs2 = (T)3;
     static constexpr T cs2 = (T)1/inv_cs2;
 
-    static constexpr unsigned int iQ_Bottom[faceQ] = {2, 6, 7, 12, 17, 18, 19, 21, 22};
-    static constexpr unsigned int iQ_Top[faceQ] = {3, 8, 9, 11, 15, 16, 23, 25, 26};
-    static constexpr unsigned int iQ_Front[faceQ] = {4, 6, 8, 14, 16, 18, 20, 21, 26};
-    static constexpr unsigned int iQ_Back[faceQ] = {5, 7, 9, 13, 15, 17, 22, 24, 25};
+    DEVICE HOST
+    static inline constexpr MathVector<unsigned int, faceQ> iQ_Bottom() {
+      return {{2, 6, 7, 12, 17, 18, 19, 21, 22}};
+     }
+
+    DEVICE HOST
+    static inline constexpr MathVector<unsigned int, faceQ> iQ_Top() {
+      return {{3, 8, 9, 11, 15, 16, 23, 25, 26}};
+     }
+
+    DEVICE HOST
+    static inline constexpr MathVector<unsigned int, faceQ> iQ_Front() {
+      return {{4, 6, 8, 14, 16, 18, 20, 21, 26}};
+    }
+
+    DEVICE HOST
+    static inline constexpr MathVector<unsigned int, faceQ> iQ_Back() {
+      return {{5, 7, 9, 13, 15, 17, 22, 24, 25}};
+    }
 
     DEVICE HOST
     static inline constexpr MathVector<MathVector<T, dimD>, dimQ> celerity() {
@@ -377,14 +441,7 @@ namespace lbm {
     }
   };
 
-  template <class T> constexpr unsigned int Lattice<T, LatticeType::D3Q27>::iQ_Bottom[Lattice<T, LatticeType::D3Q27>::faceQ];
-  template <class T> constexpr unsigned int Lattice<T, LatticeType::D3Q27>::iQ_Top[Lattice<T, LatticeType::D3Q27>::faceQ];
-  template <class T> constexpr unsigned int Lattice<T, LatticeType::D3Q27>::iQ_Front[Lattice<T, LatticeType::D3Q27>::faceQ];
-  template <class T> constexpr unsigned int Lattice<T, LatticeType::D3Q27>::iQ_Back[Lattice<T, LatticeType::D3Q27>::faceQ];
-
   typedef Lattice<dataT, latticeT> L;
   typedef Lattice<unsigned int, latticeT> uiL;
 
 }
-
-#endif // LATTICE_H

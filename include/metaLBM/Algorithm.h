@@ -1,5 +1,4 @@
-#ifndef ALGORITHM_H
-#define ALGORITHM_H
+#pragma once
 
 #include <chrono>
 #include <utility>
@@ -224,7 +223,4 @@ namespace lbm {
     using Base::getComputationTime;
   };
 
-
 }
-
-#endif // ALGORITHM_H

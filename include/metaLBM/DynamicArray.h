@@ -1,5 +1,4 @@
-#ifndef DYNAMICARRAY_H
-#define DYNAMICARRAY_H
+#pragma once
 
 #include <cstring>
 #include <stdlib.h>
@@ -134,5 +133,3 @@ namespace lbm {
   }
 
 }
-
-#endif // DYNAMICARRAY_H

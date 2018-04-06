@@ -1,5 +1,4 @@
-#ifndef COLLISION_H
-#define COLLISION_H
+#pragma once
 
 #include "Commons.h"
 #include "Options.h"
@@ -233,7 +232,7 @@ namespace lbm {
       return isDeviationSmallR;
     }
 
-    DEVICE HOST
+    HOST DEVICE
     T calculateAlphaMax(const T * haloDistributionNext_Ptr,
                         const T * haloDistributionPrevious_Ptr,
                         const Position& iP) {
@@ -256,7 +255,7 @@ namespace lbm {
       return alphaMaxR;
     }
 
-    DEVICE HOST
+    HOST DEVICE
     inline T solveAlpha(const T * haloDistributionNext_Ptr,
                         const T * haloDistributionPrevious_Ptr,
                         const Position& iP, const T alphaMin, const T alphaMax) {
@@ -279,7 +278,7 @@ namespace lbm {
       return alphaR;
     }
 
-    DEVICE HOST
+    HOST DEVICE
     inline void calculateAlpha(const T * haloDistributionNext_Ptr,
                                const T * haloDistributionPrevious_Ptr,
                                const Position& iP) {
@@ -338,7 +337,7 @@ namespace lbm {
     using Base::calculateAlphaMax;
     using Base::solveAlpha;
 
-    DEVICE HOST
+    HOST DEVICE
     inline T approximateAlpha(const T * haloDistributionNext_Ptr,
                               const T * haloDistributionPrevious_Ptr,
                               const Position& iP) {
@@ -373,7 +372,7 @@ namespace lbm {
       return alphaR;
     }
 
-    DEVICE HOST
+    HOST DEVICE
     inline void calculateAlpha(const T * haloDistributionNext_Ptr,
                                const T * haloDistributionPrevious_Ptr,
                                const Position& iP) {
@@ -495,5 +494,3 @@ namespace lbm {
   typedef Collision<dataT, collisionT> Collision_;
 
 }
-
-#endif // COLLISION_H

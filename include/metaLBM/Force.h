@@ -1,5 +1,4 @@
-#ifndef FORCE_H
-#define FORCE_H
+#pragma once
 
 #include <cmath>
 
@@ -329,5 +328,3 @@ namespace lbm {
   typedef Force<dataT, forceT> Force_;
 
 }
-
-#endif // FORCE_H

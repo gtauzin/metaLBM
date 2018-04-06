@@ -1,5 +1,4 @@
-#ifndef FORCINGSCHEME_H
-#define FORCINGSCHEME_H
+#pragma once
 
 #include <cmath>
 
@@ -214,5 +213,3 @@ namespace lbm {
   typedef ForcingScheme<dataT, forcingSchemeT> ForcingScheme_;
 
 }
-
-#endif // FORCINGSCHEME_H

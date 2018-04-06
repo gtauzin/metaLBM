@@ -2,7 +2,7 @@
 #include <iostream>
 #include <string>
 
-#include "./Input.h"
+#include "./Input.in"
 #include "metaLBM/Commons.h"
 #include "metaLBM/Computation.h"
 #include "metaLBM/Lattice.h"

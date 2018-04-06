@@ -1,5 +1,4 @@
-#ifndef ALGORITHM_H
-#define ALGORITHM_H
+#pragma once
 
 #include <chrono>
 #include <utility>
@@ -121,5 +120,3 @@ namespace lbm {
   };
 
 }
-
-#endif // ALGORITHM_H

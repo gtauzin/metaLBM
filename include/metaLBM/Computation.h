@@ -1,5 +1,4 @@
-#ifndef COMPUTATION_H
-#define COMPUTATION_H
+#pragma once
 
 #include "Commons.h"
 #include "Options.h"
@@ -113,5 +112,3 @@ namespace lbm {
   };
 
 }
-
-#endif // COMPUTATION_H

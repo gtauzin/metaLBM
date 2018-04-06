@@ -1,6 +1,4 @@
-#ifndef EQUILIBRIUM_H
-#define EQUILIBRIUM_H
-
+#pragma once
 
 #include "Commons.h"
 #include "Options.h"
@@ -114,5 +112,3 @@ namespace lbm {
   typedef Equilibrium<dataT, latticeT, equilibriumT> Equilibrium_;
 
 }
-
-#endif // EQUILIBRIUM_H

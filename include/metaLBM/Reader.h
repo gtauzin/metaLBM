@@ -1,5 +1,4 @@
-#ifndef READER_H
-#define READER_H
+#pragma once
 
 #include <string>
 
@@ -180,6 +179,3 @@ namespace lbm {
   typedef DistributionReader<dataT, InputOutput::HDF5> DistributionReader_;
 
 }
-
-
-#endif // READER_H

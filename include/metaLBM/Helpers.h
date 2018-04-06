@@ -1,5 +1,4 @@
-#ifndef HELPERS_H
-#define HELPERS_H
+#pragma once
 
 #include <memory>
 #include <cmath>
@@ -153,5 +152,3 @@ namespace lbm {
   };
 
 }
-
-#endif // HELPERS_H

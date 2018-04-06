@@ -1,5 +1,4 @@
-#ifndef COMMONS_H
-#define COMMONS_H
+#pragma once
 
 #include <iostream>
 
@@ -81,5 +80,3 @@
 namespace lbm {
 
 }
-
-#endif // COMMONS_H

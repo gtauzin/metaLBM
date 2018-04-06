@@ -1,5 +1,4 @@
-#ifndef OPTIONS_H
-#define OPTIONS_H
+#pragma once
 
 #include "Commons.h"
 
@@ -40,5 +39,3 @@ namespace lbm {
   enum class InputOutput {Generic, None, DAT, HDF5, XDMF};
   enum class InputOutputFormat {Generic, ascii, binary};
 }
-
-#endif // OPTIONS_H

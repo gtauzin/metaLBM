@@ -1,5 +1,4 @@
-#ifndef COMMUNICATION_H
-#define COMMUNICATION_H
+#pragma once
 
 #include <mpi.h>
 #include <string>
@@ -719,5 +718,3 @@ typedef Communication<dataT, latticeT, algorithmT,
                       memoryL, partitionningT, implementationT, L::dimD> Communication_;
 
 }
-
-#endif // COMMUNICATION_H

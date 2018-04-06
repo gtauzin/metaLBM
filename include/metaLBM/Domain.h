@@ -1,5 +1,4 @@
-#ifndef DOMAIN_H
-#define DOMAIN_H
+#pragma once
 
 #include "Options.h"
 #include "Helpers.h"
@@ -333,5 +332,3 @@ namespace lbm {
                  MemoryLayout::Generic, L::dimQ> bXSD;
 
 } // namespace lbm
-
-#endif // DOMAIN_H

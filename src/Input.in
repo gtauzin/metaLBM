@@ -1,5 +1,4 @@
-#ifndef INPUT_H
-#define INPUT_H
+#pragma once
 
 #include <string>
 
@@ -69,5 +68,3 @@ namespace lbm {
   constexpr bool analyzeEnergySpectra = 1;
   constexpr bool analyzeEnstrophySpectra = 1;
 }
-
-#endif // INPUT_H

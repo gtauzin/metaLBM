@@ -1,5 +1,4 @@
-#ifndef MATHVECTOR_H
-#define MATHVECTOR_H
+#pragma once
 
 #include <cmath>
 #include <fstream>
@@ -439,5 +438,3 @@ namespace lbm {
   typedef MathVector<int, 3> WaveNumber;
 
 }
-
-#endif // MATHVECTOR_H
