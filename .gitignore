@@ -12,3 +12,4 @@ script/*out*
 script/*err*
 wrap*
 obsolete*
+CMakeLists.txt.user

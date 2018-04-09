@@ -1,12 +1,10 @@
-#ifndef MATHVECTOR_H
-#define MATHVECTOR_H
+#pragma once
 
 #include <cmath>
 #include <fstream>
 #include <sstream>
 
 #include "StaticArray.h"
-#include "Input.h"
 
 namespace lbm {
 
@@ -126,44 +124,60 @@ namespace lbm {
     return lhs.sArray == rhs.sArray;
   }
 
-
-  template<class U, unsigned int NumberComponents>
-  HOST DEVICE
-  MathVector<U, NumberComponents>& operator+=(MathVector<U, NumberComponents>& lhs,
-                                              const MathVector<U, NumberComponents>& rhs)
-  {
-    for(auto iC = 0; iC < NumberComponents; ++iC) {
-      lhs[iC] += rhs[iC];
-    }
-
+  template<class U>
+  HOST DEVICE INLINE
+  MathVector<U, 1>& operator+=(MathVector<U, 1>& lhs,
+                               const MathVector<U, 1>& rhs) {
+      lhs[0] += rhs[0];
     return lhs;
   }
 
-  template<class U, unsigned int NumberComponents>
-  HOST DEVICE
-  MathVector<U, NumberComponents> operator+(const MathVector<U, NumberComponents>& mV_a,
-                                            const MathVector<U, NumberComponents>& mV_b)
-  {
-    MathVector<U, NumberComponents> mV_result;
-    for(auto iC = 0; iC < NumberComponents; ++iC) {
-      mV_result[iC] = mV_a[iC] + mV_b[iC];
-    }
-    return mV_result;
+  template<class U>
+  HOST DEVICE INLINE
+  MathVector<U, 2>& operator+=(MathVector<U, 2>& lhs,
+                               const MathVector<U, 2>& rhs) {
+      lhs[0] += rhs[0];
+      lhs[1] += rhs[1];
+    return lhs;
   }
 
   template<class U>
   HOST DEVICE
-  constexpr MathVector<U, 3> operator+(const MathVector<U, 3>& mV_a,
-                                       const MathVector<U, 3>& mV_b)
-  {
+  MathVector<U, 3>& operator+=(MathVector<U, 3>& lhs,
+                               const MathVector<U, 3>& rhs) {
+      lhs[0] += rhs[0];
+      lhs[1] += rhs[1];
+      lhs[2] += rhs[2];
+    return lhs;
+  }
+
+  template<class U>
+  HOST DEVICE INLINE
+  MathVector<U, 1> operator+(const MathVector<U, 1>& mV_a,
+                             const MathVector<U, 1>& mV_b) {
+    return MathVector<U, 1>{mV_a[0]+mV_b[0]};
+  }
+
+  template<class U>
+  HOST DEVICE INLINE
+  MathVector<U, 2> operator+(const MathVector<U, 2>& mV_a,
+                             const MathVector<U, 2>& mV_b) {
+    return MathVector<U, 2>{mV_a[0]+mV_b[0], mV_a[1]+mV_b[1]};
+  }
+
+  template<class U>
+  HOST DEVICE INLINE
+    constexpr MathVector<U, 3> operator+(const MathVector<U, 3>& mV_a,
+                                         const MathVector<U, 3>& mV_b) {
     return MathVector<U, 3>{mV_a[0]+mV_b[0], mV_a[1]+mV_b[1], mV_a[2]+mV_b[2]};
   }
 
 
   template<class U, unsigned int NumberComponents>
-  HOST DEVICE
+  HOST DEVICE INLINE
   MathVector<U, NumberComponents>& operator*=(MathVector<U, NumberComponents>& mV,
                                               const U factor) {
+    #pragma unroll
     for(auto iC = 0; iC < NumberComponents; ++iC) {
       mV[iC] *= factor;
     }
@@ -172,11 +186,12 @@ namespace lbm {
   }
 
   template<class U, class V, unsigned int NumberComponents>
-  HOST DEVICE
+  HOST DEVICE INLINE
   MathVector<U, NumberComponents> operator*(const MathVector<U, NumberComponents>& mV,
                                             const V factor)
   {
     MathVector<U, NumberComponents> mV_result;
+    #pragma unroll
     for(auto iC = 0; iC < NumberComponents; ++iC) {
       mV_result[iC] = mV[iC] * (U) factor;
     }
@@ -236,11 +251,12 @@ namespace lbm {
   }
 
   template<class U, unsigned int NumberComponents>
-  HOST DEVICE
+  HOST DEVICE INLINE
   MathVector<U, NumberComponents> operator-(const MathVector<U, NumberComponents>& mV_a,
                                             const MathVector<U, NumberComponents>& mV_b)
   {
     MathVector<U, NumberComponents> mV_result;
+    #pragma unroll
     for(auto iC = 0; iC < NumberComponents; ++iC) {
       mV_result[iC] = mV_a[iC] - mV_b[iC];
     }
@@ -249,7 +265,7 @@ namespace lbm {
   }
 
   template<unsigned int NumberComponents>
-  HOST DEVICE
+  HOST DEVICE INLINE
   MathVector<unsigned int, NumberComponents> operator-(const MathVector<unsigned int, NumberComponents>& mV_a,
                                                        const MathVector<unsigned int, NumberComponents>& mV_b)
   {
@@ -262,7 +278,7 @@ namespace lbm {
   }
 
   template<class U, unsigned int NumberComponents>
-  HOST DEVICE
+  HOST DEVICE INLINE
   MathVector<unsigned int, NumberComponents> operator-(const MathVector<unsigned int, NumberComponents>& mV_a,
                                                        const MathVector<U, NumberComponents>& mV_b)
   {
@@ -275,7 +291,7 @@ namespace lbm {
   }
 
   template<class U, unsigned int NumberComponents>
-  HOST DEVICE
+  HOST DEVICE INLINE
   MathVector<unsigned int, NumberComponents> operator-(const MathVector<U, NumberComponents>& mV_a,
                                                        const MathVector<unsigned int, NumberComponents>& mV_b)
   {
@@ -287,7 +303,7 @@ namespace lbm {
     return mV_result;
   }
 
-  HOST DEVICE
+  HOST DEVICE INLINE
   MathVector<unsigned int, 3> operator-(const MathVector<unsigned int, 3>& mV_a,
                                         const MathVector<unsigned int, 3>& mV_b)
   {
@@ -355,11 +371,11 @@ namespace lbm {
 
   template<class T, unsigned int Dimension>
   struct ProjectPadRealAndLeave1 {
-    HOST DEVICE
-    static inline MathVector<T, 3> Do(const MathVector<T, 3>& mV) {
+    HOST DEVICE INLINE
+    static MathVector<T, 3> Do(const MathVector<T, 3>& mV) {
 
       MathVector<T, 3> mVProjected = { (T) 1, (T) 1, (T) 1};
-
+      #pragma unroll
       for(auto iD = 0; iD < Dimension; ++iD) {
         mVProjected[iD] = mV[iD];
       }
@@ -388,11 +404,11 @@ namespace lbm {
 
   template<class T, unsigned int Dimension>
   struct ProjectPadComplexAndLeave1 {
-    HOST DEVICE
-    static inline MathVector<T, 3> Do(const MathVector<T, 3>& mV) {
+    HOST DEVICE INLINE
+    static MathVector<T, 3> Do(const MathVector<T, 3>& mV) {
 
       MathVector<T, 3> mVProjected = { (T) 1, (T) 1, (T) 1};
-
+      #pragma unroll
       for(auto iD = 0; iD < Dimension-1; ++iD) {
         mVProjected[iD] = mV[iD];
       }
@@ -422,5 +438,3 @@ namespace lbm {
   typedef MathVector<int, 3> WaveNumber;
 
 }
-
-#endif // MATHVECTOR_H

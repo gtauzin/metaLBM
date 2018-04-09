@@ -1,5 +1,4 @@
-#ifndef FORCE_H
-#define FORCE_H
+#pragma once
 
 #include <cmath>
 
@@ -10,11 +9,8 @@
 #include "Commons.h"
 #include "Options.h"
 #include "MathVector.h"
-#include "StaticArray.h"
 #include "Lattice.h"
 #include "FourierDomain.h"
-
-// TODO: Functors
 
 namespace lbm {
 
@@ -34,12 +30,13 @@ namespace lbm {
       }
     }
 
-    DEVICE HOST
-    inline void setForce(T * localForceArray,
-                         const Position& iP,
-                         const unsigned int numberElements,
-                         MathVector<T, L::dimD>& force) {
+    DEVICE HOST INLINE
+    void setForce(T * localForceArray,
+                  const Position& iP,
+                  const unsigned int numberElements,
+                  MathVector<T, L::dimD>& force) {
       auto index = lSD::getIndex(iP);
+      #pragma unroll
       for(auto iD = 0; iD < L::dimD; ++iD) {
         force[iD] = (localForceArray+iD*numberElements)[index];
       }
@@ -207,7 +204,7 @@ namespace lbm {
     }
 
     DEVICE HOST
-    inline void setForce(const Position& iP,
+    void setForce(const Position& iP,
                          MathVector<T, L::dimD>& force) {
       force[d::X] = amplitude[d::X] * sin(iP[d::Y]*2*M_PI/waveLength[d::X]);
     }
@@ -221,7 +218,6 @@ namespace lbm {
       computationLocal.Do
         ([=] HOST (const Position& iP) {
           MathVector<T, L::dimD> force;
-          //std::cout << ""
           auto index = lSD::getIndex(iP);
           setForce(iP+offset, force);
           for(auto iD = 0; iD < L::dimD; ++iD) {
@@ -286,7 +282,7 @@ namespace lbm {
 
             for(auto iD = 0; iD < 2*L::dimD-3; ++iD) {
               fftw_complex * fourierTempPtr
-                = ((fftw_complex *) spaceTempPtr+iD*numberElements);
+                = (fftw_complex *) (spaceTempPtr+iD*numberElements);
 
               fourierTempPtr[index][p::Re] = amplitude[iD];
               fourierTempPtr[index][p::Im] = 0;
@@ -332,5 +328,3 @@ namespace lbm {
   typedef Force<dataT, forceT> Force_;
 
 }
-
-#endif // FORCE_H

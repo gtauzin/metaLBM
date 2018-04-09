@@ -1,6 +1,3 @@
-#define NPROCS 1
-#define NTHREADS 1
-
 #include <mpi.h>
 #include <iostream>
 #include <string>
@@ -14,7 +11,7 @@
   #include <shmemx.h>
 #endif
 
-#include "Input.h"
+#include "./Input.in"
 #include "metaLBM/Lattice.h"
 #include "metaLBM/Commons.h"
 #include "metaLBM/MathVector.h"
@@ -57,16 +54,20 @@ int main(int argc, char* argv[]) {
   #endif
 
   #ifdef USE_NVSHMEM
-  MPI_Comm comm_MPI;
-  shmemx_init_attr_t attribute_SHMEM;
+  MPI_Comm commMPI;
+  shmemx_init_attr_t attributeSHMEM;
   comm_MPI = MPI_COMM_WORLD;
 
-  attribute_SHMEM.mpi_comm = &comm_MPI;
-  shmemx_init_attr (SHMEMX_INIT_WITH_MPI_COMM, &attribute_SHMEM);
+  attributeSHMEM.mpi_comm = &commMPI;
+  shmemx_init_attr (SHMEMX_INIT_WITH_MPI_COMM, &attributeSHMEM);
   #endif
 
   MathVector<int, 3> sizeMPI{1, 1, 1};
   MPI_Comm_size(MPI_COMM_WORLD, &sizeMPI[d::X]);
+  if (sizeMPI[d::X] != numProcs) {
+    std::cout << "Compile-time and runtime number of process don't match\n";
+    MPI_Abort(MPI_COMM_WORLD, 1);
+  }
 
   MathVector<int, 3> rankMPI{0, 0, 0};
   MPI_Comm_rank(MPI_COMM_WORLD, &rankMPI[d::X]);
@@ -86,7 +87,6 @@ int main(int argc, char* argv[]) {
 
   // MPI_Comm_rank(localComm, &localRank);
   int localRank = 0;
-  std::cout << "Local rank: " << localRank << std::endl;
   int numberDevices = 0;
   CUDA_CALL( cudaGetDeviceCount(&numberDevices); )
   CUDA_CALL( cudaSetDevice(localRank % numberDevices); )
@@ -111,4 +111,4 @@ int main(int argc, char* argv[]) {
     cudaDeviceReset();
 
     return EXIT_SUCCESS;
- }
+}

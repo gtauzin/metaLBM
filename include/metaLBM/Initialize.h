@@ -1,5 +1,4 @@
-#ifndef INITIALIZE_H
-#define INITIALIZE_H
+#pragma once
 
 #include <iostream>
 #include <string>
@@ -131,7 +130,9 @@ namespace lbm {
 
     else {
       DistributionReader_ distributionReader(prefix, rankMPI);
+      distributionReader.openFile(startIteration);
       distributionReader.readDistribution(distributionR);
+      distributionReader.closeFile();
     }
 
     return distributionR;
@@ -139,5 +140,3 @@ namespace lbm {
 
 
 }
-
-#endif // INITIALIZE_H

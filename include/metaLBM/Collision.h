@@ -1,5 +1,4 @@
-#ifndef COLLISION_H
-#define COLLISION_H
+#pragma once
 
 #include "Commons.h"
 #include "Options.h"
@@ -21,7 +20,7 @@ namespace lbm {
   template <class T>
   class Collision<T, CollisionType::GenericSRT> {
   protected:
-    const T tau;
+    T tau;
 
     Force_ forcing;
     ForcingScheme_ forcingScheme;
@@ -48,23 +47,23 @@ namespace lbm {
     {}
 
   public:
-    DEVICE HOST
-    inline const T& getDensity() {
+    DEVICE HOST INLINE
+    const T& getDensity() {
       return density;
     }
 
-    DEVICE HOST
-    inline const MathVector<T, L::dimD>& getVelocity() {
+    DEVICE HOST INLINE
+    const MathVector<T, L::dimD>& getVelocity() {
       return velocity;
     }
 
-    DEVICE HOST
-    inline const MathVector<T, L::dimD>& getForce() {
+    DEVICE HOST INLINE
+    const MathVector<T, L::dimD>& getForce() {
       return force;
     }
 
     DEVICE HOST
-    inline void calculateMoments(const T * haloDistributionPtr,
+    void calculateMoments(const T * haloDistributionPtr,
                                  const Position& iP) {
       { INSTRUMENT_OFF("Moment<T>::calculateMoments",4) }
 
@@ -74,11 +73,11 @@ namespace lbm {
       velocity2 = velocity.norm2();
     }
 
-    DEVICE HOST
-    inline void setForce(T * localForceArray,
-                         const Position& iP,
-                         const unsigned int numberElements,
-                         const Position& offset) {
+    DEVICE HOST INLINE
+    void setForce(T * localForceArray,
+                  const Position& iP,
+                  const unsigned int numberElements,
+                  const Position& offset) {
       { INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::setForce",4) }
 
       forcing.setForce(localForceArray, iP-L::halo(), numberElements, force);
@@ -88,26 +87,6 @@ namespace lbm {
     DEVICE HOST
     inline const MathVector<T, L::dimD> getHydrodynamicVelocity() {
       return forcingScheme.calculateHydrodynamicVelocity(force, density, velocity);
-    }
-
-    DEVICE HOST
-    inline void calculateRelaxationTime(const T * haloDistributionNext_Ptr,
-                                        const T * haloDistributionPrevious_Ptr,
-                                        const Position& iP) {
-      { INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::calculate",4) }
-    }
-
-    DEVICE HOST
-    inline T calculate(const T * haloDistributionPtr,
-                       const Position& iP,
-                       const unsigned int iQ) {
-      { INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::calculate",4) }
-      T equilibrium_iQ = Equilibrium_::calculate(density, velocity, velocity2, iQ);
-
-        return ( (T) 1.0 - (T) 1.0/tau) * haloDistributionPtr[hSD::getIndex(iP, iQ)]
-        + forcingScheme.calculateCollisionSource(force, density, velocity, velocity2,
-                                                 equilibrium_iQ, iQ)
-        + (T) 1.0/tau * equilibrium_iQ;
     }
 
     DEVICE HOST
@@ -124,10 +103,8 @@ namespace lbm {
   private:
     using Base = Collision<T, CollisionType::GenericSRT>;
   protected:
-    using Base::tau;
-    using Base::forcingScheme;
-
     T alpha;
+    const T beta;
 
   public:
     Collision(const T tau_in,
@@ -136,12 +113,36 @@ namespace lbm {
               const unsigned int kMin_in, const unsigned int kMax_in)
       : Base(tau_in, amplitude_in, waveLength_in, kMin_in, kMax_in)
       , alpha( (T) 2)
-    {}
+      , beta( (T) 1.0/(2.0 * tau_in))
+  {}
 
     using Base::update;
     using Base::setForce;
 
-    using Base::calculate;
+    DEVICE HOST
+    inline void calculateRelaxationTime(const T * haloDistributionNext_Ptr,
+                                        const T * haloDistributionPrevious_Ptr,
+                                        const Position& iP) {
+      { INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::calculate",4) }
+    }
+
+
+    DEVICE HOST
+    inline void collideAndStream(T * haloDistributionNext_Ptr,
+                                 const T * haloDistributionPrevious_Ptr,
+                                 const Position& iP, const unsigned int iQ) {
+      { INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::calculate",4) }
+      T equilibrium_iQ = Equilibrium_::calculate(Base::density, Base::velocity,
+                                                 Base::velocity2, iQ);
+
+      haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)]
+        = haloDistributionPrevious_Ptr[hSD::getIndex(iP-uiL::celerity()[iQ], iQ)]
+        + Base::forcingScheme.calculateCollisionSource(Base::force, Base::density,
+                                                       Base::velocity, Base::velocity2,
+                                                       equilibrium_iQ, iQ)
+        - 2*beta * (haloDistributionPrevious_Ptr[hSD::getIndex(iP-uiL::celerity()[iQ],
+                                                               iQ)] - equilibrium_iQ);
+    }
 
     using Base::getHydrodynamicVelocity;
     using Base::getDensity;
@@ -162,44 +163,44 @@ namespace lbm {
     using Base = Collision<T, CollisionType::BGK>;
 
   public:
-    Collision(const T tau_in,
-              const MathVector<T, 3>& amplitude_in,
-              const MathVector<T, 3>& waveLength_in,
-              const unsigned int kMin_in, const unsigned int kMax_in)
-      : Base(tau_in, amplitude_in, waveLength_in,
-                                         kMin_in, kMax_in)
-      , beta( (T) 1.0/(2.0 * tau_in))
-    {}
+    using Base::Collision;
 
     using Base::setForce;
 
     DEVICE HOST
-    inline void setVariables(const T * haloDistributionPtr,
-                             const Position& iP,
-                             const T density,
-                             const MathVector<T, L::dimD>& velocity) {
-      { INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::setVariables",4) }
-
-        Base::setVariables(haloDistributionPtr, iP, density, velocity);
+    inline void calculateRelaxationTime(T * haloDistributionNext_Ptr,
+                                        T * haloDistributionPrevious_Ptr,
+                                        const Position& iP) {
+      { INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::calculate",4) }
 
       for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
         T equilibrium_iQ = Equilibrium_::calculate(Base::density, Base::velocity,
                                                    Base::velocity2, iQ);
 
-        f_Forced[iQ] = haloDistributionPtr[hSD::getIndex(iP-uiL::celerity()[iQ], iQ)]
-          + forcingScheme.calculateCollisionSource(Base::force, Base::density,
-                                                   Base::velocity, Base::velocity2,
-                                                   equilibrium_iQ, iQ);
-        f_NonEq[iQ] = haloDistributionPtr[hSD::getIndex(iP-uiL::celerity()[iQ], iQ)]
-          - equilibrium_iQ;
+        haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)] =
+          haloDistributionPrevious_Ptr[hSD::getIndex(iP-uiL::celerity()[iQ], iQ)]
+          + Base::forcingScheme.calculateCollisionSource(Base::force, Base::density,
+                                                         Base::velocity, Base::velocity2,
+                                                         equilibrium_iQ, iQ);
+        haloDistributionPrevious_Ptr[hSD::getIndex(iP-uiL::celerity()[iQ], iQ)]
+          -= equilibrium_iQ;
       }
 
-      calculateAlpha();
-      tau = (T) 1.0/(Base::alpha*beta);
+      calculateAlpha(haloDistributionNext_Ptr, haloDistributionPrevious_Ptr, iP);
+      Base::tau = (T) 1.0/(Base::alpha*Base::beta);
+    }
+
+    DEVICE HOST
+    inline void collideAndStream(T * haloDistributionNext_Ptr,
+                                 const T * haloDistributionPrevious_Ptr,
+                                 const Position& iP, const unsigned int iQ) {
+      { INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::calculate",4) }
+
+      haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)] -= (T) 1.0/Base::tau
+        * haloDistributionPrevious_Ptr[hSD::getIndex(iP-uiL::celerity()[iQ], iQ)];
     }
 
     using Base::update;
-    using Base::calculate;
 
     using Base::getHydrodynamicVelocity;
     using Base::getDensity;
@@ -209,24 +210,19 @@ namespace lbm {
 
   protected:
     using Base::forcingScheme;
-    using Base::equilibrium;
-
-    using Base::tau;
-
-    const T beta;
-
-    MathVector<T, L::dimQ> f_Forced;
-    MathVector<T, L::dimQ> f_NonEq;
 
     DEVICE HOST
-    inline bool isDeviationSmall(const T error) {
-      INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::isDeviationSmall",6)
+    inline bool isDeviationSmall(const T * haloDistributionNext_Ptr,
+                                 const T * haloDistributionPrevious_Ptr,
+                                 const Position& iP, const T error) {
+      { INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::isDeviationSmall",6) }
 
-        bool isDeviationSmallR = true;
+      bool isDeviationSmallR = true;
       T deviation;
 
       for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
-        deviation = fabs(f_NonEq[iQ]/f_Forced[iQ]);
+        deviation = fabs(haloDistributionPrevious_Ptr[hSD::getIndex(iP-uiL::celerity()[iQ], iQ)]
+                         /haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)]);
 
         if(deviation > error) {
           isDeviationSmallR = false;
@@ -236,16 +232,19 @@ namespace lbm {
       return isDeviationSmallR;
     }
 
-    DEVICE HOST
-    T calculateAlphaMax() {
-      INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::calculateAlphaMax",6)
+    HOST DEVICE
+    T calculateAlphaMax(const T * haloDistributionNext_Ptr,
+                        const T * haloDistributionPrevious_Ptr,
+                        const Position& iP) {
+      { INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::calculateAlphaMax",6) }
 
-        T alphaMaxR = 2.5;
+      T alphaMaxR = 2.5;
       T alphaMaxTemp;
 
       for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
-        if(f_NonEq[iQ] > 0) {
-          alphaMaxTemp = fabs(f_Forced[iQ]/f_NonEq[iQ]);
+        if(haloDistributionPrevious_Ptr[hSD::getIndex(iP-uiL::celerity()[iQ], iQ)] > 0) {
+          alphaMaxTemp = fabs(haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)]
+             / haloDistributionPrevious_Ptr[hSD::getIndex(iP-uiL::celerity()[iQ], iQ)]);
 
           if(alphaMaxTemp < alphaMaxR) {
             alphaMaxR = alphaMaxTemp;
@@ -256,12 +255,14 @@ namespace lbm {
       return alphaMaxR;
     }
 
-    DEVICE HOST
-    inline T solveAlpha(const T alphaMin, const T alphaMax) {
-      INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::solveAlpha",6)
+    HOST DEVICE
+    inline T solveAlpha(const T * haloDistributionNext_Ptr,
+                        const T * haloDistributionPrevious_Ptr,
+                        const Position& iP, const T alphaMin, const T alphaMax) {
+      { INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::solveAlpha",6) }
 
-        std::shared_ptr<RootFinderFunctor<T>> entropicStepFunctor =
-        std::shared_ptr<RootFinderFunctor<T>>(new EntropicStepFunctor<T>(f_Forced, f_NonEq));
+      EntropicStepFunctor<T> entropicStepFunctor(haloDistributionNext_Ptr,
+                                                 haloDistributionPrevious_Ptr, iP);
       const T tolerance = 1e-5;
       const int iterationMax = 20;
       T alphaR = Base::alpha;
@@ -277,27 +278,33 @@ namespace lbm {
       return alphaR;
     }
 
-    DEVICE HOST
-    inline void calculateAlpha() {
-      INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::calculateAlpha",5)
+    HOST DEVICE
+    inline void calculateAlpha(const T * haloDistributionNext_Ptr,
+                               const T * haloDistributionPrevious_Ptr,
+                               const Position& iP) {
+      { INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::calculateAlpha",5) }
 
-        if(isDeviationSmall( (T) 1.0e-3)) {
-          Base::alpha = 2.0;
+      if(isDeviationSmall(haloDistributionNext_Ptr,
+                          haloDistributionPrevious_Ptr,
+                          iP, (T) 1.0e-3)) {
+        Base::alpha = 2.0;
+      }
+
+      else {
+        T alphaMax = calculateAlphaMax(haloDistributionNext_Ptr,
+                                       haloDistributionPrevious_Ptr, iP);
+
+        if(alphaMax < 2.) {
+          Base::alpha = 0.95 * alphaMax;
         }
 
         else {
-          T alphaMax = calculateAlphaMax();
-
-          if(alphaMax < 2.) {
-            Base::alpha = 0.95 * alphaMax;
-          }
-
-          else {
-            T alphaMin = 1.;
-            Base::alpha = solveAlpha(alphaMin, alphaMax);
-
-          }
+          T alphaMin = 1.;
+          Base::alpha = solveAlpha(haloDistributionNext_Ptr,
+                                   haloDistributionPrevious_Ptr, iP,
+                                   alphaMin, alphaMax);
         }
+      }
     }
   };
 
@@ -309,19 +316,12 @@ namespace lbm {
     using Base = Collision<T, CollisionType::ELBM>;
 
   public:
-    Collision(const T tau_in,
-              const MathVector<T, 3>& amplitude_in,
-              const MathVector<T, 3>& waveLength_in,
-              const unsigned int kMin_in, const unsigned int kMax_in)
-      : Base(tau_in, amplitude_in, waveLength_in,
-                                          kMin_in, kMax_in)
-    {}
+    using Base::Collision;
 
     using Base::update;
     using Base::setForce;
-    using Base::setVariables;
 
-    using Base::calculate;
+    using Base::collideAndStream;
 
     using Base::getHydrodynamicVelocity;
     using Base::getDensity;
@@ -332,30 +332,33 @@ namespace lbm {
   private:
     using Base::tau;
     using Base::alpha;
-    using Base::forcingScheme;
-    using Base::equilibrium;
-    using Base::f_Forced;
-    using Base::f_NonEq;
 
     using Base::isDeviationSmall;
     using Base::calculateAlphaMax;
     using Base::solveAlpha;
 
-    DEVICE HOST
-    inline T approximateAlpha() {
+    HOST DEVICE
+    inline T approximateAlpha(const T * haloDistributionNext_Ptr,
+                              const T * haloDistributionPrevious_Ptr,
+                              const Position& iP) {
       { INSTRUMENT_OFF("Collision<T, CollisionType::Approached_ELBM>::approximateAlpha",6) }
 
-      T a1 = 0.0;
-      T a2 = 0.0;
-      T a3 = 0.0;
-      T a4 = 0.0;
+      T a1 = (T) 0;
+      T a2 = (T) 0;
+      T a3 = (T) 0;
+      T a4 = (T) 0;
 
       for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
-        T temp = f_NonEq[iQ]/f_Forced[iQ];
-        a1 += f_NonEq[iQ]*temp;
-        a2 += f_NonEq[iQ]*temp*temp;
-        a3 += f_NonEq[iQ]*temp*temp*temp;
-        a4 += f_NonEq[iQ]*temp*temp*temp*temp;
+        T temp = haloDistributionPrevious_Ptr[hSD::getIndex(iP-uiL::celerity()[iQ], iQ)]
+          / haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)];
+        a1 += haloDistributionPrevious_Ptr[hSD::getIndex(iP-uiL::celerity()[iQ], iQ)]
+          *temp;
+        a2 += haloDistributionPrevious_Ptr[hSD::getIndex(iP-uiL::celerity()[iQ], iQ)]
+          *temp*temp;
+        a3 += haloDistributionPrevious_Ptr[hSD::getIndex(iP-uiL::celerity()[iQ], iQ)]
+          *temp*temp*temp;
+        a4 += haloDistributionPrevious_Ptr[hSD::getIndex(iP-uiL::celerity()[iQ], iQ)]
+          *temp*temp*temp*temp;
       }
 
       a1 *= 1.0/2.0;
@@ -369,25 +372,30 @@ namespace lbm {
       return alphaR;
     }
 
-    DEVICE HOST
-    inline void calculateAlpha() {
+    HOST DEVICE
+    inline void calculateAlpha(const T * haloDistributionNext_Ptr,
+                               const T * haloDistributionPrevious_Ptr,
+                               const Position& iP) {
       { INSTRUMENT_OFF("Collision<T, CollisionType::Approached_ELBM>::calculateAlpha",5) }
 
         if(isRelativeDeviationSmall( (T) 1.0e-3)) {
-          T alphaApproximated = approximateAlpha();
-          alpha = alphaApproximated;
+          T alphaApproximated = approximateAlpha(haloDistributionNext_Ptr,
+                                                 haloDistributionPrevious_Ptr, iP);
+          Base::alpha = alphaApproximated;
         }
         else {
-          T alphaMax = calculateAlphaMax();
+          T alphaMax = Base::calculateAlphaMax(haloDistributionNext_Ptr,
+                                               haloDistributionPrevious_Ptr, iP);
 
           if(alphaMax < 2.) {
-            alpha = 0.95 * alphaMax;
+          Base::alpha = 0.95 * alphaMax;
           }
 
           else {
             T alphaMin = 1.;
-            alpha = solveAlpha(alphaMin, alphaMax);
-
+            Base::alpha = Base::solveAlpha(haloDistributionNext_Ptr,
+                                           haloDistributionPrevious_Ptr, iP,
+                                           alphaMin, alphaMax);
           }
         }
     }
@@ -401,11 +409,12 @@ namespace lbm {
     using Base = Collision<T, CollisionType::ELBM>;
 
   public:
+    using Base::Collision;
+
     using Base::update;
     using Base::setForce;
-    using Base::setVariables;
 
-    using Base::calculate;
+    using Base::collideAndStream;
 
     using Base::getHydrodynamicVelocity;
     using Base::getDensity;
@@ -414,49 +423,24 @@ namespace lbm {
     using Base::getAlpha;
 
   private:
-    using Base::alpha;
-    using Base::forcingScheme;
-    using Base::equilibrium;
-
-    using Base::f_Forced;
-    using Base::f_NonEq;
-
-    using Base::isDeviationSmall;
-    using Base::calculateAlphaMax;
-
     DEVICE HOST
-    inline T solveAlpha(const T alphaMin, const T alphaMax) {
-      { INSTRUMENT_OFF("Collision<T, CollisionType::ForcedNR_ELBM>::solveAlpha",6) }
+    inline void calculateAlpha(const T * haloDistributionNext_Ptr,
+                               const T * haloDistributionPrevious_Ptr,
+                               const Position& iP) {
+      { INSTRUMENT_OFF("Collision<T, CollisionType::ForcedNR_ELBM>::calculateAlpha",5) }
 
-      std::shared_ptr<RootFinderFunctor<T>> entropicStepFunctor =
-        std::shared_ptr<RootFinderFunctor<T>>(new EntropicStepFunctor<T>(f_Forced, f_NonEq));
-      const T tolerance = 1e-5;
-      const int iterationMax = 20;
-      T alphaR = alpha;
-
-      bool hasConverged = NewtonRaphsonSolver(entropicStepFunctor, tolerance, iterationMax,
-                                              alphaR, alphaMin, alphaMax);
-
-      if(!hasConverged) {
-        return 2.0;
-      }
-
-      return alphaR;
-    }
-
-    DEVICE HOST
-    inline T calculateAlpha() {
-      INSTRUMENT_OFF("Collision<T, CollisionType::ForcedNR_ELBM>::calculateAlpha",5)
-
-        T alphaMax = calculateAlphaMax();
+      T alphaMax = Base::calculateAlphaMax(haloDistributionNext_Ptr,
+                                           haloDistributionPrevious_Ptr, iP);
 
       if(alphaMax < 2.) {
-        alpha = 0.95 * alphaMax;
+        Base::alpha = 0.95 * alphaMax;
       }
 
       else {
         T alphaMin = 1.;
-        alpha = solveAlpha(alphaMin, alphaMax);
+        Base::alpha = Base::solveAlpha(haloDistributionNext_Ptr,
+                                       haloDistributionPrevious_Ptr, iP,
+                                       alphaMin, alphaMax);
       }
     }
   };
@@ -468,11 +452,12 @@ namespace lbm {
     using Base = Collision<T, CollisionType::ForcedNR_ELBM>;
 
   public:
+    using Base::Collision;
+
     using Base::update;
     using Base::setForce;
-    using Base::setVariables;
 
-    using Base::calculate;
+    using Base::collideAndStream;
 
     using Base::getHydrodynamicVelocity;
     using Base::getDensity;
@@ -481,26 +466,17 @@ namespace lbm {
     using Base::getAlpha;
 
   private:
-    using Base::alpha;
-    using Base::f_Forced;
-    using Base::f_NonEq;
-
-    using Base::forcingScheme;
-    using Base::equilibrium;
-
-    using Base::isDeviationSmall;
-    using Base::calculateAlphaMax;
-    using Base::calculateAlpha;
-
     DEVICE HOST
-    inline T solveAlpha(const T alphaMin, const T alphaMax) {
+    inline T solveAlpha(const T * haloDistributionNext_Ptr,
+                        const T * haloDistributionPrevious_Ptr,
+                        const Position& iP, const T alphaMin, const T alphaMax) {
       { INSTRUMENT_OFF("Collision<T, CollisionType::ForcedBNR_ELBM>::solveAlpha",6) }
 
-      std::shared_ptr<RootFinderFunctor<T>> entropicStepFunctor =
-        std::shared_ptr<RootFinderFunctor<T>>(new EntropicStepFunctor<T>(f_Forced, f_NonEq));
+      EntropicStepFunctor<T> entropicStepFunctor(haloDistributionNext_Ptr,
+                                                 haloDistributionPrevious_Ptr, iP);
       const T tolerance = 1e-5;
       const int iterationMax = 20;
-      T alphaR = alpha;
+      T alphaR = Base::alpha;
 
       bool hasConverged = Bisection_NewtonRaphsonSolver(entropicStepFunctor,
                                                         tolerance, iterationMax,
@@ -518,5 +494,3 @@ namespace lbm {
   typedef Collision<dataT, collisionT> Collision_;
 
 }
-
-#endif // COLLISION_H

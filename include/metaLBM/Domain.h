@@ -1,5 +1,4 @@
-#ifndef DOMAIN_H
-#define DOMAIN_H
+#pragma once
 
 #include "Options.h"
 #include "Helpers.h"
@@ -8,13 +7,21 @@
 
 namespace lbm {
 
-  constexpr int globalLengthInt[3] = {::lbm::globalLengthX,
-                                     ::lbm::L::dimD>1 ? ::lbm::globalLengthY: 1,
-                                     ::lbm::L::dimD>2 ? ::lbm::globalLengthZ: 1};
+  constexpr int globalLengthInt[3] = {globalLengthX,
+                                     L::dimD>1 ? globalLengthY: 1,
+                                     L::dimD>2 ? globalLengthZ: 1};
 
-  constexpr ptrdiff_t globalLengthPtrdiff_t[3] = {::lbm::globalLengthX,
-                                                 ::lbm::L::dimD>1 ? ::lbm::globalLengthY: 1,
-                                                 ::lbm::L::dimD>2 ? ::lbm::globalLengthZ: 1};
+  constexpr unsigned int globalLengthUInt[3] = {globalLengthX,
+                                                L::dimD>1 ? globalLengthY: 1,
+                                                L::dimD>2 ? globalLengthZ: 1};
+
+  constexpr ptrdiff_t globalLengthPtrdiff_t[3] = {globalLengthX,
+                                                 L::dimD>1 ? ::lbm::globalLengthY: 1,
+                                                 L::dimD>2 ? ::lbm::globalLengthZ: 1};
+
+  constexpr Position localLength = {globalLengthX/numProcs,
+                                    L::dimD>1 ? globalLengthY: 1,
+                                    L::dimD>2 ? globalLengthZ: 1};
 
   /**
    * Domain defining space where DynamicArray lives and providing them
@@ -40,13 +47,13 @@ namespace lbm {
     }
 
     HOST DEVICE
-    static inline constexpr Position pEnd() {
-      return ProjectPadRealAndLeave1<unsigned int, L::dimD>::Do({{globalLengthX/NPROCS,
+    static INLINE constexpr Position pEnd() {
+      return ProjectPadRealAndLeave1<unsigned int, L::dimD>::Do({{globalLengthX/numProcs,
             globalLengthY, globalLengthZ}});
     }
 
     HOST DEVICE
-    static inline constexpr Position pLength() {
+    static INLINE constexpr Position pLength() {
       return pEnd();
     }
 
@@ -62,23 +69,22 @@ namespace lbm {
     }
 
     HOST DEVICE
-    static inline constexpr Position sEnd() {
-      return ProjectAndLeave1<unsigned int, L::dimD>::Do({{globalLengthX/NPROCS,
-            globalLengthY, globalLengthZ}});
+    static INLINE constexpr Position sEnd() {
+      return localLength;
     }
 
     HOST DEVICE
-    static inline constexpr Position sLength() {
+    static INLINE constexpr Position sLength() {
       return sEnd();
     }
 
     HOST DEVICE
-    static inline unsigned int sVolume() {
+    static INLINE unsigned int sVolume() {
       return sLength()[d::X]*sLength()[d::Y]*sLength()[d::Z];
     }
 
     HOST DEVICE
-    static inline unsigned int getIndex(const Position& iP) {
+    static INLINE unsigned int getIndex(const Position& iP) {
       return pLength()[d::Z] * (pLength()[d::Y] * iP[d::X] + iP[d::Y]) + iP[d::Z];
     }
 
@@ -96,22 +102,22 @@ namespace lbm {
 
   public:
     HOST DEVICE
-    static inline constexpr Position pStart() {
+    static INLINE constexpr Position pStart() {
       return Position({0, 0, 0});
     }
 
     HOST DEVICE
-    static inline constexpr Position pEnd() {
-      return ProjectAndLeave1<unsigned int, L::dimD>::Do({{NPROCS * Base::pLength()[d::X], Base::pLength()[d::Y],Base::pLength()[d::Z]}});
+    static INLINE constexpr Position pEnd() {
+      return ProjectAndLeave1<unsigned int, L::dimD>::Do({{numProcs * Base::pLength()[d::X], Base::pLength()[d::Y],Base::pLength()[d::Z]}});
     }
 
     HOST DEVICE
-    static inline constexpr Position pLength() {
+    static INLINE constexpr Position pLength() {
       return pEnd();
     }
 
     HOST DEVICE
-    static inline unsigned int pVolume() {
+    static INLINE unsigned int pVolume() {
       return pLength()[d::X]*pLength()[d::Y]*pLength()[d::Z];
     }
 
@@ -130,18 +136,18 @@ namespace lbm {
     }
 
     HOST DEVICE
-    static inline constexpr Position sEnd() {
+    static INLINE constexpr Position sEnd() {
       return ProjectAndLeave1<unsigned int, L::dimD>::Do({{globalLengthX, globalLengthY,
               globalLengthZ}});
     }
 
     HOST DEVICE
-    static inline constexpr Position sLength() {
+    static INLINE constexpr Position sLength() {
       return sEnd();
     }
 
     HOST DEVICE
-    static inline unsigned int sVolume() {
+    static INLINE unsigned int sVolume() {
       return sLength()[d::X]*sLength()[d::Y]*sLength()[d::Z];
     }
 
@@ -156,7 +162,7 @@ namespace lbm {
 
 
     HOST DEVICE
-    static inline unsigned int getIndex(const Position& iP) {
+    static INLINE unsigned int getIndex(const Position& iP) {
       const unsigned int indexLocal = Base::getIndex({iP[d::X] - iP[d::X]/Base::length()[d::X] * Base::length()[d::X], iP[d::Y], iP[d::Z]});
       return iP[d::X]/Base::length()[d::X] * Base::volume() + indexLocal;
     }
@@ -185,7 +191,7 @@ namespace lbm {
     }
 
     HOST DEVICE
-    static inline constexpr Position length() {
+    static INLINE constexpr Position length() {
       return Base::sLength() + L::halo() + L::halo();
     }
 
@@ -195,12 +201,12 @@ namespace lbm {
     }
 
     HOST DEVICE
-    static inline unsigned int getIndex(const Position& iP) {
+    static INLINE unsigned int getIndex(const Position& iP) {
       return length()[d::Z] * (length()[d::Y] * iP[d::X] + iP[d::Y]) + iP[d::Z];
     }
 
     HOST DEVICE
-    static inline unsigned int getIndexLocal(const Position& iP) {
+    static INLINE unsigned int getIndexLocal(const Position& iP) {
       return Base::getIndex(iP - L::halo());
     }
 
@@ -225,13 +231,13 @@ namespace lbm {
     using Base::getIndexLocal;
 
     HOST DEVICE
-    static inline unsigned int getIndex(const Position& iP,
+    static INLINE unsigned int getIndex(const Position& iP,
                                         const unsigned int iC) {
       return getIndex(iP) * L::dimQ + iC;
     }
 
     HOST DEVICE
-    static inline unsigned int getIndex(const unsigned int index,
+    static INLINE unsigned int getIndex(const unsigned int index,
                                         const unsigned int iC) {
       return index * L::dimQ + iC;
     }
@@ -255,15 +261,13 @@ namespace lbm {
     using Base::getIndex;
     using Base::getIndexLocal;
 
-    HOST DEVICE
-    static inline unsigned int getIndex(const Position& iP,
-                                        const unsigned int iC) {
+    HOST DEVICE INLINE
+    static unsigned int getIndex(const Position& iP, const unsigned int iC) {
       return iC * volume() + getIndex(iP);
     }
 
-    HOST DEVICE
-    static inline unsigned int getIndex(const unsigned int index,
-                                        const unsigned int iC) {
+    HOST DEVICE INLINE
+    static unsigned int getIndex(const unsigned int index, const unsigned int iC) {
       return iC * volume() + index;
     }
 
@@ -328,5 +332,3 @@ namespace lbm {
                  MemoryLayout::Generic, L::dimQ> bXSD;
 
 } // namespace lbm
-
-#endif // DOMAIN_H

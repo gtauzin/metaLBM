@@ -1,12 +1,10 @@
-#ifndef DYNAMICARRAY_H
-#define DYNAMICARRAY_H
+#pragma once
 
 #include <cstring>
 #include <stdlib.h>
 
 #include "Commons.h"
 #include "Options.h"
-#include "StaticArray.h"
 
 #ifdef USE_FFTW
   #include <fftw3-mpi.h>
@@ -135,5 +133,3 @@ namespace lbm {
   }
 
 }
-
-#endif // DYNAMICARRAY_H

@@ -1,5 +1,4 @@
-#ifndef ALGORITHM_H
-#define ALGORITHM_H
+#pragma once
 
 #include <chrono>
 #include <utility>
@@ -49,11 +48,13 @@ namespace lbm {
     Collision_ collision;
 
     Computation<architecture, L::dimD> computationLocal;
-    Computation<architecture, L::dimD> computationHalo;
+    Computation<architecture, L::dimD> computationBottom;
+    Computation<architecture, L::dimD> computationTop;
+    Computation<architecture, L::dimD> computationFront;
+    Computation<architecture, L::dimD> computationBack;
 
     std::chrono::duration<double> dtComputation;
     std::chrono::duration<double> dtCommunication;
-    std::chrono::duration<double> dtTotal;
 
   public:
     bool isStored;
@@ -75,11 +76,20 @@ namespace lbm {
       , collision(relaxationTime, forceAmplitude, forceWaveLength, forcekMin, forcekMax)
       , computationLocal(lSD::sStart()+L::halo(),
                          lSD::sEnd()+L::halo())
-      , computationHalo(hSD::start(),
-                        hSD::end())
+      , computationBottom({hSD::start()[d::X], L::halo()[d::Y], hSD::start()[d::Z]},
+                          {hSD::end()[d::X], 2*L::halo()[d::Y], hSD::end()[d::Z]})
+      , computationTop({hSD::start()[d::X], L::halo()[d::Y]+lSD::sLength()[d::Y] - 1,
+                        hSD::start()[d::Z]},
+                       {hSD::end()[d::X],  2*L::halo()[d::Y]+ lSD::sLength()[d::Y] - 1,
+                        hSD::end()[d::Z]})
+      , computationFront({hSD::start()[d::X], hSD::start()[d::Y], L::halo()[d::Z]},
+                         {hSD::end()[d::X], hSD::end()[d::Y], 2*L::halo()[d::Z]})
+      , computationBack({hSD::start()[d::X], hSD::start()[d::Y],
+                         L::halo()[d::Z]+lSD::sLength()[d::Z] - 1},
+                        {hSD::end()[d::X], hSD::end()[d::Y],
+                         2*L::halo()[d::Z] + lSD::sLength()[d::Z] - 1})
       , dtComputation()
       , dtCommunication()
-      , dtTotal()
       , isStored(false)
     {}
 
@@ -102,11 +112,6 @@ namespace lbm {
     double getComputationTime() {
       return dtComputation.count();
     }
-
-    double getTotalTime() {
-      return dtTotal.count();
-    }
-
 
   protected:
     DEVICE HOST
@@ -152,13 +157,6 @@ namespace lbm {
     using Base::communication;
     using Base::collision;
 
-    using Base::computationLocal;
-    using Base::computationHalo;
-
-    using Base::dtComputation;
-    using Base::dtCommunication;
-    using Base::dtTotal;
-
     Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
              partitionningT, implementation, L::dimD> periodicBoundary;
 
@@ -174,10 +172,10 @@ namespace lbm {
       collision.calculateRelaxationTime(haloDistributionNext_Ptr,
                                         haloDistributionPrevious_Ptr, iP);
 
+      #pragma unroll
       for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
-        haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)] =
-          collision.calculate(haloDistributionPrevious_Ptr,
-                              iP-uiL::celerity()[iQ], iQ);
+        collision.collideAndStream(haloDistributionNext_Ptr,
+                                   haloDistributionPrevious_Ptr, iP, iQ);
       }
 
       if(Base::isStored) {
@@ -198,30 +196,31 @@ namespace lbm {
       communication.communicateHalos(haloDistributionPrevious_Ptr);
 
       // TODO: Run only at the boundaries
-      computationHalo.Do(periodicBoundary,
-                         haloDistributionPrevious_Ptr);
+      Base::computationBottom.Do(periodicBoundary.applyYBottom,
+                                 haloDistributionPrevious_Ptr);
+      Base::computationTop.Do(periodicBoundary.applyYTop,
+                              haloDistributionPrevious_Ptr);
+      Base::computationFront.Do(periodicBoundary.applyZFront,
+                                haloDistributionPrevious_Ptr);
+      Base::computationBack.Do(periodicBoundary.applyZBack,
+                               haloDistributionPrevious_Ptr);
 
       //boundary.apply(f_Previous.haloData());
 
       auto t1 = std::chrono::high_resolution_clock::now();
 
-      computationLocal.Do(*this);
+      Base::computationLocal.Do(*this);
 
       auto t2 = std::chrono::high_resolution_clock::now();
 
-      dtCommunication = (t1 - t0);
-      dtComputation = (t2 - t1);
-      dtTotal = (t2 - t0);
+      Base::dtCommunication = (t1 - t0);
+      Base::dtComputation = (t2 - t1);
     }
 
     using Base::pack;
     using Base::unpack;
     using Base::getCommunicationTime;
     using Base::getComputationTime;
-    using Base::getTotalTime;
   };
 
-
 }
-
-#endif // ALGORITHM_H

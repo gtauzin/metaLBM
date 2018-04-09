@@ -1,5 +1,4 @@
-#ifndef WRITER_H
-#define WRITER_H
+#pragma once
 
 #include <iostream>
 #include <string>
@@ -10,7 +9,6 @@
 
 #include "Commons.h"
 #include "Options.h"
-#include "StaticArray.h"
 #include "MathVector.h"
 #include "Domain.h"
 #include "Field.h"
@@ -281,8 +279,8 @@ namespace lbm {
                          | S_IROTH | S_IXOTH);
         if (dirError == -1)
           {
-            std::cout << "Error creating directory! It probably already exists..."
-                      << std::endl;
+            //std::cout << "Error creating directory! It probably already exists..."
+            //          << std::endl;
           }
       }
 
@@ -575,5 +573,3 @@ namespace lbm {
   typedef ScalarAnalysisWriter<dataT, InputOutputFormat::ascii> ScalarAnalysisWriter_;
   typedef SpectralAnalysisWriter<dataT, InputOutputFormat::ascii> SpectralAnalysisWriter_;
 }
-
-#endif // WRITER_H

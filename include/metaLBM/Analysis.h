@@ -1,5 +1,4 @@
-#ifndef ANALYSIS_H
-#define ANALYSIS_H
+#pragma once
 
 #include <cmath>
 
@@ -195,8 +194,4 @@ namespace lbm {
     using Base::spectra;
   };
 
-
-
 }
-
-#endif // ANALYSIS_H

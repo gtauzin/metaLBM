@@ -1,5 +1,4 @@
-#ifndef COMMONS_H
-#define COMMONS_H
+#pragma once
 
 #include <iostream>
 
@@ -20,6 +19,7 @@
   #define DEVICE __device__
   #define CONSTANT __constant__
   #define GLOBAL __global__
+  #define INLINE __forceinline__
 
   #ifdef USE_NVTX
     #include <nvToolsExt.h>
@@ -50,6 +50,8 @@
 
     #define INSTRUMENT_ON(name,colorID) Tracer uniq_name_using_macros(name, colorID);
 
+  #else
+    #define INSTRUMENT_ON(name,colorID)
   #endif // USE_NVTX
 
 #else // __NVCC__
@@ -59,6 +61,7 @@
   #define DEVICE
   #define CONSTANT
   #define GLOBAL
+  #define INLINE __always_inline
 
   #ifdef USE_SCOREP
     #include <scorep/SCOREP_User.h>
@@ -77,5 +80,3 @@
 namespace lbm {
 
 }
-
-#endif // COMMONS_H

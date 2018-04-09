@@ -1,5 +1,4 @@
-#ifndef DISTRIBUTION_H
-#define DISTRIBUTION_H
+#pragma once
 
 #include <iostream>
 
@@ -50,5 +49,3 @@ namespace lbm {
   };
 
 }
-
-#endif // DISTRIBUTION_H

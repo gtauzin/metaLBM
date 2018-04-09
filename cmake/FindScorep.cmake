@@ -32,7 +32,7 @@ else(SCOREP_CONFIG_PATH)
 endif(SCOREP_CONFIG_PATH)
 
 if(NOT SCOREP_CONFIG)
-  message(STATUS "no scorep-config found")
+  message(FATAL_ERROR "no scorep-config found")
   set(SCOREP_FOUND false)
 else(NOT SCOREP_CONFIG)
 

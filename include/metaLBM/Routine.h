@@ -1,5 +1,4 @@
-#ifndef ROUTINE_H
-#define ROUTINE_H
+#pragma once
 
 #include <chrono>
 
@@ -27,6 +26,8 @@ namespace lbm {
     Distribution<T, architecture> distribution;
     const unsigned int numberElements;
 
+    Curl<double, Architecture::CPU, PartitionningType::OneD,
+         L::dimD, L::dimD> curlVelocity;
     ScalarAnalysisList<T, architecture> scalarAnalysisList;
     SpectralAnalysisList<T, architecture> spectralAnalysisList;
 
@@ -38,8 +39,11 @@ namespace lbm {
     double differenceMass;
     double computationTime;
     double communicationTime;
-    double writeTime;
+    double writeFieldTime;
+    double writeAnalysisTime;
     double totalTime;
+    std::chrono::duration<double> dtWriteField;
+    std::chrono::duration<double> dtWriteAnalysis;
 
   public:
     Routine(const MathVector<int, 3>& rankMPI_in,
@@ -50,6 +54,10 @@ namespace lbm {
       , fieldWriter(prefix, rankMPI_in)
       , distributionWriter(prefix, rankMPI_in)
       , fieldList(rankMPI_in, numberElements_in, fieldWriter)
+      , curlVelocity(fieldList.velocity.getLocalData(), fieldList.vorticity.getLocalData(),
+                     numberElements, Cast<unsigned int,
+                     ptrdiff_t, 3>::Do(gSD::sLength()).data(),
+                     gFD::offset(rankMPI_in))
       , distribution(initLocalDistribution<T, architecture>(fieldList.density,
                                                             fieldList.velocity,
                                                             rankMPI_in))
@@ -63,16 +71,37 @@ namespace lbm {
       , differenceMass(0.0)
       , computationTime(0.0)
       , communicationTime(0.0)
-      , writeTime(0.0)
+      , writeFieldTime(0.0)
+      , writeAnalysisTime(0.0)
       , totalTime(0.0)
+      , dtWriteField()
+      , dtWriteAnalysis()
     {}
 
     void compute() {
       { INSTRUMENT_ON("Routine<T>::compute",1) }
       algorithm.unpack();
 
-      writeFields(startIteration);
-      writeAnalyses(startIteration);
+      auto t0 = std::chrono::high_resolution_clock::now();
+      auto t1 = std::chrono::high_resolution_clock::now();
+      auto t2 = std::chrono::high_resolution_clock::now();
+
+      if(writeFieldInit) {
+        t0 = std::chrono::high_resolution_clock::now();
+        writeFields(startIteration);
+        t1 = std::chrono::high_resolution_clock::now();
+        dtWriteField = (t1 - t0);
+        writeFieldTime += dtWriteField.count();
+      }
+
+      if(writeAnalysisInit) {
+        t0 = std::chrono::high_resolution_clock::now();
+        writeAnalyses(startIteration);
+        t1 = std::chrono::high_resolution_clock::now();
+        dtWriteAnalysis = (t1 - t0);
+        writeAnalysisTime += dtWriteAnalysis.count();
+      }
+
       printInputs();
 
       initialMass = communication.reduce(fieldList.density.getLocalData());
@@ -84,17 +113,29 @@ namespace lbm {
 
         algorithm.iterate(iteration);
 
+        if(algorithm.isStored) {
+          if(writeVorticity) curlVelocity.executeSpace();
+        }
+
+        t0 = std::chrono::high_resolution_clock::now();
         writeFields(iteration);
+        t1 = std::chrono::high_resolution_clock::now();
         writeAnalyses(iteration);
+        t2 = std::chrono::high_resolution_clock::now();
+        dtWriteField = (t1 - t0);
+        writeFieldTime += dtWriteField.count();
+        dtWriteAnalysis = (t2 - t1);
+        writeAnalysisTime += dtWriteAnalysis.count();
 
         communicationTime += algorithm.getCommunicationTime();
         computationTime += algorithm.getComputationTime();
-        totalTime += algorithm.getTotalTime();
       }
 
       finalMass = communication.reduce(fieldList.density.getLocalData());
 
       differenceMass = fabs(initialMass-finalMass)/initialMass;
+      totalTime = computationTime + communicationTime
+        + writeFieldTime + writeAnalysisTime;
       printOutputs();
     }
 
@@ -104,33 +145,38 @@ namespace lbm {
       if (communication.rankMPI == MathVector<int, 3>({0, 0, 0})) {
         std::cout.precision(15);
         std::cout << "-------------------OPTIONS-------------------" << std::endl
-                  << "Lattice         : D" << L::dimD << "Q" << L::dimQ << std::endl
-                  << "Global lengths  : " << gSD::sLength() << std::endl
-                  << "Global memory   : " << gSD::sVolume()*sizeof(dataT) << "B" << std::endl
+                  << "Lattice                  : D" << L::dimD << "Q" << L::dimQ << std::endl
+                  << "Global lengths           : " << gSD::sLength() << std::endl
+                  << "Global memory            : " << gSD::sVolume()*sizeof(dataT) << "B"
+                  << std::endl
                   << "----------------------------------------------" << std::endl
-                  << "NPROCS          : " << NPROCS << "" << std::endl
+                  << "NPROCS                   : " << numProcs << "" << std::endl
+                  << "NTHREADS                 : " << numThreads << "" << std::endl
                   << "-------------------PARAMETERS-----------------" << std::endl
-                  << "Relaxation time : " << relaxationTime << std::endl
-                  << "Viscosity       : " << L::cs2 * (relaxationTime - 0.5) << std::endl
-                  << "Start iteration : " << startIteration << std::endl
-                  << "End iteration   : " << endIteration << std::endl
+                  << "Relaxation time          : " << relaxationTime << std::endl
+                  << "Viscosity                : " << L::cs2 * (relaxationTime - 0.5)
+                  << std::endl
+                  << "Start iteration          : " << startIteration << std::endl
+                  << "End iteration            : " << endIteration << std::endl
                   << "----------------------------------------------" << std::endl;
       }
     }
 
     void printOutputs() {
       if (communication.rankMPI == MathVector<int, 3>({0, 0, 0})) {
-        std::cout << "--------------------OUTPUTS-------------------" << std::endl
-                  << "Total time      : " << totalTime << " s" << std::endl
-                  << "Comp time       : " << computationTime << " s" << std::endl
-                  << "Comm time       : " << communicationTime << " s" << std::endl;
+        std::cout << "-------------------OUTPUTS-_------------------" << std::endl
+                  << "Total time               : " << totalTime << " s" << std::endl
+                  << "Computatation time       : " << computationTime << " s" << std::endl
+                  << "Communication time       : " << communicationTime << " s" << std::endl
+                  << "Analysis time            : " << writeAnalysisTime << " s" << std::endl
+                  << "Write time               : " << writeFieldTime << " s" << std::endl;
 
         const double mlups = (gSD::sVolume() * 1e-6)/(totalTime / (endIteration-startIteration+1));
 
-        std::cout << "MLUPS           : " << mlups << std::endl
-                  << "Initial mass    : " << initialMass << std::endl
-                  << "Final mass      : " << finalMass << std::endl
-                  << "% mass diff.    : " << differenceMass << std::endl
+        std::cout << "MLUPS                   : " << mlups << std::endl
+                  << "Initial mass            : " << initialMass << std::endl
+                  << "Final mass              : " << finalMass << std::endl
+                  << "% mass diff.            : " << differenceMass << std::endl
                   << "----------------------------------------------" << std::endl;
       }
     }
@@ -140,6 +186,7 @@ namespace lbm {
 
       if(fieldWriter.getIsWritten(iteration)) {
         fieldWriter.openFile(iteration);
+
         fieldList.writeFields();
         fieldWriter.closeFile();
       }
@@ -169,5 +216,3 @@ namespace lbm {
   };
 
 } // namespace lbm
-
-#endif // ROUTINE_H
