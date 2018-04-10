@@ -195,7 +195,6 @@ namespace lbm {
 
       communication.communicateHalos(haloDistributionPrevious_Ptr);
 
-      // TODO: Run only at the boundaries
       Base::computationBottom.Do(periodicBoundary.applyYBottom,
                                  haloDistributionPrevious_Ptr);
       Base::computationTop.Do(periodicBoundary.applyYTop,
@@ -205,7 +204,7 @@ namespace lbm {
       Base::computationBack.Do(periodicBoundary.applyZBack,
                                haloDistributionPrevious_Ptr);
 
-      //boundary.apply(f_Previous.haloData());
+      //boundary.apply();
 
       auto t1 = std::chrono::high_resolution_clock::now();
 

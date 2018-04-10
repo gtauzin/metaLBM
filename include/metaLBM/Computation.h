@@ -32,7 +32,6 @@ namespace lbm {
 
   public:
    using Base::Computation;
-    //using Base::Do;
 
     template<typename Callback, typename... Arguments>
     void Do(Stream<Architecture::CPU> stream,
@@ -61,7 +60,6 @@ namespace lbm {
 
   public:
    using Base::Computation;
-    //using Base::Do;
 
     template<typename Callback, typename... Arguments>
     void Do(Stream<Architecture::CPU> stream,
@@ -93,7 +91,6 @@ namespace lbm {
 
   public:
    using Base::Computation;
-    //using Base::Do;
 
     template<typename Callback, typename... Arguments>
     void Do(Stream<Architecture::CPU> stream,
