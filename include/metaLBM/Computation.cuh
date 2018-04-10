@@ -5,6 +5,7 @@
 #include "Computation.h"
 #include "Commons.h"
 #include "Options.h"
+#include "Stream.cuh"
 
 namespace lbm {
 
@@ -56,72 +57,90 @@ namespace lbm {
 
  template<>
   class Computation<Architecture::GPU, 1>
-    : public Computation<Architecture::Generic, 1> {
+    : public Computation<Architecture::GPU, 0> {
   private:
-   using Computation<Architecture::Generic, 1>::start;
-   using Computation<Architecture::Generic, 1>::end;
-   using Computation<Architecture::Generic, 1>::length;
+   using Base = Computation<Architecture::GPU, 0>;
 
   public:
-   using Computation<Architecture::Generic, 1>::Computation;
+   using Base::Computation;
+   //using Base::Do;
 
     template<typename Callback, typename... Arguments>
-    void Do(Callback function, const Arguments... arguments) {
-      INSTRUMENT_OFF("Computation<Architecture::GPU, 1>::Do<Callback>",3)
+    void Do(Stream<Architecture::GPU> stream,
+            Callback function, const Arguments... arguments) {
+      { INSTRUMENT_OFF("Computation<Architecture::GPU, 1>::Do<Callback>",3) }
 
       dim3 dimBlock(128, 1, 1);
-      dim3 dimGrid((127+length[d::X])/128, 1, 1);
-      kernel_1D<Callback><<<dimGrid, dimBlock>>>(start, end, function, arguments...);
-      CUDA_CALL ( cudaGetLastError(); )
-      CUDA_CALL( cudaDeviceSynchronize(); )
+      dim3 dimGrid((127+Base::length[d::X])/128, 1, 1);
+      kernel_1D<<<dimGrid, dimBlock, 0, stream.get()>>>(Base::start, Base::end,
+                                                        function, arguments...);
+      CUDA_CALL ( cudaGetLastError(); );
+      CUDA_CALL( cudaDeviceSynchronize() );
     }
+
+   template<typename Callback, typename... Arguments>
+   void Do(Callback function, const Arguments... arguments) {
+     Do<Callback>(DefaultStream<Architecture::GPU>(), function, arguments...);
+   }
   };
 
  template<>
   class Computation<Architecture::GPU, 2>
-    : public Computation<Architecture::Generic, 2> {
+    : public Computation<Architecture::GPU, 0> {
   private:
-   using Computation<Architecture::Generic, 2>::start;
-   using Computation<Architecture::Generic, 2>::end;
-   using Computation<Architecture::Generic, 2>::length;
+   using Base = Computation<Architecture::GPU, 0>;
 
   public:
-   using Computation<Architecture::Generic, 2>::Computation;
+   using Base::Computation;
+   //using Base::Do;
 
     template<typename Callback, typename... Arguments>
-    void Do(Callback function, const Arguments... arguments) {
-      INSTRUMENT_OFF("Computation<Architecture::GPU, 2>::Do<Callback>",3)
+    void Do(Stream<Architecture::GPU> stream,
+            Callback function, const Arguments... arguments) {
+      { INSTRUMENT_OFF("Computation<Architecture::GPU, 2>::Do<Callback>",3) }
 
       dim3 dimBlock(128, 1, 1);
-      dim3 dimGrid((127+length[d::Y])/128, length[d::X], 1);
-      kernel_2D<<<dimGrid, dimBlock>>>(start, end, function, arguments...);
-      CUDA_CALL ( cudaGetLastError(); )
-      CUDA_CALL( cudaDeviceSynchronize(); )
+      dim3 dimGrid((127+Base::length[d::Y])/128, Base::length[d::X], 1);
+      kernel_2D<<<dimGrid, dimBlock, 0, stream.get()>>>(Base::start, Base::end,
+                                                        function, arguments...);
+      CUDA_CALL ( cudaGetLastError() );
+      CUDA_CALL( cudaDeviceSynchronize() );
     }
-  };
+
+   template<typename Callback, typename... Arguments>
+   void Do(Callback function, const Arguments... arguments) {
+     Do<Callback>(DefaultStream<Architecture::GPU>(), function, arguments...);
+   }
+ };
 
  template<>
   class Computation<Architecture::GPU, 3>
-    : public Computation<Architecture::Generic, 3> {
+    : public Computation<Architecture::GPU, 0> {
   private:
-   using Computation<Architecture::Generic, 3>::start;
-   using Computation<Architecture::Generic, 3>::end;
-   using Computation<Architecture::Generic, 3>::length;
+   using Base = Computation<Architecture::GPU, 0>;
 
   public:
-   using Computation<Architecture::Generic, 3>::Computation;
+   using Base::Computation;
+   //using Base::Do;
 
-    template<typename Callback, typename... Arguments>
-    void Do(Callback function, const Arguments... arguments) {
-      INSTRUMENT_OFF("Computation<Architecture::GPU, 3>::Do<Callback>",3)
+   template<typename Callback, typename... Arguments>
+   void Do(Stream<Architecture::GPU> stream,
+           Callback function, const Arguments... arguments) {
+     { INSTRUMENT_OFF("Computation<Architecture::GPU, 3>::Do<Callback>",3) }
 
-      dim3 dimBlock(128, 1, 1);
-      dim3 dimGrid((127+length[d::Z])/128, length[d::Y], length[d::X]);
+     dim3 dimBlock(128, 1, 1);
+     dim3 dimGrid((127+Base::length[d::Z])/128, Base::length[d::Y], Base::length[d::X]);
 
-      kernel_3D<Callback><<<dimGrid, dimBlock>>>(start, end, function, arguments...);
-      CUDA_CALL ( cudaGetLastError(); )
-      CUDA_CALL( cudaDeviceSynchronize(); )
-    }
-  };
+     kernel_3D<<<dimGrid, dimBlock, 0, stream.get()>>>(Base::start, Base::end,
+                                                       function, arguments...);
+     CUDA_CALL ( cudaGetLastError() );
+     CUDA_CALL( cudaDeviceSynchronize() );
+   }
+
+   template<typename Callback, typename... Arguments>
+   void Do(Callback function, const Arguments... arguments) {
+     Do<Callback>(DefaultStream<Architecture::GPU>(), function, arguments...);
+   }
+ };
 
 }

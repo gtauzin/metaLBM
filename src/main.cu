@@ -15,6 +15,7 @@
 #include "metaLBM/Lattice.h"
 #include "metaLBM/Commons.h"
 #include "metaLBM/MathVector.h"
+#include "metaLBM/Stream.cuh"
 #include "metaLBM/Computation.cuh"
 #include "metaLBM/DynamicArray.cuh"
 #include "metaLBM/Routine.h"
