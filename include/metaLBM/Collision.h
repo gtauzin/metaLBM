@@ -330,13 +330,6 @@ namespace lbm {
     using Base::getAlpha;
 
   private:
-    using Base::tau;
-    using Base::alpha;
-
-    using Base::isDeviationSmall;
-    using Base::calculateAlphaMax;
-    using Base::solveAlpha;
-
     HOST DEVICE
     inline T approximateAlpha(const T * haloDistributionNext_Ptr,
                               const T * haloDistributionPrevious_Ptr,
@@ -399,6 +392,137 @@ namespace lbm {
           }
         }
     }
+  };
+
+
+  template <class T>
+  class Collision<T, CollisionType::Essentially1_ELBM>
+    : public Collision<T, CollisionType::ELBM> {
+  private:
+    using Base = Collision<T, CollisionType::ELBM>;
+
+  public:
+    using Base::Collision;
+
+    using Base::update;
+    using Base::setForce;
+
+    using Base::collideAndStream;
+
+    using Base::getHydrodynamicVelocity;
+    using Base::getDensity;
+    using Base::getVelocity;
+    using Base::getForce;
+    using Base::getAlpha;
+
+  private:
+    HOST DEVICE
+    inline void calculateAlpha(const T * haloDistributionNext_Ptr,
+                               const T * haloDistributionPrevious_Ptr,
+                               const Position& iP) {
+      { INSTRUMENT_OFF("Collision<T, CollisionType::Essentially_ELBM>::calculateAlpha",5) }
+
+      T term1 = (T) 0;
+      T term2 = (T) 0;
+      T term3 = (T) 0;
+
+      T x_iQ;
+      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+        x_iQ = - haloDistributionPrevious_Ptr[hSD::getIndex(iP-uiL::celerity()[iQ], iQ)]
+          /haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)];
+
+        term1 += haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)]*x_iQ*x_iQ;
+
+        if(x_iQ < 0) term2 += haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)]*x_iQ*x_iQ*x_iQ;
+
+        term3 += haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)]*2.0*x_iQ*x_iQ/(2.0+x_iQ);
+      }
+
+      Base::alpha = (term1 - sqrt(term1*term1 - 8.0*term2*term3))/(2.0*term3);
+    }
+  };
+
+
+  template <class T>
+  class Collision<T, CollisionType::Essentially2_ELBM>
+    : public Collision<T, CollisionType::Essentially1_ELBM> {
+  private:
+    using Base = Collision<T, CollisionType::Essentially1_ELBM>;
+
+  public:
+    using Base::Collision;
+
+    using Base::update;
+    using Base::setForce;
+
+    using Base::collideAndStream;
+
+    using Base::getHydrodynamicVelocity;
+    using Base::getDensity;
+    using Base::getVelocity;
+    using Base::getForce;
+    using Base::getAlpha;
+
+  private:
+    HOST DEVICE
+    inline void calculateAlpha(const T * haloDistributionNext_Ptr,
+                               const T * haloDistributionPrevious_Ptr,
+                               const Position& iP) {
+      { INSTRUMENT_OFF("Collision<T, CollisionType::Essentially_ELBM>::calculateAlpha",5) }
+
+      Base::calculateAlpha(haloDistributionNext_Ptr, haloDistributionPrevious_Ptr, iP);
+
+      T alpha1 = Base::alpha;
+
+      T A = (T) 0;
+      T B = (T) 0;
+      T C = (T) 0;
+
+      T x_iQ;
+      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+        x_iQ = - haloDistributionPrevious_Ptr[hSD::getIndex(iP-uiL::celerity()[iQ], iQ)]
+          /haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)];
+
+        if(x_iQ < 0) {
+          A -= haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)]*x_iQ*x_iQ*x_iQ/6.0;
+        }
+        else {
+          B -= Base::beta*Base::beta*haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)]
+            *2.0*alpha1*x_iQ*x_iQ*x_iQ/15.0
+            *(2.0/(4.0+alpha1*x_iQ)+1.0/(4.0+2.0*alpha1*x_iQ)+2.0/(4.0+3.0*alpha1*x_iQ));
+        }
+
+        B += haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)]*x_iQ*x_iQ/2.0;
+
+        C += haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)]
+          *(x_iQ*x_iQ*(60.0*(1+x_iQ)+11.0*x_iQ*x_iQ))/(60.0+x_iQ*(90.0+x_iQ*(36.0+3.0*x_iQ)));
+      }
+
+      A *= Base::beta*Base::beta;
+
+      T alpha2p = (-B + sqrt(B*B-4.0*A*C))/(2.0*A);
+      T alpha2m = (-B - sqrt(B*B-4.0*A*C))/(2.0*A);
+
+      T alpha2 = alpha2p;
+
+      for(unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+        x_iQ = - haloDistributionPrevious_Ptr[hSD::getIndex(iP-uiL::celerity()[iQ], iQ)]
+          /haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)];
+
+        if(x_iQ < 0) {
+          A += haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)]
+            *(alpha2*Base::beta*x_iQ*x_iQ*x_iQ*x_iQ*(-1.0/12.0+alpha2*Base::beta*x_iQ(1.0/20.0-alpha2*Base::beta*x_iQ*1.0/5.0)));
+        }
+      }
+
+      T alphap = (-B + sqrt(B*B-4.0*A*C))/(2.0*A);
+      T alpham = (-B - sqrt(B*B-4.0*A*C))/(2.0*A);
+
+      Base::alpha = (T) 0;
+      if(alphap > alpha1 && alphap < alpha2) Base::alpha = alphap;
+      else if(alpham > alpha1 && alpham < alpha2) Base::alpha = alpham;
+    }
+
   };
 
 

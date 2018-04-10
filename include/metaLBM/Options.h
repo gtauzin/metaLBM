@@ -14,6 +14,7 @@ namespace lbm {
   enum class Implementation {Generic, MPI, NVSHMEM_OUT, NVSHMEM_IN};
   enum class PartitionningType {Generic, OneD, TwoD, ThreeD};
   enum class Architecture {Generic, CPU, GPU, CPUPinned};
+  enum class StreamType {Default};
 
   enum class DomainType {Generic, GlobalSpace, LocalSpace, HaloSpace, BufferXSpace,
       GlobalFourier, LocalFourier};
@@ -27,8 +28,8 @@ namespace lbm {
 
   enum class EquilibriumType {Generic, Incompressible};
 
-  enum class CollisionType {GenericSRT, BGK, ELBM, Approached_ELBM, ForcedNR_ELBM,
-      ForcedBNR_ELBM, GenericMRT};
+  enum class CollisionType {GenericSRT, BGK, ELBM, Approached_ELBM, Essentially1_ELBM,
+      Essentially2_ELBM, ForcedNR_ELBM, ForcedBNR_ELBM, GenericMRT};
 
   enum class ForcingSchemeType {Generic, None, Guo, ShanChen, ExactDifferenceMethod};
   enum class ForceType {None, Generic, GenericTimeIndependent, GenericTimeDependent,
