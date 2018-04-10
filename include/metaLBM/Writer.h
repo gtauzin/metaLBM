@@ -55,7 +55,13 @@ namespace lbm {
 
   public:
     inline bool getIsWritten(const unsigned int iteration) {
-      return (iteration % writeStep) == 0;
+      bool isWritten = false;
+
+      for(auto i = 0; i < successiveWriteStep; ++i) {
+        isWritten = isWritten || ((iteration+i) % writeStep == 0);
+      }
+
+      return isWritten;
     }
 
   };
