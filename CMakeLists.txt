@@ -19,7 +19,7 @@ target_link_libraries(metalbm INTERFACE MPI::MPI_CXX)
 
 find_package(HDF5 REQUIRED)
 target_include_directories(metalbm INTERFACE ${HDF5_INCLUDE_DIRS})
-target_link_libraries(metalbm INTERFACE ${HDF5_LIBRARIES})
+target_link_libraries(metalbm INTERFACE ${HDF5_LIBRARIES} -ldl -lz)
 
 # Check for CUDA support
 option(USE_CUDA "Enabling CUDA" ON)
@@ -49,7 +49,7 @@ if(USE_SCOREP)
   target_compile_definitions(metalbm INTERFACE USE_SCOREP)
 endif()
 
-option(USE_NVTX "Enabling manual instrumentation with NVTX" OFF)
+option(USE_NVTX "Enabling manual instrumentation with NVTX" ON)
 if(USE_NVTX)
   set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -lnvToolsExt" )
   target_compile_definitions(metalbm INTERFACE USE_NVTX)
