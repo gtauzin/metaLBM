@@ -121,7 +121,7 @@ namespace lbm {
    using Base::Computation;
 
    template<typename Callback, typename... Arguments>
-   void Do(Stream<Architecture::GPU> stream,
+   void Do(Stream<Architecture::GPU>& stream,
            Callback function, const Arguments... arguments) {
      { INSTRUMENT_OFF("Computation<Architecture::GPU, 3>::Do<Callback>",3) }
 
@@ -136,7 +136,8 @@ namespace lbm {
 
    template<typename Callback, typename... Arguments>
    void Do(Callback function, const Arguments... arguments) {
-     Do<Callback>(DefaultStream<Architecture::GPU>(), function, arguments...);
+     Stream<Architecture::GPU> stream = DefaultStream<Architecture::GPU>();	
+     Do<Callback>(stream,  function, arguments...);
    }
  };
 

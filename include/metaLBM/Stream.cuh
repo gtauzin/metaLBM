@@ -13,16 +13,22 @@ namespace lbm {
     cudaStream_t stream;
 
 public:
-    Stream() {
-      CUDA_CALL( cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking) );
+    Stream(bool isDefault_in = false) {
+      std::cout << "Stream beginning of constructor: " << stream << std::endl;
+      if(isDefault_in) {
+	CUDA_CALL( cudaStreamCreateWithFlags(&stream, cudaStreamDefault) );
+	std::cout << "Stream created default: " << stream << std::endl;
+      }
+      else {
+	CUDA_CALL( cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking) )
+	std::cout << "Stream created non-default: " << stream << std::endl;
+      }
     }
 
-    Stream(const cudaStream_t& stream_in)
-      : stream(stream_in)
-    {}
-
     ~Stream() {
+      std::cout << "Stream beginning desctructor: " << stream << std::endl;
       CUDA_CALL( cudaStreamDestroy(stream) );
+      std::cout << "Stream end desctructor: " << stream << std::endl;
     }
 
     void synchronize() {
@@ -43,10 +49,9 @@ public:
 
   public:
     DefaultStream()
-      : Base((cudaStream_t) 0)
+      : Base(true)
     {}
 
     using Base::get;
-
   };
 }

@@ -24,6 +24,7 @@ using namespace lbm;
 
 int main(int argc, char* argv[]) {
   { INSTRUMENT_ON("main",0) }
+  
   {
   #ifndef USE_FFTW
     MPI_Init(&argc, &argv);
@@ -92,6 +93,8 @@ int main(int argc, char* argv[]) {
   CUDA_CALL( cudaGetDeviceCount(&numberDevices); )
   CUDA_CALL( cudaSetDevice(localRank % numberDevices); )
 
+  std::cout << "Number of GPUs available: " << numberDevices << std::endl;
+
   // MPI_Comm_free(&localComm);
   // MPI_Info_free(&info);
 
@@ -105,11 +108,9 @@ int main(int argc, char* argv[]) {
     fftw_mpi_cleanup();
   #endif
 
-    }
+    }    
     MPI_Finalize();
-    }
-
     cudaDeviceReset();
-
+  }
     return EXIT_SUCCESS;
 }
