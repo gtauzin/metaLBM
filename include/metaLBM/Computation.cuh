@@ -11,45 +11,41 @@ namespace lbm {
 
   template<typename Callback, typename... Arguments>
   GLOBAL
-  void kernel_1D(const Position start,
-                 const Position end,
+  void kernel_1D(const Position start, const Position end, const Position dir,
                  Callback function, const Arguments... arguments) {
-
-    Position iP = {blockIdx.x*blockDim.x + threadIdx.x+ start[d::X],
-                   start[d::Y], start[d::Z]};
+    Position iP = start;
+    iP[dir[0]] += blockIdx.x*blockDim.x + threadIdx.x;
 
     // delete if and make sure that this we choose blocks so that we are always
     // in the right case
-    if(iP[0] < end[d::X]) {
+    if(iP[dir[0]] < end[dir[0]]) {
       function(iP, arguments...);
     }
   }
 
   template<typename Callback, typename... Arguments>
   GLOBAL
-  void kernel_2D(const Position start,
-                 const Position end,
+  void kernel_2D(const Position start, const Position end, const Position dir,
                  Callback function, const Arguments... arguments) {
+    Position iP = start;
+    iP[dir[0]] += blockIdx.y*blockDim.y + threadIdx.y;
+    iP[dir[1]] += blockIdx.x*blockDim.x + threadIdx.x;
 
-    Position iP = {blockIdx.y*blockDim.y + threadIdx.y + start[d::X],
-                   blockIdx.x*blockDim.x + threadIdx.x + start[d::Y],
-                   start[d::Z]};
-
-    if(iP[1] < end[d::X] && iP[0] < end[d::Y]) {
+    if(iP[dir[1]] < end[dir[0]] && iP[dir[0]] < end[dir[1]]) {
       function(iP, arguments...);
     }
   }
 
   template<typename Callback, typename... Arguments>
   GLOBAL
-  void kernel_3D(const Position start,
-                 const Position end,
+  void kernel_3D(const Position start, const Position end, const Position dir,
                  Callback function, const Arguments... arguments) {
+    Position iP = start;
+    iP[dir[0]] += blockIdx.z*blockDim.z + threadIdx.z;
+    iP[dir[1]] += blockIdx.y*blockDim.y + threadIdx.y;
+    iP[dir[2]] += blockIdx.x*blockDim.x + threadIdx.x;
 
-    Position iP = {blockIdx.z*blockDim.z + threadIdx.z + start[d::X],
-                   blockIdx.y*blockDim.y + threadIdx.y + start[d::Y],
-                   blockIdx.x*blockDim.x + threadIdx.x + start[d::Z]};
-    if(iP[2] < end[d::X] && iP[1] < end[d::Y] && iP[0] < end[d::Z]) {
+    if(iP[dir[2]] < end[dir[0]] && iP[dir[1]] < end[dir[1]] && iP[dir[0]] < end[dir[2]]) {
       function(iP, arguments...);
     }
   }
@@ -69,8 +65,10 @@ namespace lbm {
       { INSTRUMENT_OFF("Computation<Architecture::GPU, 1>::Do<Callback>",3) }
 
       dim3 dimBlock(128, 1, 1);
-      dim3 dimGrid((127+Base::length[d::X])/128, 1, 1);
+      dim3 dimGrid((127+Base::length[dir[0]])/128, 1, 1);
+
       kernel_1D<<<dimGrid, dimBlock, 0, Base::stream.get()>>>(Base::start, Base::end,
+                                                              Base::dir,
                                                               function, arguments...);
       CUDA_CALL ( cudaGetLastError(); );
       CUDA_CALL( cudaDeviceSynchronize() );
@@ -92,8 +90,9 @@ namespace lbm {
       { INSTRUMENT_OFF("Computation<Architecture::GPU, 2>::Do<Callback>",3) }
 
       dim3 dimBlock(128, 1, 1);
-      dim3 dimGrid((127+Base::length[d::Y])/128, Base::length[d::X], 1);
+      dim3 dimGrid((127+Base::length[dir[1]])/128, Base::length[dir[0]], 1);
       kernel_2D<<<dimGrid, dimBlock, 0, Base::stream.get()>>>(Base::start, Base::end,
+                                                              Base::dir,
                                                               function, arguments...);
       CUDA_CALL ( cudaGetLastError() );
       CUDA_CALL( cudaDeviceSynchronize() );
@@ -115,9 +114,10 @@ namespace lbm {
      { INSTRUMENT_OFF("Computation<Architecture::GPU, 3>::Do<Callback>",3) }
 
      dim3 dimBlock(128, 1, 1);
-     dim3 dimGrid((127+Base::length[d::Z])/128, Base::length[d::Y], Base::length[d::X]);
+     dim3 dimGrid((127+Base::length[dir[2]])/128, Base::length[dir[1]], Base::length[dir[0]]);
 
      kernel_3D<<<dimGrid, dimBlock, 0, Base::stream.get()>>>(Base::start, Base::end,
+                                                             Base::dir,
                                                              function, arguments...);
      CUDA_CALL ( cudaGetLastError() );
      CUDA_CALL( cudaDeviceSynchronize() );

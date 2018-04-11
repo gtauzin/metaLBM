@@ -48,10 +48,10 @@ namespace lbm {
     Collision_ collision;
 
     Computation<architecture, L::dimD> computationLocal;
-    Computation<architecture, L::dimD> computationBottom;
-    Computation<architecture, L::dimD> computationTop;
-    Computation<architecture, L::dimD> computationFront;
-    Computation<architecture, L::dimD> computationBack;
+    Computation<architecture, L::dimD-1> computationBottom;
+    Computation<architecture, L::dimD-1> computationTop;
+    Computation<architecture, L::dimD-1> computationFront;
+    Computation<architecture, L::dimD-1> computationBack;
 
     std::chrono::duration<double> dtComputation;
     std::chrono::duration<double> dtCommunication;
@@ -77,17 +77,19 @@ namespace lbm {
       , computationLocal(lSD::sStart()+L::halo(),
                          lSD::sEnd()+L::halo())
       , computationBottom({hSD::start()[d::X], L::halo()[d::Y], hSD::start()[d::Z]},
-                          {hSD::end()[d::X], 2*L::halo()[d::Y], hSD::end()[d::Z]})
+                          {hSD::end()[d::X], 2*L::halo()[d::Y], hSD::end()[d::Z]},
+                          {d::X, d::Z, d::Y})
       , computationTop({hSD::start()[d::X], L::halo()[d::Y]+lSD::sLength()[d::Y] - 1,
                         hSD::start()[d::Z]},
                        {hSD::end()[d::X],  2*L::halo()[d::Y]+ lSD::sLength()[d::Y] - 1,
-                        hSD::end()[d::Z]})
+                        hSD::end()[d::Z]}, {d::X, d::Z, d::Y})
       , computationFront({hSD::start()[d::X], hSD::start()[d::Y], L::halo()[d::Z]},
-                         {hSD::end()[d::X], hSD::end()[d::Y], 2*L::halo()[d::Z]})
+                         {hSD::end()[d::X], hSD::end()[d::Y], 2*L::halo()[d::Z]},
+                          {d::X, d::Y, d::Z})
       , computationBack({hSD::start()[d::X], hSD::start()[d::Y],
                          L::halo()[d::Z]+lSD::sLength()[d::Z] - 1},
                         {hSD::end()[d::X], hSD::end()[d::Y],
-                         2*L::halo()[d::Z] + lSD::sLength()[d::Z] - 1})
+                         2*L::halo()[d::Z] + lSD::sLength()[d::Z] - 1}, {d::X, d::Y, d::Z})
       , dtComputation()
       , dtCommunication()
       , isStored(false)

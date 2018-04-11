@@ -13,15 +13,17 @@ namespace lbm {
     const Position start;
     const Position end;
     const Position length;
+    const Position dir;
     Stream<architecture> stream;
 
   public:
-    Computation(const Position& start_in,
-                const Position& end_in,
+    Computation(const Position& start_in, const Position& end_in,
+                const Position& dir_in = {{d::X, d::Y, d::Z}},
                 const Stream<architecture>& stream_in = DefaultStream<architecture>())
       : start(start_in)
       , end(end_in)
       , length(end_in-start_in)
+      , dir(dir_in)
       , stream(stream_in)
     {}
 
@@ -40,9 +42,9 @@ namespace lbm {
     void Do(Callback function, const Arguments... arguments) {
       { INSTRUMENT_OFF("Computation<Architecture::CPU, 2>::Do<Callback>",1) }
 
-      Position iP{{0}};
-      for(auto iX = Base::start[d::X]; iX < Base::end[d::X]; ++iX) {
-        iP[d::X] = iX;
+      Position iP = start;
+      for(auto i0 = Base::start[Base::dir[0]]; i0 < Base::end[Base::dir[0]]; ++i0) {
+        iP[Base::dir[0]] = i0;
         function(iP, arguments...);
       }
     }
@@ -62,11 +64,11 @@ namespace lbm {
     void Do(Callback function, const Arguments... arguments) {
       { INSTRUMENT_OFF("Computation<Architecture::CPU, 2>::Do<Callback>",2) }
 
-      Position iP{{0}};
-      for(auto iX = Base::start[d::X]; iX < Base::end[d::X]; ++iX) {
-        iP[d::X] = iX;
-        for(auto iY = Base::start[d::Y]; iY < Base::end[d::Y]; ++iY) {
-          iP[d::Y] = iY;
+      Position iP = start;
+      for(auto i0 = Base::start[Base::dir[0]]; i0 < Base::end[Base::dir[0]]; ++i0) {
+        iP[Base::dir[0]] = i0;
+        for(auto i1 = Base::start[Base::dir[1]]; i1 < Base::end[Base::dir[1]]; ++i1) {
+          iP[Base::dir[1]] = i1;
           function(iP, arguments...);
         }
       }
@@ -87,13 +89,13 @@ namespace lbm {
     void Do(Callback function, const Arguments... arguments) {
       { INSTRUMENT_OFF("Computation<Architecture::CPU, 2>::Do<Callback>",3) }
 
-      Position iP{{0}};
-      for(auto iX = Base::start[d::X]; iX < Base::end[d::X]; ++iX) {
-        iP[d::X] = iX;
-        for(auto iY = Base::start[d::Y]; iY < Base::end[d::Y]; ++iY) {
-          iP[d::Y] = iY;
-          for(auto iZ = Base::start[d::Z]; iZ < Base::end[d::Z]; ++iZ) {
-            iP[d::Z] = iZ;
+      Position iP = start;
+      for(auto i0 = Base::start[Base::dir[0]]; i0 < Base::end[Base::dir[0]]; ++i0) {
+        iP[Base::dir[0]] = i0;
+        for(auto i1 = Base::start[Base::dir[1]]; i1 < Base::end[Base::dir[1]]; ++i1) {
+          iP[Base::dir[1]] = i1;
+          for(auto i2 = Base::start[Base::dir[2]]; i2 < Base::end[Base::dir[2]]; ++i2) {
+            iP[Base::dir[2]] = i2;
             function(iP, arguments...);
           }
         }
