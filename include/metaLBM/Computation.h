@@ -13,13 +13,16 @@ namespace lbm {
     const Position start;
     const Position end;
     const Position length;
+    Stream<architecture> stream;
 
   public:
     Computation(const Position& start_in,
-                const Position& end_in)
+                const Position& end_in,
+                const Stream<architecture>& stream_in = DefaultStream<architecture>())
       : start(start_in)
       , end(end_in)
       , length(end_in-start_in)
+      , stream(stream_in)
     {}
 
   };
@@ -34,8 +37,7 @@ namespace lbm {
    using Base::Computation;
 
     template<typename Callback, typename... Arguments>
-    void Do(Stream<Architecture::CPU> stream,
-            Callback function, const Arguments... arguments) {
+    void Do(Callback function, const Arguments... arguments) {
       { INSTRUMENT_OFF("Computation<Architecture::CPU, 2>::Do<Callback>",1) }
 
       Position iP{{0}};
@@ -43,11 +45,6 @@ namespace lbm {
         iP[d::X] = iX;
         function(iP, arguments...);
       }
-    }
-
-    template<typename Callback, typename... Arguments>
-    void Do(Callback function, const Arguments... arguments) {
-      Do<Callback>(DefaultStream<Architecture::CPU>(), function, arguments...);
     }
 
   };
@@ -62,8 +59,7 @@ namespace lbm {
    using Base::Computation;
 
     template<typename Callback, typename... Arguments>
-    void Do(Stream<Architecture::CPU> stream,
-            Callback function, const Arguments... arguments) {
+    void Do(Callback function, const Arguments... arguments) {
       { INSTRUMENT_OFF("Computation<Architecture::CPU, 2>::Do<Callback>",2) }
 
       Position iP{{0}};
@@ -74,11 +70,6 @@ namespace lbm {
           function(iP, arguments...);
         }
       }
-    }
-
-    template<typename Callback, typename... Arguments>
-    void Do(Callback function, const Arguments... arguments) {
-      Do<Callback>(DefaultStream<Architecture::CPU>(), function, arguments...);
     }
 
   };
@@ -93,8 +84,7 @@ namespace lbm {
    using Base::Computation;
 
     template<typename Callback, typename... Arguments>
-    void Do(Stream<Architecture::CPU> stream,
-            Callback function, const Arguments... arguments) {
+    void Do(Callback function, const Arguments... arguments) {
       { INSTRUMENT_OFF("Computation<Architecture::CPU, 2>::Do<Callback>",3) }
 
       Position iP{{0}};
@@ -108,11 +98,6 @@ namespace lbm {
           }
         }
       }
-    }
-
-    template<typename Callback, typename... Arguments>
-    void Do(Callback function, const Arguments... arguments) {
-      Do<Callback>(DefaultStream<Architecture::CPU>(), function, arguments...);
     }
 
   };
