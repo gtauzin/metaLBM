@@ -22,7 +22,7 @@ namespace lbm {
   private:
 
   public:
-    Stream() {
+    Stream(bool isDefault_in) {
     }
 
     ~Stream() {
@@ -32,22 +32,5 @@ namespace lbm {
     }
 
   };
-
-  template<Architecture architecture>
-  class DefaultStream {};
-
-  template<>
-  class DefaultStream<Architecture::CPU>
-    : public Stream<Architecture::CPU> {
-  private:
-    using Base = Stream<Architecture::CPU>;
-
-  public:
-    DefaultStream()
-      : Base()
-    {}
-
-  };
-
 
 }
