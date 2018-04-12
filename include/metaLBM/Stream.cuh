@@ -10,23 +10,25 @@ namespace lbm {
   class Stream<Architecture::GPU>
     : public Stream<Architecture::Generic> {
   private:
+    bool isDefault;
     cudaStream_t stream;
 
 public:
-    Stream(bool isDefault_in) {
+    Stream(bool isDefault_in = true)
+      : isDefault(isDefault_in)
+    {
       if(isDefault_in) {
-	CUDA_CALL( cudaStreamCreateWithFlags(&stream, cudaStreamDefault) );
-	std::cout << "Stream created default: " << stream << std::endl;
+	stream = (cudaStream_t) 0;
       }
       else {
 	CUDA_CALL( cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking) )
-	std::cout << "Stream created non-default: " << stream << std::endl;
       }
     }
 
     ~Stream() {
-      std::cout << "Stream desctructor: " << stream << std::endl;
-      CUDA_CALL( cudaStreamDestroy(stream) );
+      if(!isDefault) {
+	CUDA_CALL( cudaStreamDestroy(stream) );
+      }
     }
 
     void synchronize() {
