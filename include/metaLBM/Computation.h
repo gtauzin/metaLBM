@@ -46,6 +46,11 @@ namespace lbm {
       }
     }
 
+    template<typename Callback, typename... Arguments>
+    void Do(const Stream<Architecture::CPU>& stream,
+	    Callback function, const Arguments... arguments) {
+      Do(function, arguments...);
+   }
   };
 
   template<>
@@ -71,6 +76,11 @@ namespace lbm {
       }
     }
 
+    template<typename Callback, typename... Arguments>
+    void Do(const Stream<Architecture::CPU>& stream,
+	    Callback function, const Arguments... arguments) {
+      Do(function, arguments...);
+    }
   };
 
   template<>
@@ -99,6 +109,11 @@ namespace lbm {
       }
     }
 
+    template<typename Callback, typename... Arguments>
+    void Do(const Stream<Architecture::CPU>& stream,
+	    Callback function, const Arguments... arguments) {
+      Do(function, arguments...);
+   }
   };
 
 }

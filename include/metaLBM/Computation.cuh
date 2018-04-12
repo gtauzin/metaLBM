@@ -31,7 +31,7 @@ namespace lbm {
     iP[dir[0]] += blockIdx.y*blockDim.y + threadIdx.y;
     iP[dir[1]] += blockIdx.x*blockDim.x + threadIdx.x;
 
-    if(iP[dir[1]] < end[dir[0]] && iP[dir[0]] < end[dir[1]]) {
+    if(iP[dir[0]] < end[dir[0]] && iP[dir[1]] < end[dir[1]]) {
       function(iP, arguments...);
     }
   }
@@ -45,7 +45,7 @@ namespace lbm {
     iP[dir[1]] += blockIdx.y*blockDim.y + threadIdx.y;
     iP[dir[2]] += blockIdx.x*blockDim.x + threadIdx.x;
 
-    if(iP[dir[2]] < end[dir[0]] && iP[dir[1]] < end[dir[1]] && iP[dir[0]] < end[dir[2]]) {
+    if(iP[dir[0]] < end[dir[0]] && iP[dir[1]] < end[dir[1]] && iP[dir[2]] < end[dir[2]]) {
       function(iP, arguments...);
     }
   }
@@ -61,7 +61,7 @@ namespace lbm {
    using Base::Computation;
 
     template<typename Callback, typename... Arguments>
-    void Do(const Stream<Architecture::GPU>& stream, 
+    void Do(const Stream<Architecture::GPU>& stream,
 	    Callback function, const Arguments... arguments) {
       { INSTRUMENT_OFF("Computation<Architecture::GPU, 1>::Do<Callback>",3) }
 
@@ -73,7 +73,6 @@ namespace lbm {
       CUDA_CALL ( cudaGetLastError(); );
       CUDA_CALL( cudaDeviceSynchronize() );
     }
-
   };
 
  template<>
@@ -86,7 +85,7 @@ namespace lbm {
    using Base::Computation;
 
     template<typename Callback, typename... Arguments>
-    void Do(const Stream<Architecture::GPU>& stream, 
+    void Do(const Stream<Architecture::GPU>& stream,
 	    Callback function, const Arguments... arguments) {
       { INSTRUMENT_OFF("Computation<Architecture::GPU, 2>::Do<Callback>",3) }
 
@@ -97,7 +96,6 @@ namespace lbm {
       CUDA_CALL ( cudaGetLastError() );
       CUDA_CALL( cudaDeviceSynchronize() );
     }
-
  };
 
  template<>
@@ -110,7 +108,7 @@ namespace lbm {
    using Base::Computation;
 
    template<typename Callback, typename... Arguments>
-    void Do(const Stream<Architecture::GPU>& stream, 
+    void Do(const Stream<Architecture::GPU>& stream,
 	    Callback function, const Arguments... arguments) {
      { INSTRUMENT_OFF("Computation<Architecture::GPU, 3>::Do<Callback>",3) }
 
@@ -122,7 +120,6 @@ namespace lbm {
      CUDA_CALL ( cudaGetLastError() );
      CUDA_CALL( cudaDeviceSynchronize() );
    }
-
  };
 
 }
