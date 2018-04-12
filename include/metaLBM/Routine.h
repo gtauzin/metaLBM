@@ -32,7 +32,7 @@ namespace lbm {
     SpectralAnalysisList<T, architecture> spectralAnalysisList;
 
     Algorithm<dataT, algorithmT, architecture, implementation> algorithm;
-    Computation<Architecture::CPU, L::dimD> computationLocal;
+    Stream<architecture> stream;
 
     double initialMass;
     double finalMass;
@@ -65,7 +65,7 @@ namespace lbm {
       , scalarAnalysisList(fieldList, numberElements, communication)
       , spectralAnalysisList(fieldList, numberElements, communication)
       , algorithm(fieldList, distribution, numberElements, communication)
-      , computationLocal(lSD::sStart(), lSD::sEnd())
+      , stream(true)
       , initialMass(0.0)
       , finalMass(0.0)
       , differenceMass(0.0)
@@ -80,7 +80,7 @@ namespace lbm {
 
     void compute() {
       { INSTRUMENT_ON("Routine<T>::compute",1) }
-      algorithm.unpack();
+      algorithm.unpack(stream);
 
       auto t0 = std::chrono::high_resolution_clock::now();
       auto t1 = std::chrono::high_resolution_clock::now();
@@ -111,7 +111,7 @@ namespace lbm {
         || scalarAnalysisList.getIsAnalyzed(iteration)
         || spectralAnalysisList.getIsAnalyzed(iteration);
 
-        algorithm.iterate(iteration);
+        algorithm.iterate(iteration, stream);
 
         if(algorithm.isStored) {
           if(writeVorticity) curlVelocity.executeSpace();
@@ -192,7 +192,7 @@ namespace lbm {
       }
 
       if(distributionWriter.getIsBackedUp(iteration)) {
-        algorithm.pack();
+        algorithm.pack(stream);
         distributionWriter.openFile(iteration);
         distributionWriter.writeDistribution(distribution);
         distributionWriter.closeFile();

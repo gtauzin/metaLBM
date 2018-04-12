@@ -13,7 +13,7 @@ namespace lbm {
     cudaStream_t stream;
 
 public:
-    Stream(bool isDefault_in) {
+    Stream(bool isDefault_in = true) {
       if(isDefault_in) {
 	CUDA_CALL( cudaStreamCreateWithFlags(&stream, cudaStreamDefault) );
 	std::cout << "Stream created default: " << stream << std::endl;
@@ -40,6 +40,6 @@ public:
     cudaStream_t get() const {
       return stream;
     }
-    
+
   };
 }

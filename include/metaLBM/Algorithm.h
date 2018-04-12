@@ -112,8 +112,7 @@ namespace lbm {
     : public Algorithm<T, AlgorithmType::Generic, architecture, implementation> {
   private:
     using Base = Algorithm<T, AlgorithmType::Generic, architecture, implementation>;
-    
-    Stream<architecture> stream;
+
     Computation<architecture, L::dimD> computationLocal;
     Computation<architecture, L::dimD> computationBottom;
     Computation<architecture, L::dimD> computationTop;
@@ -130,7 +129,6 @@ namespace lbm {
               Communication<T, latticeT, algorithmT, memoryL,
               partitionningT, implementation, L::dimD>& communication_in)
       : Base(fieldList_in, distribution_in, numberElements_in, communication_in)
-      , stream(true)
       , computationLocal(lSD::sStart()+L::halo(),
                          lSD::sEnd()+L::halo(), {d::X, d::Y, d::Z})
       , computationBottom({hSD::start()[d::X], L::halo()[d::Y], hSD::start()[d::Z]},
@@ -170,7 +168,7 @@ namespace lbm {
     }
 
     HOST
-    void iterate(const unsigned int iteration) {
+      void iterate(const unsigned int iteration, const Stream<architecture>& stream) {
       { INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate",2) }
 
       std::swap(Base::haloDistributionPrevious_Ptr, Base::haloDistributionNext_Ptr);
@@ -201,15 +199,15 @@ namespace lbm {
       Base::dtCommunication = (t1 - t0);
       Base::dtComputation = (t2 - t1);
     }
-    
+
     HOST
-    void pack() {
+    void pack(const Stream<architecture>& stream) {
       computationLocal.Do(stream, Base::packer, Base::localDistribution_Ptr,
                           Base::haloDistributionNext_Ptr, Base::numberElements);
     }
 
     HOST
-      void unpack() {
+      void unpack(const Stream<architecture>& stream) {
       computationLocal.Do(stream, Base::unpacker, Base::haloDistributionNext_Ptr,
                           Base::localDistribution_Ptr, Base::numberElements);
     }
