@@ -229,13 +229,62 @@ namespace lbm {
                           implementation, Dimension>;
 
   public:
+    HOST DEVICE
     void operator()(const Position& iP, T * haloDistributionPtr) {
       Base::applyYBottom(iP, haloDistributionPtr);
     }
-
   };
 
+  template<class T, BoundaryType boundaryType, AlgorithmType algorithmType,
+           PartitionningType partitionningType, Implementation implementation,
+           unsigned int Dimension>
+  class TopBoundary
+    : public Boundary<T, boundaryType, algorithmType, partitionningType,
+                      implementation, Dimension> {
+  private:
+    using Base = Boundary<T, boundaryType, algorithmType, partitionningType,
+                          implementation, Dimension>;
 
+  public:
+    HOST DEVICE
+    void operator()(const Position& iP, T * haloDistributionPtr) {
+      Base::applyYTop(iP, haloDistributionPtr);
+    }
+  };
+
+  template<class T, BoundaryType boundaryType, AlgorithmType algorithmType,
+           PartitionningType partitionningType, Implementation implementation,
+           unsigned int Dimension>
+  class FrontBoundary
+    : public Boundary<T, boundaryType, algorithmType, partitionningType,
+                      implementation, Dimension> {
+  private:
+    using Base = Boundary<T, boundaryType, algorithmType, partitionningType,
+                          implementation, Dimension>;
+
+  public:
+    HOST DEVICE
+    void operator()(const Position& iP, T * haloDistributionPtr) {
+      Base::applyZFront(iP, haloDistributionPtr);
+    }
+  };
+
+  template<class T, BoundaryType boundaryType, AlgorithmType algorithmType,
+           PartitionningType partitionningType, Implementation implementation,
+           unsigned int Dimension>
+  class BackBoundary
+    : public Boundary<T, boundaryType, algorithmType, partitionningType,
+                      implementation, Dimension> {
+  private:
+    using Base = Boundary<T, boundaryType, algorithmType, partitionningType,
+                          implementation, Dimension>;
+
+  public:
+    HOST DEVICE
+    void operator()(const Position& iP, T * haloDistributionPtr) {
+      Base::applyZBack(iP, haloDistributionPtr);
+    }
+  };
 
 
 

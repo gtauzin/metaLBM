@@ -121,6 +121,12 @@ namespace lbm {
 
     BottomBoundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
                    partitionningT, implementation, L::dimD> bottomBoundary;
+    TopBoundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
+                partitionningT, implementation, L::dimD> topBoundary;
+    FrontBoundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
+                  partitionningT, implementation, L::dimD> frontBoundary;
+    BackBoundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
+                 partitionningT, implementation, L::dimD> backBoundary;
 
   public:
     Algorithm(FieldList<T, architecture>& fieldList_in,
@@ -179,16 +185,10 @@ namespace lbm {
 
       Base::communication.communicateHalos(Base::haloDistributionPrevious_Ptr);
 
-      computationBottom.Do(stream, bottomBoundary,
-      			   Base::haloDistributionPrevious_Ptr);
-      /* computationTop.Do(stream, periodicBoundary.applyYTop, */
-      /* 			Base::haloDistributionPrevious_Ptr); */
-      /* computationFront.Do(stream, periodicBoundary.applyZFront, */
-      /* 			  Base::haloDistributionPrevious_Ptr); */
-      /* computationBack.Do(stream, periodicBoundary.applyZBack, */
-      /* 			 Base::haloDistributionPrevious_Ptr); */
-
-      //boundary.apply();
+      computationBottom.Do(stream, bottomBoundary, Base::haloDistributionPrevious_Ptr);
+      computationTop.Do(stream, topBoundary, Base::haloDistributionPrevious_Ptr);
+      computationFront.Do(stream, frontBoundary, Base::haloDistributionPrevious_Ptr);
+      computationBack.Do(stream, backBoundary, Base::haloDistributionPrevious_Ptr);
 
       auto t1 = std::chrono::high_resolution_clock::now();
 
