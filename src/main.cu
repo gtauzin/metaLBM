@@ -4,6 +4,7 @@
 
 #ifdef USE_FFTW
   #include <fftw3-mpi.h>
+  #include "metaLBM/FFTWInitializer.h"
 #endif
 
 #ifdef USE_NVSHMEM
@@ -11,7 +12,8 @@
   #include <shmemx.h>
 #endif
 
-#include "./Input.in"
+#include "Input.in"
+#include "metaLBM/MPIInitializer.h"
 #include "metaLBM/Lattice.h"
 #include "metaLBM/Commons.h"
 #include "metaLBM/MathVector.h"
@@ -20,31 +22,18 @@
 #include "metaLBM/DynamicArray.cuh"
 #include "metaLBM/Routine.h"
 
-using namespace lbm;
-
 int main(int argc, char* argv[]) {
+  using namespace lbm;
   { INSTRUMENT_ON("main",0) }
   
-  {
+  MPIInitializer<numProcs> mpiLauncher {argc, argv};
   #ifndef USE_FFTW
-    MPI_Init(&argc, &argv);
-    {
       unsigned int numberElements = lSD::pVolume();
 
   #else
-    int provided;
-    MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided);
-    {
-      int useThreadsFFTW = (provided >= MPI_THREAD_FUNNELED);
-
-      if(useThreadsFFTW) useThreadsFFTW = fftw_init_threads();
-      fftw_mpi_init();
-
-      if (useThreadsFFTW) fftw_plan_with_nthreads(NTHREADS);
-
+      FFTWInitializer<numThreads> fftwLauncher{};
       ptrdiff_t lX_fftw;
       ptrdiff_t startX_fftw;
-
       unsigned int numberElements
         = (unsigned int) 2*fftw_mpi_local_size(L::dimD,
                                                Cast<unsigned int,
@@ -63,20 +52,9 @@ int main(int argc, char* argv[]) {
   attributeSHMEM.mpi_comm = &commMPI;
   shmemx_init_attr (SHMEMX_INIT_WITH_MPI_COMM, &attributeSHMEM);
   #endif
+  auto sizeMPI = MathVector<int, 3>{mpiLauncher.numProcs(), 1, 1};
+  auto rankMPI = MathVector<int, 3>{mpiLauncher.procRank(), 0, 0};
 
-  MathVector<int, 3> sizeMPI{1, 1, 1};
-  MPI_Comm_size(MPI_COMM_WORLD, &sizeMPI[d::X]);
-  if (sizeMPI[d::X] != numProcs) {
-    std::cout << "Compile-time and runtime number of process don't match\n";
-    MPI_Abort(MPI_COMM_WORLD, 1);
-  }
-
-  MathVector<int, 3> rankMPI{0, 0, 0};
-  MPI_Comm_rank(MPI_COMM_WORLD, &rankMPI[d::X]);
-
-  int  hostnameLength;
-  char hostname[MPI_MAX_PROCESSOR_NAME];
-  MPI_Get_processor_name(hostname, &hostnameLength);
 
   // MPI_Comm localComm;
   // MPI_Info info;
@@ -99,18 +77,9 @@ int main(int argc, char* argv[]) {
   // MPI_Info_free(&info);
 
   Routine<dataT, Architecture::GPU, implementationT> routine(rankMPI, sizeMPI,
-                                                             std::string(hostname),
+                                                             mpiLauncher.hostName(),
                                                              numberElements);
 
-  routine.compute();
-
-  #ifdef USE_FFTW
-    fftw_mpi_cleanup();
-  #endif
-
-    }    
-    MPI_Finalize();
-    cudaDeviceReset();
-  }
-    return EXIT_SUCCESS;
+  routine.compute();    
+  cudaDeviceReset();
 }
