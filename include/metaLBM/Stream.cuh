@@ -16,16 +16,13 @@ public:
     Stream(bool isDefault_in = true) {
       if(isDefault_in) {
 	CUDA_CALL( cudaStreamCreateWithFlags(&stream, cudaStreamDefault) );
-	std::cout << "Stream created default: " << stream << std::endl;
       }
       else {
 	CUDA_CALL( cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking) )
-	std::cout << "Stream created non-default: " << stream << std::endl;
       }
     }
 
     ~Stream() {
-      std::cout << "Stream desctructor: " << stream << std::endl;
       CUDA_CALL( cudaStreamDestroy(stream) );
     }
 

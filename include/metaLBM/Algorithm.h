@@ -183,10 +183,10 @@ namespace lbm {
       /* 			   Base::haloDistributionPrevious_Ptr); */
       /* computationTop.Do(stream, periodicBoundary.applyYTop, */
       /* 			Base::haloDistributionPrevious_Ptr); */
-      /* computationFront.Do(stream, periodicBoundary.applyZFront, */
-      /* 			  Base::haloDistributionPrevious_Ptr); */
-      /* computationBack.Do(stream, periodicBoundary.applyZBack, */
-      /* 			 Base::haloDistributionPrevious_Ptr); */
+      computationLocal.Do(stream, periodicBoundary.applyZFront,
+      			  Base::haloDistributionPrevious_Ptr);
+      computationLocal.Do(stream, periodicBoundary.applyZBack,
+      			 Base::haloDistributionPrevious_Ptr);
 
       //boundary.apply();
 
