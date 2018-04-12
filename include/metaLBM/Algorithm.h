@@ -47,12 +47,6 @@ namespace lbm {
                   partitionningT, implementation, L::dimD> communication;
     Collision_ collision;
 
-    Computation<architecture, L::dimD> computationLocal;
-    Computation<architecture, L::dimD-1> computationBottom;
-    Computation<architecture, L::dimD-1> computationTop;
-    Computation<architecture, L::dimD-1> computationFront;
-    Computation<architecture, L::dimD-1> computationBack;
-
     std::chrono::duration<double> dtComputation;
     std::chrono::duration<double> dtCommunication;
 
@@ -74,38 +68,11 @@ namespace lbm {
       , numberElements(numberElements_in)
       , communication(communication_in)
       , collision(relaxationTime, forceAmplitude, forceWaveLength, forcekMin, forcekMax)
-      , computationLocal(lSD::sStart()+L::halo(),
-                         lSD::sEnd()+L::halo())
-      , computationBottom({hSD::start()[d::X], L::halo()[d::Y], hSD::start()[d::Z]},
-                          {hSD::end()[d::X], 2*L::halo()[d::Y], hSD::end()[d::Z]},
-                          {d::X, d::Z, d::Y})
-      , computationTop({hSD::start()[d::X], L::halo()[d::Y]+lSD::sLength()[d::Y] - 1,
-                        hSD::start()[d::Z]},
-                       {hSD::end()[d::X],  2*L::halo()[d::Y]+ lSD::sLength()[d::Y] - 1,
-                        hSD::end()[d::Z]}, {d::X, d::Z, d::Y})
-      , computationFront({hSD::start()[d::X], hSD::start()[d::Y], L::halo()[d::Z]},
-                         {hSD::end()[d::X], hSD::end()[d::Y], 2*L::halo()[d::Z]},
-                          {d::X, d::Y, d::Z})
-      , computationBack({hSD::start()[d::X], hSD::start()[d::Y],
-                         L::halo()[d::Z]+lSD::sLength()[d::Z] - 1},
-                        {hSD::end()[d::X], hSD::end()[d::Y],
-                         2*L::halo()[d::Z] + lSD::sLength()[d::Z] - 1}, {d::X, d::Y, d::Z})
       , dtComputation()
       , dtCommunication()
       , isStored(false)
     {}
 
-    HOST
-    void pack() {
-      computationLocal.Do(packer, localDistribution_Ptr,
-                          haloDistributionNext_Ptr, numberElements);
-    }
-
-    HOST
-    void unpack() {
-      computationLocal.Do(unpacker, haloDistributionNext_Ptr,
-                          localDistribution_Ptr, numberElements);
-    }
 
     double getCommunicationTime() {
       return dtCommunication.count();
@@ -145,39 +112,56 @@ namespace lbm {
     : public Algorithm<T, AlgorithmType::Generic, architecture, implementation> {
   private:
     using Base = Algorithm<T, AlgorithmType::Generic, architecture, implementation>;
-
-    using Base::localDensity_Ptr;
-    using Base::localVelocity_Ptr;
-    using Base::localForce_Ptr;
-    using Base::localAlpha_Ptr;
-
-    using Base::localDistribution_Ptr;
-    using Base::haloDistributionPrevious_Ptr;
-    using Base::haloDistributionNext_Ptr;
-    using Base::numberElements;
-
-    using Base::communication;
-    using Base::collision;
+    
+    Stream<architecture> stream;
+    Computation<architecture, L::dimD> computationLocal;
+    Computation<architecture, L::dimD> computationBottom;
+    Computation<architecture, L::dimD> computationTop;
+    Computation<architecture, L::dimD> computationFront;
+    Computation<architecture, L::dimD> computationBack;
 
     Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
              partitionningT, implementation, L::dimD> periodicBoundary;
 
   public:
-    using Base::Algorithm;
+    Algorithm(FieldList<T, architecture>& fieldList_in,
+              Distribution<T, architecture>& distribution_in,
+              const unsigned int numberElements_in,
+              Communication<T, latticeT, algorithmT, memoryL,
+              partitionningT, implementation, L::dimD>& communication_in)
+      : Base(fieldList_in, distribution_in, numberElements_in, communication_in)
+      , stream(true)
+      , computationLocal(lSD::sStart()+L::halo(),
+                         lSD::sEnd()+L::halo(), {d::X, d::Y, d::Z})
+      , computationBottom({hSD::start()[d::X], L::halo()[d::Y], hSD::start()[d::Z]},
+                          {hSD::end()[d::X], 2*L::halo()[d::Y], hSD::end()[d::Z]},
+                          {d::X, d::Z, d::Y})
+      , computationTop({hSD::start()[d::X], L::halo()[d::Y]+lSD::sLength()[d::Y] - 1,
+                        hSD::start()[d::Z]},
+                       {hSD::end()[d::X],  2*L::halo()[d::Y]+ lSD::sLength()[d::Y] - 1,
+			   hSD::end()[d::Z]}, {d::X, d::Z, d::Y})
+      , computationFront({hSD::start()[d::X], hSD::start()[d::Y], L::halo()[d::Z]},
+                         {hSD::end()[d::X], hSD::end()[d::Y], 2*L::halo()[d::Z]},
+			 {d::X, d::Y, d::Z})
+      , computationBack({hSD::start()[d::X], hSD::start()[d::Y],
+                         L::halo()[d::Z]+lSD::sLength()[d::Z] - 1},
+                        {hSD::end()[d::X], hSD::end()[d::Y],
+			    2*L::halo()[d::Z] + lSD::sLength()[d::Z] - 1}, {d::X, d::Y, d::Z})
+    {}
 
     HOST DEVICE
     void operator()(const Position& iP) {
-      collision.calculateMoments(haloDistributionPrevious_Ptr, iP);
+      Base::collision.calculateMoments(Base::haloDistributionPrevious_Ptr, iP);
 
-      collision.setForce(localForce_Ptr, iP,
-                         numberElements, gSD::sOffset(communication.rankMPI));
-      collision.calculateRelaxationTime(haloDistributionNext_Ptr,
-                                        haloDistributionPrevious_Ptr, iP);
+      Base::collision.setForce(Base::localForce_Ptr, iP,
+			       Base::numberElements, gSD::sOffset(Base::communication.rankMPI));
+      Base::collision.calculateRelaxationTime(Base::haloDistributionNext_Ptr,
+					      Base::haloDistributionPrevious_Ptr, iP);
 
       #pragma unroll
       for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
-        collision.collideAndStream(haloDistributionNext_Ptr,
-                                   haloDistributionPrevious_Ptr, iP, iQ);
+	Base::collision.collideAndStream(Base::haloDistributionNext_Ptr,
+					 Base::haloDistributionPrevious_Ptr, iP, iQ);
       }
 
       if(Base::isStored) {
@@ -187,39 +171,49 @@ namespace lbm {
 
     HOST
     void iterate(const unsigned int iteration) {
-      INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate",2)
+      { INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate",2) }
 
-      std::swap(haloDistributionPrevious_Ptr, haloDistributionNext_Ptr);
+      std::swap(Base::haloDistributionPrevious_Ptr, Base::haloDistributionNext_Ptr);
 
-      collision.update(iteration);
+      Base::collision.update(iteration);
 
       auto t0 = std::chrono::high_resolution_clock::now();
 
-      communication.communicateHalos(haloDistributionPrevious_Ptr);
+      Base::communication.communicateHalos(Base::haloDistributionPrevious_Ptr);
 
-      Base::computationBottom.Do(periodicBoundary.applyYBottom,
-                                 haloDistributionPrevious_Ptr);
-      Base::computationTop.Do(periodicBoundary.applyYTop,
-                              haloDistributionPrevious_Ptr);
-      Base::computationFront.Do(periodicBoundary.applyZFront,
-                                haloDistributionPrevious_Ptr);
-      Base::computationBack.Do(periodicBoundary.applyZBack,
-                               haloDistributionPrevious_Ptr);
+      /* computationBottom.Do(stream, periodicBoundary.applyYBottom, */
+      /* 			   Base::haloDistributionPrevious_Ptr); */
+      /* computationTop.Do(stream, periodicBoundary.applyYTop, */
+      /* 			Base::haloDistributionPrevious_Ptr); */
+      /* computationFront.Do(stream, periodicBoundary.applyZFront, */
+      /* 			  Base::haloDistributionPrevious_Ptr); */
+      /* computationBack.Do(stream, periodicBoundary.applyZBack, */
+      /* 			 Base::haloDistributionPrevious_Ptr); */
 
       //boundary.apply();
 
       auto t1 = std::chrono::high_resolution_clock::now();
 
-      Base::computationLocal.Do(*this);
+      computationLocal.Do(stream, *this);
 
       auto t2 = std::chrono::high_resolution_clock::now();
 
       Base::dtCommunication = (t1 - t0);
       Base::dtComputation = (t2 - t1);
     }
+    
+    HOST
+    void pack() {
+      computationLocal.Do(stream, Base::packer, Base::localDistribution_Ptr,
+                          Base::haloDistributionNext_Ptr, Base::numberElements);
+    }
 
-    using Base::pack;
-    using Base::unpack;
+    HOST
+      void unpack() {
+      computationLocal.Do(stream, Base::unpacker, Base::haloDistributionNext_Ptr,
+                          Base::localDistribution_Ptr, Base::numberElements);
+    }
+
     using Base::getCommunicationTime;
     using Base::getComputationTime;
   };

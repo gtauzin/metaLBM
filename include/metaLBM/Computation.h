@@ -14,17 +14,14 @@ namespace lbm {
     const Position end;
     const Position length;
     const Position dir;
-    Stream<architecture> stream;
 
   public:
     Computation(const Position& start_in, const Position& end_in,
-                const Position& dir_in = {{d::X, d::Y, d::Z}},
-                const Stream<architecture>& stream_in = DefaultStream<architecture>())
+                const Position& dir_in = {{d::X, d::Y, d::Z}})
       : start(start_in)
       , end(end_in)
       , length(end_in-start_in)
       , dir(dir_in)
-      , stream(stream_in)
     {}
 
   };

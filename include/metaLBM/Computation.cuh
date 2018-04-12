@@ -61,15 +61,15 @@ namespace lbm {
    using Base::Computation;
 
     template<typename Callback, typename... Arguments>
-    void Do(Callback function, const Arguments... arguments) {
+    void Do(const Stream<Architecture::GPU>& stream, 
+	    Callback function, const Arguments... arguments) {
       { INSTRUMENT_OFF("Computation<Architecture::GPU, 1>::Do<Callback>",3) }
 
       dim3 dimBlock(128, 1, 1);
       dim3 dimGrid((127+Base::length[dir[0]])/128, 1, 1);
 
-      kernel_1D<<<dimGrid, dimBlock, 0, Base::stream.get()>>>(Base::start, Base::end,
-                                                              Base::dir,
-                                                              function, arguments...);
+      kernel_1D<<<dimGrid, dimBlock, 0, stream.get()>>>(Base::start, Base::end, Base::dir,
+							function, arguments...);
       CUDA_CALL ( cudaGetLastError(); );
       CUDA_CALL( cudaDeviceSynchronize() );
     }
@@ -86,14 +86,14 @@ namespace lbm {
    using Base::Computation;
 
     template<typename Callback, typename... Arguments>
-    void Do(Callback function, const Arguments... arguments) {
+    void Do(const Stream<Architecture::GPU>& stream, 
+	    Callback function, const Arguments... arguments) {
       { INSTRUMENT_OFF("Computation<Architecture::GPU, 2>::Do<Callback>",3) }
 
       dim3 dimBlock(128, 1, 1);
       dim3 dimGrid((127+Base::length[dir[1]])/128, Base::length[dir[0]], 1);
-      kernel_2D<<<dimGrid, dimBlock, 0, Base::stream.get()>>>(Base::start, Base::end,
-                                                              Base::dir,
-                                                              function, arguments...);
+      kernel_2D<<<dimGrid, dimBlock, 0, stream.get()>>>(Base::start, Base::end, Base::dir,
+							function, arguments...);
       CUDA_CALL ( cudaGetLastError() );
       CUDA_CALL( cudaDeviceSynchronize() );
     }
@@ -110,15 +110,15 @@ namespace lbm {
    using Base::Computation;
 
    template<typename Callback, typename... Arguments>
-   void Do(Callback function, const Arguments... arguments) {
+    void Do(const Stream<Architecture::GPU>& stream, 
+	    Callback function, const Arguments... arguments) {
      { INSTRUMENT_OFF("Computation<Architecture::GPU, 3>::Do<Callback>",3) }
 
      dim3 dimBlock(128, 1, 1);
      dim3 dimGrid((127+Base::length[dir[2]])/128, Base::length[dir[1]], Base::length[dir[0]]);
 
-     kernel_3D<<<dimGrid, dimBlock, 0, Base::stream.get()>>>(Base::start, Base::end,
-                                                             Base::dir,
-                                                             function, arguments...);
+     kernel_3D<<<dimGrid, dimBlock, 0, stream.get()>>>(Base::start, Base::end, Base::dir,
+						       function, arguments...);
      CUDA_CALL ( cudaGetLastError() );
      CUDA_CALL( cudaDeviceSynchronize() );
    }

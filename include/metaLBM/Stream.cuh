@@ -36,6 +36,10 @@ public:
     cudaStream_t get() {
       return stream;
     }
+
+    cudaStream_t get() const {
+      return stream;
+    }
     
   };
 }
