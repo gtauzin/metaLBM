@@ -218,6 +218,27 @@ namespace lbm {
     static void applyZBack(const Position& iP, T * haloDistributionPtr) {}
   };
 
+  template<class T, BoundaryType boundaryType, AlgorithmType algorithmType,
+           PartitionningType partitionningType, Implementation implementation,
+           unsigned int Dimension>
+  class BottomBoundary
+    : public Boundary<T, boundaryType, algorithmType, partitionningType,
+                      implementation, Dimension> {
+  private:
+    using Base = Boundary<T, boundaryType, algorithmType, partitionningType,
+                          implementation, Dimension>;
+
+  public:
+    void operator()(const Position& iP, T * haloDistributionPtr) {
+      Base::applyYBottom(iP, haloDistributionPtr);
+    }
+
+  };
+
+
+
+
+
 
   template<class T, AlgorithmType algorithmType, PartitionningType partitionningType,
            Implementation implementation, unsigned int Dimension>

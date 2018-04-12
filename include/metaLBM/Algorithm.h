@@ -119,8 +119,8 @@ namespace lbm {
     Computation<architecture, L::dimD> computationFront;
     Computation<architecture, L::dimD> computationBack;
 
-    Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-             partitionningT, implementation, L::dimD> periodicBoundary;
+    BottomBoundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
+                   partitionningT, implementation, L::dimD> bottomBoundary;
 
   public:
     Algorithm(FieldList<T, architecture>& fieldList_in,
@@ -179,14 +179,14 @@ namespace lbm {
 
       Base::communication.communicateHalos(Base::haloDistributionPrevious_Ptr);
 
-      /* computationBottom.Do(stream, periodicBoundary.applyYBottom, */
-      /* 			   Base::haloDistributionPrevious_Ptr); */
+      computationBottom.Do(stream, bottomBoundary,
+      			   Base::haloDistributionPrevious_Ptr);
       /* computationTop.Do(stream, periodicBoundary.applyYTop, */
       /* 			Base::haloDistributionPrevious_Ptr); */
-      computationLocal.Do(stream, periodicBoundary.applyZFront,
-      			  Base::haloDistributionPrevious_Ptr);
-      computationLocal.Do(stream, periodicBoundary.applyZBack,
-      			 Base::haloDistributionPrevious_Ptr);
+      /* computationFront.Do(stream, periodicBoundary.applyZFront, */
+      /* 			  Base::haloDistributionPrevious_Ptr); */
+      /* computationBack.Do(stream, periodicBoundary.applyZBack, */
+      /* 			 Base::haloDistributionPrevious_Ptr); */
 
       //boundary.apply();
 
