@@ -16,6 +16,7 @@
 
 namespace lbm {
 
+/// Initializes all fields and starts the LBM method
 template <class T, Architecture architecture, Implementation implementation>
 class Routine {
  protected:
@@ -147,50 +148,41 @@ class Routine {
   void printInputs() {
     if (communication.rankMPI == MathVector<int, 3>({0, 0, 0})) {
       std::cout.precision(15);
-      std::cout << "-------------------OPTIONS-------------------" << std::endl
-                << "Lattice                  : D" << L::dimD << "Q" << L::dimQ
-                << std::endl
-                << "Global lengths           : " << gSD::sLength() << std::endl
-                << "Global memory            : "
-                << gSD::sVolume() * sizeof(dataT) << "B" << std::endl
-                << "----------------------------------------------" << std::endl
-                << "NPROCS                   : " << numProcs << "" << std::endl
-                << "NTHREADS                 : " << numThreads << ""
-                << std::endl
-                << "-------------------PARAMETERS-----------------" << std::endl
-                << "Relaxation time          : " << relaxationTime << std::endl
-                << "Viscosity                : "
-                << L::cs2 * (relaxationTime - 0.5) << std::endl
-                << "Start iteration          : " << startIteration << std::endl
-                << "End iteration            : " << endIteration << std::endl
-                << "----------------------------------------------"
-                << std::endl;
+      // clang-format off
+      std::cout << "-------------------OPTIONS-------------------\n"
+                << "Lattice                  : D" << L::dimD << "Q" << L::dimQ << "\n"
+                << "Global lengths           : " << gSD::sLength() << "\n"
+                << "Global memory            : " << gSD::sVolume() * sizeof(dataT) << "B\n"
+                << "----------------------------------------------\n"
+                << "NPROCS                   : " << numProcs << "\n"
+                << "NTHREADS                 : " << numThreads << "\n"
+                << "-------------------PARAMETERS-----------------\n"
+                << "Relaxation time          : " << relaxationTime << "\n"
+                << "Viscosity                : " << L::cs2 * (relaxationTime - 0.5) << "\n"
+                << "Start iteration          : " << startIteration << "\n"
+                << "End iteration            : " << endIteration << "\n"
+                << "----------------------------------------------\n";
+      // clang-format on
     }
   }
 
   void printOutputs() {
     if (communication.rankMPI == MathVector<int, 3>({0, 0, 0})) {
-      std::cout << "-------------------OUTPUTS-_------------------" << std::endl
-                << "Total time               : " << totalTime << " s"
-                << std::endl
-                << "Computatation time       : " << computationTime << " s"
-                << std::endl
-                << "Communication time       : " << communicationTime << " s"
-                << std::endl
-                << "Analysis time            : " << writeAnalysisTime << " s"
-                << std::endl
-                << "Write time               : " << writeFieldTime << " s"
-                << std::endl;
+      std::cout << "-------------------OUTPUTS--------------------\n"
+                << "Total time               : " << totalTime << " s\n"
+                << "Computatation time       : " << computationTime << " s\n"
+                << "Communication time       : " << communicationTime << " s\n"
+                << "Analysis time            : " << writeAnalysisTime << " s\n"
+                << "Write time               : " << writeFieldTime << " s\n";
 
       const double mlups = (gSD::sVolume() * 1e-6) /
                            (totalTime / (endIteration - startIteration + 1));
 
-      std::cout << "MLUPS                   : " << mlups << std::endl
-                << "Initial mass            : " << initialMass << std::endl
-                << "Final mass              : " << finalMass << std::endl
-                << "% mass diff.            : " << differenceMass << std::endl
-                << "----------------------------------------------"
-                << std::endl;
+      std::cout << "MLUPS                   : " << mlups << "\n"
+                << "Initial mass            : " << initialMass << "\n"
+                << "Final mass              : " << finalMass << "\n"
+                << "% mass diff.            : " << differenceMass << "\n"
+                << "----------------------------------------------\n";
     }
   }
 
