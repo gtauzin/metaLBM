@@ -44,6 +44,7 @@ class Routine {
   double initialMass;
   double finalMass;
   double differenceMass;
+
   double computationTime;
   double communicationTime;
   double writeFieldTime;
@@ -107,6 +108,7 @@ class Routine {
 
     initialMass = communication.reduce(fieldList.density.getLocalData());
 
+    // Execute LBM algorithm
     for (int iteration = startIteration + 1; iteration <= endIteration;
          ++iteration) {
       algorithm.isStored = fieldWriter.getIsWritten(iteration) ||

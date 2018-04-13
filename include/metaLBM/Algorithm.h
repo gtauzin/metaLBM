@@ -125,6 +125,7 @@ class Algorithm<T, AlgorithmType::Pull, architecture, implementation>
  private:
   using Base =
       Algorithm<T, AlgorithmType::Generic, architecture, implementation>;
+  using Clock = std::chrono::high_resolution_clock;
 
   Computation<architecture, L::dimD> computationLocal;
   Computation<architecture, L::dimD> computationBottom;
@@ -229,10 +230,8 @@ class Algorithm<T, AlgorithmType::Pull, architecture, implementation>
 
     Base::collision.update(iteration);
 
-    auto t0 = std::chrono::high_resolution_clock::now();
-
+    auto t0 = Clock::now();
     Base::communication.communicateHalos(Base::haloDistributionPrevious_Ptr);
-
     computationBottom.Do(stream, bottomBoundary,
                          Base::haloDistributionPrevious_Ptr);
     computationTop.Do(stream, topBoundary, Base::haloDistributionPrevious_Ptr);
@@ -240,15 +239,13 @@ class Algorithm<T, AlgorithmType::Pull, architecture, implementation>
                         Base::haloDistributionPrevious_Ptr);
     computationBack.Do(stream, backBoundary,
                        Base::haloDistributionPrevious_Ptr);
-
-    auto t1 = std::chrono::high_resolution_clock::now();
-
-    computationLocal.Do(stream, *this);
-
-    auto t2 = std::chrono::high_resolution_clock::now();
-
+    auto t1 = Clock::now();
     Base::dtCommunication = (t1 - t0);
-    Base::dtComputation = (t2 - t1);
+
+    auto t2 = Clock::now();
+    computationLocal.Do(stream, *this);
+    auto t3 = Clock::now();
+    Base::dtComputation = (t3 - t2);
   }
 
   LBM_HOST
@@ -262,9 +259,6 @@ class Algorithm<T, AlgorithmType::Pull, architecture, implementation>
     computationLocal.Do(stream, Base::unpacker, Base::haloDistributionNext_Ptr,
                         Base::localDistribution_Ptr, Base::numberElements);
   }
-
-  using Base::getCommunicationTime;
-  using Base::getComputationTime;
 };
 
 }  // namespace lbm
