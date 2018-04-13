@@ -5,32 +5,24 @@
 
 namespace lbm {
 
-  template<Architecture architecture>
-  class Stream {};
+template <Architecture architecture>
+class Stream {};
 
-  template<>
-  class Stream<Architecture::Generic> {
-  protected:
+template <>
+class Stream<Architecture::Generic> {
+ protected:
+ public:
+};
 
-  public:
+template <>
+class Stream<Architecture::CPU> : public Stream<Architecture::Generic> {
+ private:
+ public:
+  Stream(bool isDefault_in) {}
 
-  };
+  ~Stream() {}
 
-  template<>
-  class Stream<Architecture::CPU>
-    : public Stream<Architecture::Generic> {
-  private:
+  void synchronize() {}
+};
 
-  public:
-    Stream(bool isDefault_in) {
-    }
-
-    ~Stream() {
-    }
-
-    void synchronize() {
-    }
-
-  };
-
-}
+}  // namespace lbm

@@ -6,7 +6,6 @@
 namespace lbm {
 
 /// RAII container for launching MPI
-
 template <int numProcsAtCompileTile>
 struct MPIInitializer {
   /// Launch MPI

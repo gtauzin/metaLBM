@@ -3,213 +3,233 @@
 #include <cmath>
 
 #include "Commons.h"
-#include "Options.h"
-#include "MathVector.h"
-#include "Lattice.h"
 #include "Equilibrium.h"
 #include "Helpers.h"
+#include "Lattice.h"
+#include "MathVector.h"
+#include "Options.h"
 
 namespace lbm {
 
-  template <class T, ForcingSchemeType forcingSchemeType>
-  class ForcingScheme {};
+template <class T, ForcingSchemeType forcingSchemeType>
+class ForcingScheme {};
 
-  template <class T>
-  class ForcingScheme<T, ForcingSchemeType::Generic> {
-  protected:
-    T tau;
+template <class T>
+class ForcingScheme<T, ForcingSchemeType::Generic> {
+ protected:
+  T tau;
 
-  public:
-    ForcingScheme(const T tau_in)
-      : tau(tau_in)
-    {}
+ public:
+  ForcingScheme(const T tau_in) : tau(tau_in) {}
 
-  public:
-    LBM_DEVICE LBM_HOST LBM_INLINE
-    MathVector<T, L::dimD>
-      calculateHydrodynamicVelocity(const MathVector<T, L::dimD>& force,
-                                    const T& density,
-                                    const MathVector<T, L::dimD>& velocity) const {
-      LBM_SCOREP_INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::Generic>::calculateHydrodynamicVelocity",5)
+ public:
+  LBM_DEVICE LBM_HOST LBM_INLINE MathVector<T, L::dimD>
+  calculateHydrodynamicVelocity(const MathVector<T, L::dimD>& force,
+                                const T& density,
+                                const MathVector<T, L::dimD>& velocity) const {
+    LBM_SCOREP_INSTRUMENT_OFF(
+        "ForcingScheme<T, "
+        "ForcingSchemeType::Generic>::calculateHydrodynamicVelocity",
+        5)
 
-      return velocity + 0.5/density * force;
-    }
+    return velocity + 0.5 / density * force;
+  }
 
-    LBM_DEVICE LBM_HOST LBM_INLINE
-    void setVariables(const MathVector<T, L::dimD>& force,
-                      const T& density,
-                      const MathVector<T, L::dimD>& velocity) {
-    }
-  };
+  LBM_DEVICE LBM_HOST LBM_INLINE void setVariables(
+      const MathVector<T, L::dimD>& force,
+      const T& density,
+      const MathVector<T, L::dimD>& velocity) {}
+};
 
-  template <class T>
-  class ForcingScheme<T, ForcingSchemeType::None>
+template <class T>
+class ForcingScheme<T, ForcingSchemeType::None>
     : public ForcingScheme<T, ForcingSchemeType::Generic> {
-  private:
-    using Base = ForcingScheme<T, ForcingSchemeType::Generic>;
+ private:
+  using Base = ForcingScheme<T, ForcingSchemeType::Generic>;
 
-  public:
-    using Base::ForcingScheme;
+ public:
+  using Base::ForcingScheme;
 
-    LBM_DEVICE LBM_HOST LBM_INLINE
-    MathVector<T, L::dimD>
-      calculateHydrodynamicVelocity(const MathVector<T, L::dimD>& force,
-                                    const T& density,
-                                    const MathVector<T, L::dimD>& velocity) const {
-      LBM_SCOREP_INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::Generic>::calculateHydrodynamicVelocity",5)
+  LBM_DEVICE LBM_HOST LBM_INLINE MathVector<T, L::dimD>
+  calculateHydrodynamicVelocity(const MathVector<T, L::dimD>& force,
+                                const T& density,
+                                const MathVector<T, L::dimD>& velocity) const {
+    LBM_SCOREP_INSTRUMENT_OFF(
+        "ForcingScheme<T, "
+        "ForcingSchemeType::Generic>::calculateHydrodynamicVelocity",
+        5)
 
-        return velocity;
-    }
+    return velocity;
+  }
 
-
-    LBM_DEVICE LBM_HOST LBM_INLINE
-    MathVector<T, L::dimD>
-    calculateEquilibriumVelocity(const MathVector<T, L::dimD>& force,
-                                 const T& density,
-                                 const MathVector<T, L::dimD>& velocity) const {
-      LBM_SCOREP_INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::Guo>::calculateEquilibriumVelocity",5)
-
-        return velocity;
-    }
-
-    LBM_DEVICE LBM_HOST LBM_INLINE
-    T calculateCollisionSource(const MathVector<T, L::dimD>& force,
+  LBM_DEVICE LBM_HOST LBM_INLINE MathVector<T, L::dimD>
+  calculateEquilibriumVelocity(const MathVector<T, L::dimD>& force,
                                const T& density,
-                               const MathVector<T, L::dimD>& velocity,
-                               const T& velocity2, const T equilibrium_iQ,
-                               const unsigned int iQ) const {
-      LBM_SCOREP_INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::Guo>::calculateCollisionSource",5)
+                               const MathVector<T, L::dimD>& velocity) const {
+    LBM_SCOREP_INSTRUMENT_OFF(
+        "ForcingScheme<T, "
+        "ForcingSchemeType::Guo>::calculateEquilibriumVelocity",
+        5)
 
-        return 0;
-    }
+    return velocity;
+  }
 
-  };
+  LBM_DEVICE LBM_HOST LBM_INLINE T
+  calculateCollisionSource(const MathVector<T, L::dimD>& force,
+                           const T& density,
+                           const MathVector<T, L::dimD>& velocity,
+                           const T& velocity2,
+                           const T equilibrium_iQ,
+                           const unsigned int iQ) const {
+    LBM_SCOREP_INSTRUMENT_OFF(
+        "ForcingScheme<T, ForcingSchemeType::Guo>::calculateCollisionSource", 5)
 
+    return 0;
+  }
+};
 
-  template <class T>
-  class ForcingScheme<T, ForcingSchemeType::Guo>
+template <class T>
+class ForcingScheme<T, ForcingSchemeType::Guo>
     : public ForcingScheme<T, ForcingSchemeType::Generic> {
-  private:
-    using Base = ForcingScheme<T, ForcingSchemeType::Generic>;
+ private:
+  using Base = ForcingScheme<T, ForcingSchemeType::Generic>;
 
-  public:
-    using Base::ForcingScheme;
+ public:
+  using Base::ForcingScheme;
 
-    LBM_DEVICE LBM_HOST LBM_INLINE
-    MathVector<T, L::dimD>
-    calculateEquilibriumVelocity(const MathVector<T, L::dimD>& force,
-                                 const T& density,
-                                 const MathVector<T, L::dimD>& velocity) const {
-      LBM_SCOREP_INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::Guo>::calculateEquilibriumVelocity",5)
-
-      return velocity + 0.5/density * force;
-    }
-
-    LBM_DEVICE LBM_HOST LBM_INLINE
-    T calculateCollisionSource(const MathVector<T, L::dimD>& force,
+  LBM_DEVICE LBM_HOST LBM_INLINE MathVector<T, L::dimD>
+  calculateEquilibriumVelocity(const MathVector<T, L::dimD>& force,
                                const T& density,
-                               const MathVector<T, L::dimD>& velocity,
-                               const T& velocity2, const T equilibrium_iQ,
-                               const unsigned int iQ) const {
-      LBM_SCOREP_INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::Guo>::calculateCollisionSource",5)
+                               const MathVector<T, L::dimD>& velocity) const {
+    LBM_SCOREP_INSTRUMENT_OFF(
+        "ForcingScheme<T, "
+        "ForcingSchemeType::Guo>::calculateEquilibriumVelocity",
+        5)
 
-      T celerity_iQDotVelocity = L::celerity()[iQ].dot(velocity);
+    return velocity + 0.5 / density * force;
+  }
 
-      T collisionForcingR = (L::celerity()[iQ] - velocity
-                             + L::inv_cs2 * celerity_iQDotVelocity
-                             * L::celerity()[iQ]).dot(force);
+  LBM_DEVICE LBM_HOST LBM_INLINE T
+  calculateCollisionSource(const MathVector<T, L::dimD>& force,
+                           const T& density,
+                           const MathVector<T, L::dimD>& velocity,
+                           const T& velocity2,
+                           const T equilibrium_iQ,
+                           const unsigned int iQ) const {
+    LBM_SCOREP_INSTRUMENT_OFF(
+        "ForcingScheme<T, ForcingSchemeType::Guo>::calculateCollisionSource", 5)
 
-      return (1.0 - 1.0/(2.0 * Base::tau)) * L::weight()[iQ] * L::inv_cs2 * collisionForcingR;
-    }
+    T celerity_iQDotVelocity = L::celerity()[iQ].dot(velocity);
 
-  };
+    T collisionForcingR =
+        (L::celerity()[iQ] - velocity +
+         L::inv_cs2 * celerity_iQDotVelocity * L::celerity()[iQ])
+            .dot(force);
 
+    return (1.0 - 1.0 / (2.0 * Base::tau)) * L::weight()[iQ] * L::inv_cs2 *
+           collisionForcingR;
+  }
+};
 
-  template <class T>
-  class ForcingScheme<T, ForcingSchemeType::ShanChen>
+template <class T>
+class ForcingScheme<T, ForcingSchemeType::ShanChen>
     : public ForcingScheme<T, ForcingSchemeType::Generic> {
-  private:
-    using Base = ForcingScheme<T, ForcingSchemeType::Generic>;
+ private:
+  using Base = ForcingScheme<T, ForcingSchemeType::Generic>;
 
-    using Base::tau;
+  using Base::tau;
 
-  public:
-    using Base::ForcingScheme;
-    using Base::setVariables;
+ public:
+  using Base::ForcingScheme;
+  using Base::setVariables;
 
-    LBM_DEVICE LBM_HOST LBM_INLINE
-    MathVector<T, L::dimD>
-      calculateEquilibriumVelocity(const MathVector<T, L::dimD>& force,
-                                   const T& density,
-                                   const MathVector<T, L::dimD>& velocity) const {
-      { LBM_SCOREP_INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::ShanChen>::calculateEquilibriumVelocity",5) }
-
-      return velocity + tau/density * force;
-    }
-
-    LBM_DEVICE LBM_HOST LBM_INLINE
-    T calculateCollisionSource(const MathVector<T, L::dimD>& force,
+  LBM_DEVICE LBM_HOST LBM_INLINE MathVector<T, L::dimD>
+  calculateEquilibriumVelocity(const MathVector<T, L::dimD>& force,
                                const T& density,
-                               const MathVector<T, L::dimD>& velocity,
-                               const T& velocity2, const T equilibrium_iQ,
-                               const unsigned int iQ) const {
-      LBM_SCOREP_INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::ShanChen>::calculateCollisionSource",5)
-
-      return 0.0;
+                               const MathVector<T, L::dimD>& velocity) const {
+    {
+      LBM_SCOREP_INSTRUMENT_OFF(
+          "ForcingScheme<T, "
+          "ForcingSchemeType::ShanChen>::calculateEquilibriumVelocity",
+          5)
     }
 
-  };
+    return velocity + tau / density * force;
+  }
 
+  LBM_DEVICE LBM_HOST LBM_INLINE T
+  calculateCollisionSource(const MathVector<T, L::dimD>& force,
+                           const T& density,
+                           const MathVector<T, L::dimD>& velocity,
+                           const T& velocity2,
+                           const T equilibrium_iQ,
+                           const unsigned int iQ) const {
+    LBM_SCOREP_INSTRUMENT_OFF(
+        "ForcingScheme<T, "
+        "ForcingSchemeType::ShanChen>::calculateCollisionSource",
+        5)
 
-  template <class T>
-  class ForcingScheme<T, ForcingSchemeType::ExactDifferenceMethod>
+    return 0.0;
+  }
+};
+
+template <class T>
+class ForcingScheme<T, ForcingSchemeType::ExactDifferenceMethod>
     : public ForcingScheme<T, ForcingSchemeType::Generic> {
-  private:
-    using Base = ForcingScheme<T, ForcingSchemeType::Generic>;
+ private:
+  using Base = ForcingScheme<T, ForcingSchemeType::Generic>;
 
-    MathVector<T, L::dimD> deltaVelocity;
-    T deltaVelocity2;
+  MathVector<T, L::dimD> deltaVelocity;
+  T deltaVelocity2;
 
-  public:
-    ForcingScheme(const T& tau_in)
-      : Base(tau_in)
-      , deltaVelocity()
-      , deltaVelocity2()
-    {}
+ public:
+  ForcingScheme(const T& tau_in)
+      : Base(tau_in), deltaVelocity(), deltaVelocity2() {}
 
-    LBM_DEVICE LBM_HOST LBM_INLINE
-    MathVector<T, L::dimD>
-      calculateEquilibriumVelocity(const MathVector<T, L::dimD>& force,
-                                   const T& density,
-                                   const MathVector<T, L::dimD>& velocity) const {
-      { LBM_SCOREP_INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::ExactDifferenceMethod>::calculateEquilibriumVelocity",5) }
-
-      return velocity;
-    }
-
-    LBM_DEVICE LBM_HOST LBM_INLINE
-    void setVariables(const MathVector<T, L::dimD>& force,
-                      const T& density,
-                      const MathVector<T, L::dimD>& velocity) {
-      deltaVelocity = velocity + 1.0/density * force;
-      deltaVelocity2 = deltaVelocity.norm2();
-    }
-
-    LBM_DEVICE LBM_HOST LBM_INLINE
-    T calculateCollisionSource(const MathVector<T, L::dimD>& force,
+  LBM_DEVICE LBM_HOST LBM_INLINE MathVector<T, L::dimD>
+  calculateEquilibriumVelocity(const MathVector<T, L::dimD>& force,
                                const T& density,
-                               const MathVector<T, L::dimD>& velocity,
-                               const T& velocity2, const T equilibrium_iQ,
-                               const unsigned int iQ) const {
-      { LBM_SCOREP_INSTRUMENT_OFF("ForcingScheme<T, ForcingSchemeType::ExactDifferenceMethod>::calculateCollisionSource",5) }
-
-        return Equilibrium_::calculate(density, velocity + 1.0/density * force,
-                                       (velocity + 1.0/density * force).norm2(), iQ)
-          - equilibrium_iQ;
+                               const MathVector<T, L::dimD>& velocity) const {
+    {
+      LBM_SCOREP_INSTRUMENT_OFF(
+          "ForcingScheme<T, "
+          "ForcingSchemeType::ExactDifferenceMethod>::"
+          "calculateEquilibriumVelocity",
+          5)
     }
 
-  };
+    return velocity;
+  }
 
-  typedef ForcingScheme<dataT, forcingSchemeT> ForcingScheme_;
+  LBM_DEVICE LBM_HOST LBM_INLINE void setVariables(
+      const MathVector<T, L::dimD>& force,
+      const T& density,
+      const MathVector<T, L::dimD>& velocity) {
+    deltaVelocity = velocity + 1.0 / density * force;
+    deltaVelocity2 = deltaVelocity.norm2();
+  }
 
-}
+  LBM_DEVICE LBM_HOST LBM_INLINE T
+  calculateCollisionSource(const MathVector<T, L::dimD>& force,
+                           const T& density,
+                           const MathVector<T, L::dimD>& velocity,
+                           const T& velocity2,
+                           const T equilibrium_iQ,
+                           const unsigned int iQ) const {
+    {
+      LBM_SCOREP_INSTRUMENT_OFF(
+          "ForcingScheme<T, "
+          "ForcingSchemeType::ExactDifferenceMethod>::calculateCollisionSource",
+          5)
+    }
+
+    return Equilibrium_::calculate(density, velocity + 1.0 / density * force,
+                                   (velocity + 1.0 / density * force).norm2(),
+                                   iQ) -
+           equilibrium_iQ;
+  }
+};
+
+typedef ForcingScheme<dataT, forcingSchemeT> ForcingScheme_;
+
+}  // namespace lbm

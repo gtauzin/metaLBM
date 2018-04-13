@@ -3,22 +3,15 @@
 
 namespace lbm {
 
-  template<class U, unsigned int NumberComponents>
-  class MathVector {
-  public:
-    U sArray[NumberComponents];
+template <class U, unsigned int NumberComponents>
+class MathVector {
+ public:
+  U sArray[NumberComponents];
 
-    __device__ __host__
-    U& operator[] (int i) {
-      return sArray[i];
-    }
+  __device__ __host__ U& operator[](int i) { return sArray[i]; }
 
-    __device__ __host__
-    const U& operator[] (int i) const {
-      return sArray[i];
-    }
+  __device__ __host__ const U& operator[](int i) const { return sArray[i]; }
+};
+}  // namespace lbm
 
-  };
-}
-
-#endif // MATHVECTOR_H
+#endif  // MATHVECTOR_H
