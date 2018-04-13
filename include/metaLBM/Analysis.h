@@ -59,7 +59,7 @@ namespace lbm {
       , localVelocityPtr(localVelocityPtr_in)
     {}
 
-    HOST
+    LBM_HOST
     void operator()(const Position& iP) {
       auto index = lSD::getIndex(iP);
       for(auto iD = 0; iD < L::dimD; ++iD) {
@@ -95,7 +95,7 @@ namespace lbm {
       , localVorticityPtr(localVorticityPtr_in)
     {}
 
-    HOST
+    LBM_HOST
     void operator()(const Position& iP) {
       auto index = lSD::getIndex(iP);
       for(auto iD = 0; iD < 2*L::dimD-3; ++iD) {
@@ -163,7 +163,7 @@ namespace lbm {
       , backward(localVelocityPtr_in, numberElements_in, globalLength_in)
     {}
 
-    HOST
+    LBM_HOST
     void operator()(const Position& iFP, const unsigned int index,
                     const WaveNumber& iK, const unsigned int kNorm) {
       T coefficient = (T) 1;

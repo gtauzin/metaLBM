@@ -11,7 +11,7 @@ namespace lbm {
   template<class T>
   struct Packer {
   public:
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     inline void operator()(const Position& iP,
                            T * const local, T * halo,
                            const unsigned int numberElements) {
@@ -25,7 +25,7 @@ namespace lbm {
   template<class T>
   struct Unpacker {
   public:
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     inline void operator()(const Position& iP,
                            T * halo, T * const local,
                            const unsigned int numberElements) {
@@ -47,9 +47,9 @@ namespace lbm {
   class Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
                  PartitionningType::Generic, Implementation::Generic, Dimension> {
   public:
-    DEVICE HOST INLINE
+    LBM_DEVICE LBM_HOST LBM_INLINE
     static void applyYBottom(const Position& iP, T * haloDistributionPtr) {
-      { INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyYBottom",5) }
+      { LBM_SCOREP_INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyYBottom",5) }
 
       Position iP_Destination = {iP[d::X], iP[d::Y] + lSD::sLength()[d::Y], iP[d::Z]};
 
@@ -60,9 +60,9 @@ namespace lbm {
       }
     }
 
-    DEVICE HOST INLINE
+    LBM_DEVICE LBM_HOST LBM_INLINE
     static void applyYTop(const Position& iP, T * haloDistributionPtr) {
-      { INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyYTop",5) }
+      { LBM_SCOREP_INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyYTop",5) }
 
       Position iP_Destination{iP[d::X],
           iP[d::Y] - (L::halo()[d::Y]+lSD::sLength()[d::Y] - 1), iP[d::Z]};
@@ -74,9 +74,9 @@ namespace lbm {
       }
     }
 
-    DEVICE HOST INLINE
+    LBM_DEVICE LBM_HOST LBM_INLINE
     static void applyZFront(const Position& iP, T * haloDistributionPtr) {
-      { INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyZFront",5) }
+      { LBM_SCOREP_INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyZFront",5) }
 
       Position iP_Destination = {iP[d::X], iP[d::Y], iP[d::Z] + lSD::sLength()[d::Z]};
 
@@ -87,9 +87,9 @@ namespace lbm {
       }
     }
 
-    DEVICE HOST INLINE
+    LBM_DEVICE LBM_HOST LBM_INLINE
     static void applyZBack(const Position& iP, T * haloDistributionPtr) {
-      { INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyZBack",5) }
+      { LBM_SCOREP_INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyZBack",5) }
 
       Position iP_Destination{iP[d::X], iP[d::Y],
           iP[d::Z] - (L::halo()[d::Z]+lSD::sLength()[d::Z] - 1)};
@@ -108,16 +108,16 @@ namespace lbm {
     : public Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
                       PartitionningType::Generic, Implementation::Generic, 1> {
   public:
-    DEVICE HOST INLINE
+    LBM_DEVICE LBM_HOST LBM_INLINE
     static void applyYBottom(const Position& iP, T * haloDistributionPtr) {}
 
-    DEVICE HOST INLINE
+    LBM_DEVICE LBM_HOST LBM_INLINE
     static void applyYTop(const Position& iP, T * haloDistributionPtr) {}
 
-    DEVICE HOST INLINE
+    LBM_DEVICE LBM_HOST LBM_INLINE
     static void applyZFront(const Position& iP, T * haloDistributionPtr) {}
 
-    DEVICE HOST INLINE
+    LBM_DEVICE LBM_HOST LBM_INLINE
     static void applyZBack(const Position& iP, T * haloDistributionPtr) {}
   };
 
@@ -134,10 +134,10 @@ namespace lbm {
     using Base::applyYTop;
     using Base::applyYBottom;
 
-    DEVICE HOST INLINE
+    LBM_DEVICE LBM_HOST LBM_INLINE
     static void applyZFront(const Position& iP, T * haloDistributionPtr) {}
 
-    DEVICE HOST INLINE
+    LBM_DEVICE LBM_HOST LBM_INLINE
     static void applyZBack(const Position& iP, T * haloDistributionPtr) {}
   };
 
@@ -147,16 +147,16 @@ namespace lbm {
     : public Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
                       PartitionningType::Generic, Implementation::Generic, 2> {
   public:
-    DEVICE HOST INLINE
+    LBM_DEVICE LBM_HOST LBM_INLINE
     static void applyYBottom(const Position& iP, T * haloDistributionPtr) {}
 
-    DEVICE HOST INLINE
+    LBM_DEVICE LBM_HOST LBM_INLINE
     static void applyYTop(const Position& iP, T * haloDistributionPtr) {}
 
-    DEVICE HOST INLINE
+    LBM_DEVICE LBM_HOST LBM_INLINE
     static void applyZFront(const Position& iP, T * haloDistributionPtr) {}
 
-    DEVICE HOST INLINE
+    LBM_DEVICE LBM_HOST LBM_INLINE
     static void applyZBack(const Position& iP, T * haloDistributionPtr) {}
   };
 
@@ -188,10 +188,10 @@ namespace lbm {
                           PartitionningType::Generic, Implementation::Generic, 3>;
 
   public:
-    DEVICE HOST INLINE
+    LBM_DEVICE LBM_HOST LBM_INLINE
     static void applyYBottom(const Position& iP, T * haloDistributionPtr) {}
 
-    DEVICE HOST INLINE
+    LBM_DEVICE LBM_HOST LBM_INLINE
     static void applyYTop(const Position& iP, T * haloDistributionPtr) {}
 
     using Base::applyZFront;
@@ -205,16 +205,16 @@ namespace lbm {
     : public Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
                       PartitionningType::Generic, Implementation::Generic, 3> {
   public:
-    DEVICE HOST INLINE
+    LBM_DEVICE LBM_HOST LBM_INLINE
     static void applyYBottom(const Position& iP, T * haloDistributionPtr) {}
 
-    DEVICE HOST INLINE
+    LBM_DEVICE LBM_HOST LBM_INLINE
     static void applyYTop(const Position& iP, T * haloDistributionPtr) {}
 
-    DEVICE HOST INLINE
+    LBM_DEVICE LBM_HOST LBM_INLINE
     static void applyZFront(const Position& iP, T * haloDistributionPtr) {}
 
-    DEVICE HOST INLINE
+    LBM_DEVICE LBM_HOST LBM_INLINE
     static void applyZBack(const Position& iP, T * haloDistributionPtr) {}
   };
 
@@ -229,7 +229,7 @@ namespace lbm {
                           implementation, Dimension>;
 
   public:
-    HOST DEVICE
+    LBM_HOST LBM_DEVICE
     void operator()(const Position& iP, T * haloDistributionPtr) {
       Base::applyYBottom(iP, haloDistributionPtr);
     }
@@ -246,7 +246,7 @@ namespace lbm {
                           implementation, Dimension>;
 
   public:
-    HOST DEVICE
+    LBM_HOST LBM_DEVICE
     void operator()(const Position& iP, T * haloDistributionPtr) {
       Base::applyYTop(iP, haloDistributionPtr);
     }
@@ -263,7 +263,7 @@ namespace lbm {
                           implementation, Dimension>;
 
   public:
-    HOST DEVICE
+    LBM_HOST LBM_DEVICE
     void operator()(const Position& iP, T * haloDistributionPtr) {
       Base::applyZFront(iP, haloDistributionPtr);
     }
@@ -280,7 +280,7 @@ namespace lbm {
                           implementation, Dimension>;
 
   public:
-    HOST DEVICE
+    LBM_HOST LBM_DEVICE
     void operator()(const Position& iP, T * haloDistributionPtr) {
       Base::applyZBack(iP, haloDistributionPtr);
     }

@@ -28,7 +28,7 @@ namespace lbm {
     static constexpr int dimQ = 3;
     static constexpr int faceQ = 1;
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr Position halo() {
       return Position({1, 0, 0});
     }
@@ -36,27 +36,27 @@ namespace lbm {
     static constexpr T inv_cs2 = (T)3;
     static constexpr T cs2 = (T)1/inv_cs2;
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<unsigned int, 0> iQ_Bottom() {
       return {{}};
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<unsigned int, 0> iQ_Top() {
       return {{}};
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<unsigned int, 0> iQ_Front() {
       return {{}};
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<unsigned int, 0> iQ_Back() {
       return {{}};
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<MathVector<T, dimD>, dimQ> celerity() {
       return
         {
@@ -66,7 +66,7 @@ namespace lbm {
         };
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<T, dimQ> weight() {
       return
         {
@@ -84,7 +84,7 @@ namespace lbm {
     static constexpr int dimQ = 5;
     static constexpr int faceQ = 1;
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr Position halo() {
       return Position({1, 1, 0});
     }
@@ -92,27 +92,27 @@ namespace lbm {
     static constexpr T inv_cs2 = (T)3;
     static constexpr T cs2 = (T)1/inv_cs2;
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<unsigned int, faceQ> iQ_Bottom() {
       return {{3}};
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<unsigned int, faceQ> iQ_Top() {
       return {{4}};
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<unsigned int, 0> iQ_Front() {
       return {{}};
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<unsigned int, 0> iQ_Back() {
       return {{}};
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<MathVector<T, dimD>, dimQ> celerity() {
       return
         {
@@ -124,7 +124,7 @@ namespace lbm {
         };
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<T, dimQ> weight() {
       return
         {
@@ -144,7 +144,7 @@ namespace lbm {
     static constexpr int dimQ = 9;
     static constexpr int faceQ = 3;
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr Position halo() {
       return Position({1, 1, 0});
     }
@@ -152,27 +152,27 @@ namespace lbm {
     static constexpr T inv_cs2 = (T)3;
     static constexpr T cs2 = (T)1/inv_cs2;
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<T, dimQ> iQ_Bottom() {
       return {{3, 4, 7}};
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<T, dimQ> iQ_Top() {
       return {{1, 6, 8}};
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<unsigned int, 0> iQ_Front() {
       return {{}};
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<unsigned int, 0> iQ_Back() {
       return {{}};
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<MathVector<T, dimD>, dimQ> celerity() {
       return
         {
@@ -188,7 +188,7 @@ namespace lbm {
         };
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<T, dimQ> weight() {
       return
         {
@@ -210,7 +210,7 @@ namespace lbm {
     static constexpr int dimQ = 15;
     static constexpr int faceQ = 5;
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr Position halo() {
       return Position({1, 1, 1});
     }
@@ -218,27 +218,27 @@ namespace lbm {
     static constexpr T inv_cs2 = (T)3;
     static constexpr T cs2 = (T)1/inv_cs2;
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<T, dimQ> iQ_Bottom() {
       return {{2, 3, 9, 10, 11}};
      }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<T, dimQ> iQ_Top() {
       return {{4, 5, 7, 8, 13}};
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<T, dimQ> iQ_Front() {
       return {{2, 4, 8, 10, 12}};
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<T, dimQ> iQ_Back() {
       return {{3, 5, 7, 9, 14}};
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<MathVector<T, dimD>, dimQ> celerity() {
       return
         {
@@ -260,7 +260,7 @@ namespace lbm {
         };
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<T, dimQ> weight() {
       return
         {
@@ -283,7 +283,7 @@ namespace lbm {
     static constexpr int dimQ = 19;
     static constexpr int faceQ = 5;
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr Position halo() {
       return Position({1, 1, 1});
     }
@@ -291,27 +291,27 @@ namespace lbm {
     static constexpr T inv_cs2 = (T)3;
     static constexpr T cs2 = (T)1/inv_cs2;
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<unsigned int, faceQ> iQ_Bottom() {
       return {{2, 8, 11, 13, 14}};
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<unsigned int, faceQ> iQ_Top() {
       return {{3, 7, 15, 17, 18}};
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<unsigned int, faceQ> iQ_Front() {
       return {{4, 10, 12, 13, 18}};
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<unsigned int, faceQ> iQ_Back() {
       return {{5, 9, 14, 16, 17}};
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<MathVector<T, dimD>, dimQ> celerity() {
       return
         {
@@ -337,7 +337,7 @@ namespace lbm {
         };
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<T, dimQ> weight() {
       return
         {
@@ -362,7 +362,7 @@ namespace lbm {
     static constexpr int dimQ = 27;
     static constexpr int faceQ = 9;
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr Position halo() {
       return Position({1, 1, 1});
     }
@@ -370,27 +370,27 @@ namespace lbm {
     static constexpr T inv_cs2 = (T)3;
     static constexpr T cs2 = (T)1/inv_cs2;
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<unsigned int, faceQ> iQ_Bottom() {
       return {{2, 6, 7, 12, 17, 18, 19, 21, 22}};
      }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<unsigned int, faceQ> iQ_Top() {
       return {{3, 8, 9, 11, 15, 16, 23, 25, 26}};
      }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<unsigned int, faceQ> iQ_Front() {
       return {{4, 6, 8, 14, 16, 18, 20, 21, 26}};
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<unsigned int, faceQ> iQ_Back() {
       return {{5, 7, 9, 13, 15, 17, 22, 24, 25}};
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<MathVector<T, dimD>, dimQ> celerity() {
       return
         {
@@ -424,7 +424,7 @@ namespace lbm {
         };
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline constexpr MathVector<T, dimQ> weight() {
       return
         {

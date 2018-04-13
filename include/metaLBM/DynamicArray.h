@@ -34,32 +34,32 @@ namespace lbm {
     {}
 
   public:
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     U& operator[] (int i) {
       return dArrayPtr[i];
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     const U& operator[] (int i) const {
       return dArrayPtr[i];
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     U * data(const unsigned offset = 0) {
       return dArrayPtr + offset;
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     const U * data(const unsigned offset = 0) const {
       return dArrayPtr + offset;
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     unsigned int size() {
       return numberElements;
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     unsigned int size() const {
       return numberElements;
     }

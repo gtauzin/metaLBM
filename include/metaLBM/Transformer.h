@@ -61,7 +61,7 @@ namespace lbm {
       }
     }
 
-    HOST
+    LBM_HOST
     inline void execute() {
       for(auto iC = 0; iC < NumberComponents; ++iC) {
         fftw_execute(planForward[iC]);
@@ -115,11 +115,11 @@ namespace lbm {
       }
     }
 
-    HOST
+    LBM_HOST
     inline void execute() {
       for(auto iC = 0; iC < NumberComponents; ++iC) {
         fftw_execute(planBackward[iC]);
-        computationLocal.Do([=] HOST (const Position& iP) {
+        computationLocal.Do([=] LBM_HOST (const Position& iP) {
             (localSpacePtr+numberElements*iC)[lSD::getIndex(iP)] /= gSD::sVolume();
           });
       }
@@ -157,10 +157,10 @@ namespace lbm {
       , computationFourier(lFD::start(), lFD::end())
     {}
 
-    HOST
+    LBM_HOST
     inline void executeFourier() {
       computationFourier.Do
-        ([=] HOST (const Position& iFP) {
+        ([=] LBM_HOST (const Position& iFP) {
           auto index = lFD::getIndex(iFP);
 
           WaveNumber iK{{0}};
@@ -181,7 +181,7 @@ namespace lbm {
       backwardOut.execute();
     }
 
-    HOST
+    LBM_HOST
     inline void executeSpace() {
       forwardIn.execute();
       executeFourier();
@@ -216,10 +216,10 @@ namespace lbm {
       , computationFourier(lFD::start(), lFD::end())
     {}
 
-    HOST
+    LBM_HOST
     inline void executeFourier() {
       computationFourier.Do
-        ([=] HOST (const Position& iFP) {
+        ([=] LBM_HOST (const Position& iFP) {
           auto index = lFD::getIndex(iFP);
 
           WaveNumber iK{{0}};
@@ -260,7 +260,7 @@ namespace lbm {
       backwardOut.execute();
     }
 
-    HOST
+    LBM_HOST
     inline void executeSpace() {
       forwardIn.execute();
       executeFourier();
@@ -297,10 +297,10 @@ namespace lbm {
       , computationFourier(lFD::start(), lFD::end())
     {}
 
-    HOST
+    LBM_HOST
     inline void executeFourier() {
       computationFourier.Do
-        ([=] HOST (const Position& iFP) {
+        ([=] LBM_HOST (const Position& iFP) {
           auto index = lFD::getIndex(iFP);
 
           WaveNumber iK{{0}};

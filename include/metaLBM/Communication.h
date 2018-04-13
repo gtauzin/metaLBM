@@ -52,7 +52,7 @@ namespace lbm {
     MPI_Status statusZMPI[4];
     MPI_Request requestZMPI[4];
 
-    HOST
+    LBM_HOST
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
                   const std::string& processorName_in)
@@ -76,11 +76,11 @@ namespace lbm {
       , requestZMPI()
     {}
 
-    HOST
+    LBM_HOST
     void sendGlobalToLocal(T * globalPtr,
                            T * localPtr,
                            unsigned int numberComponents) {
-      INSTRUMENT_ON("Communication<6>::sendGlobalToLocal",3)
+      LBM_SCOREP_INSTRUMENT_ON("Communication<6>::sendGlobalToLocal",3)
 
         MPI_Scatter(globalPtr, numberComponents*lSD::pVolume(), MPI_DOUBLE,
                     localPtr, numberComponents*lSD::pVolume(), MPI_DOUBLE,
@@ -88,11 +88,11 @@ namespace lbm {
 
     }
 
-    HOST
+    LBM_HOST
     void sendLocalToGlobal(T * localPtr,
                            T * globalPtr,
                            unsigned int numberComponents) {
-      INSTRUMENT_ON("Communication<6>::sendLocalToGlobal",3)
+      LBM_SCOREP_INSTRUMENT_ON("Communication<6>::sendLocalToGlobal",3)
 
       MPI_Gather(localPtr, numberComponents*lSD::pVolume(), MPI_DOUBLE,
                  globalPtr, numberComponents*lSD::pVolume(), MPI_DOUBLE,
@@ -100,7 +100,7 @@ namespace lbm {
     }
 
 
-    HOST
+    LBM_HOST
     void reduce(T * localSumPtr, unsigned int numberComponents) {
       MPI_Barrier(MPI_COMM_WORLD);
 
@@ -117,11 +117,11 @@ namespace lbm {
 
     }
 
-    HOST
+    LBM_HOST
     T reduce(T * localPtr) {
       T localSum = (T) 0;
       computationLocal.Do
-        ([&] HOST (const Position& iP) {
+        ([&] LBM_HOST (const Position& iP) {
           localSum += localPtr[lSD::getIndex(iP)];
         });
 
@@ -171,9 +171,9 @@ namespace lbm {
     unsigned int receivedFromRightBeginX;
 
   protected:
-    HOST
+    LBM_HOST
     void sendAndReceiveHaloXRight(T * haloDistributionPtr) {
-      { INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloXRight",4) }
+      { LBM_SCOREP_INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloXRight",4) }
 
       for(auto iQ = L::faceQ+1; iQ < 2*L::faceQ+1; ++iQ) {
         sendToRightBeginX = hMLSD::getIndex(Position({L::halo()[d::X]+lSD::sLength()[d::X]-1,
@@ -191,9 +191,9 @@ namespace lbm {
       }
     }
 
-    HOST
+    LBM_HOST
     void sendAndReceiveHaloXLeft(T * haloDistributionPtr) {
-      { INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloXLeft",4) }
+      { LBM_SCOREP_INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloXLeft",4) }
 
       for(auto iQ = 1; iQ < L::faceQ+1; ++iQ) {
         sendToLeftBeginX = hMLSD::getIndex(Position({L::halo()[d::X],
@@ -214,32 +214,32 @@ namespace lbm {
 
 
 
-    HOST
+    LBM_HOST
     void sendAndReceiveHaloYBottom(T * haloDistributionPtr) {
-      { INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloYBottom",4) }
+      { LBM_SCOREP_INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloYBottom",4) }
       //TODO - PACK AND UNPACK
     }
 
-    HOST
+    LBM_HOST
     void sendAndReceiveHaloYTop(T * haloDistributionPtr) {
-      { INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloYTop",4) }
+      { LBM_SCOREP_INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloYTop",4) }
       //TODO - PACK AND UNPACK
     }
 
-    HOST
+    LBM_HOST
     void sendAndReceiveHaloZFront(T * haloDistributionPtr) {
-      { INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloZFront",4) }
+      { LBM_SCOREP_INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloZFront",4) }
       //TODO: PACK AND UNPACK
     }
 
-    HOST
+    LBM_HOST
     void sendAndReceiveHaloZBack(T * haloDistributionPtr) {
-      { INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloZBack",4) }
+      { LBM_SCOREP_INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloZBack",4) }
       //TODO: PACK AND UNPACK
     }
 
   public:
-    HOST
+    LBM_HOST
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
                   const std::string& processorName_in)
@@ -301,7 +301,7 @@ namespace lbm {
     unsigned int receivedFromRightBeginX;
 
   public:
-    HOST
+    LBM_HOST
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
                   const std::string& processorName_in)
@@ -327,9 +327,9 @@ namespace lbm {
     using Base::reduce;
 
   protected:
-    HOST
+    LBM_HOST
     void sendAndReceiveHaloXRight(T * haloDistributionPtr) {
-      INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloXRight",4)
+      LBM_SCOREP_INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloXRight",4)
 
       MPI_Irecv(haloDistributionPtr+receivedFromLeftBeginX, sizeStripeX,
                 MPI_DOUBLE, leftXRankMPI, 17, MPI_COMM_WORLD, &requestXRightMPI[0]);
@@ -340,9 +340,9 @@ namespace lbm {
       MPI_Waitall(2, requestXRightMPI, statusXRightMPI);
     }
 
-    HOST
+    LBM_HOST
     void sendAndReceiveHaloXLeft(T * haloDistributionPtr) {
-      INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloXLeft",4)
+      LBM_SCOREP_INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloXLeft",4)
 
       MPI_Irecv(haloDistributionPtr+receivedFromRightBeginX, sizeStripeX,
                 MPI_DOUBLE, rightXRankMPI, 23, MPI_COMM_WORLD, &requestXLeftMPI[0]);
@@ -353,27 +353,27 @@ namespace lbm {
       MPI_Waitall(2, requestXLeftMPI, statusXLeftMPI);
     }
 
-    HOST
+    LBM_HOST
     void sendAndReceiveHaloYBottom(T * haloDistributionPtr) {
-      { INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloYBottom",4) }
+      { LBM_SCOREP_INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloYBottom",4) }
       //TODO - PACK AND UNPACK
     }
 
-    HOST
+    LBM_HOST
     void sendAndReceiveHaloYTop(T * haloDistributionPtr) {
-      { INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloYTop",4) }
+      { LBM_SCOREP_INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloYTop",4) }
       //TODO - PACK AND UNPACK
     }
 
-    HOST
+    LBM_HOST
     void sendAndReceiveHaloZFront(T * haloDistributionPtr) {
-      { INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloZFront",4) }
+      { LBM_SCOREP_INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloZFront",4) }
       //TODO: PACK AND UNPACK
     }
 
-    HOST
+    LBM_HOST
     void sendAndReceiveHaloZBack(T * haloDistributionPtr) {
-      { INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloZBack",4) }
+      { LBM_SCOREP_INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloZBack",4) }
       //TODO: PACK AND UNPACK
     }
 
@@ -558,7 +558,7 @@ namespace lbm {
                                Implementation::MPI, 0>;
 
   public:
-    HOST
+    LBM_HOST
     Communication(const MathVector<int, 3>& rankMPI_in,
                   const MathVector<int, 3>& sizeMPI_in,
                   const std::string& processorName_in)
@@ -574,9 +574,9 @@ namespace lbm {
     using Base::sendLocalToGlobal;
     using Base::reduce;
 
-    HOST
+    LBM_HOST
     inline void communicateHalos(T * haloDistributionPtr) {
-      { INSTRUMENT_ON("Communication<6>::communicateHalos",3) }
+      { LBM_SCOREP_INSTRUMENT_ON("Communication<6>::communicateHalos",3) }
       Base::sendAndReceiveHaloXRight(haloDistributionPtr);
       Base::sendAndReceiveHaloXLeft(haloDistributionPtr);
     }
@@ -623,9 +623,9 @@ namespace lbm {
     using Base::sendLocalToGlobal;
     using Base::reduce;
 
-    HOST
+    LBM_HOST
     inline void communicateHalos(T * haloDistributionPtr) {
-      INSTRUMENT_ON("Communication<6>::communicateHalos",3)
+      LBM_SCOREP_INSTRUMENT_ON("Communication<6>::communicateHalos",3)
 
       Base::sendAndReceiveHaloXRight(haloDistributionPtr);
       Base::sendAndReceiveHaloXLeft(haloDistributionPtr);
@@ -700,9 +700,9 @@ namespace lbm {
     using Base::sendLocalToGlobal;
     using Base::reduce;
 
-    HOST
+    LBM_HOST
     inline void communicateHalos(T * haloDistributionPtr) {
-      INSTRUMENT_ON("Communication<6>::communicateHalos",3)
+      LBM_SCOREP_INSTRUMENT_ON("Communication<6>::communicateHalos",3)
 
       Base::sendAndReceiveHaloZFront(haloDistributionPtr);
       Base::sendAndReceiveHaloZBack(haloDistributionPtr);

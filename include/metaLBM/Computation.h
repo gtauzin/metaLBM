@@ -37,7 +37,7 @@ namespace lbm {
 
     template<typename Callback, typename... Arguments>
     void Do(Callback function, const Arguments... arguments) {
-      { INSTRUMENT_OFF("Computation<Architecture::CPU, 2>::Do<Callback>",1) }
+      { LBM_SCOREP_INSTRUMENT_OFF("Computation<Architecture::CPU, 2>::Do<Callback>",1) }
 
       Position iP = start;
       for(auto i0 = Base::start[Base::dir[0]]; i0 < Base::end[Base::dir[0]]; ++i0) {
@@ -64,7 +64,7 @@ namespace lbm {
 
     template<typename Callback, typename... Arguments>
     void Do(Callback function, const Arguments... arguments) {
-      { INSTRUMENT_OFF("Computation<Architecture::CPU, 2>::Do<Callback>",2) }
+      { LBM_SCOREP_INSTRUMENT_OFF("Computation<Architecture::CPU, 2>::Do<Callback>",2) }
 
       Position iP = start;
       for(auto i0 = Base::start[Base::dir[0]]; i0 < Base::end[Base::dir[0]]; ++i0) {
@@ -94,7 +94,7 @@ namespace lbm {
 
     template<typename Callback, typename... Arguments>
     void Do(Callback function, const Arguments... arguments) {
-      { INSTRUMENT_OFF("Computation<Architecture::CPU, 2>::Do<Callback>",3) }
+      { LBM_SCOREP_INSTRUMENT_OFF("Computation<Architecture::CPU, 2>::Do<Callback>",3) }
 
       Position iP = start;
       for(auto i0 = Base::start[Base::dir[0]]; i0 < Base::end[Base::dir[0]]; ++i0) {

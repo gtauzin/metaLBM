@@ -39,7 +39,7 @@ namespace lbm {
 
     template<unsigned int NumberComponents, Architecture architecture>
       void readField(Field<T, NumberComponents, architecture, true>& field) {
-      { INSTRUMENT_ON("Reader<T, InputOutput::HDF5, readerFileFromat>::readField<NumberComponents>",3) }
+      { LBM_SCOREP_INSTRUMENT_ON("Reader<T, InputOutput::HDF5, readerFileFromat>::readField<NumberComponents>",3) }
 
       std::string fieldName = field.fieldName;
       Base::propertyListHDF5 = H5Pcreate(H5P_DATASET_XFER);
@@ -125,7 +125,7 @@ namespace lbm {
 
     template<Architecture architecture>
       void readDistribution(Distribution<T, architecture>& distribution) {
-      { INSTRUMENT_ON("Reader<T, InputOutput::HDF5, readerFileFromat>::readField<NumberComponents>",3) }
+      { LBM_SCOREP_INSTRUMENT_ON("Reader<T, InputOutput::HDF5, readerFileFromat>::readField<NumberComponents>",3) }
 
         Base::propertyListHDF5 = H5Pcreate(H5P_DATASET_XFER);
 

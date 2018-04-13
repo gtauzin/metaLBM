@@ -120,7 +120,7 @@ namespace lbm {
                   L::dimD> computationLocal(lSD::sStart(),
                                             lSD::sEnd());
       computationLocal.Do
-        ([&] HOST (const Position& iP) {
+        ([&] LBM_HOST (const Position& iP) {
           for(auto iC = 0; iC < NumberComponents; ++iC) {
             setLocalValue(iP, value_in, iC);
           }
@@ -135,7 +135,7 @@ namespace lbm {
                   L::dimD> computationLocal(lSD::sStart(),
                                             lSD::sEnd());
       computationLocal.Do
-        ([&] HOST (const Position& iP) {
+        ([&] LBM_HOST (const Position& iP) {
           setLocalVector(iP, vector_in);
         });
     }
@@ -151,20 +151,20 @@ namespace lbm {
       return localArray;
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     T * getLocalData(const unsigned int iC = 0) {
       return localArray.data(iC*numberElements);
     }
 
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     inline void setLocalValue(const Position iP,
                               const T value,
                               const unsigned int iC = 0) {
       (localArray.data(iC*numberElements))[lSD::getIndex(iP)] = value;
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     inline void setLocalVector(const Position iP,
                                const MathVector<T, NumberComponents> vector) {
       for(auto iC = 0; iC < NumberComponents; ++iC) {
@@ -172,13 +172,13 @@ namespace lbm {
       }
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     inline T getLocalValue(const Position& iP,
                            const unsigned int iC = 0) const {
       return (localArray.data(iC*numberElements))[lSD::getIndex(iP)];
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     inline MathVector<T, NumberComponents> getLocalVector(const Position& iP) const {
       MathVector<T, NumberComponents> vectorR;
       for(auto iC = 0; iC < NumberComponents; ++iC) {
@@ -226,19 +226,19 @@ namespace lbm {
       return DynamicArray<T, Architecture::CPU>();
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     void setLocalValue(const unsigned int index, const T value, const unsigned int iC = 0) {}
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     void setLocalVector(const unsigned int index,
                        const MathVector<T, NumberComponents> vector) {}
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     T getLocalValue(const unsigned int index, const unsigned int iC = 0) {
       return (T) -1;
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     MathVector<T, NumberComponents> getLocalVector(const unsigned int index) {
       return MathVector<T, NumberComponents>{{(T) -1}};
     }

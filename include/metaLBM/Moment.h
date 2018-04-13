@@ -13,11 +13,11 @@ namespace lbm {
   private:
   public:
 
-    DEVICE HOST INLINE
+    LBM_DEVICE LBM_HOST LBM_INLINE
     static void calculateDensity(const T * haloDistributionPtr,
                                         const Position& iP,
                                         T& density) {
-      { INSTRUMENT_OFF("Moment<T>::calculateDensity",5)}
+      { LBM_SCOREP_INSTRUMENT_OFF("Moment<T>::calculateDensity",5)}
 
       density = haloDistributionPtr[hSD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)];
 
@@ -27,12 +27,12 @@ namespace lbm {
       }
     }
 
-    DEVICE HOST INLINE
+    LBM_DEVICE LBM_HOST LBM_INLINE
     static void calculateVelocity(const T * haloDistributionPtr,
                                   const Position& iP,
                                   T& density,
                                   MathVector<T, L::dimD>& velocity) {
-      { INSTRUMENT_OFF("Moment<T>::calculateVelocity",5) }
+      { LBM_SCOREP_INSTRUMENT_OFF("Moment<T>::calculateVelocity",5) }
 
        velocity = L::celerity()[0]
         * haloDistributionPtr[hSD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)];
@@ -45,11 +45,11 @@ namespace lbm {
       velocity /= density;
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline T calculateEntropy(const T * haloDistributionPtr,
                               const Position& iP,
                               T& entropy) {
-      { INSTRUMENT_OFF("Moment<T>::calculateEntropy",5) }
+      { LBM_SCOREP_INSTRUMENT_OFF("Moment<T>::calculateEntropy",5) }
 
       entropy = haloDistributionPtr[hSD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)]
         * log(haloDistributionPtr[hSD::getIndex(iP-uiL::celerity()[0], (unsigned int) 0)]

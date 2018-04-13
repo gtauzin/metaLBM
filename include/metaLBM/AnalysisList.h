@@ -55,7 +55,7 @@ namespace lbm {
       resetAnalyses();
 
       computationLocal.Do
-        ([&] HOST (const Position& iP) {
+        ([&] LBM_HOST (const Position& iP) {
           totalEnergy(iP);
           totalEnstrophy(iP);
         });
@@ -135,7 +135,7 @@ namespace lbm {
 
       forwardTransformAnalyses();
       computationFourier.Do
-        ([&] HOST (const Position& iFP) {
+        ([&] LBM_HOST (const Position& iFP) {
           auto index = lFD::getIndex(iFP);
 
           iK[d::X] = iFP[d::X]+offset[d::X] <= gSD::sLength()[d::X]/2 ?

@@ -14,12 +14,12 @@ namespace lbm {
   template <class T, LatticeType latticeType>
   class Equilibrium<T, latticeType, EquilibriumType::Incompressible> {
   public:
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline T calculate(const T& density,
                               const MathVector<T, L::dimD>& velocity,
                               const T& velocity2,
                               const unsigned int iQ) {
-      { INSTRUMENT_OFF("Equilibrium<T, latticeType, EquilibriumType::Incompressible>::calculate",5) }
+      { LBM_SCOREP_INSTRUMENT_OFF("Equilibrium<T, latticeType, EquilibriumType::Incompressible>::calculate",5) }
 
       T cu = L::celerity()[iQ].dot(velocity);
 
@@ -40,12 +40,12 @@ namespace lbm {
   class Equilibrium<T, LatticeType::D1Q3, EquilibriumType::Incompressible>
     : public Equilibrium<T, LatticeType::Generic, EquilibriumType::Incompressible> {
   public:
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline T calculate(const T& density,
                               const MathVector<T, L::dimD>& velocity,
                               const T& velocity2,
                               const unsigned int iQ) {
-      { INSTRUMENT_OFF("Equilibrium<T, D1Q3, EquilibriumType::Incompressible>::calculate",5) }
+      { LBM_SCOREP_INSTRUMENT_OFF("Equilibrium<T, D1Q3, EquilibriumType::Incompressible>::calculate",5) }
 
       T fEq_iQ = 1.0;
 
@@ -64,12 +64,12 @@ namespace lbm {
   class Equilibrium<T, LatticeType::D2Q9, EquilibriumType::Incompressible>
     : public Equilibrium<T, LatticeType::D1Q3, EquilibriumType::Incompressible> {
   public:
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline T calculate(const T& density,
                               const MathVector<T, L::dimD>& velocity,
                               const T& velocity2,
                               const unsigned int iQ) {
-      { INSTRUMENT_OFF("Equilibrium<T, D2Q9, EquilibriumType::Incompressible>::calculate",5) }
+      { LBM_SCOREP_INSTRUMENT_OFF("Equilibrium<T, D2Q9, EquilibriumType::Incompressible>::calculate",5) }
 
       T fEq_iQ = 1.0;
 
@@ -89,12 +89,12 @@ namespace lbm {
   class Equilibrium<T, LatticeType::D3Q27, EquilibriumType::Incompressible>
     : public Equilibrium<T, LatticeType::D1Q3, EquilibriumType::Incompressible> {
   public:
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     static inline T calculate(const T& density,
                               const MathVector<T, L::dimD>& velocity,
                               const T& velocity2,
                               const unsigned int iQ) {
-      INSTRUMENT_OFF("Equilibrium<T, D3Q27, EquilibriumType::Incompressible>::calculate",5)
+      LBM_SCOREP_INSTRUMENT_OFF("Equilibrium<T, D3Q27, EquilibriumType::Incompressible>::calculate",5)
 
       T fEq_iQ = (T) 1;
       for(auto iD = 0; iD < L::dimD; ++iD) {

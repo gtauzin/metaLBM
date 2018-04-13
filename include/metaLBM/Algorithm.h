@@ -23,7 +23,7 @@ namespace lbm {
     Architecture architecture, Implementation implementation>
   class Algorithm {
   public:
-    HOST DEVICE
+    LBM_HOST LBM_DEVICE
       void operator()(const Position iP);
   };
 
@@ -83,9 +83,9 @@ namespace lbm {
     }
 
   protected:
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     void storeLocalFields(const Position& iP) {
-      INSTRUMENT_OFF("Algorithm<T, AlgorithmType::Pull>::storeLocalFields",4)
+      LBM_SCOREP_INSTRUMENT_OFF("Algorithm<T, AlgorithmType::Pull>::storeLocalFields",4)
 
       const auto indexLocal = hSD::getIndexLocal(iP);
 
@@ -153,7 +153,7 @@ namespace lbm {
 			    2*L::halo()[d::Z] + lSD::sLength()[d::Z] - 1}, {d::X, d::Y, d::Z})
     {}
 
-    HOST DEVICE
+    LBM_HOST LBM_DEVICE
     void operator()(const Position& iP) {
       Base::collision.calculateMoments(Base::haloDistributionPrevious_Ptr, iP);
 
@@ -173,9 +173,9 @@ namespace lbm {
       }
     }
 
-    HOST
+    LBM_HOST
       void iterate(const unsigned int iteration, const Stream<architecture>& stream) {
-      { INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate",2) }
+      { LBM_SCOREP_INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate",2) }
 
       std::swap(Base::haloDistributionPrevious_Ptr, Base::haloDistributionNext_Ptr);
 
@@ -200,13 +200,13 @@ namespace lbm {
       Base::dtComputation = (t2 - t1);
     }
 
-    HOST
+    LBM_HOST
     void pack(const Stream<architecture>& stream) {
       computationLocal.Do(stream, Base::packer, Base::localDistribution_Ptr,
                           Base::haloDistributionNext_Ptr, Base::numberElements);
     }
 
-    HOST
+    LBM_HOST
       void unpack(const Stream<architecture>& stream) {
       computationLocal.Do(stream, Base::unpacker, Base::haloDistributionNext_Ptr,
                           Base::localDistribution_Ptr, Base::numberElements);

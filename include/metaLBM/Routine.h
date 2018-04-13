@@ -79,7 +79,7 @@ namespace lbm {
     {}
 
     void compute() {
-      { INSTRUMENT_ON("Routine<T>::compute",1) }
+      { LBM_SCOREP_INSTRUMENT_ON("Routine<T>::compute",1) }
       algorithm.unpack(stream);
 
       auto t0 = std::chrono::high_resolution_clock::now();
@@ -182,7 +182,7 @@ namespace lbm {
     }
 
     void writeFields(const unsigned int iteration) {
-      { INSTRUMENT_ON("Routine<T>::writeFields",2) }
+      { LBM_SCOREP_INSTRUMENT_ON("Routine<T>::writeFields",2) }
 
       if(fieldWriter.getIsWritten(iteration)) {
         fieldWriter.openFile(iteration);
@@ -201,7 +201,7 @@ namespace lbm {
     }
 
     void writeAnalyses(const unsigned int iteration) {
-      { INSTRUMENT_ON("Routine<T>::writeFields",2) }
+      { LBM_SCOREP_INSTRUMENT_ON("Routine<T>::writeFields",2) }
 
       if(scalarAnalysisList.getIsAnalyzed(iteration)) {
         scalarAnalysisList.writeAnalyses(iteration);

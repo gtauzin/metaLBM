@@ -30,7 +30,7 @@ namespace lbm {
       }
     }
 
-    DEVICE HOST INLINE
+    LBM_DEVICE LBM_HOST LBM_INLINE
     void setForce(T * localForceArray,
                   const Position& iP,
                   const unsigned int numberElements,
@@ -42,7 +42,7 @@ namespace lbm {
       }
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     inline void update(const unsigned int iteration) {
     }
 
@@ -97,13 +97,13 @@ namespace lbm {
       : Base(amplitude_in)
     {}
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     inline void setForce(const Position& iP,
                          MathVector<T, L::dimD>& force) {
       force = amplitude;
     }
 
-    HOST
+    LBM_HOST
     inline void setLocalForceArray(double * localForcePtr,
                                    const unsigned int numberElements,
                                    const Position& offset) {
@@ -111,7 +111,7 @@ namespace lbm {
                                                                lSD::sEnd());
 
       computationLocal.Do
-        ([=] HOST (const Position& iP) {
+        ([=] LBM_HOST (const Position& iP) {
           auto index = lSD::getIndex(iP);
 
           MathVector<T, L::dimD> force;
@@ -151,7 +151,7 @@ namespace lbm {
       }
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     inline void setForce(const Position& iP,
                          MathVector<T, L::dimD>& force) {
       for(auto iD = 0; iD < L::dimD; ++iD) {
@@ -159,14 +159,14 @@ namespace lbm {
       }
     }
 
-    HOST
+    LBM_HOST
     inline void setLocalForceArray(double * localForcePtr,
                                    const unsigned int numberElements,
                                    const Position& offset) {
       Computation<Architecture::CPU, L::dimD> computationLocal(lSD::sStart(),
                                                                lSD::sEnd());
       computationLocal.Do
-        ([=] HOST (const Position& iP) {
+        ([=] LBM_HOST (const Position& iP) {
           MathVector<T, L::dimD> force;
 
           auto index = lSD::getIndex(iP);
@@ -203,20 +203,20 @@ namespace lbm {
       }
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     void setForce(const Position& iP,
                          MathVector<T, L::dimD>& force) {
       force[d::X] = amplitude[d::X] * sin(iP[d::Y]*2*M_PI/waveLength[d::X]);
     }
 
-    HOST
+    LBM_HOST
     inline void setLocalForceArray(double * localForcePtr,
                                    const unsigned int numberElements,
                                    const Position& offset) {
       Computation<Architecture::CPU, L::dimD> computationLocal(lSD::sStart(),
                                                                lSD::sEnd());
       computationLocal.Do
-        ([=] HOST (const Position& iP) {
+        ([=] LBM_HOST (const Position& iP) {
           MathVector<T, L::dimD> force;
           auto index = lSD::getIndex(iP);
           setForce(iP+offset, force);
@@ -263,7 +263,7 @@ namespace lbm {
       Computation<Architecture::CPU, L::dimD> computationFourier(lFD::start(), lFD::end());
 
       computationFourier.Do
-        ([=] HOST (const Position& iFP) {
+        ([=] LBM_HOST (const Position& iFP) {
           int kNormSquared;
           WaveNumber iK{{0}};
           Position iFP_symmetric{{0}};

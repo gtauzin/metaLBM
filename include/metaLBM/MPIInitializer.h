@@ -40,14 +40,6 @@ struct MPIInitializer {
     return std::string(hostname);
   }
 
-  MPIInitializer(MPIInitializer const&) = delete;
-
-  MPIInitializer& operator=(MPIInitializer const&) = delete;
-
-  MPIInitializer(MPIInitializer&&) = delete;
-
-  MPIInitializer& operator=(MPIInitializer&&) = delete;
-
   /// Finalizes MPI
   ~MPIInitializer() { MPI_Finalize(); }
 

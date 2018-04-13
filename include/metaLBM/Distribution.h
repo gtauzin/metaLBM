@@ -33,12 +33,12 @@ namespace lbm {
 
     using Base::getLocalData;
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     T * getHaloDataPrevious() {
       return haloArrayPrevious.data();
     }
 
-    DEVICE HOST
+    LBM_DEVICE LBM_HOST
     T * getHaloDataNext() {
       return haloArrayNext.data();
     }

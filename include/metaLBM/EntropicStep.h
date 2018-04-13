@@ -17,7 +17,7 @@ namespace lbm {
     const Position iP;
 
   public:
-    HOST DEVICE
+    LBM_HOST LBM_DEVICE
     EntropicStepFunctor(const T * haloDistributionNext_Ptr_in,
                         const T * haloDistributionPrevious_Ptr_in,
                         const Position& iP_in)
@@ -26,7 +26,7 @@ namespace lbm {
       , iP(iP_in)
     {}
 
-    HOST DEVICE
+    LBM_HOST LBM_DEVICE
     inline T evaluateFunction(T const& alpha) {
       T entropicStepFunction = (T) 0;
 
@@ -41,7 +41,7 @@ namespace lbm {
       return entropicStepFunction;
     }
 
-    HOST DEVICE
+    LBM_HOST LBM_DEVICE
     inline T evaluateDerivative(T const& alpha) {
       T entropicStepFunctionDerivative = (T) 0;
 
@@ -57,7 +57,7 @@ namespace lbm {
   };
 
   template <class T>
-  HOST DEVICE
+  LBM_HOST LBM_DEVICE
   inline bool NewtonRaphsonSolver(EntropicStepFunctor<T> functor,
                                   const T tolerance, const int iterationMax,
                                   T& xR, const T xMin, const T xMax) {
@@ -89,7 +89,7 @@ namespace lbm {
   }
 
   template <class T>
-  HOST DEVICE
+  LBM_HOST LBM_DEVICE
   inline bool Bisection_NewtonRaphsonSolver(EntropicStepFunctor<T> functor,
                                             const T tolerance, const int iterationMax,
                                             T& xR, const T xMin, const T xMax) {

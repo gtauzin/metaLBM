@@ -19,27 +19,27 @@ namespace lbm {
   struct Domain<DomainType::LocalFourier, partitionningType,
                 MemoryLayout::Generic, NumberComponents> {
   public:
-    HOST DEVICE
+    LBM_HOST LBM_DEVICE
     static inline constexpr Position start() {
       return Position({0, 0, 0});
     }
 
-    HOST DEVICE
+    LBM_HOST LBM_DEVICE
     static inline constexpr Position end() {
       return ProjectPadComplexAndLeave1<unsigned int, L::dimD>::Do(lSD::sLength());
     }
 
-    HOST DEVICE
+    LBM_HOST LBM_DEVICE
     static inline constexpr Position length() {
       return end();
     }
 
-    HOST DEVICE
+    LBM_HOST LBM_DEVICE
     static inline unsigned int volume() {
       return length()[d::X]*length()[d::Y]*length()[d::Z];
     }
 
-    HOST DEVICE
+    LBM_HOST LBM_DEVICE
       static inline unsigned int getIndex(const Position& iP) {
       return length()[d::Z] * (length()[d::Y] * iP[d::X] + iP[d::Y]) + iP[d::Z];
     }
@@ -56,32 +56,32 @@ namespace lbm {
                         MemoryLayout::Generic, 1>;
 
   public:
-    HOST DEVICE
+    LBM_HOST LBM_DEVICE
     static inline constexpr Position start() {
       return Position({0, 0, 0});
     }
 
-    HOST DEVICE
+    LBM_HOST LBM_DEVICE
     static inline constexpr Position end() {
       return ProjectPadComplexAndLeave1<unsigned int, L::dimD>::Do(gSD::sLength());
     }
 
-    HOST DEVICE
+    LBM_HOST LBM_DEVICE
     static inline constexpr Position length() {
       return end();
     }
 
-    HOST DEVICE
+    LBM_HOST LBM_DEVICE
     static inline constexpr unsigned int volume() {
       return length()[d::X]*length()[d::Y]*length()[d::Z];
     }
 
-    HOST DEVICE
+    LBM_HOST LBM_DEVICE
     static inline constexpr unsigned int maxWaveNumber() {
       return arrayMax(globalLengthInt)/2;
     }
 
-    HOST DEVICE
+    LBM_HOST LBM_DEVICE
     static inline Position offset(const MathVector<int, 3>& rankMPI) {
       Position offsetR{{0}};
       for(auto iD = 0; iD < L::dimD; ++iD) {
@@ -91,7 +91,7 @@ namespace lbm {
       return offsetR;
   }
 
-    HOST DEVICE
+    LBM_HOST LBM_DEVICE
     static inline unsigned int getIndex(const Position& iP) {
       const unsigned int localLengthX = Base::length()[d::X];
       const unsigned int localVolume = Base::volume();

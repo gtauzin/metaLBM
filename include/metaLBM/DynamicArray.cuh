@@ -38,40 +38,40 @@ namespace lbm {
     DynamicArray(const unsigned int numberElements_in)
       : Base(numberElements_in)
     {
-      CUDA_CALL( MALLOC_GPU((void**)&dArrayPtr, numberElements*sizeof(U)); )
+      LBM_CUDA_CALL( MALLOC_GPU((void**)&dArrayPtr, numberElements*sizeof(U)); )
     }
 
     DynamicArray(const DynamicArray& dArray_in)
       : Base(dArray_in.size())
     {
-      CUDA_CALL( MALLOC_GPU((void**)&dArrayPtr, numberElements*sizeof(U)); )
+      LBM_CUDA_CALL( MALLOC_GPU((void**)&dArrayPtr, numberElements*sizeof(U)); )
       copyFrom(dArray_in);
     }
 
     ~DynamicArray(){
       if(dArrayPtr) {
-        CUDA_CALL( FREE_GPU(dArrayPtr); )
+        LBM_CUDA_CALL( FREE_GPU(dArrayPtr); )
 	dArrayPtr = NULL;
       }
     }
 
     void copyFrom(const DynamicArray<U, Architecture::CPU>& other) {
-      CUDA_CALL( cudaMemcpy(dArrayPtr, other.data(), other.size()*sizeof(U),
+      LBM_CUDA_CALL( cudaMemcpy(dArrayPtr, other.data(), other.size()*sizeof(U),
                             cudaMemcpyHostToDevice); )
     }
 
     void copyFrom(const DynamicArray<U, Architecture::GPU>& other) {
-      CUDA_CALL( cudaMemcpy(dArrayPtr, other.data(), other.size()*sizeof(U),
+      LBM_CUDA_CALL( cudaMemcpy(dArrayPtr, other.data(), other.size()*sizeof(U),
                             cudaMemcpyDeviceToDevice); )
     }
 
     void copyTo(DynamicArray<U, Architecture::CPU>& other) const {
-      CUDA_CALL( cudaMemcpy(other.data(), dArrayPtr, numberElements*sizeof(U),
+      LBM_CUDA_CALL( cudaMemcpy(other.data(), dArrayPtr, numberElements*sizeof(U),
                             cudaMemcpyDeviceToHost); )
     }
 
     void copyTo(DynamicArray<U, Architecture::GPU>& other) const {
-      CUDA_CALL( cudaMemcpy(other.data(), dArrayPtr, numberElements*sizeof(U),
+      LBM_CUDA_CALL( cudaMemcpy(other.data(), dArrayPtr, numberElements*sizeof(U),
                             cudaMemcpyDeviceToDevice); )
     }
 
@@ -95,20 +95,20 @@ namespace lbm {
       : Base()
     {
       numberElements = numberElements_in;
-      CUDA_CALL( cudaMallocHost((void**)&dArrayPtr, numberElements*sizeof(U)); )
+      LBM_CUDA_CALL( cudaMallocHost((void**)&dArrayPtr, numberElements*sizeof(U)); )
     }
 
     DynamicArray(const DynamicArray& dArray_in)
       : Base()
     {
       numberElements = dArray_in.size();
-      CUDA_CALL( cudaMallocHost((void**)&dArrayPtr, numberElements*sizeof(U)); )
+      LBM_CUDA_CALL( cudaMallocHost((void**)&dArrayPtr, numberElements*sizeof(U)); )
       copyFrom(dArray_in);
     }
 
     ~DynamicArray(){
       if(dArrayPtr) {
-        CUDA_CALL( cudaFreeHost(dArrayPtr); )
+        LBM_CUDA_CALL( cudaFreeHost(dArrayPtr); )
 	dArrayPtr = NULL;
       }
     }
