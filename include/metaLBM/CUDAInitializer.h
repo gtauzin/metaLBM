@@ -1,7 +1,5 @@
-#ifndef METALBM_CUDA_INITIALIZER_H
-#define METALBM_CUDA_INITIALIZER_H
+#pragma once
 
-#include "Commons.h"
 #include <mpi.h>
 
 namespace lbm {
@@ -38,5 +36,3 @@ struct CUDAInitializer {
 }; // end struct CUDAInitializer
 
 } // end namespace lbm
-
-#endif  // METALBM_CUDA_INITIALIZER_H

@@ -1,5 +1,4 @@
-#ifndef METALBM_MPIINITIALIZER_H
-#define METALBM_MPIINITIALIZER_H
+#pragma once
 
 #include <mpi.h>
 #include <iostream>
@@ -46,5 +45,3 @@ struct MPIInitializer {
 };  // end class MPIInitializer
 
 }  // end namespace lbm
-
-#endif  // METALBM_MPIINITIALIZER_H

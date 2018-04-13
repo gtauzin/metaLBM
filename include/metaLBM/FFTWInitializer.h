@@ -1,5 +1,4 @@
-#ifndef METALBM_FFTWINITIALIZER_H
-#define METALBM_FFTWINITIALIZER_H
+#pragma once
 
 #include <fftw3-mpi.h>
 #include <mpi.h>
@@ -34,5 +33,3 @@ struct FFTWInitializer {
 };  // end class FFTWInitializer
 
 }  // end namespace lbm
-
-#endif  // METALBM_FFTWINITIALIZER_H
