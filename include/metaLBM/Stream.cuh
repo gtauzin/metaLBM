@@ -14,15 +14,15 @@ class Stream<Architecture::GPU> : public Stream<Architecture::Generic> {
  public:
   Stream(bool isDefault_in = true) {
     if (isDefault_in) {
-      CUDA_CALL(cudaStreamCreateWithFlags(&stream, cudaStreamDefault));
+      LBM_CUDA_CALL(cudaStreamCreateWithFlags(&stream, cudaStreamDefault));
     } else {
-      CUDA_CALL(cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking))
+      LBM_CUDA_CALL(cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking))
     }
   }
 
-  ~Stream() { CUDA_CALL(cudaStreamDestroy(stream)); }
+  ~Stream() { LBM_CUDA_CALL(cudaStreamDestroy(stream)); }
 
-  void synchronize() { CUDA_CALL(cudaStreamSynchronize(stream)); }
+  void synchronize() { LBM_CUDA_CALL(cudaStreamSynchronize(stream)); }
 
   cudaStream_t get() { return stream; }
 

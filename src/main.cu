@@ -1,4 +1,5 @@
 #include "Input.in"
+#include "metaLBM/Computation.cuh"
 #include "metaLBM/CUDAInitializer.h"
 #include "metaLBM/MPIInitializer.h"
 #include "metaLBM/Commons.h"
