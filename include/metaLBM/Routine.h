@@ -9,9 +9,11 @@
 #include "Computation.h"
 #include "Distribution.h"
 #include "FieldList.h"
+#include "FourierDomain.h"
 #include "Lattice.h"
 #include "MathVector.h"
 #include "Options.h"
+#include "Transformer.h"
 #include "Writer.h"
 
 namespace lbm {
@@ -20,6 +22,9 @@ namespace lbm {
 template <class T, Architecture architecture, Implementation implementation>
 class Routine {
  protected:
+  using Clock = std::chrono::high_resolution_clock;
+  using Seconds = std::chrono::duration<double>;
+
   Communication_ communication;
 
   FieldWriter_ fieldWriter;
@@ -44,8 +49,6 @@ class Routine {
   double writeFieldTime;
   double writeAnalysisTime;
   double totalTime;
-  std::chrono::duration<double> dtWriteField;
-  std::chrono::duration<double> dtWriteAnalysis;
 
  public:
   Routine(const MathVector<int, 3>& rankMPI_in,
@@ -77,32 +80,27 @@ class Routine {
         communicationTime(0.0),
         writeFieldTime(0.0),
         writeAnalysisTime(0.0),
-        totalTime(0.0),
-        dtWriteField(),
-        dtWriteAnalysis() {}
+        totalTime(0.0) {}
 
   void compute() {
     {LBM_SCOREP_INSTRUMENT_ON("Routine<T>::compute", 1)} algorithm.unpack(
         stream);
 
-    auto t0 = std::chrono::high_resolution_clock::now();
-    auto t1 = std::chrono::high_resolution_clock::now();
-    auto t2 = std::chrono::high_resolution_clock::now();
+    Clock::time_point t0;
+    Clock::time_point t1;
 
     if (writeFieldInit) {
-      t0 = std::chrono::high_resolution_clock::now();
+      t0 = Clock::now();
       writeFields(startIteration);
-      t1 = std::chrono::high_resolution_clock::now();
-      dtWriteField = (t1 - t0);
-      writeFieldTime += dtWriteField.count();
+      t1 = Clock::now();
+      writeFieldTime += Seconds(t1 - t0).count();
     }
 
     if (writeAnalysisInit) {
-      t0 = std::chrono::high_resolution_clock::now();
+      t0 = Clock::now();
       writeAnalyses(startIteration);
-      t1 = std::chrono::high_resolution_clock::now();
-      dtWriteAnalysis = (t1 - t0);
-      writeAnalysisTime += dtWriteAnalysis.count();
+      t1 = Clock::now();
+      writeAnalysisTime += Seconds(t1 - t0).count();
     }
 
     printInputs();
@@ -122,15 +120,15 @@ class Routine {
           curlVelocity.executeSpace();
       }
 
-      t0 = std::chrono::high_resolution_clock::now();
+      t0 = Clock::now();
       writeFields(iteration);
-      t1 = std::chrono::high_resolution_clock::now();
+      t1 = Clock::now();
+      writeFieldTime += Seconds(t1 - t0).count();
+
+      t0 = Clock::now();
       writeAnalyses(iteration);
-      t2 = std::chrono::high_resolution_clock::now();
-      dtWriteField = (t1 - t0);
-      writeFieldTime += dtWriteField.count();
-      dtWriteAnalysis = (t2 - t1);
-      writeAnalysisTime += dtWriteAnalysis.count();
+      t1 = Clock::now();
+      writeAnalysisTime += Seconds(t1 - t0).count();
 
       communicationTime += algorithm.getCommunicationTime();
       computationTime += algorithm.getComputationTime();
