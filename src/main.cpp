@@ -1,17 +1,12 @@
 #include "Input.in"
 #include "metaLBM/Commons.h"
-#include "metaLBM/Computation.h"
-#include "metaLBM/Lattice.h"
 #include "metaLBM/MPIInitializer.h"
 #include "metaLBM/MathVector.h"
 #include "metaLBM/Routine.h"
 
 #ifdef USE_FFTW
-#include <fftw3-mpi.h>
 #include "metaLBM/FFTWInitializer.h"
 #endif
-
-#include "metaLBM/FourierDomain.h"
 
 int main(int argc, char* argv[]) {
   using namespace lbm;

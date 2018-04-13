@@ -4,6 +4,7 @@
 #include <fftw3-mpi.h>
 #include <mpi.h>
 #include "MathVector.h"
+#include "Lattice.h"
 
 namespace lbm {
 
