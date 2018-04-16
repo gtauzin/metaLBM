@@ -19,22 +19,22 @@ namespace lbm {
   constexpr int globalLengthZ = GLOBAL_LENGTH_Z;
 
   constexpr unsigned int startIteration = 0;
-  constexpr unsigned int endIteration = 100;
-  constexpr unsigned int writeStep = 1;
-  constexpr unsigned int backUpStep = 100;
+  constexpr unsigned int endIteration = 500;
+  constexpr unsigned int writeStep = 50000;
+  constexpr unsigned int backUpStep = 100000;
 
-  constexpr unsigned int scalarAnalysisStep = 1;
-  constexpr unsigned int spectralAnalysisStep = 1;
+  constexpr unsigned int scalarAnalysisStep = 1000;
+  constexpr unsigned int spectralAnalysisStep = 1000;
 
-  constexpr unsigned int successiveWriteStep = 2;
+  constexpr unsigned int successiveWriteStep = 1;
 
   constexpr AlgorithmType algorithmT = AlgorithmType::Pull;
   constexpr PartitionningType partitionningT = PartitionningType::OneD;
   constexpr Implementation implementationT = Implementation::MPI;
   constexpr MemoryLayout memoryL = MemoryLayout::SoA;
 
-  constexpr dataT relaxationTime = 0.50000001;
-  constexpr CollisionType collisionT = CollisionType::ForcedBNR_ELBM;
+  constexpr dataT relaxationTime = 0.502;
+  constexpr CollisionType collisionT = CollisionType::ELBM;
   constexpr EquilibriumType equilibriumT = EquilibriumType::Incompressible;
 
   constexpr InitDensityType initDensityT = InitDensityType::Homogeneous;
@@ -53,9 +53,10 @@ namespace lbm {
   constexpr BoundaryType boundaryT = BoundaryType::Generic;
 
   constexpr InputOutputFormat inputOutputFormatT = InputOutputFormat::ascii;
-  constexpr auto prefix = "test_elbm";
-  constexpr bool writeFieldInit = 1;
-  constexpr bool writeAnalysisInit = 1;
+  constexpr auto prefix = "elbm_0.502";
+
+  constexpr bool writeFieldInit = 0;
+  constexpr bool writeAnalysisInit = 0;
 
   constexpr bool writeForce = 1;
   constexpr bool writeEntropy = 0;
