@@ -5,40 +5,32 @@
 
 namespace lbm {
 
-  template<Architecture architecture>
-  class Event {};
+template <Architecture architecture>
+class Event {};
 
-  template<>
-  class Event<Architecture::Generic> {
-  protected:
+template <>
+class Event<Architecture::Generic> {
+ protected:
+ public:
+};
 
-  public:
+template <>
+class Event<Architecture::GPU> : public Event<Architecture::Generic> {
+ private:
+ public:
+  Event() {}
 
-  };
+  ~Event() {}
 
-  template<>
-  class Event<Architecture::GPU>
-    : public Event<Architecture::Generic> {
-  private:
+  void synchronize() {}
 
-  public:
-    Event() {
-    }
+  void record(Stream<Architecture::CPU> stream) {
+    CUDA_CALL(cudaEventRecord(event, stream));
+  }
 
-    ~Event() {
-    }
+  void wait(Stream<Architecture::CPU> stream) {
+    CUDA_CALL(cudaEventWaitEvent(stream, event, 0));
+  }
+};
 
-    void synchronize() {
-    }
-
-    void record(Stream<Architecture::CPU> stream) {
-      CUDA_CALL( cudaEventRecord(event, stream) );
-    }
-
-    void wait(Stream<Architecture::CPU> stream) {
-      CUDA_CALL( cudaEventWaitEvent ( stream, event, 0 ) );
-    }
-
-  };
-
-}
+}  // namespace lbm

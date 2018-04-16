@@ -49,7 +49,7 @@ if(USE_SCOREP)
   target_compile_definitions(metalbm INTERFACE USE_SCOREP)
 endif()
 
-option(USE_NVTX "Enabling manual instrumentation with NVTX" ON)
+option(USE_NVTX "Enabling manual instrumentation with NVTX" OFF)
 if(USE_NVTX)
   set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -lnvToolsExt" )
   target_compile_definitions(metalbm INTERFACE USE_NVTX)
