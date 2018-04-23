@@ -200,17 +200,23 @@ class Algorithm<T, AlgorithmType::Pull, architecture, implementation>
                          2 * L::halo()[d::Z] + lSD::sLength()[d::Z] - 1},
                         {d::X, d::Y, d::Z}) {}
 
-  LBM_HOST LBM_DEVICE void operator()(const Position& iP) {
+  LBM_DEVICE void operator()(const Position& iP) {
     Base::collision.calculateMoments(Base::haloDistributionPrevious_Ptr, iP);
 
     Base::collision.setForce(Base::localForce_Ptr, iP, Base::numberElements,
                              gSD::sOffset(Base::communication.rankMPI));
-    Base::collision.calculateRelaxationTime(
-        Base::haloDistributionNext_Ptr, Base::haloDistributionPrevious_Ptr, iP);
 
-#pragma unroll
+    LBM_SHARED MathVector<T, L::dimQ> f_Forced;
+    LBM_SHARED MathVector<T, L::dimQ> f_NonEq;
+
+    Base::collision.calculateRelaxationTime(
+        Base::haloDistributionPrevious_Ptr, iP,
+        f_Forced, f_NonEq);
+
+    #pragma unroll
     for (auto iQ = 0; iQ < L::dimQ; ++iQ) {
-      Base::collision.collideAndStream(Base::haloDistributionNext_Ptr, iP, iQ);
+      Base::collision.collideAndStream(Base::haloDistributionNext_Ptr, iP, iQ,
+                                       f_Forced, f_NonEq);
     }
 
     if (Base::isStored) {
