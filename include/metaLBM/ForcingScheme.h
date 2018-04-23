@@ -27,7 +27,7 @@ class ForcingScheme<T, ForcingSchemeType::Generic> {
   calculateHydrodynamicVelocity(const MathVector<T, L::dimD>& force,
                                 const T& density,
                                 const MathVector<T, L::dimD>& velocity) const {
-    LBM_SCOREP_INSTRUMENT_OFF(
+    LBM_INSTRUMENT_OFF(
         "ForcingScheme<T, "
         "ForcingSchemeType::Generic>::calculateHydrodynamicVelocity",
         5)
@@ -54,7 +54,7 @@ class ForcingScheme<T, ForcingSchemeType::None>
   calculateHydrodynamicVelocity(const MathVector<T, L::dimD>& force,
                                 const T& density,
                                 const MathVector<T, L::dimD>& velocity) const {
-    LBM_SCOREP_INSTRUMENT_OFF(
+    LBM_INSTRUMENT_OFF(
         "ForcingScheme<T, "
         "ForcingSchemeType::Generic>::calculateHydrodynamicVelocity",
         5)
@@ -66,7 +66,7 @@ class ForcingScheme<T, ForcingSchemeType::None>
   calculateEquilibriumVelocity(const MathVector<T, L::dimD>& force,
                                const T& density,
                                const MathVector<T, L::dimD>& velocity) const {
-    LBM_SCOREP_INSTRUMENT_OFF(
+    LBM_INSTRUMENT_OFF(
         "ForcingScheme<T, "
         "ForcingSchemeType::Guo>::calculateEquilibriumVelocity",
         5)
@@ -81,7 +81,7 @@ class ForcingScheme<T, ForcingSchemeType::None>
                            const T& velocity2,
                            const T equilibrium_iQ,
                            const unsigned int iQ) const {
-    LBM_SCOREP_INSTRUMENT_OFF(
+    LBM_INSTRUMENT_OFF(
         "ForcingScheme<T, ForcingSchemeType::Guo>::calculateCollisionSource", 5)
 
     return 0;
@@ -101,7 +101,7 @@ class ForcingScheme<T, ForcingSchemeType::Guo>
   calculateEquilibriumVelocity(const MathVector<T, L::dimD>& force,
                                const T& density,
                                const MathVector<T, L::dimD>& velocity) const {
-    LBM_SCOREP_INSTRUMENT_OFF(
+    LBM_INSTRUMENT_OFF(
         "ForcingScheme<T, "
         "ForcingSchemeType::Guo>::calculateEquilibriumVelocity",
         5)
@@ -116,7 +116,7 @@ class ForcingScheme<T, ForcingSchemeType::Guo>
                            const T& velocity2,
                            const T equilibrium_iQ,
                            const unsigned int iQ) const {
-    LBM_SCOREP_INSTRUMENT_OFF(
+    LBM_INSTRUMENT_OFF(
         "ForcingScheme<T, ForcingSchemeType::Guo>::calculateCollisionSource", 5)
 
     T celerity_iQDotVelocity = L::celerity()[iQ].dot(velocity);
@@ -148,7 +148,7 @@ class ForcingScheme<T, ForcingSchemeType::ShanChen>
                                const T& density,
                                const MathVector<T, L::dimD>& velocity) const {
     {
-      LBM_SCOREP_INSTRUMENT_OFF(
+      LBM_INSTRUMENT_OFF(
           "ForcingScheme<T, "
           "ForcingSchemeType::ShanChen>::calculateEquilibriumVelocity",
           5)
@@ -164,7 +164,7 @@ class ForcingScheme<T, ForcingSchemeType::ShanChen>
                            const T& velocity2,
                            const T equilibrium_iQ,
                            const unsigned int iQ) const {
-    LBM_SCOREP_INSTRUMENT_OFF(
+    LBM_INSTRUMENT_OFF(
         "ForcingScheme<T, "
         "ForcingSchemeType::ShanChen>::calculateCollisionSource",
         5)
@@ -191,7 +191,7 @@ class ForcingScheme<T, ForcingSchemeType::ExactDifferenceMethod>
                                const T& density,
                                const MathVector<T, L::dimD>& velocity) const {
     {
-      LBM_SCOREP_INSTRUMENT_OFF(
+      LBM_INSTRUMENT_OFF(
           "ForcingScheme<T, "
           "ForcingSchemeType::ExactDifferenceMethod>::"
           "calculateEquilibriumVelocity",
@@ -217,7 +217,7 @@ class ForcingScheme<T, ForcingSchemeType::ExactDifferenceMethod>
                            const T equilibrium_iQ,
                            const unsigned int iQ) const {
     {
-      LBM_SCOREP_INSTRUMENT_OFF(
+      LBM_INSTRUMENT_OFF(
           "ForcingScheme<T, "
           "ForcingSchemeType::ExactDifferenceMethod>::calculateCollisionSource",
           5)

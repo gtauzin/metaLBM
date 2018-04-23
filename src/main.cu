@@ -17,8 +17,8 @@
 
 int main(int argc, char* argv[]) {
   using namespace lbm;
-  { LBM_SCOREP_INSTRUMENT_ON("main",0) }
-  
+  { LBM_INSTRUMENT_ON("main",0) }
+
   auto mpiLauncher = MPIInitializer<numProcs>{argc, argv};
   auto cudaLauncher = CUDAInitializer{};
 
@@ -40,8 +40,8 @@ int main(int argc, char* argv[]) {
 
   auto sizeMPI = MathVector<int, 3>{mpiLauncher.numProcs(), 1, 1};
   auto rankMPI = MathVector<int, 3>{mpiLauncher.procRank(), 0, 0};
-  auto routine = Routine<dataT, Architecture::GPU, implementationT>(
-      rankMPI, sizeMPI, mpiLauncher.hostName(), numberElements);
+  Routine<dataT, Architecture::GPU, implementationT>
+    routine(rankMPI, sizeMPI, mpiLauncher.hostName(), numberElements);
 
   routine.compute();
 }

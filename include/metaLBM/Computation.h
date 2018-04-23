@@ -33,7 +33,7 @@ class Computation<Architecture::CPU, 1>
 
   template <typename Callback, typename... Arguments>
   void Do(Callback function, const Arguments... arguments) {
-    {LBM_SCOREP_INSTRUMENT_OFF(
+    {LBM_INSTRUMENT_OFF(
         "Computation<Architecture::CPU, 2>::Do<Callback>", 1)}
 
     Position iP = start;
@@ -63,7 +63,7 @@ class Computation<Architecture::CPU, 2>
 
   template <typename Callback, typename... Arguments>
   void Do(Callback function, const Arguments... arguments) {
-    {LBM_SCOREP_INSTRUMENT_OFF(
+    {LBM_INSTRUMENT_OFF(
         "Computation<Architecture::CPU, 2>::Do<Callback>", 2)}
 
     Position iP = start;
@@ -97,7 +97,7 @@ class Computation<Architecture::CPU, 3>
 
   template <typename Callback, typename... Arguments>
   void Do(Callback function, const Arguments... arguments) {
-    {LBM_SCOREP_INSTRUMENT_OFF(
+    {LBM_INSTRUMENT_OFF(
         "Computation<Architecture::CPU, 2>::Do<Callback>", 3)}
 
     Position iP = start;

@@ -84,7 +84,7 @@ class Routine {
         totalTime(0.0) {}
 
   void compute() {
-    {LBM_SCOREP_INSTRUMENT_ON("Routine<T>::compute", 1)} algorithm.unpack(
+    {LBM_INSTRUMENT_ON("Routine<T>::compute", 1)} algorithm.unpack(
         stream);
 
     Clock::time_point t0;
@@ -187,7 +187,7 @@ class Routine {
   }
 
   void writeFields(const unsigned int iteration) {
-    { LBM_SCOREP_INSTRUMENT_ON("Routine<T>::writeFields", 2) }
+    { LBM_INSTRUMENT_ON("Routine<T>::writeFields", 2) }
 
     if (fieldWriter.getIsWritten(iteration)) {
       fieldWriter.openFile(iteration);
@@ -205,7 +205,7 @@ class Routine {
   }
 
   void writeAnalyses(const unsigned int iteration) {
-    { LBM_SCOREP_INSTRUMENT_ON("Routine<T>::writeFields", 2) }
+    { LBM_INSTRUMENT_ON("Routine<T>::writeFields", 2) }
 
     if (scalarAnalysisList.getIsAnalyzed(iteration)) {
       scalarAnalysisList.writeAnalyses(iteration);

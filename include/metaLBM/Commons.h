@@ -18,6 +18,7 @@
 
 #define LBM_HOST __host__
 #define LBM_DEVICE __device__
+#define LBM_SHARED __shared__
 #define LBM_CONSTANT __constant__
 #define LBM_GLOBAL __global__
 #define LBM_INLINE __forceinline__
@@ -48,11 +49,11 @@ class Tracer {
   ~Tracer() { nvtxRangePop(); }
 };
 
-#define LBM_SCOREP_INSTRUMENT_ON(name, colorID) \
+#define LBM_INSTRUMENT_ON(name, colorID) \
   Tracer uniq_name_using_macros(name, colorID);
 
 #else
-#define LBM_SCOREP_INSTRUMENT_ON(name, colorID)
+#define LBM_INSTRUMENT_ON(name, colorID)
 #endif  // USE_NVTX
 
 #else  // __NVCC__
@@ -60,6 +61,7 @@ class Tracer {
 
 #define LBM_HOST
 #define LBM_DEVICE
+#define LBM_SHARED
 #define LBM_CONSTANT
 #define LBM_GLOBAL
 #define LBM_INLINE __always_inline
@@ -71,10 +73,10 @@ class Tracer {
   { SCOREP_USER_REGION(name, SCOREP_USER_REGION_TYPE_FUNCTION) }
 
 #else  // USE_SCOREP
-#define LBM_SCOREP_INSTRUMENT_ON(name, colorID)
+#define LBM_INSTRUMENT_ON(name, colorID)
 #endif  // USE_SCOREP
 #endif  // __NVCC__
 
-#define LBM_SCOREP_INSTRUMENT_OFF(name, colorID)
+#define LBM_INSTRUMENT_OFF(name, colorID)
 
 namespace lbm {}

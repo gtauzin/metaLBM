@@ -35,7 +35,7 @@ class FieldReader<T, InputOutput::HDF5>
 
   template <unsigned int NumberComponents, Architecture architecture>
   void readField(Field<T, NumberComponents, architecture, true>& field) {
-    {LBM_SCOREP_INSTRUMENT_ON(
+    {LBM_INSTRUMENT_ON(
         "Reader<T, InputOutput::HDF5, "
         "readerFileFromat>::readField<NumberComponents>",
         3)}
@@ -121,7 +121,7 @@ class DistributionReader<T, InputOutput::HDF5>
 
   template <Architecture architecture>
   void readDistribution(Distribution<T, architecture>& distribution) {
-    {LBM_SCOREP_INSTRUMENT_ON(
+    {LBM_INSTRUMENT_ON(
         "Reader<T, InputOutput::HDF5, "
         "readerFileFromat>::readField<NumberComponents>",
         3)}

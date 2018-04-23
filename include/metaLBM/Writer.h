@@ -157,7 +157,7 @@ class ScalarAnalysisWriter
 
   template <unsigned int NumberScalarAnalyses>
   void writeAnalysis(const unsigned int iteration, T* data) {
-    {LBM_SCOREP_INSTRUMENT_ON(
+    {LBM_INSTRUMENT_ON(
         "Writer<T, InputOutputFormat>::writeAnalysis<NumberScalarAnalysis>", 3)}
 
     Base::write(iteration);
@@ -171,7 +171,7 @@ class ScalarAnalysisWriter
   }
 
   void writeHeader(const std::string& header) {
-    {LBM_SCOREP_INSTRUMENT_ON("AnalysisWriter::writeHeader",
+    {LBM_INSTRUMENT_ON("AnalysisWriter::writeHeader",
                               2)} Base::openAndTruncate(Base::getFileName());
 
     Base::file << header << std::endl;
@@ -204,7 +204,7 @@ class SpectralAnalysisWriter
   void writeAnalysis(const unsigned int iteration,
                      T* data[NumberSpectralAnalyses]) {
     {
-      LBM_SCOREP_INSTRUMENT_ON(
+      LBM_INSTRUMENT_ON(
           "Writer<T, InputOutput::DAT, "
           "writerFileFromat>::writeAnalysis<NumberComponents>",
           3)
@@ -226,7 +226,7 @@ class SpectralAnalysisWriter
   }
 
   void writeHeader(const std::string& header) {
-    {LBM_SCOREP_INSTRUMENT_ON("AnalysisWriter::writeHeader",
+    {LBM_INSTRUMENT_ON("AnalysisWriter::writeHeader",
                               2)} Base::openAndTruncate(Base::getFileName());
 
     Base::file << header << std::endl;
@@ -297,7 +297,7 @@ class FieldWriter<T, InputOutput::HDF5>
 
   template <unsigned int NumberComponents, Architecture architecture>
   void writeField(Field<T, NumberComponents, architecture, true>& field) {
-    {LBM_SCOREP_INSTRUMENT_ON(
+    {LBM_INSTRUMENT_ON(
         "Writer<T, InputOutput::HDF5, "
         "writerFileFromat>::writeField<NumberComponents>",
         3)}
@@ -390,7 +390,7 @@ class DistributionWriter<T, InputOutput::HDF5>
 
   template <Architecture architecture>
   void writeDistribution(Distribution<T, architecture>& distribution) {
-    {LBM_SCOREP_INSTRUMENT_ON(
+    {LBM_INSTRUMENT_ON(
         "Writer<T, InputOutput::HDF5, "
         "writerFileFromat>::writeField<NumberComponents>",
         3)}
@@ -474,7 +474,7 @@ class FieldWriter<T, InputOutput::XDMF>
   }
 
   void write(const std::string& name, unsigned int numberComponents) {
-    {LBM_SCOREP_INSTRUMENT_ON(
+    {LBM_INSTRUMENT_ON(
         "Writer<T, InputOutput::XDMF, "
         "writerFileFromat>::writeField<NumberComponents>",
         3)}
@@ -508,7 +508,7 @@ class FieldWriter<T, InputOutput::XDMF>
   }
 
   void writeHeader() {
-    LBM_SCOREP_INSTRUMENT_ON(
+    LBM_INSTRUMENT_ON(
         "Writer<T, InputOutput::XDMF, InputOutputFormat::Generic>::writeHeader",
         2)
 
@@ -553,7 +553,7 @@ class FieldWriter<T, InputOutput::XDMF>
   }
 
   void writeFooter() {
-    {LBM_SCOREP_INSTRUMENT_ON(
+    {LBM_INSTRUMENT_ON(
         "Writer<T, InputOutput::XDMF, InputOutputFormat::Generic>::writeFooter",
         2)} Base::file
         << "</Grid>\n"

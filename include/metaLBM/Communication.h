@@ -88,7 +88,7 @@ class Communication<T,
   void sendGlobalToLocal(T* globalPtr,
                          T* localPtr,
                          unsigned int numberComponents) {
-    LBM_SCOREP_INSTRUMENT_ON("Communication<6>::sendGlobalToLocal", 3)
+    LBM_INSTRUMENT_ON("Communication<6>::sendGlobalToLocal", 3)
 
     MPI_Scatter(globalPtr, numberComponents * lSD::pVolume(), MPI_DOUBLE,
                 localPtr, numberComponents * lSD::pVolume(), MPI_DOUBLE, 0,
@@ -99,7 +99,7 @@ class Communication<T,
   void sendLocalToGlobal(T* localPtr,
                          T* globalPtr,
                          unsigned int numberComponents) {
-    LBM_SCOREP_INSTRUMENT_ON("Communication<6>::sendLocalToGlobal", 3)
+    LBM_INSTRUMENT_ON("Communication<6>::sendLocalToGlobal", 3)
 
     MPI_Gather(localPtr, numberComponents * lSD::pVolume(), MPI_DOUBLE,
                globalPtr, numberComponents * lSD::pVolume(), MPI_DOUBLE, 0,
@@ -188,7 +188,7 @@ class Communication<T,
   LBM_HOST
   void sendAndReceiveHaloXRight(T* haloDistributionPtr) {
     {
-      LBM_SCOREP_INSTRUMENT_ON(
+      LBM_INSTRUMENT_ON(
           "Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloXRight", 4)
     }
 
@@ -215,7 +215,7 @@ class Communication<T,
   LBM_HOST
   void sendAndReceiveHaloXLeft(T* haloDistributionPtr) {
     {
-      LBM_SCOREP_INSTRUMENT_ON(
+      LBM_INSTRUMENT_ON(
           "Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloXLeft", 4)
     }
 
@@ -244,7 +244,7 @@ class Communication<T,
   LBM_HOST
   void sendAndReceiveHaloYBottom(T* haloDistributionPtr) {
     {
-      LBM_SCOREP_INSTRUMENT_ON(
+      LBM_INSTRUMENT_ON(
           "Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloYBottom", 4)
     }
     // TODO - PACK AND UNPACK
@@ -253,7 +253,7 @@ class Communication<T,
   LBM_HOST
   void sendAndReceiveHaloYTop(T* haloDistributionPtr) {
     {
-      LBM_SCOREP_INSTRUMENT_ON(
+      LBM_INSTRUMENT_ON(
           "Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloYTop", 4)
     }
     // TODO - PACK AND UNPACK
@@ -262,7 +262,7 @@ class Communication<T,
   LBM_HOST
   void sendAndReceiveHaloZFront(T* haloDistributionPtr) {
     {
-      LBM_SCOREP_INSTRUMENT_ON(
+      LBM_INSTRUMENT_ON(
           "Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloZFront", 4)
     }
     // TODO: PACK AND UNPACK
@@ -271,7 +271,7 @@ class Communication<T,
   LBM_HOST
   void sendAndReceiveHaloZBack(T* haloDistributionPtr) {
     {
-      LBM_SCOREP_INSTRUMENT_ON(
+      LBM_INSTRUMENT_ON(
           "Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloZBack", 4)
     }
     // TODO: PACK AND UNPACK
@@ -393,7 +393,7 @@ class Communication<T,
  protected:
   LBM_HOST
   void sendAndReceiveHaloXRight(T* haloDistributionPtr) {
-    LBM_SCOREP_INSTRUMENT_ON(
+    LBM_INSTRUMENT_ON(
         "Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloXRight", 4)
 
     MPI_Irecv(haloDistributionPtr + receivedFromLeftBeginX, sizeStripeX,
@@ -408,7 +408,7 @@ class Communication<T,
 
   LBM_HOST
   void sendAndReceiveHaloXLeft(T* haloDistributionPtr) {
-    LBM_SCOREP_INSTRUMENT_ON(
+    LBM_INSTRUMENT_ON(
         "Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloXLeft", 4)
 
     MPI_Irecv(haloDistributionPtr + receivedFromRightBeginX, sizeStripeX,
@@ -424,7 +424,7 @@ class Communication<T,
   LBM_HOST
   void sendAndReceiveHaloYBottom(T* haloDistributionPtr) {
     {
-      LBM_SCOREP_INSTRUMENT_ON(
+      LBM_INSTRUMENT_ON(
           "Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloYBottom", 4)
     }
     // TODO - PACK AND UNPACK
@@ -433,7 +433,7 @@ class Communication<T,
   LBM_HOST
   void sendAndReceiveHaloYTop(T* haloDistributionPtr) {
     {
-      LBM_SCOREP_INSTRUMENT_ON(
+      LBM_INSTRUMENT_ON(
           "Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloYTop", 4)
     }
     // TODO - PACK AND UNPACK
@@ -442,7 +442,7 @@ class Communication<T,
   LBM_HOST
   void sendAndReceiveHaloZFront(T* haloDistributionPtr) {
     {
-      LBM_SCOREP_INSTRUMENT_ON(
+      LBM_INSTRUMENT_ON(
           "Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloZFront", 4)
     }
     // TODO: PACK AND UNPACK
@@ -451,7 +451,7 @@ class Communication<T,
   LBM_HOST
   void sendAndReceiveHaloZBack(T* haloDistributionPtr) {
     {
-      LBM_SCOREP_INSTRUMENT_ON(
+      LBM_INSTRUMENT_ON(
           "Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloZBack", 4)
     }
     // TODO: PACK AND UNPACK
@@ -715,7 +715,7 @@ class Communication<T,
 
   LBM_HOST
   inline void communicateHalos(T* haloDistributionPtr) {
-    {LBM_SCOREP_INSTRUMENT_ON(
+    {LBM_INSTRUMENT_ON(
         "Communication<6>::communicateHalos",
         3)} Base::sendAndReceiveHaloXRight(haloDistributionPtr);
     Base::sendAndReceiveHaloXLeft(haloDistributionPtr);
@@ -793,7 +793,7 @@ class Communication<T,
 
   LBM_HOST
   inline void communicateHalos(T* haloDistributionPtr) {
-    LBM_SCOREP_INSTRUMENT_ON("Communication<6>::communicateHalos", 3)
+    LBM_INSTRUMENT_ON("Communication<6>::communicateHalos", 3)
 
     Base::sendAndReceiveHaloXRight(haloDistributionPtr);
     Base::sendAndReceiveHaloXLeft(haloDistributionPtr);
@@ -910,7 +910,7 @@ class Communication<T,
 
   LBM_HOST
   inline void communicateHalos(T* haloDistributionPtr) {
-    LBM_SCOREP_INSTRUMENT_ON("Communication<6>::communicateHalos", 3)
+    LBM_INSTRUMENT_ON("Communication<6>::communicateHalos", 3)
 
     Base::sendAndReceiveHaloZFront(haloDistributionPtr);
     Base::sendAndReceiveHaloZBack(haloDistributionPtr);

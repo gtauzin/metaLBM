@@ -57,7 +57,7 @@ class Boundary<T,
   LBM_DEVICE LBM_HOST LBM_INLINE static void applyYBottom(
       const Position& iP,
       T* haloDistributionPtr) {
-    {LBM_SCOREP_INSTRUMENT_OFF(
+    {LBM_INSTRUMENT_OFF(
         "Boundary<T, boundaryType, algorithmType>::applyYBottom", 5)}
 
     Position iP_Destination = {iP[d::X], iP[d::Y] + lSD::sLength()[d::Y],
@@ -72,7 +72,7 @@ class Boundary<T,
 
   LBM_DEVICE LBM_HOST LBM_INLINE static void applyYTop(const Position& iP,
                                                        T* haloDistributionPtr) {
-    {LBM_SCOREP_INSTRUMENT_OFF(
+    {LBM_INSTRUMENT_OFF(
         "Boundary<T, boundaryType, algorithmType>::applyYTop", 5)}
 
     Position iP_Destination{
@@ -89,7 +89,7 @@ class Boundary<T,
   LBM_DEVICE LBM_HOST LBM_INLINE static void applyZFront(
       const Position& iP,
       T* haloDistributionPtr) {
-    {LBM_SCOREP_INSTRUMENT_OFF(
+    {LBM_INSTRUMENT_OFF(
         "Boundary<T, boundaryType, algorithmType>::applyZFront", 5)}
 
     Position iP_Destination = {iP[d::X], iP[d::Y],
@@ -105,7 +105,7 @@ class Boundary<T,
   LBM_DEVICE LBM_HOST LBM_INLINE static void applyZBack(
       const Position& iP,
       T* haloDistributionPtr) {
-    {LBM_SCOREP_INSTRUMENT_OFF(
+    {LBM_INSTRUMENT_OFF(
         "Boundary<T, boundaryType, algorithmType>::applyZBack", 5)}
 
     Position iP_Destination{

@@ -93,7 +93,7 @@ class Algorithm<T, AlgorithmType::Generic, architecture, implementation> {
 
  protected:
   LBM_DEVICE LBM_HOST void storeLocalFields(const Position& iP) {
-    LBM_SCOREP_INSTRUMENT_OFF(
+    LBM_INSTRUMENT_OFF(
         "Algorithm<T, AlgorithmType::Pull>::storeLocalFields", 4)
 
     const auto indexLocal = hSD::getIndexLocal(iP);
@@ -210,9 +210,7 @@ class Algorithm<T, AlgorithmType::Pull, architecture, implementation>
 
 #pragma unroll
     for (auto iQ = 0; iQ < L::dimQ; ++iQ) {
-      Base::collision.collideAndStream(Base::haloDistributionNext_Ptr,
-                                       Base::haloDistributionPrevious_Ptr, iP,
-                                       iQ);
+      Base::collision.collideAndStream(Base::haloDistributionNext_Ptr, iP, iQ);
     }
 
     if (Base::isStored) {
@@ -223,7 +221,7 @@ class Algorithm<T, AlgorithmType::Pull, architecture, implementation>
   LBM_HOST
   void iterate(const unsigned int iteration,
                const Stream<architecture>& stream) {
-    {LBM_SCOREP_INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate", 2)}
+    {LBM_INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate", 2)}
 
     std::swap(Base::haloDistributionPrevious_Ptr,
               Base::haloDistributionNext_Ptr);
