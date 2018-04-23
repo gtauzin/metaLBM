@@ -13,7 +13,7 @@ namespace lbm {
   constexpr int numProcs = NPROCS;
   constexpr int numThreads = NTHREADS;
 
-  constexpr LatticeType latticeT = LatticeType::D3Q27;
+  constexpr LatticeType latticeT = LatticeType::D3Q19;
   constexpr int globalLengthX = GLOBAL_LENGTH_X;
   constexpr int globalLengthY = GLOBAL_LENGTH_Y;
   constexpr int globalLengthZ = GLOBAL_LENGTH_Z;
