@@ -205,18 +205,14 @@ class Algorithm<T, AlgorithmType::Pull, architecture, implementation>
 
     Base::collision.setForce(Base::localForce_Ptr, iP, Base::numberElements,
                              gSD::sOffset(Base::communication.rankMPI));
-
-    LBM_SHARED MathVector<T, L::dimQ> f_Forced;
-    LBM_SHARED MathVector<T, L::dimQ> f_NonEq;
-
     Base::collision.calculateRelaxationTime(
-        Base::haloDistributionPrevious_Ptr, iP,
-        f_Forced, f_NonEq);
+        Base::haloDistributionNext_Ptr, Base::haloDistributionPrevious_Ptr, iP);
 
-    #pragma unroll
+#pragma unroll
     for (auto iQ = 0; iQ < L::dimQ; ++iQ) {
-      Base::collision.collideAndStream(Base::haloDistributionNext_Ptr, iP, iQ,
-                                       f_Forced, f_NonEq);
+      Base::collision.collideAndStream(Base::haloDistributionNext_Ptr,
+                                       Base::haloDistributionPrevious_Ptr, iP,
+                                       iQ);
     }
 
     if (Base::isStored) {
