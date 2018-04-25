@@ -140,17 +140,22 @@ class ScalarAnalysisWriter
     : public Writer<T, InputOutput::Generic, inputOutputFormat> {
  private:
   using Base = Writer<T, InputOutput::Generic, inputOutputFormat>;
+  bool isRestart;
 
  public:
-  ScalarAnalysisWriter(const std::string& filePrefix_in)
-      : Base(filePrefix_in + "/", "observables", ".dat") {}
+  ScalarAnalysisWriter(const std::string& filePrefix_in,
+                       bool isRestart_in)
+    : Base(filePrefix_in + "/", "observables", ".dat")
+    , isRestart(isRestart_in)
+    {}
 
   inline bool getIsAnalyzed(const unsigned int iteration) {
     return (iteration % scalarAnalysisStep) == 0;
   }
 
   inline void openFile(const unsigned int iteration) {
-    Base::openAndAppend(Base::getFileName());
+    if(isRestart) Base::openAndTruncate(Base::getFileName());
+    else Base::openAndAppend(Base::getFileName());
   }
 
   inline void closeFile() { Base::file.close(); }
@@ -185,17 +190,22 @@ class SpectralAnalysisWriter
     : public Writer<T, InputOutput::Generic, inputOutputFormat> {
  private:
   using Base = Writer<T, InputOutput::Generic, inputOutputFormat>;
+  bool isRestart;
 
  public:
-  SpectralAnalysisWriter(const std::string& filePrefix_in)
-      : Base(filePrefix_in + "/", "spectra", ".dat") {}
+  SpectralAnalysisWriter(const std::string& filePrefix_in,
+                         bool isRestart_in)
+    : Base(filePrefix_in + "/", "spectra", ".dat")
+    , isRestart(isRestart_in)
+  {}
 
   inline bool getIsAnalyzed(const unsigned int iteration) {
     return (iteration % spectralAnalysisStep) == 0;
   }
 
   inline void openFile(const unsigned int iteration) {
-    Base::openAndAppend(Base::getFileName());
+    if(isRestart) Base::openAndTruncate(Base::getFileName());
+    else Base::openAndAppend(Base::getFileName());
   }
 
   inline void closeFile() { Base::file.close(); }

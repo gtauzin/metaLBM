@@ -112,13 +112,14 @@ namespace lbm {
       for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
         T equilibrium_iQ = Equilibrium_::calculate(density, velocity, velocity2, iQ);
 
-        f_Forced[iQ] =
-          haloDistributionPrevious_Ptr[hSD::getIndex(iP-uiL::celerity()[iQ], iQ)]
-          + forcingScheme.calculateCollisionSource(force, density, velocity, velocity2,
-                                                   equilibrium_iQ, iQ);
         f_NonEq[iQ] =
           haloDistributionPrevious_Ptr[hSD::getIndex(iP-uiL::celerity()[iQ], iQ)]
           - equilibrium_iQ;
+
+        f_Forced[iQ] =
+          f_NonEq[iQ] + equilibrium_iQ
+          + forcingScheme.calculateCollisionSource(force, density, velocity, velocity2,
+                                                   equilibrium_iQ, iQ);
       }
     }
 
