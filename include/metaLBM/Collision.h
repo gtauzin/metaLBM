@@ -421,6 +421,91 @@ class Collision<T, CollisionType::Approached_ELBM>
 };
 
 template <class T>
+class Collision<T, CollisionType::Malaspinas_ELBM>
+    : public Collision<T, CollisionType::ELBM> {
+ private:
+  using Base = Collision<T, CollisionType::ELBM>;
+
+ public:
+  using Base::Collision;
+
+  using Base::setForce;
+  using Base::update;
+
+  using Base::collideAndStream;
+
+  using Base::getAlpha;
+  using Base::getDensity;
+  using Base::getForce;
+  using Base::getHydrodynamicVelocity;
+  using Base::getVelocity;
+
+ private:
+
+  LBM_HOST LBM_DEVICE inline void calculateAlpha(
+      const T* haloDistributionNext_Ptr,
+      const T* haloDistributionPrevious_Ptr,
+      const Position& iP) {
+    {
+      LBM_INSTRUMENT_OFF(
+          "Collision<T, CollisionType::Malaspinas_ELBM>::calculateAlpha", 5)
+    }
+
+    MathVector<T, 3> dissipativeTensor_diag{{0}};
+    MathVector<T, 3> dissipativeTensor_sym{{0}};
+
+    for (auto iQ = 0; iQ < L::dimQ; ++iQ) {
+      dissipativeTensor_diag[d::X] += L::celerity()[iQ][d::X] * L::celerity()[iQ][d::X]
+        * haloDistributionPrevious_Ptr[hSD::getIndex(iP - uiL::celerity()[iQ], iQ)];
+
+      dissipativeTensor_diag[d::Y] += L::celerity()[iQ][d::Y] * L::celerity()[iQ][d::Y]
+        * haloDistributionPrevious_Ptr[hSD::getIndex(iP - uiL::celerity()[iQ], iQ)];
+
+      dissipativeTensor_diag[d::Z] += L::celerity()[iQ][d::Z] * L::celerity()[iQ][d::Z]
+        * haloDistributionPrevious_Ptr[hSD::getIndex(iP - uiL::celerity()[iQ], iQ)];
+
+      dissipativeTensor_sym[d::X] += L::celerity()[iQ][d::X] * L::celerity()[iQ][d::Y]
+        * haloDistributionPrevious_Ptr[hSD::getIndex(iP - uiL::celerity()[iQ], iQ)];
+
+      dissipativeTensor_sym[d::Y] += L::celerity()[iQ][d::X] * L::celerity()[iQ][d::Z]
+        * haloDistributionPrevious_Ptr[hSD::getIndex(iP - uiL::celerity()[iQ], iQ)];
+
+      dissipativeTensor_sym[d::Z] += L::celerity()[iQ][d::Y] * L::celerity()[iQ][d::Z]
+        * haloDistributionPrevious_Ptr[hSD::getIndex(iP - uiL::celerity()[iQ], iQ)];
+    }
+
+    T traceDissipativeTensor2 =
+      dissipativeTensor_diag[d::X] * dissipativeTensor_diag[d::X]
+      + dissipativeTensor_diag[d::Y] * dissipativeTensor_diag[d::Y]
+      + dissipativeTensor_diag[d::Z] * dissipativeTensor_diag[d::Z]
+      + 2. * dissipativeTensor_sym[d::X] * dissipativeTensor_sym[d::X]
+      + 2. * dissipativeTensor_sym[d::Y] * dissipativeTensor_sym[d::Y]
+      + 2. * dissipativeTensor_sym[d::Z] * dissipativeTensor_sym[d::Z];
+
+    T traceDissipativeTensor3 =
+      dissipativeTensor_diag[d::X]*dissipativeTensor_diag[d::X]*dissipativeTensor_diag[d::X]
+      + dissipativeTensor_diag[d::Y]*dissipativeTensor_diag[d::Y]*dissipativeTensor_diag[d::Y]
+      + dissipativeTensor_diag[d::Z]*dissipativeTensor_diag[d::Z]*dissipativeTensor_diag[d::Z]
+      + dissipativeTensor_diag[d::X]
+      *(3.*(dissipativeTensor_sym[d::X]*dissipativeTensor_sym[d::X]
+            + dissipativeTensor_sym[d::Y]*dissipativeTensor_sym[d::Y]))
+      + dissipativeTensor_diag[d::Y]
+      *(3.*(dissipativeTensor_sym[d::X]*dissipativeTensor_sym[d::X]
+            + dissipativeTensor_sym[d::Z]*dissipativeTensor_sym[d::Z]))
+      + dissipativeTensor_diag[d::Z]
+      *(3.*(dissipativeTensor_sym[d::Y]*dissipativeTensor_sym[d::Y]
+            + dissipativeTensor_sym[d::Z]*dissipativeTensor_sym[d::Z]))
+      + 6.*(dissipativeTensor_sym[d::X]*dissipativeTensor_sym[d::Y]
+            * dissipativeTensor_sym[d::Z]);
+
+    Base::alpha = -2./(3.*Base::density*L::cs2)
+      * traceDissipativeTensor3/traceDissipativeTensor2;
+  }
+};
+
+
+
+template <class T>
 class Collision<T, CollisionType::Essentially1_ELBM>
     : public Collision<T, CollisionType::ELBM> {
  private:
