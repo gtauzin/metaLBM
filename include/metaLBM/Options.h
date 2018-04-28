@@ -50,7 +50,7 @@ enum class CollisionType {
   BGK,
   ELBM,
   Approached_ELBM,
-    Malaspinas_ELBM,
+  Malaspinas_ELBM,
   Essentially1_ELBM,
   Essentially2_ELBM,
   ForcedNR_ELBM,

@@ -134,15 +134,12 @@ class Collision<T, CollisionType::BGK>
                                 iQ);
 
     haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)] =
-        haloDistributionPrevious_Ptr[hSD::getIndex(iP - uiL::celerity()[iQ],
-                                                   iQ)] +
-        Base::forcingScheme.calculateCollisionSource(
-            Base::force, Base::density, Base::velocity, Base::velocity2,
-            equilibrium_iQ, iQ) -
-        2 * beta *
-            (haloDistributionPrevious_Ptr[hSD::getIndex(
-                 iP - uiL::celerity()[iQ], iQ)] -
-             equilibrium_iQ);
+      (1.-2.*beta)
+      * haloDistributionPrevious_Ptr[hSD::getIndex(iP - uiL::celerity()[iQ], iQ)] +
+        +2.*beta * equilibrium_iQ
+      + Base::forcingScheme.calculateCollisionSource(Base::force, Base::density,
+                                                     Base::velocity, Base::velocity2,
+                                                     equilibrium_iQ, iQ);
   }
 
   using Base::getDensity;
@@ -498,7 +495,7 @@ class Collision<T, CollisionType::Malaspinas_ELBM>
       + 6.*(dissipativeTensor_sym[d::X]*dissipativeTensor_sym[d::Y]
             * dissipativeTensor_sym[d::Z]);
 
-    Base::alpha = -2./(3.*Base::density*L::cs2)
+    Base::alpha = 2. - 2./(3.*Base::density*L::cs2)
       * traceDissipativeTensor3/traceDissipativeTensor2;
   }
 };
