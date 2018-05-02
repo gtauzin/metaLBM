@@ -15,7 +15,7 @@ class Event<Architecture::Generic> {
 };
 
 template <>
-class Event<Architecture::GPU> : public Event<Architecture::Generic> {
+class Event<Architecture::CPU> : public Event<Architecture::Generic> {
  private:
  public:
   Event() {}
@@ -25,11 +25,9 @@ class Event<Architecture::GPU> : public Event<Architecture::Generic> {
   void synchronize() {}
 
   void record(Stream<Architecture::CPU> stream) {
-    CUDA_CALL(cudaEventRecord(event, stream));
   }
 
   void wait(Stream<Architecture::CPU> stream) {
-    CUDA_CALL(cudaEventWaitEvent(stream, event, 0));
   }
 };
 

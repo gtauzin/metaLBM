@@ -112,7 +112,7 @@ class Collision<T, CollisionType::BGK>
   using Base::setForce;
   using Base::update;
 
-  LBM_DEVICE LBM_HOST inline void calculateRelaxationTime(
+  LBM_DEVICE LBM_HOST LBM_INLINE void calculateRelaxationTime(
       const T* haloDistributionNext_Ptr,
       const T* haloDistributionPrevious_Ptr,
       const Position& iP) {
@@ -135,8 +135,8 @@ class Collision<T, CollisionType::BGK>
 
     haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)] =
       (1.-2.*beta)
-      * haloDistributionPrevious_Ptr[hSD::getIndex(iP - uiL::celerity()[iQ], iQ)] +
-        +2.*beta * equilibrium_iQ
+      * haloDistributionPrevious_Ptr[hSD::getIndex(iP - uiL::celerity()[iQ], iQ)]
+      + 2.*beta * equilibrium_iQ
       + Base::forcingScheme.calculateCollisionSource(Base::force, Base::density,
                                                      Base::velocity, Base::velocity2,
                                                      equilibrium_iQ, iQ);
