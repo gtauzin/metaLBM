@@ -21,7 +21,7 @@ class Event<Architecture::GPU> : public Event<Architecture::Generic> {
   }
 
   void wait(Stream<Architecture::GPU>& stream) {
-    LBM_CUDA_CALL(cudaEventWaitEvent(stream.get(), event, 0));
+    LBM_CUDA_CALL(cudaStreamWaitEvent(stream.get(), event, 0));
   }
 };
 
