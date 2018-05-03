@@ -16,12 +16,12 @@ class Event<Architecture::GPU> : public Event<Architecture::Generic> {
 
   ~Event() { CUDA_CALL(cudaEventDestroy(event)); }
 
-  void record(Stream<Architecture::GPU> stream) {
-    CUDA_CALL(cudaEventRecord(event, stream));
+  void record(Stream<Architecture::GPU>& stream) {
+    CUDA_CALL(cudaEventRecord(event, stream.get()));
   }
 
-  void wait(Stream<Architecture::GPU> stream) {
-    CUDA_CALL(cudaEventWaitEvent(stream, event, 0));
+  void wait(Stream<Architecture::GPU>& stream) {
+    CUDA_CALL(cudaEventWaitEvent(stream.get(), event, 0));
   }
 };
 
