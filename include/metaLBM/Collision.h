@@ -498,7 +498,7 @@ class Collision<T, CollisionType::Malaspinas_ELBM>
       + 6.*(dissipativeTensor_sym[d::X]*dissipativeTensor_sym[d::Y]
             * dissipativeTensor_sym[d::Z]);
 
-    Base::alpha = -2./(3.*Base::density*L::cs2)
+    Base::alpha = 2.-2./(3.*Base::density*L::cs2)
       * traceDissipativeTensor3/traceDissipativeTensor2;
   }
 };
