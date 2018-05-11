@@ -35,14 +35,14 @@ class ScalarAnalysisList {
   ScalarAnalysisList(FieldList<T, architecture>& fieldList_in,
                      const unsigned int numberElements_in,
                      Communication_& communication_in,
-                     bool isRestart_in)
+                     unsigned int startIteration_in)
       : totalEnergy(fieldList_in.density.getLocalData(),
                     fieldList_in.velocity.getLocalData(),
                     numberElements_in),
         totalEnstrophy(fieldList_in.vorticity.getLocalData(),
                        numberElements_in),
         communication(communication_in),
-    scalarAnalysisWriter(prefix, isRestart_in),
+    scalarAnalysisWriter(prefix, startIteration_in),
         computationLocal(lSD::sStart(), lSD::sEnd()) {
     if (communication.rankMPI[d::X] == 0) {
       writeAnalysesHeader();
@@ -112,14 +112,14 @@ class SpectralAnalysisList {
   SpectralAnalysisList(FieldList<T, architecture>& fieldList_in,
                        const unsigned int numberElements_in,
                        Communication_& communication_in,
-                       bool isRestart_in)
-      : energySpectra(fieldList_in.velocity.getLocalData(),
-                      numberElements_in,
-                      globalLengthPtrdiff_t),
-        communication(communication_in),
-    spectralAnalysisWriter(prefix, isRestart_in),
-        offset(gFD::offset(communication.rankMPI)),
-        computationFourier(lFD::start(), lFD::end()) {
+                       unsigned int startIteration_in)
+    : energySpectra(fieldList_in.velocity.getLocalData(),
+                    numberElements_in, globalLengthPtrdiff_t)
+    , communication(communication_in)
+    , spectralAnalysisWriter(prefix, startIteration_in)
+    , offset(gFD::offset(communication.rankMPI))
+    , computationFourier(lFD::start(), lFD::end())
+  {
     if (communication.rankMPI[d::X] == 0) {
       writeAnalysesHeader();
     }
