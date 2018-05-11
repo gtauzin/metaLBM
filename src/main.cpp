@@ -21,8 +21,8 @@ int main(int argc, char* argv[]) {
 #endif
   auto sizeMPI = MathVector<int, 3>{mpiLauncher.numProcs(), 1, 1};
   auto rankMPI = MathVector<int, 3>{mpiLauncher.procRank(), 0, 0};
-  auto routine = Routine<dataT, Architecture::CPU, implementationT>(
-      rankMPI, sizeMPI, mpiLauncher.hostName(), numberElements);
+  Routine<dataT, Architecture::CPU, implementationT>
+    routine(rankMPI, sizeMPI, mpiLauncher.hostName(), numberElements);
 
   routine.compute();
 }

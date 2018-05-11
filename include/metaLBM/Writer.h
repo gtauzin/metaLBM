@@ -48,8 +48,8 @@ class Writer<T, InputOutput::Generic, InputOutputFormat::Generic> {
            fileExtension;
   }
 
-  inline std::string getFileName() {
-    return writeFolder + writerFolder + filePrefix + fileExtension;
+  inline std::string getFileName(const std::string& postfix = "") {
+    return writeFolder + writerFolder + filePrefix + postfix + fileExtension;
   }
 
  public:
@@ -140,13 +140,13 @@ class ScalarAnalysisWriter
     : public Writer<T, InputOutput::Generic, inputOutputFormat> {
  private:
   using Base = Writer<T, InputOutput::Generic, inputOutputFormat>;
-  bool isRestart;
+  unsigned int startIteration;
 
  public:
   ScalarAnalysisWriter(const std::string& filePrefix_in,
-                       bool isRestart_in)
+                       unsigned int startIteration_in)
     : Base(filePrefix_in + "/", "observables", ".dat")
-    , isRestart(isRestart_in)
+    , startIteration(startIteration_in)
     {}
 
   inline bool getIsAnalyzed(const unsigned int iteration) {
@@ -154,8 +154,7 @@ class ScalarAnalysisWriter
   }
 
   inline void openFile(const unsigned int iteration) {
-    if(isRestart) Base::openAndTruncate(Base::getFileName());
-    else Base::openAndAppend(Base::getFileName());
+    Base::openAndAppend(Base::getFileName("_"+std::to_string(startIteration)));
   }
 
   inline void closeFile() { Base::file.close(); }
@@ -176,8 +175,9 @@ class ScalarAnalysisWriter
   }
 
   void writeHeader(const std::string& header) {
-    {LBM_INSTRUMENT_ON("AnalysisWriter::writeHeader",
-                              2)} Base::openAndTruncate(Base::getFileName());
+    {LBM_INSTRUMENT_ON("AnalysisWriter::writeHeader", 2)}
+
+    Base::openAndTruncate(Base::getFileName("_"+std::to_string(startIteration)));
 
     Base::file << header << std::endl;
 
@@ -190,13 +190,13 @@ class SpectralAnalysisWriter
     : public Writer<T, InputOutput::Generic, inputOutputFormat> {
  private:
   using Base = Writer<T, InputOutput::Generic, inputOutputFormat>;
-  bool isRestart;
+  unsigned int startIteration;
 
  public:
   SpectralAnalysisWriter(const std::string& filePrefix_in,
-                         bool isRestart_in)
+                         unsigned int startIteration_in)
     : Base(filePrefix_in + "/", "spectra", ".dat")
-    , isRestart(isRestart_in)
+    , startIteration(startIteration_in)
   {}
 
   inline bool getIsAnalyzed(const unsigned int iteration) {
@@ -204,8 +204,7 @@ class SpectralAnalysisWriter
   }
 
   inline void openFile(const unsigned int iteration) {
-    if(isRestart) Base::openAndTruncate(Base::getFileName());
-    else Base::openAndAppend(Base::getFileName());
+    Base::openAndAppend(Base::getFileName("_"+std::to_string(startIteration)));
   }
 
   inline void closeFile() { Base::file.close(); }
@@ -236,8 +235,9 @@ class SpectralAnalysisWriter
   }
 
   void writeHeader(const std::string& header) {
-    {LBM_INSTRUMENT_ON("AnalysisWriter::writeHeader",
-                              2)} Base::openAndTruncate(Base::getFileName());
+    {LBM_INSTRUMENT_ON("AnalysisWriter::writeHeader", 2)}
+
+    Base::openAndTruncate(Base::getFileName("_"+std::to_string(startIteration)));
 
     Base::file << header << std::endl;
 
@@ -400,10 +400,7 @@ class DistributionWriter<T, InputOutput::HDF5>
 
   template <Architecture architecture>
   void writeDistribution(Distribution<T, architecture>& distribution) {
-    {LBM_INSTRUMENT_ON(
-        "Writer<T, InputOutput::HDF5, "
-        "writerFileFromat>::writeField<NumberComponents>",
-        3)}
+    {LBM_INSTRUMENT_ON("Writer<InputOutput::HDF5>::writeField<NumberComponents>", 3)}
 
     Base::propertyListHDF5 = H5Pcreate(H5P_DATASET_XFER);
     for (auto iC = 0; iC < L::dimQ; ++iC) {
@@ -429,8 +426,7 @@ class DistributionWriter<T, InputOutput::HDF5>
       H5Sselect_hyperslab(
           Base::fileSpaceHDF5, H5S_SELECT_SET,
           Project<hsize_t, unsigned int, L::dimD>::Do(
-              gSD::pOffset(Base::rankMPI))
-              .data(),
+              gSD::pOffset(Base::rankMPI)).data(),
           NULL,
           Project<hsize_t, unsigned int, L::dimD>::Do(lSD::pLength()).data(),
           NULL);
