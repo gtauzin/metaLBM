@@ -594,7 +594,7 @@ class Communication<T,
   using Base::sizeMPI;
 
  protected:
-  HOST void sendAndReceiveHaloXRight(T* haloDistributionPtr) {
+  LBM_HOST void sendAndReceiveHaloXRight(T* haloDistributionPtr) {
     {INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloX",
                    4)}
 
@@ -604,7 +604,7 @@ class Communication<T,
     shmem_barrier_all();
   }
 
-  HOST void sendAndReceiveHaloXLeft(T* haloDistributionPtr) {
+  LBM_HOST void sendAndReceiveHaloXLeft(T* haloDistributionPtr) {
     {INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloX",
                    4)}
 
@@ -653,17 +653,11 @@ class Communication<T,
   using Base::sizeMPI;
 
  protected:
-  /* HOST */
-  /* void sendAndReceiveHaloX(T * haloDistributionPtr) { */
-  /* } */
+  LBM_HOST void sendAndReceiveHaloXRight(T* haloDistributionPtr) {
+  }
 
-  /* HOST */
-  /* void sendAndReceiveHaloY(T * haloDistributionPtr) { */
-  /* } */
-
-  /* HOST */
-  /* void sendAndReceiveHaloZ(T * haloDistributionPtr) { */
-  /* } */
+  LBM_HOST void sendAndReceiveHaloXLeft(T* haloDistributionPtr) {
+  }
 };
 #endif  // USE_NVSHMEM
 
