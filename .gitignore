@@ -12,6 +12,6 @@ script/*out*
 script/*err*
 wrap*
 obsolete*
-profile*
+profiles*
 processing*
 CMakeLists.txt.user
