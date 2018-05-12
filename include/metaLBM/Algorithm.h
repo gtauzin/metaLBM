@@ -328,4 +328,82 @@ namespace lbm {
 
   };
 
+#ifdef USE_NVSHMEM
+
+  template <class T, Overlapping overlapping>
+    class Algorithm<T, AlgorithmType::Pull, Architecture::GPU,
+                    Implementation::NVSHMEM_IN, overlapping>
+    : public Algorithm<T, AlgorithmType::Generic, Architecture::GPU,
+                       implementation, Overlapping::Off> {
+  private:
+    using Base =
+      Algorithm<T, AlgorithmType::Generic, Architecture::GPU,
+                implementation, Overlapping::Off>;
+    using Clock = std::chrono::high_resolution_clock;
+
+  public:
+    using Base::Algorithm;
+
+    LBM_DEVICE void operator()(const Position& iP) {
+      if(iP[d::X] = L::halo()[d::X]) {
+        Base::communication.communicateHalos(Base::haloDistributionPrevious_Ptr);
+      }
+      else if(iP[d::X] = L::halo()[d::X] + lSD::length()[d::X]) {
+        Base::communication.communicateHalos(Base::haloDistributionPrevious_Ptr);
+      }
+
+      Base::collision.calculateMoments(Base::haloDistributionPrevious_Ptr, iP);
+
+      Base::collision.setForce(Base::localForce_Ptr, iP, Base::numberElements,
+                               gSD::sOffset(Base::communication.rankMPI));
+      Base::collision.calculateRelaxationTime(Base::haloDistributionNext_Ptr,
+                                              Base::haloDistributionPrevious_Ptr, iP);
+
+      #pragma unroll
+      for (auto iQ = 0; iQ < L::dimQ; ++iQ) {
+        Base::collision.collideAndStream(Base::haloDistributionNext_Ptr,
+                                         Base::haloDistributionPrevious_Ptr, iP,
+                                         iQ);
+      }
+
+      if (Base::isStored) {
+        Base::storeLocalFields(iP);
+      }
+    }
+
+    LBM_HOST
+    void iterate(const unsigned int iteration,
+                 Stream<architecture>& defaultStream,
+                 Stream<architecture>& bulkStream,
+                 Stream<architecture>& leftStream,
+                 Stream<architecture>& rightStream,
+                 Event<architecture>& leftEvent,
+                 Event<architecture>& rightEvent) {
+      {LBM_INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate", 2)}
+
+      std::swap(Base::haloDistributionPrevious_Ptr,
+                Base::haloDistributionNext_Ptr);
+
+      Base::collision.update(iteration);
+
+      auto t0 = Clock::now();
+      computationBottom.Do(defaultStream, bottomBoundary,
+                           Base::haloDistributionPrevious_Ptr);
+      computationTop.Do(defaultStream, topBoundary,
+                        Base::haloDistributionPrevious_Ptr);
+      computationFront.Do(defaultStream, frontBoundary,
+                          Base::haloDistributionPrevious_Ptr);
+      computationBack.Do(defaultStream, backBoundary,
+                         Base::haloDistributionPrevious_Ptr);
+      auto t1 = Clock::now();
+      Base::dtCommunication = (t1 - t0);
+
+      computationLocal.Do(defaultStream, *this);
+      t0 = Clock::now();
+      Base::dtComputation = (t0 - t1);
+    }
+
+  };
+#endif  // USE_NVSHMEM
+
 }  // namespace lbm

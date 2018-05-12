@@ -105,9 +105,9 @@ Distribution<T, architecture> initLocalDistribution(
     const Field<T, 1, architecture, true>& densityField,
     const Field<T, L::dimD, architecture, true>& velocityField,
     const MathVector<int, 3>& rankMPI) {
-  {LBM_INSTRUMENT_ON("initLocalDistribution<T>",
-                            2)} Distribution<T, architecture>
-      distributionR(densityField.numberElements);
+  {LBM_INSTRUMENT_ON("initLocalDistribution<T>", 2)}
+
+  Distribution<T, architecture> distributionR(densityField.numberElements);
 
   if (startIteration == 0) {
     Position iP;
