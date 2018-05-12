@@ -293,8 +293,9 @@ namespace lbm {
       Base::computationBack.Do(bulkStream, Base::backBoundary,
                                Base::haloDistributionPrevious_Ptr);
 
-      leftEvent.record(bulkStream);
-      rightEvent.record(bulkStream);
+      bulkStream.synchronize();
+      //leftEvent.record(bulkStream);
+      //rightEvent.record(bulkStream);
 
       auto t1 = Clock::now();
       Base::dtCommunication = (t1 - t0);
@@ -306,8 +307,8 @@ namespace lbm {
       // TODO: if only 1 GPU, use leftBoundary and rightBoundary instead of MPI
       Base::communication.communicateHalos(Base::haloDistributionPrevious_Ptr);
 
-      leftEvent.wait(leftStream);
-      rightEvent.wait(rightStream);
+      //leftEvent.wait(leftStream);
+      //rightEvent.wait(rightStream);
 
       t1 = Clock::now();
       Base::dtCommunication += (t1 - t0);
