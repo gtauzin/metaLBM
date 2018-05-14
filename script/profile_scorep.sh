@@ -1,15 +1,39 @@
 #!/bin/bash
 
-cd ~/metaLBM_private/
-rm -rf build
-mkdir build
-cd build
-SCOREP_WRAPPER=OFF cmake .. -DCMAKE_C_COMPILER=scorep-mpicc -DCMAKE_CXX_COMPILER=scorep-mpic++ -DPROFILE_SCOREP=ON
+NPROCS=$1
+NTHREADS=1
+
+GLOBAL_LENGTH_X=$2
+GLOBAL_LENGTH_Y=$2
+GLOBAL_LENGTH_Z=$2
+
+POSTFIX=$3
+
+PARAMS="${NPROCS} ${NTHREADS} ${GLOBAL_LENGTH_X} ${GLOBAL_LENGTH_Y} ${GLOBAL_LENGTH_Z}"
+TARGET_NAME="cpulbm_${NPROCS}_${NTHREADS}_${GLOBAL_LENGTH_X}_${GLOBAL_LENGTH_Y}_${GLOBAL_LENGTH_Z}"
+cd ../build
+rm -rf ./CMakeFiles ./CMakeCache.txt
+
+SCOREP_WRAPPER=OFF \
+cmake .. \
+  -DCMAKE_C_COMPILER=scorep-mpicc \
+  -DCMAKE_CXX_COMPILER=scorep-mpic++ \
+  -DUSE_CUDA=OFF \
+  -DUSE_FFTW=ON \
+  -DUSE_NVSHMEM=OFF \
+  -DUSE_SCOREP=ON \
+  -DUSE_NVTX=OFF \
+  -DNPROCS=1 \
+  -DNTHREADS=1 \
+#   -DFFTW_ROOT=<path_to_fftw> \
+  -DFFTW_WITH_THREADS=ON \
+  -DCMAKE_EXPORT_COMPILE_COMMANDS=On \
+
 export SCOREP_WRAPPER=ON
 export SCOREP_ENABLE_TRACING=true
 export SCOREP_TOTAL_MEMORY=3g
 
-make lbm VERBOSE=1 SCOREP_WRAPPER_INSTRUMENTER_FLAGS="--verbose --user --nocompiler"
+cmake -DPARAMS="${PARAMS}" ..
+make ${TARGET_NAME} -j 8 SCOREP_WRAPPER_INSTRUMENTER_FLAGS="--verbose --user --nocompiler"
 
-cd ../script
-./submit_job.sh
+mpirun -np ${NPROCS} ./${TARGET_NAME}
