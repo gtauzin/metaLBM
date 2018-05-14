@@ -114,8 +114,8 @@ class Field<T, NumberComponents, architecture, true>
         const unsigned int numberElements_in,
         const T& value_in)
       : Base(fieldName_in, numberElements_in) {
-    Computation<Architecture::CPU, L::dimD> computationLocal(lSD::sStart(),
-                                                             lSD::sEnd());
+    Computation<architecture, L::dimD> computationLocal(lSD::sStart(),
+                                                        lSD::sEnd());
     computationLocal.Do([&] LBM_HOST(const Position& iP) {
       for (auto iC = 0; iC < NumberComponents; ++iC) {
         setLocalValue(iP, value_in, iC);
@@ -129,7 +129,7 @@ class Field<T, NumberComponents, architecture, true>
         const unsigned int numberElements_in,
         const MathVector<T, NumberComponents>& vector_in)
       : Base(fieldName_in, numberElements_in) {
-    Computation<Architecture::CPU, L::dimD> computationLocal(lSD::sStart(),
+    Computation<architecture, L::dimD> computationLocal(lSD::sStart(),
                                                              lSD::sEnd());
     computationLocal.Do(
         [&] LBM_HOST(const Position& iP) { setLocalVector(iP, vector_in); });

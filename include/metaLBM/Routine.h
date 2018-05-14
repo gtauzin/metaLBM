@@ -27,6 +27,13 @@ namespace lbm {
     using Seconds = std::chrono::duration<double>;
 
     Communication_ communication;
+    Stream<architecture> defaultStream;
+    Stream<architecture> bulkStream;
+    Stream<architecture> leftStream;
+    Stream<architecture> rightStream;
+
+    Event<architecture> leftEvent;
+    Event<architecture> rightEvent;
 
     FieldWriter_ fieldWriter;
     DistributionWriter_ distributionWriter;
@@ -40,13 +47,6 @@ namespace lbm {
     SpectralAnalysisList<T, architecture> spectralAnalysisList;
 
     Algorithm<dataT, algorithmT, architecture, implementation, overlappingT> algorithm;
-    Stream<architecture> defaultStream;
-    Stream<architecture> bulkStream;
-    Stream<architecture> leftStream;
-    Stream<architecture> rightStream;
-
-    Event<architecture> leftEvent;
-    Event<architecture> rightEvent;
 
     double initialMass;
     double finalMass;
@@ -64,6 +64,12 @@ namespace lbm {
             const std::string& processorName_in,
             const unsigned int numberElements_in)
       : communication(rankMPI_in, sizeMPI_in, processorName_in)
+      , defaultStream(true)
+      , bulkStream(false)
+      , leftStream(false)
+      , rightStream(false)
+      , leftEvent()
+      , rightEvent()
       , fieldWriter(prefix, rankMPI_in)
       , distributionWriter(prefix, rankMPI_in)
       , fieldList(rankMPI_in, numberElements_in, fieldWriter)
@@ -75,17 +81,13 @@ namespace lbm {
                      gFD::offset(rankMPI_in))
       , distribution(initLocalDistribution<T, architecture>(fieldList.density,
                                                             fieldList.velocity,
+                                                            bulkStream,
+                                                            numberElements_in,
                                                             rankMPI_in))
       , numberElements(numberElements_in)
       , scalarAnalysisList(fieldList, numberElements, communication, startIteration)
       , spectralAnalysisList(fieldList, numberElements, communication, startIteration)
       , algorithm(fieldList, distribution, numberElements, communication)
-      , defaultStream(true)
-      , bulkStream(false)
-      , leftStream(false)
-      , rightStream(false)
-      , leftEvent()
-      , rightEvent()
       , initialMass(0.0)
       , finalMass(0.0)
       , differenceMass(0.0)

@@ -104,6 +104,8 @@ template <class T, Architecture architecture>
 Distribution<T, architecture> initLocalDistribution(
     const Field<T, 1, architecture, true>& densityField,
     const Field<T, L::dimD, architecture, true>& velocityField,
+    const Stream<architecture>& stream,
+    const unsigned int numberElements,
     const MathVector<int, 3>& rankMPI) {
   LBM_INSTRUMENT_ON("initLocalDistribution<T>", 2)
 
@@ -111,24 +113,21 @@ Distribution<T, architecture> initLocalDistribution(
 
   if (startIteration == 0) {
     Position iP;
-    for (auto iZ = lSD::sStart()[d::Z]; iZ < lSD::sEnd()[d::Z]; iZ++) {
-      for (auto iY = lSD::sStart()[d::Y]; iY < lSD::sEnd()[d::Y]; iY++) {
-        for (auto iX = lSD::sStart()[d::X]; iX < lSD::sEnd()[d::X]; iX++) {
-          iP = Position({iX, iY, iZ});
 
-          T density = densityField.getLocalValue(iP);
-          MathVector<T, L::dimD> velocity = velocityField.getLocalVector(iP);
-          T velocity2 = velocity.norm2();
+    Computation<architecture, L::dimD> computationLocal(lSD::sStart(), lSD::sEnd());
 
-          for (auto iQ = 0; iQ < L::dimQ; ++iQ) {
-            distributionR.setLocalValue(
-                iP, Equilibrium_::calculate(density, velocity, velocity2, iQ),
-                iQ);
-          }
+    T * localDistribution = distributionR.getLocalData();
+
+    computationLocal.Do(stream, [=] LBM_HOST LBM_DEVICE (const Position& iP) {
+        T density = densityField.getLocalValue(iP);
+        MathVector<T, L::dimD> velocity = velocityField.getLocalVector(iP);
+        T velocity2 = velocity.norm2();
+
+        for (auto iQ = 0; iQ < L::dimQ; ++iQ) {
+          localDistribution[iQ * numberElements + lSD::getIndex(iP)] =
+            Equilibrium_::calculate(density, velocity, velocity2, iQ);
         }
-      }
-    }
-
+      });
   }
 
   else {
