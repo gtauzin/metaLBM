@@ -54,7 +54,7 @@ namespace lbm {
   constexpr BoundaryType boundaryT = BoundaryType::Generic;
 
   constexpr InputOutputFormat inputOutputFormatT = InputOutputFormat::ascii;
-  constexpr auto prefix = "overlapping";
+  constexpr auto prefix = "LBM_PREFIX";
 
   constexpr bool writeFieldInit = 0;
   constexpr bool writeAnalysisInit = 0;
