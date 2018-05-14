@@ -42,6 +42,8 @@ if(USE_NVSHMEM)
   target_compile_definitions(metalbm INTERFACE USE_NVSHMEM)
 endif()
 
+option(USE_NVTX "Enabling manual instrumentation with NVTX" OFF)
+
 option(USE_SCOREP "Enabling manual instrumentation with Score-P" OFF)
 if(USE_SCOREP)
   find_package(Scorep REQUIRED)
