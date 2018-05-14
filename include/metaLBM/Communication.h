@@ -127,6 +127,7 @@ class Communication<T,
     computationLocal.Do([&] LBM_HOST(const Position& iP) {
       localSum += localPtr[lSD::getIndex(iP)];
     });
+    computationLocal.synchronize();
 
     reduce(&localSum, 1);
     return localSum;

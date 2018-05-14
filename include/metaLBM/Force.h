@@ -110,6 +110,8 @@ class Force<T, ForceType::Constant>
         (localForcePtr + iD * numberElements)[index] = force[iD];
       }
     });
+    computationLocal.synchronize();
+
   }
 
   using Base::setForce;
@@ -159,6 +161,8 @@ class Force<T, ForceType::Sinusoidal>
         (localForcePtr + iD * numberElements)[index] = force[iD];
       }
     });
+    computationLocal.synchronize();
+
   }
 
   using Base::setForce;
@@ -204,6 +208,8 @@ class Force<T, ForceType::Kolmogorov>
         (localForcePtr + iD * numberElements)[index] = force[iD];
       }
     });
+    computationLocal.synchronize();
+
   }
 
   using Base::setForce;
@@ -289,6 +295,8 @@ class Force<double, ForceType::ConstantShell>
         }
       }
     });
+    computationFourier.synchronize();
+
 
     MakeIncompressible<double, Architecture::CPU, PartitionningType::OneD,
                        L::dimD>

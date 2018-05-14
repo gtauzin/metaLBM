@@ -121,6 +121,8 @@ class Field<T, NumberComponents, architecture, true>
         setLocalValue(iP, value_in, iC);
       }
     });
+    computationLocal.synchronize();
+
   }
 
   Field(const std::string& fieldName_in,
@@ -131,6 +133,8 @@ class Field<T, NumberComponents, architecture, true>
                                                              lSD::sEnd());
     computationLocal.Do(
         [&] LBM_HOST(const Position& iP) { setLocalVector(iP, vector_in); });
+    computationLocal.synchronize();
+
   }
 
   Field(const std::string& fieldName_in,

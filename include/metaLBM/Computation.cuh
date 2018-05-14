@@ -50,6 +50,27 @@ namespace lbm {
     }
   }
 
+template <unsigned int Dimension>
+  class Computation<Architecture::GPU, Dimension> {
+ protected:
+  const Position start;
+  const Position end;
+  const Position length;
+  const Position dir;
+
+ public:
+  Computation(const Position& start_in,
+              const Position& end_in,
+              const Position& dir_in = {{d::X, d::Y, d::Z}})
+      : start(start_in), end(end_in), length(end_in - start_in), dir(dir_in) {}
+
+  LBM_INLINE static void synchronize() {
+    LBM_CUDA_CALL( cudaDeviceSynchronize() );
+  }
+
+};
+
+
 
  template<>
   class Computation<Architecture::GPU, 1>
@@ -71,7 +92,6 @@ namespace lbm {
       kernel_1D<<<dimGrid, dimBlock, 0, stream.get()>>>(Base::start, Base::end, Base::dir,
 							function, arguments...);
       LBM_CUDA_CALL ( cudaGetLastError(); );
-      LBM_CUDA_CALL( cudaDeviceSynchronize() );
     }
   };
 
@@ -94,7 +114,6 @@ namespace lbm {
       kernel_2D<<<dimGrid, dimBlock, 0, stream.get()>>>(Base::start, Base::end, Base::dir,
 							function, arguments...);
       LBM_CUDA_CALL ( cudaGetLastError() );
-      LBM_CUDA_CALL( cudaDeviceSynchronize() );
     }
  };
 
@@ -118,7 +137,6 @@ namespace lbm {
      kernel_3D<<<dimGrid, dimBlock, 0, stream.get()>>>(Base::start, Base::end, Base::dir,
 						       function, arguments...);
      LBM_CUDA_CALL ( cudaGetLastError() );
-     LBM_CUDA_CALL( cudaDeviceSynchronize() );
    }
  };
 

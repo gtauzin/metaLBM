@@ -60,6 +60,7 @@ class ScalarAnalysisList {
       totalEnergy(iP);
       totalEnstrophy(iP);
     });
+    computationLocal.synchronize();
 
     normalizeAnalyses();
     reduceAnalyses();
@@ -149,6 +150,8 @@ class SpectralAnalysisList {
 
       energySpectra(iFP, index, iK, kNorm);
     });
+    computationFourier.synchronize();
+
     backwardTransformAnalyses();
 
     normalizeAnalyses();

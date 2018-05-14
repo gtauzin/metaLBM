@@ -129,6 +129,8 @@ class BackwardFFT<double,
         (localSpacePtr + numberElements * iC)[lSD::getIndex(iP)] /=
             gSD::sVolume();
       });
+      computationLocal.synchronize();
+
     }
   }
 };
@@ -200,6 +202,7 @@ class Curl<double, Architecture::CPU, PartitionningType::OneD, 2, 2> {
           iK[d::Y] * ((fftw_complex*)(forwardIn.localFourierPtr +
                                       numberElements * (d::X)))[index][p::Re];
     });
+    computationFourier.synchronize();
 
     backwardOut.execute();
   }
@@ -297,6 +300,7 @@ class Curl<double, Architecture::CPU, PartitionningType::OneD, 3, 3> {
           iK[d::Y] * ((fftw_complex*)(forwardIn.localFourierPtr +
                                       numberElements * (d::X)))[index][p::Re];
     });
+    computationFourier.synchronize();
 
     backwardOut.execute();
   }
@@ -372,6 +376,7 @@ class MakeIncompressible<double,
                        numberElements * (d::Y)))[index][p::Im] =
           -iK[d::X] * localFourierInPtr[index][p::Re];
     });
+    computationFourier.synchronize();
 
     backwardOut.execute();
   }

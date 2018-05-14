@@ -207,6 +207,7 @@ namespace lbm {
       Base::dtCommunication = (t1 - t0);
 
       computationLocal.Do(defaultStream, *this);
+      computationLocal.synchronize();
       t0 = Clock::now();
       Base::dtComputation = (t0 - t1);
     }
@@ -215,12 +216,14 @@ namespace lbm {
     void pack(const Stream<architecture>& stream) {
       computationLocal.Do(stream, Base::packer, Base::localDistribution_Ptr,
                           Base::haloDistributionNext_Ptr, Base::numberElements);
+      computationLocal.synchronize();
     }
 
     LBM_HOST
     void unpack(const Stream<architecture>& stream) {
       computationLocal.Do(stream, Base::unpacker, Base::haloDistributionNext_Ptr,
                           Base::localDistribution_Ptr, Base::numberElements);
+      computationLocal.synchronize();
     }
   };
 
@@ -399,6 +402,8 @@ namespace lbm {
       Base::dtCommunication = (t1 - t0);
 
       computationLocal.Do(defaultStream, *this);
+      computationLocal::synchronize();
+
       t0 = Clock::now();
       Base::dtComputation = (t0 - t1);
     }

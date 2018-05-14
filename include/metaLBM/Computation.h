@@ -8,7 +8,10 @@
 namespace lbm {
 
 template <Architecture architecture, unsigned int Dimension>
-class Computation {
+  class Computation {};
+
+template <unsigned int Dimension>
+  class Computation<Architecture::CPU, Dimension> {
  protected:
   const Position start;
   const Position end;
@@ -20,7 +23,10 @@ class Computation {
               const Position& end_in,
               const Position& dir_in = {{d::X, d::Y, d::Z}})
       : start(start_in), end(end_in), length(end_in - start_in), dir(dir_in) {}
+
+  LBM_INLINE static void synchronize() {}
 };
+
 
 template <>
 class Computation<Architecture::CPU, 1>
