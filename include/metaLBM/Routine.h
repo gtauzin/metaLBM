@@ -72,7 +72,7 @@ namespace lbm {
       , rightEvent()
       , fieldWriter(prefix, rankMPI_in)
       , distributionWriter(prefix, rankMPI_in)
-      , fieldList(rankMPI_in, numberElements_in, fieldWriter)
+      , fieldList(rankMPI_in, numberElements_in, fieldWriter, defaultStream)
       , curlVelocity(
                      fieldList.velocity.getLocalData(),
                      fieldList.vorticity.getLocalData(),
@@ -81,9 +81,9 @@ namespace lbm {
                      gFD::offset(rankMPI_in))
       , distribution(initLocalDistribution<T, architecture>(fieldList.density,
                                                             fieldList.velocity,
-                                                            bulkStream,
                                                             numberElements_in,
-                                                            rankMPI_in))
+                                                            rankMPI_in,
+                                                            defaultStream))
       , numberElements(numberElements_in)
       , scalarAnalysisList(fieldList, numberElements, communication, startIteration)
       , spectralAnalysisList(fieldList, numberElements, communication, startIteration)

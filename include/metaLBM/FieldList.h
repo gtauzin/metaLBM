@@ -33,20 +33,18 @@ class FieldList {
 
   FieldList(const MathVector<int, 3>& rankMPI_in,
             const unsigned int numberElements_in,
-            FieldWriter_& fieldWriter_in)
-      : density(
-            initLocalDensity<T, architecture>(numberElements_in, rankMPI_in)),
-        velocity(initLocalVelocity<T, architecture>(numberElements_in)),
-        force(initLocalForce<T, architecture>(numberElements_in, rankMPI_in)),
-        alpha(initLocalAlpha<T, architecture>(numberElements_in)),
-        vorticity("vorticity", numberElements_in, 0),
-        curlVelocity(
-            velocity.getLocalData(),
-            vorticity.getLocalData(),
-            numberElements_in,
-            Cast<unsigned int, ptrdiff_t, 3>::Do(gSD::sLength()).data(),
-            gFD::offset(rankMPI_in)),
-        fieldWriter(fieldWriter_in) {}
+            FieldWriter_& fieldWriter_in,
+            const Stream<architecture>& stream_in)
+    : density(initLocalDensity<T, architecture>(numberElements_in, rankMPI_in, stream_in))
+    , velocity(initLocalVelocity<T, architecture>(numberElements_in, stream_in))
+    , force(initLocalForce<T, architecture>(numberElements_in, rankMPI_in, stream_in))
+    , alpha(initLocalAlpha<T, architecture>(numberElements_in, stream_in))
+    , vorticity("vorticity", numberElements_in, 0, stream_in)
+    , curlVelocity(velocity.getLocalData(), vorticity.getLocalData(),
+                   numberElements_in,
+                   Cast<unsigned int, ptrdiff_t, 3>::Do(gSD::sLength()).data(),
+                   gFD::offset(rankMPI_in))
+    , fieldWriter(fieldWriter_in) {}
 
   inline void writeFields() {
     if (writeVorticity)

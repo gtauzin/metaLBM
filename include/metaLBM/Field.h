@@ -112,35 +112,51 @@ class Field<T, NumberComponents, architecture, true>
 
   Field(const std::string& fieldName_in,
         const unsigned int numberElements_in,
-        const T& value_in)
+        const T& value_in, const Stream<architecture>& stream_in)
       : Base(fieldName_in, numberElements_in) {
-    Computation<architecture, L::dimD> computationLocal(lSD::sStart(),
-                                                        lSD::sEnd());
-    computationLocal.Do([&] LBM_HOST(const Position& iP) {
-      for (auto iC = 0; iC < NumberComponents; ++iC) {
-        setLocalValue(iP, value_in, iC);
-      }
-    });
-    computationLocal.synchronize();
-
+    initByValue(numberElements_in, value_in, stream_in);
   }
 
   Field(const std::string& fieldName_in,
         const unsigned int numberElements_in,
-        const MathVector<T, NumberComponents>& vector_in)
+        const MathVector<T, NumberComponents>& vector_in,
+        const Stream<architecture>& stream_in)
       : Base(fieldName_in, numberElements_in) {
-    Computation<architecture, L::dimD> computationLocal(lSD::sStart(),
-                                                             lSD::sEnd());
-    computationLocal.Do(
-        [&] LBM_HOST(const Position& iP) { setLocalVector(iP, vector_in); });
-    computationLocal.synchronize();
-
+    initByVector(numberElements_in, vector_in, stream_in);
   }
 
   Field(const std::string& fieldName_in,
         const DynamicArray<T, Architecture::CPU>& localArray_in)
       : Base(fieldName_in, localArray_in.size()) {
     localArray.copyFrom(localArray_in);
+  }
+
+  void initByValue(const unsigned int numberElements_in,
+        const T& value_in, const Stream<architecture>& stream_in) {
+    Computation<architecture, L::dimD> computationLocal(lSD::sStart(),
+                                                        lSD::sEnd());
+    T * localArrayPtr = localArray.data();
+    computationLocal.Do(stream_in, [=] LBM_HOST LBM_DEVICE (const Position& iP) {
+      for (auto iC = 0; iC < NumberComponents; ++iC) {
+        localArrayPtr[iC * numberElements + lSD::getIndex(iP)] = value_in;
+      }
+    });
+    computationLocal.synchronize();
+  }
+
+  void initByVector(const unsigned int numberElements_in,
+                    const MathVector<T, NumberComponents>& vector_in,
+                    const Stream<architecture>& stream_in) {
+    Computation<architecture, L::dimD> computationLocal(lSD::sStart(),
+                                                        lSD::sEnd());
+
+    T * localArrayPtr = localArray.data();
+    computationLocal.Do(stream_in, [=] LBM_HOST LBM_DEVICE (const Position& iP) {
+        for (auto iC = 0; iC < NumberComponents; ++iC) {
+          localArrayPtr[iC * numberElements + lSD::getIndex(iP)] = vector_in[iC];
+        }
+      });
+    computationLocal.synchronize();
   }
 
   inline DynamicArray<T, Architecture::CPU>& getLocalArray() {
@@ -209,14 +225,6 @@ class Field<T, NumberComponents, architecture, false> {
   DynamicArray<T, Architecture::CPU> getLocalArray() {
     return DynamicArray<T, Architecture::CPU>();
   }
-
-  LBM_DEVICE LBM_HOST void setLocalValue(const unsigned int index,
-                                         const T value,
-                                         const unsigned int iC = 0) {}
-
-  LBM_DEVICE LBM_HOST void setLocalVector(
-      const unsigned int index,
-      const MathVector<T, NumberComponents> vector) {}
 
   LBM_DEVICE LBM_HOST T getLocalValue(const unsigned int index,
                                       const unsigned int iC = 0) {
