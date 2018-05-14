@@ -471,9 +471,9 @@ class FieldWriter<T, InputOutput::XDMF>
   }
 
   void write(const std::string& name, unsigned int numberComponents) {
-    LBM_INSTRUMENT_ON("Writer<XDMF>::writeField<NumberComponents>",3)}
+    LBM_INSTRUMENT_ON("Writer<XDMF>::writeField<NumberComponents>",3)
 
-        Base::file
+      Base::file
         << "<Attribute Name=\"" << name << "\" "
         << "AttributeType=\"Scalar\" Center=\"Node\">\n";
     Base::file << "<DataItem Dimensions=\"" << gSD::pLength()[d::X];
