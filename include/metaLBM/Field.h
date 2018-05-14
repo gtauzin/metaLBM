@@ -106,23 +106,34 @@ class Field<T, NumberComponents, architecture, true>
   using Base::fieldName;
   using Base::IsWritten;
   using Base::numberElements;
+  Computation<architecture, L::dimD> computationLocal;
 
   Field(const std::string& fieldName_in, const unsigned int numberElements_in)
-      : Base(fieldName_in, numberElements_in) {}
+    : Base(fieldName_in, numberElements_in)
+    , computationLocal(lSD::sStart(), lSD::sEnd())
+  {}
 
   Field(const std::string& fieldName_in,
         const unsigned int numberElements_in,
         const T& value_in, const Stream<architecture>& stream_in)
-      : Base(fieldName_in, numberElements_in) {
-    initByValue(numberElements_in, value_in, stream_in);
+    : Base(fieldName_in, numberElements_in)
+    , computationLocal(lSD::sStart(), lSD::sEnd())
+  {
+    T * localArrayPtr = localArray.data();
+    computationLocal.Do(stream_in, *this, localArrayPtr, value_in);
+    computationLocal.synchronize();
   }
 
   Field(const std::string& fieldName_in,
         const unsigned int numberElements_in,
         const MathVector<T, NumberComponents>& vector_in,
         const Stream<architecture>& stream_in)
-      : Base(fieldName_in, numberElements_in) {
-    initByVector(numberElements_in, vector_in, stream_in);
+    : Base(fieldName_in, numberElements_in)
+    , computationLocal(lSD::sStart(), lSD::sEnd())
+  {
+    T * localArrayPtr = localArray.data();
+    computationLocal.Do(stream_in, *this, localArrayPtr, vector_in);
+    computationLocal.synchronize();
   }
 
   Field(const std::string& fieldName_in,
@@ -131,18 +142,20 @@ class Field<T, NumberComponents, architecture, true>
     localArray.copyFrom(localArray_in);
   }
 
-  void initByValue(const unsigned int numberElements_in,
-        const T& value_in, const Stream<architecture>& stream_in) {
-    Computation<architecture, L::dimD> computationLocal(lSD::sStart(),
-                                                        lSD::sEnd());
-    T * localArrayPtr = localArray.data();
-    computationLocal.Do(stream_in, [=] LBM_HOST LBM_DEVICE (const Position& iP) {
-      for (auto iC = 0; iC < NumberComponents; ++iC) {
-        localArrayPtr[iC * numberElements + lSD::getIndex(iP)] = value_in;
-      }
-    });
-    computationLocal.synchronize();
+  LBM_DEVICE void operator()(const Position& iP, T * localArrayPtr,
+                             const T initValue) {
+    for (auto iC = 0; iC < NumberComponents; ++iC) {
+      localArrayPtr[iC * numberElements + lSD::getIndex(iP)] = initValue;
+    }
   }
+
+  LBM_DEVICE void operator()(const Position& iP, T * localArrayPtr,
+                             const MathVector<T, L::dimD> initVector) {
+    for (auto iC = 0; iC < NumberComponents; ++iC) {
+      localArrayPtr[iC * numberElements + lSD::getIndex(iP)] = initVector[iC];
+    }
+  }
+
 
   void initByVector(const unsigned int numberElements_in,
                     const MathVector<T, NumberComponents>& vector_in,
