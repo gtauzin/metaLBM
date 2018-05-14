@@ -83,8 +83,7 @@ namespace lbm {
 
   protected:
     LBM_DEVICE LBM_HOST void storeLocalFields(const Position& iP) {
-      LBM_INSTRUMENT_OFF(
-                         "Algorithm<T, AlgorithmType::Pull>::storeLocalFields", 4)
+      LBM_INSTRUMENT_OFF("Algorithm<T, AlgorithmType::Pull>::storeLocalFields", 4)
 
         const auto indexLocal = hSD::getIndexLocal(iP);
 
@@ -187,7 +186,7 @@ namespace lbm {
                  Stream<architecture>& rightStream,
                  Event<architecture>& leftEvent,
                  Event<architecture>& rightEvent) {
-      {LBM_INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate", 2)}
+      LBM_INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate", 2)
 
       std::swap(Base::haloDistributionPrevious_Ptr,
                 Base::haloDistributionNext_Ptr);
@@ -276,7 +275,7 @@ namespace lbm {
                  Stream<architecture>& rightStream,
                  Event<architecture>& leftEvent,
                  Event<architecture>& rightEvent) {
-      { LBM_INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate", 2) }
+      LBM_INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate", 2)
 
       std::swap(Base::haloDistributionPrevious_Ptr,
                 Base::haloDistributionNext_Ptr);
@@ -380,7 +379,7 @@ namespace lbm {
                  Stream<architecture>& rightStream,
                  Event<architecture>& leftEvent,
                  Event<architecture>& rightEvent) {
-      {LBM_INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate", 2)}
+      LBM_INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate", 2)
 
       std::swap(Base::haloDistributionPrevious_Ptr,
                 Base::haloDistributionNext_Ptr);

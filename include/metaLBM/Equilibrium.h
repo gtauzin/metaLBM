@@ -19,9 +19,7 @@ class Equilibrium<T, latticeType, EquilibriumType::Incompressible> {
       const MathVector<T, L::dimD>& velocity,
       const T& velocity2,
       const unsigned int iQ) {
-    {
-        LBM_INSTRUMENT_OFF("Equilibrium::calculate",
-                                  5)}
+    LBM_INSTRUMENT_OFF("Equilibrium::calculate",5)
 
     T cu = L::celerity()[iQ].dot(velocity);
 
@@ -48,8 +46,7 @@ class Equilibrium<T, LatticeType::D1Q3, EquilibriumType::Incompressible>
       const MathVector<T, L::dimD>& velocity,
       const T& velocity2,
       const unsigned int iQ) {
-    {LBM_INSTRUMENT_OFF(
-        "Equilibrium::calculate", 5)}
+    LBM_INSTRUMENT_OFF("Equilibrium::calculate", 5)
 
     T fEq_iQ = 1.0;
 
@@ -76,8 +73,7 @@ class Equilibrium<T, LatticeType::D2Q9, EquilibriumType::Incompressible>
       const MathVector<T, L::dimD>& velocity,
       const T& velocity2,
       const unsigned int iQ) {
-    {LBM_INSTRUMENT_OFF(
-        "Equilibrium::calculate", 5)}
+    LBM_INSTRUMENT_OFF("Equilibrium::calculate", 5)
 
     T fEq_iQ = 1.0;
 
@@ -104,8 +100,7 @@ class Equilibrium<T, LatticeType::D3Q27, EquilibriumType::Incompressible>
       const MathVector<T, L::dimD>& velocity,
       const T& velocity2,
       const unsigned int iQ) {
-    LBM_INSTRUMENT_OFF(
-        "Equilibrium::calculate", 5)
+    LBM_INSTRUMENT_OFF("Equilibrium::calculate", 5)
 
     T fEq_iQ = (T)1;
     for (auto iD = 0; iD < L::dimD; ++iD) {

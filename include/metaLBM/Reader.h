@@ -37,10 +37,7 @@ class FieldReader<T, InputOutput::HDF5>
 
   template <unsigned int NumberComponents, Architecture architecture>
   void readField(Field<T, NumberComponents, architecture, true>& field) {
-    {LBM_INSTRUMENT_ON(
-        "Reader<T, InputOutput::HDF5, "
-        "readerFileFromat>::readField<NumberComponents>",
-        3)}
+    LBM_INSTRUMENT_ON("Reader<HDF5>::readField<NumberComponents>", 3)
 
     std::string fieldName = field.fieldName;
     Base::propertyListHDF5 = H5Pcreate(H5P_DATASET_XFER);
@@ -123,7 +120,7 @@ class DistributionReader<T, InputOutput::HDF5>
 
   template <Architecture architecture>
   void readDistribution(Distribution<T, architecture>& distribution) {
-    {LBM_INSTRUMENT_ON("Reader<InputOutput::HDF5>::readField<NumberComponents>", 3)}
+    LBM_INSTRUMENT_ON("Reader<HDF5>::readField<NumberComponents>", 3)
 
     Base::propertyListHDF5 = H5Pcreate(H5P_DATASET_XFER);
 

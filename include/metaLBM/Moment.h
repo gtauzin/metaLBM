@@ -15,7 +15,7 @@ class Moment {
       const T* haloDistributionPtr,
       const Position& iP,
       T& density) {
-    {LBM_INSTRUMENT_OFF("Moment<T>::calculateDensity", 5)}
+    LBM_INSTRUMENT_OFF("Moment<T>::calculateDensity", 5)
 
     density = haloDistributionPtr[hSD::getIndex(iP - uiL::celerity()[0],
                                                 (unsigned int)0)];
@@ -32,7 +32,7 @@ class Moment {
       const Position& iP,
       T& density,
       MathVector<T, L::dimD>& velocity) {
-    {LBM_INSTRUMENT_OFF("Moment<T>::calculateVelocity", 5)}
+    LBM_INSTRUMENT_OFF("Moment<T>::calculateVelocity", 5)
 
     velocity =
         L::celerity()[0] * haloDistributionPtr[hSD::getIndex(
@@ -51,7 +51,7 @@ class Moment {
       const T* haloDistributionPtr,
       const Position& iP,
       T& entropy) {
-    {LBM_INSTRUMENT_OFF("Moment<T>::calculateEntropy", 5)}
+    LBM_INSTRUMENT_OFF("Moment<T>::calculateEntropy", 5)
 
     entropy = haloDistributionPtr[hSD::getIndex(iP - uiL::celerity()[0],
                                                 (unsigned int)0)] *

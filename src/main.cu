@@ -18,7 +18,7 @@
 
 int main(int argc, char* argv[]) {
   using namespace lbm;
-  { LBM_INSTRUMENT_ON("main",0) }
+  LBM_INSTRUMENT_ON("main",0)
 
   auto mpiLauncher = MPIInitializer<numProcs>{argc, argv};
   auto cudaLauncher = CUDAInitializer{};

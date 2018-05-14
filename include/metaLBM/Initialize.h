@@ -20,7 +20,7 @@ template <class T, Architecture architecture>
 Field<T, 1, architecture, true> initLocalDensity(
     const unsigned int numberElements,
     const MathVector<int, 3>& rankMPI) {
-  {LBM_INSTRUMENT_ON("initLocalDensity<T>", 2)}
+  LBM_INSTRUMENT_ON("initLocalDensity<T>", 2)
 
   Field<T, 1, architecture, true>
       densityFieldR("density", numberElements, initDensityValue);
@@ -75,7 +75,7 @@ template <class T, Architecture architecture>
 Field<T, L::dimD, architecture, writeForce> initLocalForce(
     const unsigned int numberElements,
     const MathVector<int, 3>& rankMPI) {
-  {LBM_INSTRUMENT_ON("initLocalForce<T>", 2)}
+  LBM_INSTRUMENT_ON("initLocalForce<T>", 2)
 
   Field<T, L::dimD, architecture, writeForce>
       forceFieldR("force", numberElements, 0);
@@ -93,7 +93,7 @@ Field<T, L::dimD, architecture, writeForce> initLocalForce(
 template <class T, Architecture architecture>
 Field<T, 1, architecture, writeAlpha> initLocalAlpha(
     const unsigned int numberElements) {
-  {LBM_INSTRUMENT_ON("initLocalAlpha<T>", 2)}
+  LBM_INSTRUMENT_ON("initLocalAlpha<T>", 2)
 
   Field<T, 1, architecture, writeAlpha>
       alphaFieldR("alpha", numberElements, (T)2);
@@ -105,7 +105,7 @@ Distribution<T, architecture> initLocalDistribution(
     const Field<T, 1, architecture, true>& densityField,
     const Field<T, L::dimD, architecture, true>& velocityField,
     const MathVector<int, 3>& rankMPI) {
-  {LBM_INSTRUMENT_ON("initLocalDistribution<T>", 2)}
+  LBM_INSTRUMENT_ON("initLocalDistribution<T>", 2)
 
   Distribution<T, architecture> distributionR(densityField.numberElements);
 

@@ -58,7 +58,7 @@ class Collision<T, CollisionType::GenericSRT> {
 
   LBM_DEVICE LBM_HOST void calculateMoments(const T* haloDistributionPtr,
                                             const Position& iP) {
-    {LBM_INSTRUMENT_OFF("Moment<T>::calculateMoments", 4)}
+    LBM_INSTRUMENT_OFF("Moment<T>::calculateMoments", 4)
 
     Moment_::calculateDensity(haloDistributionPtr, iP, density);
     Moment_::calculateVelocity(haloDistributionPtr, iP, density, velocity);
@@ -71,8 +71,7 @@ class Collision<T, CollisionType::GenericSRT> {
       const Position& iP,
       const unsigned int numberElements,
       const Position& offset) {
-    {LBM_INSTRUMENT_OFF(
-        "Collision<T, CollisionType::GenericSRT>::setForce", 4)}
+    LBM_INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::setForce", 4)
 
     forcing.setForce(localForceArray, iP - L::halo(), numberElements, force);
     forcingScheme.setVariables(force, density, velocity);
@@ -116,10 +115,7 @@ class Collision<T, CollisionType::BGK>
       const T* haloDistributionNext_Ptr,
       const T* haloDistributionPrevious_Ptr,
       const Position& iP) {
-    {
-      LBM_INSTRUMENT_OFF(
-          "Collision<T, CollisionType::GenericSRT>::calculate", 4)
-    }
+    LBM_INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::calculate", 4)
   }
 
   LBM_DEVICE LBM_HOST inline void collideAndStream(
@@ -127,9 +123,9 @@ class Collision<T, CollisionType::BGK>
       const T* haloDistributionPrevious_Ptr,
       const Position& iP,
       const unsigned int iQ) {
-    {LBM_INSTRUMENT_OFF(
-        "Collision<T, CollisionType::GenericSRT>::calculate",
-        4)} T equilibrium_iQ =
+    LBM_INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::calculate", 4)
+
+      T equilibrium_iQ =
         Equilibrium_::calculate(Base::density, Base::velocity, Base::velocity2,
                                 iQ);
 
@@ -165,10 +161,7 @@ class Collision<T, CollisionType::ELBM>
       T* haloDistributionNext_Ptr,
       T* haloDistributionPrevious_Ptr,
       const Position& iP) {
-    {
-      LBM_INSTRUMENT_OFF(
-          "Collision<T, CollisionType::GenericSRT>::calculate", 4)
-    }
+    LBM_INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::calculate", 4)
 
     for (auto iQ = 0; iQ < L::dimQ; ++iQ) {
       T equilibrium_iQ = Equilibrium_::calculate(Base::density, Base::velocity,
@@ -193,8 +186,7 @@ class Collision<T, CollisionType::ELBM>
       const T* haloDistributionPrevious_Ptr,
       const Position& iP,
       const unsigned int iQ) {
-    {LBM_INSTRUMENT_OFF(
-        "Collision<T, CollisionType::GenericSRT>::calculate", 4)}
+    LBM_INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::calculate", 4)
 
     haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)] -=
         (T)1.0 / Base::tau *
@@ -218,10 +210,7 @@ class Collision<T, CollisionType::ELBM>
       const T* haloDistributionPrevious_Ptr,
       const Position& iP,
       const T error) {
-    {
-      LBM_INSTRUMENT_OFF(
-          "Collision<T, CollisionType::ELBM>::isDeviationSmall", 6)
-    }
+    LBM_INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::isDeviationSmall", 6)
 
     bool isDeviationSmallR = true;
     T deviation;
@@ -242,8 +231,7 @@ class Collision<T, CollisionType::ELBM>
   LBM_HOST LBM_DEVICE T calculateAlphaMax(const T* haloDistributionNext_Ptr,
                                           const T* haloDistributionPrevious_Ptr,
                                           const Position& iP) {
-    {LBM_INSTRUMENT_OFF(
-        "Collision<T, CollisionType::ELBM>::calculateAlphaMax", 6)}
+    LBM_INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::calculateAlphaMax", 6)
 
     T alphaMaxR = 2.5;
     T alphaMaxTemp;
@@ -269,8 +257,7 @@ class Collision<T, CollisionType::ELBM>
                                           const Position& iP,
                                           const T alphaMin,
                                           const T alphaMax) {
-    {LBM_INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::solveAlpha",
-                               6)}
+    LBM_INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::solveAlpha",6)
 
     EntropicStepFunctor<T>
         entropicStepFunctor(haloDistributionNext_Ptr,
@@ -294,10 +281,7 @@ class Collision<T, CollisionType::ELBM>
       const T* haloDistributionNext_Ptr,
       const T* haloDistributionPrevious_Ptr,
       const Position& iP) {
-    {
-      LBM_INSTRUMENT_OFF(
-          "Collision<T, CollisionType::ELBM>::calculateAlpha", 5)
-    }
+    LBM_INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::calculateAlpha", 5)
 
     if (isDeviationSmall(haloDistributionNext_Ptr, haloDistributionPrevious_Ptr,
                          iP, (T)1.0e-3)) {
@@ -347,8 +331,7 @@ class Collision<T, CollisionType::Approached_ELBM>
       const T* haloDistributionNext_Ptr,
       const T* haloDistributionPrevious_Ptr,
       const Position& iP) {
-    {LBM_INSTRUMENT_OFF(
-        "Collision<T, CollisionType::Approached_ELBM>::approximateAlpha", 6)}
+    LBM_INSTRUMENT_OFF( "Collision<T, CollisionType::Approached_ELBM>::approximateAlpha", 6)
 
     T a1 = (T)0;
     T a2 = (T)0;
@@ -390,10 +373,7 @@ class Collision<T, CollisionType::Approached_ELBM>
       const T* haloDistributionNext_Ptr,
       const T* haloDistributionPrevious_Ptr,
       const Position& iP) {
-    {
-      LBM_INSTRUMENT_OFF(
-          "Collision<T, CollisionType::Approached_ELBM>::calculateAlpha", 5)
-    }
+    LBM_INSTRUMENT_OFF("Collision<T, CollisionType::Approached_ELBM>::calculateAlpha", 5)
 
     if (isRelativeDeviationSmall((T)1.0e-3)) {
       T alphaApproximated = approximateAlpha(haloDistributionNext_Ptr,
@@ -443,10 +423,7 @@ class Collision<T, CollisionType::Malaspinas_ELBM>
       const T* haloDistributionNext_Ptr,
       const T* haloDistributionPrevious_Ptr,
       const Position& iP) {
-    {
-      LBM_INSTRUMENT_OFF(
-          "Collision<T, CollisionType::Malaspinas_ELBM>::calculateAlpha", 5)
-    }
+    LBM_INSTRUMENT_OFF("Collision<T, CollisionType::Malaspinas_ELBM>::calculateAlpha", 5)
 
     MathVector<T, 3> dissipativeTensor_diag{{0}};
     MathVector<T, 3> dissipativeTensor_sym{{0}};
@@ -527,8 +504,7 @@ class Collision<T, CollisionType::Essentially1_ELBM>
       const T* haloDistributionNext_Ptr,
       const T* haloDistributionPrevious_Ptr,
       const Position& iP) {
-    {LBM_INSTRUMENT_OFF(
-        "Collision<T, CollisionType::Essentially_ELBM>::calculateAlpha", 5)}
+    LBM_INSTRUMENT_OFF("Collision<T, CollisionType::Essentially_ELBM>::calculateAlpha", 5)
 
     T term1 = (T)0;
     T term2 = (T)0;
@@ -580,8 +556,7 @@ class Collision<T, CollisionType::Essentially2_ELBM>
       const T* haloDistributionNext_Ptr,
       const T* haloDistributionPrevious_Ptr,
       const Position& iP) {
-    {LBM_INSTRUMENT_OFF(
-        "Collision<T, CollisionType::Essentially_ELBM>::calculateAlpha", 5)}
+    LBM_INSTRUMENT_OFF("Collision<T, CollisionType::Essentially_ELBM>::calculateAlpha", 5)
 
     Base::calculateAlpha(haloDistributionNext_Ptr, haloDistributionPrevious_Ptr,
                          iP);
@@ -673,8 +648,7 @@ class Collision<T, CollisionType::ForcedNR_ELBM>
       const T* haloDistributionNext_Ptr,
       const T* haloDistributionPrevious_Ptr,
       const Position& iP) {
-    {LBM_INSTRUMENT_OFF(
-        "Collision<T, CollisionType::ForcedNR_ELBM>::calculateAlpha", 5)}
+    LBM_INSTRUMENT_OFF("Collision<T, CollisionType::ForcedNR_ELBM>::calculateAlpha", 5)
 
     T alphaMax = Base::calculateAlphaMax(haloDistributionNext_Ptr,
                                          haloDistributionPrevious_Ptr, iP);
@@ -718,8 +692,7 @@ class Collision<T, CollisionType::ForcedBNR_ELBM>
                                           const Position& iP,
                                           const T alphaMin,
                                           const T alphaMax) {
-    {LBM_INSTRUMENT_OFF(
-        "Collision<T, CollisionType::ForcedBNR_ELBM>::solveAlpha", 6)}
+    LBM_INSTRUMENT_OFF("Collision<T, CollisionType::ForcedBNR_ELBM>::solveAlpha", 6)
 
     EntropicStepFunctor<T>
         entropicStepFunctor(haloDistributionNext_Ptr,

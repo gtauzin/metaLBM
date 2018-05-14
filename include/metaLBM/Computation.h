@@ -33,8 +33,7 @@ class Computation<Architecture::CPU, 1>
 
   template <typename Callback, typename... Arguments>
   void Do(Callback function, const Arguments... arguments) {
-    {LBM_INSTRUMENT_OFF(
-        "Computation<Architecture::CPU, 2>::Do<Callback>", 1)}
+    LBM_INSTRUMENT_OFF("Computation<Architecture::CPU, 2>::Do<Callback>", 1)
 
     Position iP = start;
     for (auto i0 = Base::start[Base::dir[0]]; i0 < Base::end[Base::dir[0]];
@@ -63,8 +62,7 @@ class Computation<Architecture::CPU, 2>
 
   template <typename Callback, typename... Arguments>
   void Do(Callback function, const Arguments... arguments) {
-    {LBM_INSTRUMENT_OFF(
-        "Computation<Architecture::CPU, 2>::Do<Callback>", 2)}
+    LBM_INSTRUMENT_OFF("Computation<Architecture::CPU, 2>::Do<Callback>", 2)
 
     Position iP = start;
     for (auto i0 = Base::start[Base::dir[0]]; i0 < Base::end[Base::dir[0]];
@@ -97,8 +95,7 @@ class Computation<Architecture::CPU, 3>
 
   template <typename Callback, typename... Arguments>
   void Do(Callback function, const Arguments... arguments) {
-    {LBM_INSTRUMENT_OFF(
-        "Computation<Architecture::CPU, 2>::Do<Callback>", 3)}
+    LBM_INSTRUMENT_OFF("Computation<Architecture::CPU, 2>::Do<Callback>", 3)
 
     Position iP = start;
     for (auto i0 = Base::start[Base::dir[0]]; i0 < Base::end[Base::dir[0]];

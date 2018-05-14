@@ -27,10 +27,7 @@ class ForcingScheme<T, ForcingSchemeType::Generic> {
   calculateHydrodynamicVelocity(const MathVector<T, L::dimD>& force,
                                 const T& density,
                                 const MathVector<T, L::dimD>& velocity) const {
-    LBM_INSTRUMENT_OFF(
-        "ForcingScheme<T, "
-        "ForcingSchemeType::Generic>::calculateHydrodynamicVelocity",
-        5)
+    LBM_INSTRUMENT_OFF("ForcingScheme<Generic>::calculateHydrodynamicVelocity",5)
 
     return velocity + 0.5 / density * force;
   }
@@ -54,10 +51,7 @@ class ForcingScheme<T, ForcingSchemeType::None>
   calculateHydrodynamicVelocity(const MathVector<T, L::dimD>& force,
                                 const T& density,
                                 const MathVector<T, L::dimD>& velocity) const {
-    LBM_INSTRUMENT_OFF(
-        "ForcingScheme<T, "
-        "ForcingSchemeType::Generic>::calculateHydrodynamicVelocity",
-        5)
+    LBM_INSTRUMENT_OFF("ForcingScheme<Generic>::calculateHydrodynamicVelocity",5)
 
     return velocity;
   }
@@ -66,10 +60,7 @@ class ForcingScheme<T, ForcingSchemeType::None>
   calculateEquilibriumVelocity(const MathVector<T, L::dimD>& force,
                                const T& density,
                                const MathVector<T, L::dimD>& velocity) const {
-    LBM_INSTRUMENT_OFF(
-        "ForcingScheme<T, "
-        "ForcingSchemeType::Guo>::calculateEquilibriumVelocity",
-        5)
+    LBM_INSTRUMENT_OFF("ForcingScheme<Guo>::calculateEquilibriumVelocity", 5)
 
     return velocity;
   }
@@ -81,8 +72,7 @@ class ForcingScheme<T, ForcingSchemeType::None>
                            const T& velocity2,
                            const T equilibrium_iQ,
                            const unsigned int iQ) const {
-    LBM_INSTRUMENT_OFF(
-        "ForcingScheme<T, ForcingSchemeType::Guo>::calculateCollisionSource", 5)
+    LBM_INSTRUMENT_OFF("ForcingScheme<ForcingSchemeType::Guo>::calculateCollisionSource", 5)
 
     return 0;
   }
@@ -101,10 +91,7 @@ class ForcingScheme<T, ForcingSchemeType::Guo>
   calculateEquilibriumVelocity(const MathVector<T, L::dimD>& force,
                                const T& density,
                                const MathVector<T, L::dimD>& velocity) const {
-    LBM_INSTRUMENT_OFF(
-        "ForcingScheme<T, "
-        "ForcingSchemeType::Guo>::calculateEquilibriumVelocity",
-        5)
+    LBM_INSTRUMENT_OFF("ForcingScheme<Guo>::calculateEquilibriumVelocity",5)
 
     return velocity + 0.5 / density * force;
   }
@@ -116,8 +103,7 @@ class ForcingScheme<T, ForcingSchemeType::Guo>
                            const T& velocity2,
                            const T equilibrium_iQ,
                            const unsigned int iQ) const {
-    LBM_INSTRUMENT_OFF(
-        "ForcingScheme<T, ForcingSchemeType::Guo>::calculateCollisionSource", 5)
+    LBM_INSTRUMENT_OFF("ForcingScheme<Guo>::calculateCollisionSource", 5)
 
     T celerity_iQDotVelocity = L::celerity()[iQ].dot(velocity);
 
@@ -147,12 +133,7 @@ class ForcingScheme<T, ForcingSchemeType::ShanChen>
   calculateEquilibriumVelocity(const MathVector<T, L::dimD>& force,
                                const T& density,
                                const MathVector<T, L::dimD>& velocity) const {
-    {
-      LBM_INSTRUMENT_OFF(
-          "ForcingScheme<T, "
-          "ForcingSchemeType::ShanChen>::calculateEquilibriumVelocity",
-          5)
-    }
+    LBM_INSTRUMENT_OFF("ForcingScheme<ShanChen>::calculateEquilibriumVelocity",5)
 
     return velocity + tau / density * force;
   }
@@ -164,10 +145,7 @@ class ForcingScheme<T, ForcingSchemeType::ShanChen>
                            const T& velocity2,
                            const T equilibrium_iQ,
                            const unsigned int iQ) const {
-    LBM_INSTRUMENT_OFF(
-        "ForcingScheme<T, "
-        "ForcingSchemeType::ShanChen>::calculateCollisionSource",
-        5)
+    LBM_INSTRUMENT_OFF("ForcingScheme<ShanChen>::calculateCollisionSource",5)
 
     return 0.0;
   }
@@ -190,13 +168,7 @@ class ForcingScheme<T, ForcingSchemeType::ExactDifferenceMethod>
   calculateEquilibriumVelocity(const MathVector<T, L::dimD>& force,
                                const T& density,
                                const MathVector<T, L::dimD>& velocity) const {
-    {
-      LBM_INSTRUMENT_OFF(
-          "ForcingScheme<T, "
-          "ForcingSchemeType::ExactDifferenceMethod>::"
-          "calculateEquilibriumVelocity",
-          5)
-    }
+    LBM_INSTRUMENT_OFF("ForcingScheme<ExactDifferenceMethod>::calculateEquilibriumVelocity",5)
 
     return velocity;
   }
@@ -216,12 +188,7 @@ class ForcingScheme<T, ForcingSchemeType::ExactDifferenceMethod>
                            const T& velocity2,
                            const T equilibrium_iQ,
                            const unsigned int iQ) const {
-    {
-      LBM_INSTRUMENT_OFF(
-          "ForcingScheme<T, "
-          "ForcingSchemeType::ExactDifferenceMethod>::calculateCollisionSource",
-          5)
-    }
+    LBM_INSTRUMENT_OFF("ForcingScheme<ExactDifferenceMethod>::calculateCollisionSource",5)
 
     return Equilibrium_::calculate(density, velocity + 1.0 / density * force,
                                    (velocity + 1.0 / density * force).norm2(),

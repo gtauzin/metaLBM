@@ -161,8 +161,7 @@ class ScalarAnalysisWriter
 
   template <unsigned int NumberScalarAnalyses>
   void writeAnalysis(const unsigned int iteration, T* data) {
-    {LBM_INSTRUMENT_ON(
-        "Writer<T, InputOutputFormat>::writeAnalysis<NumberScalarAnalysis>", 3)}
+    LBM_INSTRUMENT_ON("ScalarAnalysisWriter::writeAnalysis<NumberScalarAnalysis>", 3)
 
     Base::write(iteration);
     Base::file << " ";
@@ -175,7 +174,7 @@ class ScalarAnalysisWriter
   }
 
   void writeHeader(const std::string& header) {
-    {LBM_INSTRUMENT_ON("AnalysisWriter::writeHeader", 2)}
+    LBM_INSTRUMENT_ON("ScalarAnalysisWriter::writeHeader", 2)
 
     Base::openAndTruncate(Base::getFileName("_"+std::to_string(startIteration)));
 
@@ -212,12 +211,7 @@ class SpectralAnalysisWriter
   template <unsigned int NumberSpectralAnalyses, unsigned int MaxWaveNumber>
   void writeAnalysis(const unsigned int iteration,
                      T* data[NumberSpectralAnalyses]) {
-    {
-      LBM_INSTRUMENT_ON(
-          "Writer<T, InputOutput::DAT, "
-          "writerFileFromat>::writeAnalysis<NumberComponents>",
-          3)
-    }
+     LBM_INSTRUMENT_ON("SpectralAnalysisWriter::writeAnalysis<NumberComponents>",3)
 
     for (auto kNorm = 0; kNorm < MaxWaveNumber; ++kNorm) {
       Base::write(iteration);
@@ -235,7 +229,7 @@ class SpectralAnalysisWriter
   }
 
   void writeHeader(const std::string& header) {
-    {LBM_INSTRUMENT_ON("AnalysisWriter::writeHeader", 2)}
+    LBM_INSTRUMENT_ON("SpectralAnalysisWriter::writeHeader", 2)
 
     Base::openAndTruncate(Base::getFileName("_"+std::to_string(startIteration)));
 
@@ -307,10 +301,7 @@ class FieldWriter<T, InputOutput::HDF5>
 
   template <unsigned int NumberComponents, Architecture architecture>
   void writeField(Field<T, NumberComponents, architecture, true>& field) {
-    {LBM_INSTRUMENT_ON(
-        "Writer<T, InputOutput::HDF5, "
-        "writerFileFromat>::writeField<NumberComponents>",
-        3)}
+    LBM_INSTRUMENT_ON("Writer<HDF5>::writeField<NumberComponents>",3)
 
     std::string fieldName = field.fieldName;
     propertyListHDF5 = H5Pcreate(H5P_DATASET_XFER);
@@ -400,7 +391,7 @@ class DistributionWriter<T, InputOutput::HDF5>
 
   template <Architecture architecture>
   void writeDistribution(Distribution<T, architecture>& distribution) {
-    {LBM_INSTRUMENT_ON("Writer<InputOutput::HDF5>::writeField<NumberComponents>", 3)}
+    LBM_INSTRUMENT_ON("Writer<HDF5>::writeField<NumberComponents>", 3)
 
     Base::propertyListHDF5 = H5Pcreate(H5P_DATASET_XFER);
     for (auto iC = 0; iC < L::dimQ; ++iC) {
@@ -480,10 +471,7 @@ class FieldWriter<T, InputOutput::XDMF>
   }
 
   void write(const std::string& name, unsigned int numberComponents) {
-    {LBM_INSTRUMENT_ON(
-        "Writer<T, InputOutput::XDMF, "
-        "writerFileFromat>::writeField<NumberComponents>",
-        3)}
+    LBM_INSTRUMENT_ON("Writer<XDMF>::writeField<NumberComponents>",3)}
 
         Base::file
         << "<Attribute Name=\"" << name << "\" "
@@ -514,9 +502,7 @@ class FieldWriter<T, InputOutput::XDMF>
   }
 
   void writeHeader() {
-    LBM_INSTRUMENT_ON(
-        "Writer<T, InputOutput::XDMF, InputOutputFormat::Generic>::writeHeader",
-        2)
+    LBM_INSTRUMENT_ON("Writer<XDMF>::writeHeader",2)
 
     Base::file << "<?xml version=\"1.0\"?>\n";
     Base::file << "<!DOCTYPE Xdmf SYSTEM \"Xdmf.dtd\" []>\n";
@@ -559,9 +545,9 @@ class FieldWriter<T, InputOutput::XDMF>
   }
 
   void writeFooter() {
-    {LBM_INSTRUMENT_ON(
-        "Writer<T, InputOutput::XDMF, InputOutputFormat::Generic>::writeFooter",
-        2)} Base::file
+    LBM_INSTRUMENT_ON("Writer<XDMF>::writeFooter", 2)
+
+      Base::file
         << "</Grid>\n"
         << "</Domain>\n"
         << "</Xdmf>\n";
