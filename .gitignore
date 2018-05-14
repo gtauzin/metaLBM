@@ -15,3 +15,4 @@ obsolete*
 profiles*
 processing*
 CMakeLists.txt.user
+*src/Input.in
