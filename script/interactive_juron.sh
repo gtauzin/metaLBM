@@ -2,7 +2,6 @@
 
 NPROCS=$1
 NHOURS=$2
-COMMAND=$3
 
 bsub \
     -n ${NPROCS} \
@@ -11,4 +10,4 @@ bsub \
     -W ${NHOURS}:00 \
     -x \
     -Is \
-    ${COMMAND}
+    -tty /bin/bash
