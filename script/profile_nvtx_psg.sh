@@ -21,6 +21,9 @@ cd ../bin
 mv ${TARGET_NAME} ${TARGET_NAME}_${POSTFIX}
 
 cd ../script
-./interactive_psg.sh ${NPROCS} 1 " \
-LD_PRELOAD=\"${NVTX_MPI_WRAPPERS}/libnvtx_pmpi.so\" mpirun -np ${NPROCS} nvprof -f -o profile_${POSTFIX}.%q{OMPI_COMM_WORLD_RANK}.nvprof ../bin/${TARGET_NAME}_${POSTFIX}; \ 
-LD_PRELOAD=\"${NVTX_MPI_WRAPPERS}/libnvtx_pmpi.so\" mpirun -np ${NPROCS} nvprof --analysis-metrics -f -o profile_metrics_${POSTFIX}.%q{OMPI_COMM_WORLD_RANK}.nvprof ../bin/${TARGET_NAME}_${POSTFIX}"
+./submit_psg.sh ${NPROCS} 1 " \
+LD_PRELOAD=\"${NVTX_MPI_WRAPPERS}/libnvtx_pmpi.so\" mpirun -np ${NPROCS} nvprof -f -o profile_${POSTFIX}.%q{OMPI_COMM_WORLD_RANK}.nvprof ../bin/${TARGET_NAME}_${POSTFIX}" 
+
+
+
+#LD_PRELOAD=\"${NVTX_MPI_WRAPPERS}/libnvtx_pmpi.so\" mpirun -np ${NPROCS} nvprof --analysis-metrics -f -o profile_metrics_${POSTFIX}.%q{OMPI_COMM_WORLD_RANK}.nvprof ../bin/${TARGET_NAME}_${POSTFIX}"

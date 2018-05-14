@@ -4,8 +4,9 @@ NPROCS=$1
 NHOURS=$2
 COMMAND=$3
 
-srun \
+sbatch \
     -n ${NPROCS} \
     -p hsw_p100
     -t ${NHOURS}:00:00 \
-    ${COMMAND}
+    -I \
+    --wrap=${COMMAND}
