@@ -3,6 +3,8 @@
 *.csv
 *.gprof
 *.out
+*.nvprof
+*.nvvp
 .idea*
 output*
 bin*
