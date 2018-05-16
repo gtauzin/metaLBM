@@ -818,7 +818,7 @@ function (_MPI_interrogate_compiler LANG)
 
   # If we found MPI, set up all of the appropriate cache entries
   if(NOT MPI_${LANG}_COMPILE_OPTIONS)
-    set(MPI_${LANG}_COMPILE_OPTIONS          ${MPI_COMPILE_OPTIONS_WORK}     CACHE STRING "MPI ${LANG} compilation options"            FORCE)
+   # set(MPI_${LANG}_COMPILE_OPTIONS          ${MPI_COMPILE_OPTIONS_WORK}     CACHE STRING "MPI ${LANG} compilation options"            FORCE)
   endif()
   if(NOT MPI_${LANG}_COMPILE_DEFINITIONS)
     set(MPI_${LANG}_COMPILE_DEFINITIONS      ${MPI_COMPILE_DEFINITIONS_WORK} CACHE STRING "MPI ${LANG} compilation definitions"        FORCE)

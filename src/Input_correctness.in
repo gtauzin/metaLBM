@@ -30,9 +30,9 @@ namespace lbm {
 
   constexpr AlgorithmType algorithmT = AlgorithmType::Pull;
   constexpr PartitionningType partitionningT = PartitionningType::OneD;
-  constexpr Implementation implementationT = Implementation::MPI;
+  constexpr Implementation implementationT = Implementation::NVSHMEM_OUT;
   constexpr MemoryLayout memoryL = MemoryLayout::SoA;
-  constexpr Overlapping overlappingT = Overlapping::On;
+  constexpr Overlapping overlappingT = Overlapping::Off;
 
   constexpr dataT relaxationTime = 0.8;
   constexpr CollisionType collisionT = CollisionType::BGK;

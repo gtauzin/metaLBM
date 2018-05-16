@@ -21,12 +21,12 @@ TARGET_NAME="gpulbm_${NPROCS}_${NTHREADS}_${GLOBAL_LENGTH_X}_${GLOBAL_LENGTH_Y}_
 echo ${PARAMS}
 cd ../build
 cmake -DPARAMS="${PARAMS}" ..
-make ${TARGET_NAME} -j 8
+make VERBOSE=1 ${TARGET_NAME} -j 8
 
 cd ../bin
-sbatch --time=4:00:00 --job-name=${TARGET_NAME} \
---partition=${PARTITION} --nodes=${NNODES} --ntasks-per-node=${NTASKS_PER_NODE} \
---mem_bind=local --cpus-per-task=${NTHREADS} \
---output=${TARGET_NAME}-%j.out --error=${TARGET_NAME}-%j.err \
---mail-type=FAIL --mail-user=guillaumetauzin.ut@gmail.com \
---wrap="cd $HOME/Workspace/metaLBM_private/bin && mpirun -np ${NPROCS} ${TARGET_NAME}"
+# sbatch --time=4:00:00 --job-name=${TARGET_NAME} \
+# --partition=${PARTITION} --nodes=${NNODES} --ntasks-per-node=${NTASKS_PER_NODE} \
+# --mem_bind=local --cpus-per-task=${NTHREADS} \
+# --output=${TARGET_NAME}-%j.out --error=${TARGET_NAME}-%j.err \
+# --mail-type=FAIL --mail-user=guillaumetauzin.ut@gmail.com \
+# --wrap="cd $HOME/Workspace/metaLBM_private/bin && mpirun -np ${NPROCS} ${TARGET_NAME}"

@@ -3,6 +3,11 @@
 #include <mpi.h>
 #include <iostream>
 
+#ifdef USE_NVSHMEM
+  #include <shmem.h>
+  #include <shmemx.h>
+#endif
+
 namespace lbm {
 
 /// RAII container for launching MPI
@@ -17,6 +22,16 @@ struct MPIInitializer {
       std::cout << "Compile-time and runtime number of process don't match\n";
       MPI_Abort(MPI_COMM_WORLD, 1);
     }
+
+    #ifdef USE_NVSHMEM
+      MPI_Comm comm;
+      shmemx_init_attr_t attribute;
+      comm = MPI_COMM_WORLD;
+
+      attribute.mpi_comm = &comm;
+      shmemx_init_attr (SHMEMX_INIT_WITH_MPI_COMM, &attribute);
+    #endif
+
   }
 
   int numProcs() const noexcept {

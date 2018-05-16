@@ -116,12 +116,12 @@ class Boundary<T,
   }
 };
 
-template <class T>
+ template <class T, Implementation implementation>
 class Boundary<T,
                BoundaryType::Periodic,
                AlgorithmType::Pull,
                PartitionningType::OneD,
-               Implementation::MPI,
+               implementation,
                1> : public Boundary<T,
                                     BoundaryType::Periodic,
                                     AlgorithmType::Pull,
@@ -146,12 +146,12 @@ class Boundary<T,
       T* haloDistributionPtr) {}
 };
 
-template <class T>
+ template <class T, Implementation implementation>
 class Boundary<T,
                BoundaryType::Periodic,
                AlgorithmType::Pull,
                PartitionningType::OneD,
-               Implementation::MPI,
+               implementation,
                2> : public Boundary<T,
                                     BoundaryType::Periodic,
                                     AlgorithmType::Pull,
@@ -179,12 +179,12 @@ class Boundary<T,
       T* haloDistributionPtr) {}
 };
 
-template <class T>
+ template <class T, Implementation implementation>
 class Boundary<T,
                BoundaryType::Periodic,
                AlgorithmType::Pull,
                PartitionningType::TwoD,
-               Implementation::MPI,
+               implementation,
                2> : public Boundary<T,
                                     BoundaryType::Periodic,
                                     AlgorithmType::Pull,
@@ -209,12 +209,12 @@ class Boundary<T,
       T* haloDistributionPtr) {}
 };
 
-template <class T>
+ template <class T, Implementation implementation>
 class Boundary<T,
                BoundaryType::Periodic,
                AlgorithmType::Pull,
                PartitionningType::OneD,
-               Implementation::MPI,
+               implementation,
                3> : public Boundary<T,
                                     BoundaryType::Periodic,
                                     AlgorithmType::Pull,
@@ -236,12 +236,12 @@ class Boundary<T,
   using Base::applyZFront;
 };
 
-template <class T>
+ template <class T, Implementation implementation>
 class Boundary<T,
                BoundaryType::Periodic,
                AlgorithmType::Pull,
                PartitionningType::TwoD,
-               Implementation::MPI,
+               implementation,
                3> : public Boundary<T,
                                     BoundaryType::Periodic,
                                     AlgorithmType::Pull,
@@ -269,12 +269,12 @@ class Boundary<T,
   using Base::applyZFront;
 };
 
-template <class T>
+ template <class T, Implementation implementation>
 class Boundary<T,
                BoundaryType::Periodic,
                AlgorithmType::Pull,
                PartitionningType::ThreeD,
-               Implementation::MPI,
+               implementation,
                3> : public Boundary<T,
                                     BoundaryType::Periodic,
                                     AlgorithmType::Pull,

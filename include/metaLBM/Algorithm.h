@@ -331,17 +331,17 @@ namespace lbm {
 
   };
 
-#ifdef USE_NVSHMEM
+#ifndef USE_NVSHMEM
 
   template <class T, Overlapping overlapping>
     class Algorithm<T, AlgorithmType::Pull, Architecture::GPU,
                     Implementation::NVSHMEM_IN, overlapping>
     : public Algorithm<T, AlgorithmType::Generic, Architecture::GPU,
-                       implementation, Overlapping::Off> {
+                       Implementation::MPI, Overlapping::Off> {
   private:
     using Base =
       Algorithm<T, AlgorithmType::Generic, Architecture::GPU,
-                implementation, Overlapping::Off>;
+                Implementation::MPI, Overlapping::Off>;
     using Clock = std::chrono::high_resolution_clock;
 
   public:
@@ -376,12 +376,12 @@ namespace lbm {
 
     LBM_HOST
     void iterate(const unsigned int iteration,
-                 Stream<architecture>& defaultStream,
-                 Stream<architecture>& bulkStream,
-                 Stream<architecture>& leftStream,
-                 Stream<architecture>& rightStream,
-                 Event<architecture>& leftEvent,
-                 Event<architecture>& rightEvent) {
+                 Stream<Architecture::GPU>& defaultStream,
+                 Stream<Architecture::GPU>& bulkStream,
+                 Stream<Architecture::GPU>& leftStream,
+                 Stream<Architecture::GPU>& rightStream,
+                 Event<Architecture::GPU>& leftEvent,
+                 Event<Architecture::GPU>& rightEvent) {
       LBM_INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate", 2)
 
       std::swap(Base::haloDistributionPrevious_Ptr,

@@ -10,12 +10,6 @@
 #ifdef USE_NVSHMEM
   #include<shmem.h>
   #include<shmemx.h>
-
-  #define MALLOC_GPU shmem_malloc
-  #define FREE_GPU shmem_free
-#else
-  #define MALLOC_GPU cudaMalloc
-  #define FREE_GPU cudaFree
 #endif
 
 
@@ -38,20 +32,34 @@ namespace lbm {
     DynamicArray(const unsigned int numberElements_in)
       : Base(numberElements_in)
     {
-      LBM_CUDA_CALL( MALLOC_GPU((void**)&dArrayPtr, numberElements*sizeof(U)); )
+      #ifdef USE_NVSHMEM
+      dArrayPtr = (double *) shmem_malloc(numberElements*sizeof(U));
+      #else
+        LBM_CUDA_CALL( cudaMalloc((void**)&dArrayPtr, numberElements*sizeof(U)); )
+      #endif
     }
 
     DynamicArray(const DynamicArray& dArray_in)
       : Base(dArray_in.size())
     {
-      LBM_CUDA_CALL( MALLOC_GPU((void**)&dArrayPtr, numberElements*sizeof(U)); )
+      #ifdef USE_NVSHMEM
+        dArrayPtr = (double *) shmem_malloc(numberElements*sizeof(U));
+      #else
+        LBM_CUDA_CALL( cudaMalloc((void**)&dArrayPtr, numberElements*sizeof(U)); )
+      #endif
+
       copyFrom(dArray_in);
     }
 
     ~DynamicArray(){
       if(dArrayPtr) {
-        LBM_CUDA_CALL( FREE_GPU(dArrayPtr); )
-	dArrayPtr = NULL;
+        #ifdef USE_NVSHMEM
+          shmem_free(dArrayPtr);
+        #else
+          LBM_CUDA_CALL( cudaFree(dArrayPtr);
+        #endif
+
+        dArrayPtr = NULL;
       }
     }
 

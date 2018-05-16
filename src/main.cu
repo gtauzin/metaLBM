@@ -11,11 +11,6 @@
   #include "metaLBM/FFTWInitializer.h"
 #endif
 
-#ifdef USE_NVSHMEM
-  #include <shmem.h>
-  #include <shmemx.h>
-#endif
-
 int main(int argc, char* argv[]) {
   using namespace lbm;
   LBM_INSTRUMENT_ON("main",0)
@@ -28,15 +23,6 @@ int main(int argc, char* argv[]) {
 #else
   auto fftwLauncher = FFTWInitializer<numThreads>{};
   auto numberElements = fftwLauncher.numElements();
-#endif
-
-#ifdef USE_NVSHMEM
-  MPI_Comm commMPI;
-  shmemx_init_attr_t attributeSHMEM;
-  comm_MPI = MPI_COMM_WORLD;
-
-  attributeSHMEM.mpi_comm = &commMPI;
-  shmemx_init_attr (SHMEMX_INIT_WITH_MPI_COMM, &attributeSHMEM);
 #endif
 
   auto sizeMPI = MathVector<int, 3>{mpiLauncher.numProcs(), 1, 1};
