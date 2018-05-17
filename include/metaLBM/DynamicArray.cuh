@@ -32,99 +32,99 @@ namespace lbm {
     DynamicArray(const unsigned int numberElements_in)
       : Base(numberElements_in)
     {
-      #ifdef USE_NVSHMEM
+    #ifdef USE_NVSHMEM
       dArrayPtr = (double *) shmem_malloc(numberElements*sizeof(U));
-      #else
-        LBM_CUDA_CALL( cudaMalloc((void**)&dArrayPtr, numberElements*sizeof(U)); )
-      #endif
-    }
+    #else
+      LBM_CUDA_CALL( cudaMalloc((void**)&dArrayPtr, numberElements*sizeof(U)); )
+    #endif
+	}
 
     DynamicArray(const DynamicArray& dArray_in)
       : Base(dArray_in.size())
     {
-      #ifdef USE_NVSHMEM
-        dArrayPtr = (double *) shmem_malloc(numberElements*sizeof(U));
-      #else
-        LBM_CUDA_CALL( cudaMalloc((void**)&dArrayPtr, numberElements*sizeof(U)); )
-      #endif
+    #ifdef USE_NVSHMEM
+      dArrayPtr = (double *) shmem_malloc(numberElements*sizeof(U));
+    #else
+      LBM_CUDA_CALL( cudaMalloc((void**)&dArrayPtr, numberElements*sizeof(U)); )
+    #endif
 
-      copyFrom(dArray_in);
+	copyFrom(dArray_in);
     }
 
     ~DynamicArray(){
       if(dArrayPtr) {
-        #ifdef USE_NVSHMEM
-          shmem_free(dArrayPtr);
-        #else
-          LBM_CUDA_CALL( cudaFree(dArrayPtr);
-        #endif
+      #ifdef USE_NVSHMEM
+	shmem_free(dArrayPtr);
+      #else
+	LBM_CUDA_CALL( cudaFree(dArrayPtr); )
+      #endif
 
-        dArrayPtr = NULL;
+	dArrayPtr = NULL;
       }
     }
 
     void copyFrom(const DynamicArray<U, Architecture::CPU>& other) {
       LBM_CUDA_CALL( cudaMemcpy(dArrayPtr, other.data(), other.size()*sizeof(U),
-                            cudaMemcpyHostToDevice); )
+				  cudaMemcpyHostToDevice); )
     }
 
     void copyFrom(const DynamicArray<U, Architecture::GPU>& other) {
       LBM_CUDA_CALL( cudaMemcpy(dArrayPtr, other.data(), other.size()*sizeof(U),
-                            cudaMemcpyDeviceToDevice); )
+				  cudaMemcpyDeviceToDevice); )
     }
 
     void copyTo(DynamicArray<U, Architecture::CPU>& other) const {
       LBM_CUDA_CALL( cudaMemcpy(other.data(), dArrayPtr, numberElements*sizeof(U),
-                            cudaMemcpyDeviceToHost); )
+				  cudaMemcpyDeviceToHost); )
     }
 
     void copyTo(DynamicArray<U, Architecture::GPU>& other) const {
       LBM_CUDA_CALL( cudaMemcpy(other.data(), dArrayPtr, numberElements*sizeof(U),
-                            cudaMemcpyDeviceToDevice); )
+				  cudaMemcpyDeviceToDevice); )
     }
 
-  };
+ };
 
- template<class U>
-  class DynamicArray<U, Architecture::CPUPinned>
-    :public DynamicArray<U, Architecture::CPU> {
-  protected:
-   using Base = DynamicArray<U, Architecture::CPU>;
+    template<class U>
+    class DynamicArray<U, Architecture::CPUPinned>
+      :public DynamicArray<U, Architecture::CPU> {
+    protected:
+      using Base = DynamicArray<U, Architecture::CPU>;
 
-    using Base::numberElements;
-    using Base::dArrayPtr;
+      using Base::numberElements;
+      using Base::dArrayPtr;
 
-  public:
-    using Base::operator[];
-    using Base::data;
-    using Base::size;
+    public:
+      using Base::operator[];
+      using Base::data;
+      using Base::size;
 
-    DynamicArray(const unsigned int numberElements_in)
-      : Base()
-    {
-      numberElements = numberElements_in;
-      LBM_CUDA_CALL( cudaMallocHost((void**)&dArrayPtr, numberElements*sizeof(U)); )
-    }
+      DynamicArray(const unsigned int numberElements_in)
+	: Base()
+      {
+	numberElements = numberElements_in;
+	LBM_CUDA_CALL( cudaMallocHost((void**)&dArrayPtr, numberElements*sizeof(U)); )
+	  }
 
-    DynamicArray(const DynamicArray& dArray_in)
-      : Base()
-    {
-      numberElements = dArray_in.size();
-      LBM_CUDA_CALL( cudaMallocHost((void**)&dArrayPtr, numberElements*sizeof(U)); )
-      copyFrom(dArray_in);
-    }
-
-    ~DynamicArray(){
-      if(dArrayPtr) {
-        LBM_CUDA_CALL( cudaFreeHost(dArrayPtr); )
-	dArrayPtr = NULL;
+      DynamicArray(const DynamicArray& dArray_in)
+	: Base()
+      {
+	numberElements = dArray_in.size();
+	LBM_CUDA_CALL( cudaMallocHost((void**)&dArrayPtr, numberElements*sizeof(U)); )
+	  copyFrom(dArray_in);
       }
-    }
 
-    using Base::copyFrom;
-    using Base::copyTo;
+      ~DynamicArray(){
+	if(dArrayPtr) {
+	  LBM_CUDA_CALL( cudaFreeHost(dArrayPtr); )
+	    dArrayPtr = NULL;
+	}
+      }
 
-  }; // end class DynamicArray<U, Architecture::CPUPinned>
+      using Base::copyFrom;
+      using Base::copyTo;
+
+    }; // end class DynamicArray<U, Architecture::CPUPinned>
 
 
-} // end namespace lbm
+  } // end namespace lbm

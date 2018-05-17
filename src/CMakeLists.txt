@@ -9,7 +9,7 @@ function(gpu_target_helper TARGET_STR NPROCS NTHREADS X_SIZE Y_SIZE Z_SIZE LBM_P
     GLOBAL_LENGTH_X=${X_SIZE}
     GLOBAL_LENGTH_Y=${Y_SIZE}
     GLOBAL_LENGTH_Z=${Z_SIZE}
-    LBM_POSTFIX=${LBM_POSTFIX})
+    LBM_POSTFIX="${LBM_POSTFIX}")
   set_target_properties(${TARGET_STR} PROPERTIES CUDA_SEPARABLE_COMPILATION OFF)
   add_dependencies(gpulbm ${TARGET_STR})
 endfunction()
@@ -37,7 +37,7 @@ function(cpu_target NPROCS NTHREADS X_SIZE Y_SIZE Z_SIZE LBM_POSTFIX)
     GLOBAL_LENGTH_X=${X_SIZE}
     GLOBAL_LENGTH_Y=${Y_SIZE}
     GLOBAL_LENGTH_Z=${Z_SIZE}
-    LBM_POSTFIX=${LBM_POSTFIX})
+    LBM_POSTFIX="${LBM_POSTFIX}")
   add_dependencies(cpulbm ${target_name})
 endfunction()
 

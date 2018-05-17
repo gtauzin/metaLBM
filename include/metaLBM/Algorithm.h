@@ -331,7 +331,7 @@ namespace lbm {
 
   };
 
-#ifndef USE_NVSHMEM
+#ifdef USE_NVSHMEM
 
   template <class T, Overlapping overlapping>
     class Algorithm<T, AlgorithmType::Pull, Architecture::GPU,

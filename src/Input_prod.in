@@ -34,7 +34,7 @@ namespace lbm {
   constexpr MemoryLayout memoryL = MemoryLayout::SoA;
   constexpr Overlapping overlappingT = Overlapping::On;
 
-  constexpr dataT relaxationTime = 0.50002;
+  constexpr dataT relaxationTime = 0.502;
   constexpr CollisionType collisionT = CollisionType::ELBM;
   constexpr EquilibriumType equilibriumT = EquilibriumType::Incompressible;
 
@@ -54,7 +54,7 @@ namespace lbm {
   constexpr BoundaryType boundaryT = BoundaryType::Generic;
 
   constexpr InputOutputFormat inputOutputFormatT = InputOutputFormat::ascii;
-  constexpr auto prefix = "LBM_POSTFIX";
+  constexpr auto prefix = LBM_POSTFIX;
 
   constexpr bool writeFieldInit = 1;
   constexpr bool writeAnalysisInit = 0;
