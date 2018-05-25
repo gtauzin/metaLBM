@@ -56,7 +56,7 @@ namespace lbm {
         #ifdef USE_NVSHMEM
           shmem_free(dArrayPtr);
         #else
-          LBM_CUDA_CALL( cudaFree(dArrayPtr);
+          LBM_CUDA_CALL( cudaFree(dArrayPtr); )
         #endif
 
         dArrayPtr = NULL;

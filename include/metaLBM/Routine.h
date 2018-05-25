@@ -39,7 +39,6 @@ namespace lbm {
     DistributionWriter_ distributionWriter;
     FieldList<T, architecture> fieldList;
     Distribution<T, architecture> distribution;
-    const unsigned int numberElements;
 
     Curl<double, Architecture::CPU, PartitionningType::OneD, L::dimD, L::dimD>
     curlVelocity;
@@ -59,35 +58,27 @@ namespace lbm {
     double totalTime;
 
   public:
-    Routine(const MathVector<int, 3>& rankMPI_in,
-            const MathVector<int, 3>& sizeMPI_in,
-            const std::string& processorName_in,
-            const unsigned int numberElements_in)
-      : communication(rankMPI_in, sizeMPI_in, processorName_in)
+    Routine()
+      : communication()
       , defaultStream(true)
       , bulkStream(false)
       , leftStream(false)
       , rightStream(false)
       , leftEvent()
       , rightEvent()
-      , fieldWriter(prefix, rankMPI_in)
-      , distributionWriter(prefix, rankMPI_in)
-      , fieldList(rankMPI_in, numberElements_in, fieldWriter, defaultStream)
-      , curlVelocity(
-                     fieldList.velocity.getLocalData(),
-                     fieldList.vorticity.getLocalData(),
-                     numberElements,
+      , fieldWriter(prefix)
+      , distributionWriter(prefix)
+      , fieldList(fieldWriter, defaultStream)
+      , curlVelocity(fieldList.velocity.getLocalData(FFTWInit::numberElements),
+                     fieldList.vorticity.getLocalData(FFTWInit::numberElements),
                      Cast<unsigned int, ptrdiff_t, 3>::Do(gSD::sLength()).data(),
-                     gFD::offset(rankMPI_in))
+                     gFD::offset(MPIInit::rank))
       , distribution(initLocalDistribution<T, architecture>(fieldList.density,
                                                             fieldList.velocity,
-                                                            numberElements_in,
-                                                            rankMPI_in,
                                                             defaultStream))
-      , numberElements(numberElements_in)
-      , scalarAnalysisList(fieldList, numberElements, communication, startIteration)
-      , spectralAnalysisList(fieldList, numberElements, communication, startIteration)
-      , algorithm(fieldList, distribution, numberElements, communication)
+      , scalarAnalysisList(fieldList, communication, startIteration)
+      , spectralAnalysisList(fieldList, communication, startIteration)
+      , algorithm(fieldList, distribution, communication)
       , initialMass(0.0)
       , finalMass(0.0)
       , differenceMass(0.0)
@@ -126,7 +117,7 @@ namespace lbm {
         writeAnalysisTime += Seconds(t1 - t0).count();
       }
 
-      initialMass = communication.reduce(fieldList.density.getLocalData());
+      initialMass = communication.reduce(fieldList.density.getLocalData(FFTWInit::numberElements));
 
       // Execute LBM algorithm
       for (int iteration = startIteration + 1; iteration <= endIteration;
@@ -157,7 +148,7 @@ namespace lbm {
         computationTime += algorithm.getComputationTime();
       }
 
-      finalMass = communication.reduce(fieldList.density.getLocalData());
+      finalMass = communication.reduce(fieldList.density.getLocalData(FFTWInit::numberElements));
 
       differenceMass = fabs(initialMass - finalMass) / initialMass;
       totalTime = computationTime + communicationTime + writeFieldTime + writeAnalysisTime;
@@ -165,7 +156,7 @@ namespace lbm {
 
   protected:
     void printInputs() {
-      if (communication.rankMPI == MathVector<int, 3>({0, 0, 0})) {
+      if (MPIInit::rank[d::X] == 0) {
         std::cout.precision(15);
         // clang-format off
         std::cout << "-------------------OPTIONS-------------------\n"
@@ -186,7 +177,7 @@ namespace lbm {
     }
 
     void printOutputs() {
-      if (communication.rankMPI == MathVector<int, 3>({0, 0, 0})) {
+      if (MPIInit::rank[d::X] == 0) {
         std::cout << "-------------------OUTPUTS--------------------\n"
                   << "Total time               : " << totalTime << " s\n"
                   << "Computatation time       : " << computationTime << " s\n"

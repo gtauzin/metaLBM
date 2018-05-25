@@ -13,19 +13,17 @@
 #include "MathVector.h"
 #include "Options.h"
 
-// TODO: Functors
-
 namespace lbm {
 
 template <class T>
 class AnalysisScalar {
  public:
   T scalar;
-  const unsigned int numberElements;
 
  protected:
-  AnalysisScalar(const unsigned int numberElements_in)
-      : scalar((T)0), numberElements(numberElements_in) {}
+  AnalysisScalar()
+    : scalar((T)0)
+  {}
 
   inline void reset() { scalar = (T)0; }
 
@@ -45,20 +43,20 @@ class TotalEnergy : public AnalysisScalar<T> {
   static constexpr auto analysisName = "total_energy";
 
   TotalEnergy(T* localDensityPtr_in,
-              T* localVelocityPtr_in,
-              const unsigned int numberElements_in)
-      : Base(numberElements_in),
-        scalarRef(Base::scalar),
-        localDensityPtr(localDensityPtr_in),
-        localVelocityPtr(localVelocityPtr_in) {}
+              T* localVelocityPtr_in)
+    : Base()
+    , scalarRef(Base::scalar)
+    , localDensityPtr(localDensityPtr_in)
+    , localVelocityPtr(localVelocityPtr_in)
+  {}
 
   LBM_HOST
   void operator()(const Position& iP) {
     auto index = lSD::getIndex(iP);
     for (auto iD = 0; iD < L::dimD; ++iD) {
       scalarRef += 0.5 * localDensityPtr[index] *
-                   (localVelocityPtr + iD * Base::numberElements)[index] *
-                   (localVelocityPtr + iD * Base::numberElements)[index];
+                   (localVelocityPtr + iD * FFTWInit::numberElements)[index] *
+                   (localVelocityPtr + iD * FFTWInit::numberElements)[index];
     }
   }
 
@@ -78,18 +76,19 @@ class TotalEnstrophy : public AnalysisScalar<T> {
  public:
   static constexpr auto analysisName = "total_enstrophy";
 
-  TotalEnstrophy(T* localVorticityPtr_in, const unsigned int numberElements_in)
-      : Base(numberElements_in),
-        scalarRef(Base::scalar),
-        localVorticityPtr(localVorticityPtr_in) {}
+  TotalEnstrophy(T* localVorticityPtr_in)
+    : Base()
+    , scalarRef(Base::scalar)
+    , localVorticityPtr(localVorticityPtr_in)
+  {}
 
   LBM_HOST
   void operator()(const Position& iP) {
     auto index = lSD::getIndex(iP);
     for (auto iD = 0; iD < 2 * L::dimD - 3; ++iD) {
       scalarRef += 0.5 *
-                   (localVorticityPtr + iD * Base::numberElements)[index] *
-                   (localVorticityPtr + iD * Base::numberElements)[index];
+                   (localVorticityPtr + iD * FFTWInit::numberElements)[index] *
+                   (localVorticityPtr + iD * FFTWInit::numberElements)[index];
     }
   }
 
@@ -102,13 +101,9 @@ template <class T, unsigned int maxWaveNumber>
 class AnalysisSpectral {
  public:
   T spectra[maxWaveNumber];
-  const unsigned int numberElements;
 
  protected:
-  AnalysisSpectral(const unsigned int numberElements_in)
-      : numberElements(numberElements_in) {
-    reset();
-  }
+  AnalysisSpectral() { reset(); }
 
   inline void reset() {
     for (auto waveNumber = 0; waveNumber < maxWaveNumber; ++waveNumber) {
@@ -124,42 +119,34 @@ class AnalysisSpectral {
 };
 
 template <class T, unsigned int MaxWaveNumber>
-class EnergySpectra : public AnalysisSpectral<T, MaxWaveNumber> {
+class PowerSpectra : public AnalysisSpectral<T, MaxWaveNumber> {
  private:
   using Base = AnalysisSpectral<T, MaxWaveNumber>;
 
-  T* localVelocityPtr;
+  T* localArrayPtr;
   T (&spectraRef)[MaxWaveNumber];
-  ForwardFFT<double,
-             Architecture::CPU,
-             PartitionningType::OneD,
-             L::dimD,
-             L::dimD>
-      forward;
-  BackwardFFT<double,
-              Architecture::CPU,
-              PartitionningType::OneD,
-              L::dimD,
-              L::dimD>
-      backward;
+  ForwardFFT<double, Architecture::CPU, PartitionningType::OneD,
+             L::dimD, L::dimD> forward;
+  BackwardFFT<double, Architecture::CPU, PartitionningType::OneD,
+              L::dimD, L::dimD> backward;
 
  public:
-  static constexpr auto analysisName = "energy_spectra";
+  const std::string analysisName;
 
-  EnergySpectra(T* localVelocityPtr_in,
-                const unsigned int numberElements_in,
-                const ptrdiff_t globalLength_in[3])
-      : Base(numberElements_in),
-        spectraRef(Base::spectra),
-        localVelocityPtr(localVelocityPtr_in),
-        forward(localVelocityPtr_in, numberElements_in, globalLength_in),
-        backward(localVelocityPtr_in, numberElements_in, globalLength_in) {}
+  PowerSpectra(T* localArrayPtr_in,
+               const ptrdiff_t globalLength_in[3],
+               const std::string& analysisName_in)
+    : Base()
+    , spectraRef(Base::spectra)
+    , localArrayPtr(localArrayPtr_in)
+    , forward(localArrayPtr_in, globalLength_in)
+    , backward(localArrayPtr_in, globalLength_in)
+    , analysisName(analysisName_in)
+  {}
 
   LBM_HOST
-  void operator()(const Position& iFP,
-                  const unsigned int index,
-                  const WaveNumber& iK,
-                  const unsigned int kNorm) {
+  void operator()(const Position& iFP, const unsigned int index,
+                  const WaveNumber& iK, const unsigned int kNorm) {
     T coefficient = (T)1;
     if (iK[L::dimD - 1] == 0) {
       coefficient = (T)0.5;
@@ -167,12 +154,12 @@ class EnergySpectra : public AnalysisSpectral<T, MaxWaveNumber> {
 
     T energy = (T)0;
     for (auto iD = 0; iD < L::dimD; ++iD) {
-      fftw_complex* fourierVelocityPtr =
-          ((fftw_complex*)(localVelocityPtr + iD * Base::numberElements));
+      fftw_complex* fourierArrayPtr =
+          ((fftw_complex*)(localArrayPtr + iD * FFTWInit::numberElements));
       energy +=
-          fourierVelocityPtr[index][p::Re] * fourierVelocityPtr[index][p::Re];
+          fourierArrayPtr[index][p::Re] * fourierArrayPtr[index][p::Re];
       energy +=
-          fourierVelocityPtr[index][p::Im] * fourierVelocityPtr[index][p::Im];
+          fourierArrayPtr[index][p::Im] * fourierArrayPtr[index][p::Im];
     }
 
     if (kNorm < MaxWaveNumber)

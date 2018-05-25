@@ -78,11 +78,10 @@ struct Domain<DomainType::GlobalFourier,
     return arrayMax(globalLengthInt) / 2;
   }
 
-  LBM_HOST LBM_DEVICE static inline Position offset(
-      const MathVector<int, 3>& rankMPI) {
+  LBM_HOST LBM_DEVICE static inline Position offset(const MathVector<int, 3>& rank) {
     Position offsetR{{0}};
     for (auto iD = 0; iD < L::dimD; ++iD) {
-      offsetR[iD] = (unsigned int)Base::length()[iD] * rankMPI[iD];
+      offsetR[iD] = (unsigned int)Base::length()[iD] * rank[iD];
     }
 
     return offsetR;

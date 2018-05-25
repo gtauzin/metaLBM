@@ -18,7 +18,7 @@ target_include_directories(metalbm INTERFACE
 option(USE_CUDA "Enabling CUDA" ON)
 if(USE_CUDA)
   enable_language(CUDA)
-  set( CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -lcuda")
+  set( CMAKE_EXE_LINKER_FLAGS ${CMAKE_EXE_LINKER_FLAGS})
 endif()
 
 find_package(MPI REQUIRED)

@@ -31,20 +31,19 @@ class FieldList {
   Curl<double, Architecture::CPU, PartitionningType::OneD, L::dimD, L::dimD>
       curlVelocity;
 
-  FieldList(const MathVector<int, 3>& rankMPI_in,
-            const unsigned int numberElements_in,
-            FieldWriter_& fieldWriter_in,
+  FieldList(FieldWriter_& fieldWriter_in,
             const Stream<architecture>& stream_in)
-    : density(initLocalDensity<T, architecture>(numberElements_in, rankMPI_in, stream_in))
-    , velocity(initLocalVelocity<T, architecture>(numberElements_in, stream_in))
-    , force(initLocalForce<T, architecture>(numberElements_in, rankMPI_in, stream_in))
-    , alpha(initLocalAlpha<T, architecture>(numberElements_in, stream_in))
-    , vorticity("vorticity", numberElements_in, 0, stream_in)
-    , curlVelocity(velocity.getLocalData(), vorticity.getLocalData(),
-                   numberElements_in,
+    : density(initLocalDensity<T, architecture>(stream_in))
+    , velocity(initLocalVelocity<T, architecture>(stream_in))
+    , force(initLocalForce<T, architecture>(stream_in))
+    , alpha(initLocalAlpha<T, architecture>(stream_in))
+    , vorticity("vorticity")
+    , curlVelocity(velocity.getLocalData(FFTWInit::numberElements),
+                   vorticity.getLocalData(FFTWInit::numberElements),
                    Cast<unsigned int, ptrdiff_t, 3>::Do(gSD::sLength()).data(),
-                   gFD::offset(rankMPI_in))
-    , fieldWriter(fieldWriter_in) {}
+                   gFD::offset(MPIInit::rank))
+    , fieldWriter(fieldWriter_in)
+  {}
 
   inline void writeFields() {
     if (writeVorticity)

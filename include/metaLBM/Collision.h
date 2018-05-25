@@ -36,28 +36,33 @@ class Collision<T, CollisionType::GenericSRT> {
             const MathVector<T, 3>& waveLength_in,
             const unsigned int kMin_in,
             const unsigned int kMax_in)
-      : tau(tau_in),
-        forcing(amplitude_in, waveLength_in, kMin_in, kMax_in),
-        forcingScheme(tau_in),
-        density(),
-        velocity{{0}},
-        velocity2(),
-        force{{0}},
-        entropy() {}
+    : tau(tau_in)
+    , forcing(amplitude_in, waveLength_in, kMin_in, kMax_in)
+    , forcingScheme(tau_in)
+    , density()
+    , velocity{{0}}
+    , velocity2()
+    , force{{0}}
+    , entropy()
+  {}
 
  public:
-  LBM_DEVICE LBM_HOST LBM_INLINE const T& getDensity() { return density; }
+  LBM_DEVICE LBM_HOST LBM_INLINE
+  const T& getDensity() { return density; }
 
-  LBM_DEVICE LBM_HOST LBM_INLINE const MathVector<T, L::dimD>& getVelocity() {
+  LBM_DEVICE LBM_HOST LBM_INLINE
+  const MathVector<T, L::dimD>& getVelocity() {
     return velocity;
   }
 
-  LBM_DEVICE LBM_HOST LBM_INLINE const MathVector<T, L::dimD>& getForce() {
+  LBM_DEVICE LBM_HOST LBM_INLINE
+  const MathVector<T, L::dimD>& getForce() {
     return force;
   }
 
-  LBM_DEVICE LBM_HOST void calculateMoments(const T* haloDistributionPtr,
-                                            const Position& iP) {
+  LBM_DEVICE LBM_HOST void
+  calculateMoments(const T* haloDistributionPtr,
+                   const Position& iP) {
     LBM_INSTRUMENT_OFF("Moment<T>::calculateMoments", 4)
 
     Moment_::calculateDensity(haloDistributionPtr, iP, density);
@@ -66,24 +71,23 @@ class Collision<T, CollisionType::GenericSRT> {
     velocity2 = velocity.norm2();
   }
 
-  LBM_DEVICE LBM_HOST LBM_INLINE void setForce(
-      T* localForceArray,
-      const Position& iP,
-      const unsigned int numberElements,
-      const Position& offset) {
+  LBM_DEVICE LBM_HOST LBM_INLINE
+  void setForce(T* localForceArray, const Position& iP,
+                const Position& offset, const unsigned int numberElements) {
     LBM_INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::setForce", 4)
 
-    forcing.setForce(localForceArray, iP - L::halo(), numberElements, force);
+      forcing.setForce(localForceArray, iP - L::halo(), force, numberElements);
     forcingScheme.setVariables(force, density, velocity);
   }
 
-  LBM_DEVICE LBM_HOST inline const MathVector<T, L::dimD>
-  getHydrodynamicVelocity() {
+  LBM_DEVICE LBM_HOST inline
+  const MathVector<T, L::dimD> getHydrodynamicVelocity() {
     return forcingScheme.calculateHydrodynamicVelocity(force, density,
                                                        velocity);
   }
 
-  LBM_DEVICE LBM_HOST inline void update(const unsigned int iteration) {
+  LBM_DEVICE LBM_HOST inline
+  void update(const unsigned int iteration) {
     forcing.update(iteration);
   }
 };

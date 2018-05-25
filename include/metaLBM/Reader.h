@@ -22,9 +22,8 @@ class FieldReader<T, InputOutput::HDF5>
 
  public:
   FieldReader(const std::string& filePrefix_in,
-              const MathVector<int, 3>& rankMPI_in,
               const std::string& name_in = "field")
-      : Base(filePrefix_in, rankMPI_in, name_in) {}
+      : Base(filePrefix_in, name_in) {}
 
   inline void openFile(const unsigned int iteration) {
     std::string fileName = Base::getFileName(iteration);
@@ -67,7 +66,7 @@ class FieldReader<T, InputOutput::HDF5>
       H5Sselect_hyperslab(
           Base::fileSpaceHDF5, H5S_SELECT_SET,
           Project<hsize_t, unsigned int, L::dimD>::Do(
-              gSD::pOffset(Base::rankMPI))
+              gSD::pOffset(MPIInit::rank))
               .data(),
           NULL,
           Project<hsize_t, unsigned int, L::dimD>::Do(lSD::pLength()).data(),
@@ -114,9 +113,8 @@ class DistributionReader<T, InputOutput::HDF5>
   using Base = FieldReader<T, InputOutput::HDF5>;
 
  public:
-  DistributionReader(const std::string& filePrefix_in,
-                     const MathVector<int, 3>& rankMPI_in)
-      : Base(filePrefix_in, rankMPI_in, "distribution") {}
+  DistributionReader(const std::string& filePrefix_in)
+      : Base(filePrefix_in, "distribution") {}
 
   template <Architecture architecture>
   void readDistribution(Distribution<T, architecture>& distribution) {
@@ -138,7 +136,7 @@ class DistributionReader<T, InputOutput::HDF5>
 
       H5Sselect_hyperslab(
           Base::dataSpaceHDF5, H5S_SELECT_SET,
-          Project<hsize_t, unsigned int, L::dimD>::Do(gSD::pOffset(Base::rankMPI)).data(),
+          Project<hsize_t, unsigned int, L::dimD>::Do(gSD::pOffset(MPIInit::rank)).data(),
           NULL,
           Project<hsize_t, unsigned int, L::dimD>::Do(lSD::pLength()).data(),
           NULL);

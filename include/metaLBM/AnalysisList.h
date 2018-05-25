@@ -33,18 +33,16 @@ class ScalarAnalysisList {
   Computation<Architecture::CPU, L::dimD> computationLocal;
 
   ScalarAnalysisList(FieldList<T, architecture>& fieldList_in,
-                     const unsigned int numberElements_in,
                      Communication_& communication_in,
                      unsigned int startIteration_in)
-      : totalEnergy(fieldList_in.density.getLocalData(),
-                    fieldList_in.velocity.getLocalData(),
-                    numberElements_in),
-        totalEnstrophy(fieldList_in.vorticity.getLocalData(),
-                       numberElements_in),
-        communication(communication_in),
-    scalarAnalysisWriter(prefix, startIteration_in),
-        computationLocal(lSD::sStart(), lSD::sEnd()) {
-    if (communication.rankMPI[d::X] == 0) {
+    : totalEnergy(fieldList_in.density.getLocalData(FFTWInit::numberElements),
+                  fieldList_in.velocity.getLocalData(FFTWInit::numberElements))
+    , totalEnstrophy(fieldList_in.vorticity.getLocalData(FFTWInit::numberElements))
+    , communication(communication_in)
+    , scalarAnalysisWriter(prefix, startIteration_in)
+    , computationLocal(lSD::sStart(), lSD::sEnd())
+  {
+    if (MPIInit::rank[d::X] == 0) {
       writeAnalysesHeader();
     }
   }
@@ -65,7 +63,7 @@ class ScalarAnalysisList {
     normalizeAnalyses();
     reduceAnalyses();
 
-    if (communication.rankMPI[d::X] == 0) {
+    if (MPIInit::rank[d::X] == 0) {
       T scalarList[] = {totalEnergy.scalar, totalEnstrophy.scalar};
       scalarAnalysisWriter.openFile(iteration);
       scalarAnalysisWriter.writeAnalysis<2>(iteration, scalarList);
@@ -104,24 +102,26 @@ class SpectralAnalysisList {
   unsigned int kNorm;
 
  public:
-  EnergySpectra<T, gFD::maxWaveNumber()> energySpectra;
+  PowerSpectra<T, gFD::maxWaveNumber()> energySpectra;
+  PowerSpectra<T, gFD::maxWaveNumber()> forcingSpectra;
   Communication_& communication;
   SpectralAnalysisWriter_ spectralAnalysisWriter;
   Position offset;
   Computation<Architecture::CPU, L::dimD> computationFourier;
 
   SpectralAnalysisList(FieldList<T, architecture>& fieldList_in,
-                       const unsigned int numberElements_in,
                        Communication_& communication_in,
                        unsigned int startIteration_in)
-    : energySpectra(fieldList_in.velocity.getLocalData(),
-                    numberElements_in, globalLengthPtrdiff_t)
+    : energySpectra(fieldList_in.velocity.getLocalData(FFTWInit::numberElements),
+                    globalLengthPtrdiff_t, "energy_spectra")
+    , forcingSpectra(fieldList_in.force.getLocalData(FFTWInit::numberElements),
+                     globalLengthPtrdiff_t, "forcing_spectra")
     , communication(communication_in)
     , spectralAnalysisWriter(prefix, startIteration_in)
-    , offset(gFD::offset(communication.rankMPI))
+    , offset(gFD::offset(MPIInit::rank))
     , computationFourier(lFD::start(), lFD::end())
   {
-    if (communication.rankMPI[d::X] == 0) {
+    if (MPIInit::rank[d::X] == 0) {
       writeAnalysesHeader();
     }
   }
@@ -149,6 +149,8 @@ class SpectralAnalysisList {
       kNorm = iK.norm();
 
       energySpectra(iFP, index, iK, kNorm);
+      forcingSpectra(iFP, index, iK, kNorm);
+
     });
     computationFourier.synchronize();
 
@@ -157,7 +159,7 @@ class SpectralAnalysisList {
     normalizeAnalyses();
     reduceAnalyses();
 
-    if (communication.rankMPI[d::X] == 0) {
+    if (MPIInit::rank[d::X] == 0) {
       T* spectraList[1] = {energySpectra.spectra};
       spectralAnalysisWriter.openFile(iteration);
       spectralAnalysisWriter.writeAnalysis<1, gFD::maxWaveNumber()>(
@@ -167,14 +169,24 @@ class SpectralAnalysisList {
   }
 
  private:
-  inline void resetAnalyses() { energySpectra.reset(); }
+  inline void resetAnalyses() {
+    energySpectra.reset();
+    forcingSpectra.reset();
+  }
 
-  inline void forwardTransformAnalyses() { energySpectra.executeForward(); }
+  inline void forwardTransformAnalyses() {
+    energySpectra.executeForward();
+    forcingSpectra.executeForward();
+  }
 
-  inline void backwardTransformAnalyses() { energySpectra.executeBackward(); }
+  inline void backwardTransformAnalyses() {
+    energySpectra.executeBackward();
+    forcingSpectra.executeBackward();
+  }
 
   inline void reduceAnalyses() {
     communication.reduce(energySpectra.spectra, gFD::maxWaveNumber());
+    communication.reduce(forcingSpectra.spectra, gFD::maxWaveNumber());
   }
 
   inline void normalizeAnalyses() { energySpectra.normalize(); }
@@ -182,6 +194,7 @@ class SpectralAnalysisList {
   inline void writeAnalysesHeader() {
     std::string header = "iteration wavenumber";
     header += " " + std::string(energySpectra.analysisName);
+    header += " " + std::string(forcingSpectra.analysisName);
     spectralAnalysisWriter.writeHeader(header);
   }
 };

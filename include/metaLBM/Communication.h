@@ -19,72 +19,42 @@
 namespace lbm {
 
   template <class T, LatticeType latticeType, AlgorithmType algorithmType,
-            MemoryLayout memoryLayout,
-            PartitionningType partitionningType,
-            Implementation implementation,
-            unsigned int Dimension>
+            MemoryLayout memoryLayout, PartitionningType partitionningType,
+            Implementation implementation, unsigned int Dimension>
   class Communication {};
 
   template <class T, LatticeType latticeType>
-  class Communication<T,
-                      latticeType,
-                      AlgorithmType::Pull,
-                      MemoryLayout::Generic,
-                      PartitionningType::Generic,
-                      Implementation::MPI,
-                      0> {
+  class Communication<T, latticeType, AlgorithmType::Pull, MemoryLayout::Generic,
+                      PartitionningType::Generic, Implementation::MPI, 0> {
   protected:
-    const MathVector<int, 3> rankMPI;
-    const MathVector<int, 3> sizeMPI;
-    const std::string processorName;
-
     Computation<Architecture::CPU, L::dimD> computationLocal;
-    const unsigned int rightXRankMPI;
-    const unsigned int leftXRankMPI;
+
     MPI_Status statusXRightMPI[2];
     MPI_Request requestXRightMPI[2];
     MPI_Status statusXLeftMPI[2];
     MPI_Request requestXLeftMPI[2];
 
-    const unsigned int rightYRankMPI;
-    const unsigned int leftYRankMPI;
     MPI_Status statusYMPI[4];
     MPI_Request requestYMPI[4];
 
-    const unsigned int rightZRankMPI;
-    const unsigned int leftZRankMPI;
     MPI_Status statusZMPI[4];
     MPI_Request requestZMPI[4];
 
     LBM_HOST
-    Communication(const MathVector<int, 3>& rankMPI_in,
-                  const MathVector<int, 3>& sizeMPI_in,
-                  const std::string& processorName_in)
-      : rankMPI(rankMPI_in),
-        sizeMPI(sizeMPI_in),
-        processorName(processorName_in),
-        computationLocal(lSD::sStart(), lSD::sEnd()),
-        leftXRankMPI((rankMPI_in[d::X] + sizeMPI_in[d::X] - 1) %
-                     sizeMPI_in[d::X]),
-        rightXRankMPI((rankMPI_in[d::X] + 1) % sizeMPI_in[d::X]),
-        statusXRightMPI(),
-        requestXRightMPI(),
-        statusXLeftMPI(),
-        requestXLeftMPI(),
-        leftYRankMPI((rankMPI_in[d::Y] + sizeMPI_in[d::Y] - 1) %
-                     sizeMPI_in[d::Y]),
-        rightYRankMPI((rankMPI_in[d::Y] + 1) % sizeMPI_in[d::Y]),
-        statusYMPI(),
-        requestYMPI(),
-        leftZRankMPI((rankMPI_in[d::Z] + sizeMPI_in[d::Z] - 1) %
-                     sizeMPI_in[d::Z]),
-        rightZRankMPI((rankMPI_in[d::Z] + 1) % sizeMPI_in[d::Z]),
-        statusZMPI(),
-        requestZMPI() {}
+    Communication()
+      : computationLocal(lSD::sStart(), lSD::sEnd())
+      , statusXRightMPI()
+      , requestXRightMPI()
+      , statusXLeftMPI()
+      , requestXLeftMPI()
+      , statusYMPI()
+      , requestYMPI()
+      , statusZMPI()
+      , requestZMPI()
+    {}
 
     LBM_HOST
-    void sendGlobalToLocal(T* globalPtr,
-                           T* localPtr,
+    void sendGlobalToLocal(T* globalPtr, T* localPtr,
                            unsigned int numberComponents) {
       LBM_INSTRUMENT_ON("Communication<6>::sendGlobalToLocal", 3)
 
@@ -94,8 +64,7 @@ namespace lbm {
     }
 
     LBM_HOST
-    void sendLocalToGlobal(T* localPtr,
-                           T* globalPtr,
+    void sendLocalToGlobal(T* localPtr, T* globalPtr,
                            unsigned int numberComponents) {
       LBM_INSTRUMENT_ON("Communication<6>::sendLocalToGlobal", 3)
 
@@ -108,7 +77,7 @@ namespace lbm {
     void reduce(T* localSumPtr, unsigned int numberComponents) {
       MPI_Barrier(MPI_COMM_WORLD);
 
-      if (rankMPI[d::X] == 0) {
+      if (MPIInit::rank[d::X] == 0) {
         MPI_Reduce(MPI_IN_PLACE, localSumPtr, numberComponents, MPI_DOUBLE,
                    MPI_SUM, 0, MPI_COMM_WORLD);
       } else {
@@ -133,49 +102,27 @@ namespace lbm {
   };
 
   template <class T, LatticeType latticeType>
-  class Communication<T,
-                      latticeType,
-                      AlgorithmType::Pull,
-                      MemoryLayout::SoA,
-                      PartitionningType::Generic,
-                      Implementation::MPI,
-                      0> : public Communication<T,
-                                                latticeType,
-                                                AlgorithmType::Pull,
-                                                MemoryLayout::Generic,
-                                                PartitionningType::Generic,
-                                                Implementation::MPI,
-                                                0> {
+  class Communication<T, latticeType, AlgorithmType::Pull, MemoryLayout::SoA,
+                      PartitionningType::Generic, Implementation::MPI, 0>
+    : public Communication<T, latticeType, AlgorithmType::Pull, MemoryLayout::Generic,
+                           PartitionningType::Generic, Implementation::MPI, 0> {
   protected:
-    using Base = Communication<T,
-                               latticeType,
-                               AlgorithmType::Pull,
-                               MemoryLayout::Generic,
-                               PartitionningType::Generic,
-                               Implementation::MPI,
-                               0>;
-    using Base::leftXRankMPI;
+    using Base = Communication<T, latticeType, AlgorithmType::Pull, MemoryLayout::Generic,
+                               PartitionningType::Generic, Implementation::MPI, 0>;
+
     using Base::requestXLeftMPI;
     using Base::requestXRightMPI;
-    using Base::rightXRankMPI;
     using Base::statusXLeftMPI;
     using Base::statusXRightMPI;
 
-    using Base::leftYRankMPI;
     using Base::requestYMPI;
-    using Base::rightYRankMPI;
     using Base::statusYMPI;
 
-    using Base::leftZRankMPI;
     using Base::requestZMPI;
-    using Base::rightZRankMPI;
     using Base::statusZMPI;
 
-    typedef Domain<DomainType::HaloSpace,
-                   PartitionningType::Generic,
-                   MemoryLayout::SoA,
-                   L::dimQ>
-    hMLSD;
+    typedef Domain<DomainType::HaloSpace, PartitionningType::Generic,
+                   MemoryLayout::SoA, L::dimQ> hMLSD;
 
     unsigned int sizeStripeX;
     unsigned int sendToRightBeginX;
@@ -190,18 +137,17 @@ namespace lbm {
 
         for (auto iQ = L::faceQ + 1; iQ < 2 * L::faceQ + 1; ++iQ) {
           sendToRightBeginX = hMLSD::getIndex(
-                                              Position({L::halo()[d::X] + lSD::sLength()[d::X] - 1,
-                                                    hMLSD::start()[d::Y], hMLSD::start()[d::Z]}),
-                                              iQ);
+            Position({L::halo()[d::X] + lSD::sLength()[d::X] - 1,
+                      hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
           receivedFromLeftBeginX = hMLSD::getIndex(
-                                                   Position({0, hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
+            Position({0, hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
           MPI_Irecv(haloDistributionPtr + receivedFromLeftBeginX, sizeStripeX,
-                    MPI_DOUBLE, leftXRankMPI, 17, MPI_COMM_WORLD,
+                    MPI_DOUBLE, MPIInit::rankLeft, 17, MPI_COMM_WORLD,
                     &requestXRightMPI[0]);
 
           MPI_Isend(haloDistributionPtr + sendToRightBeginX, sizeStripeX,
-                    MPI_DOUBLE, rightXRankMPI, 17, MPI_COMM_WORLD,
+                    MPI_DOUBLE, MPIInit::rankRight, 17, MPI_COMM_WORLD,
                     &requestXRightMPI[1]);
 
           MPI_Waitall(2, requestXRightMPI, statusXRightMPI);
@@ -213,22 +159,20 @@ namespace lbm {
       LBM_INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloXLeft", 4)
 
         for (auto iQ = 1; iQ < L::faceQ + 1; ++iQ) {
-          sendToLeftBeginX =
-            hMLSD::getIndex(Position({L::halo()[d::X], hMLSD::start()[d::Y],
-                    hMLSD::start()[d::Z]}),
-              iQ);
+          sendToLeftBeginX = hMLSD::getIndex(
+            Position({L::halo()[d::X], hMLSD::start()[d::Y],
+                      hMLSD::start()[d::Z]}), iQ);
 
           receivedFromRightBeginX = hMLSD::getIndex(
-                                                    Position({L::halo()[d::X] + lSD::sLength()[d::X],
-                                                          hMLSD::start()[d::Y], hMLSD::start()[d::Z]}),
-                                                    iQ);
+            Position({L::halo()[d::X] + lSD::sLength()[d::X],
+                      hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
           MPI_Irecv(haloDistributionPtr + receivedFromRightBeginX, sizeStripeX,
-                    MPI_DOUBLE, rightXRankMPI, 23, MPI_COMM_WORLD,
+                    MPI_DOUBLE, MPIInit::rankRight, 23, MPI_COMM_WORLD,
                     &requestXLeftMPI[0]);
 
           MPI_Isend(haloDistributionPtr + sendToLeftBeginX, sizeStripeX, MPI_DOUBLE,
-                    leftXRankMPI, 23, MPI_COMM_WORLD, &requestXLeftMPI[1]);
+                    MPIInit::rankLeft, 23, MPI_COMM_WORLD, &requestXLeftMPI[1]);
 
           MPI_Waitall(2, requestXLeftMPI, statusXLeftMPI);
         }
@@ -263,27 +207,18 @@ namespace lbm {
 
   public:
     LBM_HOST
-    Communication(const MathVector<int, 3>& rankMPI_in,
-                  const MathVector<int, 3>& sizeMPI_in,
-                  const std::string& processorName_in)
-      : Communication<T,
-      latticeType,
-      AlgorithmType::Pull,
-      MemoryLayout::Generic,
-      PartitionningType::Generic,
-      Implementation::MPI,
-      0>(rankMPI_in, sizeMPI_in, processorName_in),
-      sizeStripeX(hMLSD::volume() / hMLSD::length()[d::X]),
-      sendToRightBeginX(0),
-      receivedFromLeftBeginX(0),
-      sendToLeftBeginX(0),
-      receivedFromRightBeginX(0) {}
+    Communication()
+      : Base()
+      , sizeStripeX(hMLSD::volume() / hMLSD::length()[d::X])
+      , sendToRightBeginX(0)
+      , receivedFromLeftBeginX(0)
+      , sendToLeftBeginX(0)
+      , receivedFromRightBeginX(0)
+    {}
 
-    using Base::rankMPI;
     using Base::reduce;
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
-    using Base::sizeMPI;
   };
 
   template <class T, LatticeType latticeType>
@@ -295,28 +230,19 @@ namespace lbm {
     using Base = Communication<T, latticeType, AlgorithmType::Pull, MemoryLayout::Generic,
                                PartitionningType::Generic, Implementation::MPI, 0>;
 
-    using Base::leftXRankMPI;
     using Base::requestXLeftMPI;
     using Base::requestXRightMPI;
-    using Base::rightXRankMPI;
     using Base::statusXLeftMPI;
     using Base::statusXRightMPI;
 
-    using Base::leftYRankMPI;
     using Base::requestYMPI;
-    using Base::rightYRankMPI;
     using Base::statusYMPI;
 
-    using Base::leftZRankMPI;
     using Base::requestZMPI;
-    using Base::rightZRankMPI;
     using Base::statusZMPI;
 
-    typedef Domain<DomainType::HaloSpace,
-                   PartitionningType::Generic,
-                   MemoryLayout::AoS,
-                   L::dimQ>
-    hMLSD;
+    typedef Domain<DomainType::HaloSpace, PartitionningType::Generic,
+                   MemoryLayout::AoS, L::dimQ> hMLSD;
 
     unsigned int sizeStripeX;
     unsigned int sendToRightBeginX;
@@ -326,51 +252,38 @@ namespace lbm {
 
   public:
     LBM_HOST
-    Communication(const MathVector<int, 3>& rankMPI_in,
-                  const MathVector<int, 3>& sizeMPI_in,
-                  const std::string& processorName_in)
-      : Communication<T,
-                      latticeType,
-                      AlgorithmType::Pull,
-                      MemoryLayout::Generic,
-                      PartitionningType::Generic,
-                      Implementation::MPI,
-                      0>(rankMPI_in, sizeMPI_in, processorName_in),
-      sizeStripeX(L::dimQ * hMLSD::volume() * L::halo()[d::X] /
-                  hMLSD::length()[d::X]),
-      sendToRightBeginX(hMLSD::getIndex(
-                                        Position({L::halo()[d::X] + lSD::sLength()[d::X] - 1,
-                                              hMLSD::start()[d::Y], hMLSD::start()[d::Z]}),
-                                        0)),
-      receivedFromLeftBeginX(hMLSD::getIndex(
-                                             Position({0, hMLSD::start()[d::Y], hMLSD::start()[d::Z]}),
-                                             0)),
-      sendToLeftBeginX(
-                       hMLSD::getIndex(Position({L::halo()[d::X], hMLSD::start()[d::Y],
-                               hMLSD::start()[d::Z]}),
-                         0)),
-      receivedFromRightBeginX(hMLSD::getIndex(
-                                              Position({L::halo()[d::X] + lSD::sLength()[d::X],
-                                                    hMLSD::start()[d::Y], hMLSD::start()[d::Z]}),
-                                              0)) {}
+    Communication()
+      : Base()
+      , sizeStripeX(L::dimQ * hMLSD::volume() * L::halo()[d::X] /
+                  hMLSD::length()[d::X])
+      , sendToRightBeginX(hMLSD::getIndex(
+          Position({L::halo()[d::X] + lSD::sLength()[d::X] - 1,
+                    hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), 0))
+      , receivedFromLeftBeginX(hMLSD::getIndex(
+          Position({0, hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), 0))
+      , sendToLeftBeginX( hMLSD::getIndex(
+          Position({L::halo()[d::X], hMLSD::start()[d::Y],
+                    hMLSD::start()[d::Z]}), 0))
+      , receivedFromRightBeginX(hMLSD::getIndex(
+          Position({L::halo()[d::X] + lSD::sLength()[d::X],
+                    hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), 0))
+    {}
 
-    using Base::rankMPI;
     using Base::reduce;
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
-    using Base::sizeMPI;
 
   protected:
     LBM_HOST
     void sendAndReceiveHaloXRight(T* haloDistributionPtr) {
       LBM_INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloXRight", 4)
 
-        MPI_Irecv(haloDistributionPtr + receivedFromLeftBeginX, sizeStripeX,
-                  MPI_DOUBLE, leftXRankMPI, 17, MPI_COMM_WORLD,
-                  &requestXRightMPI[0]);
+      MPI_Irecv(haloDistributionPtr + receivedFromLeftBeginX, sizeStripeX,
+                MPI_DOUBLE, MPIInit::rankLeft, 17, MPI_COMM_WORLD,
+                &requestXRightMPI[0]);
 
       MPI_Isend(haloDistributionPtr + sendToRightBeginX, sizeStripeX, MPI_DOUBLE,
-                rightXRankMPI, 17, MPI_COMM_WORLD, &requestXRightMPI[1]);
+                MPIInit::rankRight, 17, MPI_COMM_WORLD, &requestXRightMPI[1]);
 
       MPI_Waitall(2, requestXRightMPI, statusXRightMPI);
     }
@@ -380,11 +293,11 @@ namespace lbm {
       LBM_INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloXLeft", 4)
 
         MPI_Irecv(haloDistributionPtr + receivedFromRightBeginX, sizeStripeX,
-                  MPI_DOUBLE, rightXRankMPI, 23, MPI_COMM_WORLD,
+                  MPI_DOUBLE, MPIInit::rankRight, 23, MPI_COMM_WORLD,
                   &requestXLeftMPI[0]);
 
       MPI_Isend(haloDistributionPtr + sendToLeftBeginX, sizeStripeX, MPI_DOUBLE,
-                leftXRankMPI, 23, MPI_COMM_WORLD, &requestXLeftMPI[1]);
+                MPIInit::rankLeft, 23, MPI_COMM_WORLD, &requestXLeftMPI[1]);
 
       MPI_Waitall(2, requestXLeftMPI, statusXLeftMPI);
     }
@@ -439,15 +352,14 @@ namespace lbm {
 
         for (auto iQ = L::faceQ + 1; iQ < 2 * L::faceQ + 1; ++iQ) {
           Base::sendToRightBeginX = hMLSD::getIndex(
-                                                    Position({L::halo()[d::X] + lSD::sLength()[d::X] - 1,
-                                                          hMLSD::start()[d::Y], hMLSD::start()[d::Z]}),
-                                                    iQ);
+            Position({L::halo()[d::X] + lSD::sLength()[d::X] - 1,
+                      hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
           Base::receivedFromLeftBeginX = hMLSD::getIndex(
-                                                         Position({0, hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
+            Position({0, hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
           shmem_double_put(haloDistributionPtr + Base::receivedFromLeftBeginX,
                            haloDistributionPtr + Base::sendToRightBeginX,
-                           Base::sizeStripeX, Base::rightXRankMPI);
+                           Base::sizeStripeX, MPIInit::rankRight);
           shmem_barrier_all();
         }
     }
@@ -457,19 +369,17 @@ namespace lbm {
       LBM_INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloXLeft", 4)
 
         for (auto iQ = 1; iQ < L::faceQ + 1; ++iQ) {
-          Base::sendToLeftBeginX =
-            hMLSD::getIndex(Position({L::halo()[d::X], hMLSD::start()[d::Y],
-                    hMLSD::start()[d::Z]}),
-              iQ);
+          Base::sendToLeftBeginX = hMLSD::getIndex(
+            Position({L::halo()[d::X], hMLSD::start()[d::Y],
+                      hMLSD::start()[d::Z]}), iQ);
 
           Base::receivedFromRightBeginX = hMLSD::getIndex(
-                                                          Position({L::halo()[d::X] + lSD::sLength()[d::X],
-                                                                hMLSD::start()[d::Y], hMLSD::start()[d::Z]}),
-                                                          iQ);
+            Position({L::halo()[d::X] + lSD::sLength()[d::X],
+                      hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
           shmem_double_put(haloDistributionPtr + Base::sendToLeftBeginX,
                            haloDistributionPtr + Base::receivedFromRightBeginX,
-                           Base::sizeStripeX, Base::leftXRankMPI);
+                           Base::sizeStripeX, MPIInit::rankLeft);
           shmem_barrier_all();
         }
     }
@@ -482,11 +392,9 @@ namespace lbm {
   public:
     using Base::Communication;
 
-    using Base::rankMPI;
     using Base::reduce;
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
-    using Base::sizeMPI;
   };
 
   template <class T, LatticeType latticeType>
@@ -509,11 +417,9 @@ namespace lbm {
 
     using Base::Communication;
 
-    using Base::rankMPI;
     using Base::reduce;
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
-    using Base::sizeMPI;
 
   protected:
     LBM_HOST void sendAndReceiveHaloXRight(T* haloDistributionPtr) {
@@ -521,7 +427,7 @@ namespace lbm {
 
       shmem_double_put(haloDistributionPtr + Base::receivedFromLeftBeginX,
                        haloDistributionPtr + Base::sendToRightBeginX,
-                       Base::sizeStripeX, Base::rightXRankMPI);
+                       Base::sizeStripeX, MPIInit::rankRight);
       shmem_barrier_all();
     }
 
@@ -530,7 +436,7 @@ namespace lbm {
 
       shmem_double_put(haloDistributionPtr + Base::sendToLeftBeginX,
                        haloDistributionPtr + Base::receivedFromRightBeginX,
-                       Base::sizeStripeX, Base::leftXRankMPI);
+                       Base::sizeStripeX, MPIInit::rankLeft);
       shmem_barrier_all();
     }
 
@@ -552,11 +458,9 @@ namespace lbm {
   public:
     using Base::Communication;
 
-    using Base::rankMPI;
     using Base::reduce;
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
-    using Base::sizeMPI;
 
   protected:
     LBM_HOST void sendAndReceiveHaloXRight(T* haloDistributionPtr) {
@@ -580,11 +484,9 @@ namespace lbm {
   public:
     using Base::Communication;
 
-    using Base::rankMPI;
     using Base::reduce;
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
-    using Base::sizeMPI;
 
     LBM_HOST
     inline void communicateHalos(T* haloDistributionPtr) {
@@ -608,11 +510,9 @@ namespace lbm {
   public:
     using Base::Communication;
 
-    using Base::rankMPI;
     using Base::reduce;
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
-    using Base::sizeMPI;
   };
 
   template <class T, LatticeType latticeType, MemoryLayout memoryLayout,
@@ -628,11 +528,9 @@ namespace lbm {
   public:
     using Base::Communication;
 
-    using Base::rankMPI;
     using Base::reduce;
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
-    using Base::sizeMPI;
 
     LBM_HOST
     inline void communicateHalos(T* haloDistributionPtr) {
@@ -658,11 +556,9 @@ namespace lbm {
   public:
     using Base::Communication;
 
-    using Base::rankMPI;
     using Base::reduce;
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
-    using Base::sizeMPI;
 
     using Base::communicateHalos;
   };
@@ -679,11 +575,9 @@ namespace lbm {
 
     using Base::Communication;
 
-    using Base::rankMPI;
     using Base::reduce;
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
-    using Base::sizeMPI;
 
   private:
     using Base::sendAndReceiveHaloX;
@@ -702,11 +596,9 @@ namespace lbm {
   public:
     using Base::Communication;
 
-    using Base::rankMPI;
     using Base::reduce;
     using Base::sendGlobalToLocal;
     using Base::sendLocalToGlobal;
-    using Base::sizeMPI;
 
     LBM_HOST
     inline void communicateHalos(T* haloDistributionPtr) {

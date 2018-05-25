@@ -29,11 +29,10 @@ class Force<T, ForceType::Generic> {
     }
   }
 
-  LBM_DEVICE LBM_HOST LBM_INLINE void setForce(
-      T* localForceArray,
-      const Position& iP,
-      const unsigned int numberElements,
-      MathVector<T, L::dimD>& force) {
+  LBM_DEVICE LBM_HOST LBM_INLINE void setForce(T* localForceArray,
+                                               const Position& iP,
+                                               MathVector<T, L::dimD>& force,
+                                               const unsigned int numberElements) {
     auto index = lSD::getIndex(iP);
 #pragma unroll
     for (auto iD = 0; iD < L::dimD; ++iD) {
@@ -96,7 +95,6 @@ class Force<T, ForceType::Constant>
 
   LBM_HOST
   inline void setLocalForceArray(double* localForcePtr,
-                                 const unsigned int numberElements,
                                  const Position& offset) {
     Computation<Architecture::CPU, L::dimD> computationLocal(lSD::sStart(),
                                                              lSD::sEnd());
@@ -107,7 +105,7 @@ class Force<T, ForceType::Constant>
       MathVector<T, L::dimD> force;
       setForce(iP + offset, force);
       for (auto iD = 0; iD < L::dimD; ++iD) {
-        (localForcePtr + iD * numberElements)[index] = force[iD];
+        (localForcePtr + iD * FFTWInit::numberElements)[index] = force[iD];
       }
     });
     computationLocal.synchronize();
@@ -148,7 +146,6 @@ class Force<T, ForceType::Sinusoidal>
 
   LBM_HOST
   inline void setLocalForceArray(double* localForcePtr,
-                                 const unsigned int numberElements,
                                  const Position& offset) {
     Computation<Architecture::CPU, L::dimD> computationLocal(lSD::sStart(),
                                                              lSD::sEnd());
@@ -158,7 +155,7 @@ class Force<T, ForceType::Sinusoidal>
       auto index = lSD::getIndex(iP);
       setForce(iP + offset, force);
       for (auto iD = 0; iD < L::dimD; ++iD) {
-        (localForcePtr + iD * numberElements)[index] = force[iD];
+        (localForcePtr + iD * FFTWInit::numberElements)[index] = force[iD];
       }
     });
     computationLocal.synchronize();
@@ -196,7 +193,6 @@ class Force<T, ForceType::Kolmogorov>
 
   LBM_HOST
   inline void setLocalForceArray(double* localForcePtr,
-                                 const unsigned int numberElements,
                                  const Position& offset) {
     Computation<Architecture::CPU, L::dimD> computationLocal(lSD::sStart(),
                                                              lSD::sEnd());
@@ -205,7 +201,7 @@ class Force<T, ForceType::Kolmogorov>
       auto index = lSD::getIndex(iP);
       setForce(iP + offset, force);
       for (auto iD = 0; iD < L::dimD; ++iD) {
-        (localForcePtr + iD * numberElements)[index] = force[iD];
+        (localForcePtr + iD * FFTWInit::numberElements)[index] = force[iD];
       }
     });
     computationLocal.synchronize();
@@ -236,11 +232,10 @@ class Force<double, ForceType::ConstantShell>
         const unsigned int kMax_in)
       : Base(amplitude_in), kMin(kMin_in), kMax(kMax_in) {}
 
-  inline void setLocalForceArray(double* localPtr,
-                                 const unsigned int numberElements,
+  inline void setLocalForceArray(double* localForcePtr,
                                  const Position& offset) {
     DynamicArray<double, Architecture::CPU> tempArray((2 * L::dimD - 3) *
-                                                      numberElements);
+                                                      FFTWInit::numberElements);
     double* spaceTempPtr = tempArray.data();
 
     Computation<Architecture::CPU, L::dimD> computationFourier(lFD::start(),
@@ -267,7 +262,7 @@ class Force<double, ForceType::ConstantShell>
       if (kNormSquared >= kMin * kMin && kNormSquared <= kMax * kMax) {
         for (auto iD = 0; iD < 2 * L::dimD - 3; ++iD) {
           fftw_complex* fourierTempPtr =
-              (fftw_complex*)(spaceTempPtr + iD * numberElements);
+              (fftw_complex*)(spaceTempPtr + iD * FFTWInit::numberElements);
 
           fourierTempPtr[index][p::Re] = amplitude[iD];
           fourierTempPtr[index][p::Im] = 0;
@@ -300,8 +295,7 @@ class Force<double, ForceType::ConstantShell>
 
     MakeIncompressible<double, Architecture::CPU, PartitionningType::OneD,
                        L::dimD>
-        makeIncompressible(tempArray.data(), localPtr, numberElements,
-                           globalLengthPtrdiff_t, offset);
+        makeIncompressible(tempArray.data(), localForcePtr, globalLengthPtrdiff_t, offset);
     makeIncompressible.executeFourier();
   }
 

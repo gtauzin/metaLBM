@@ -10,52 +10,65 @@
 
 namespace lbm {
 
-/// RAII container for launching MPI
-template <int numProcsAtCompileTile>
-struct MPIInitializer {
-  /// Launch MPI
-  MPIInitializer(int argc, char** argv) {
-    int providedThreadSupport;
-    MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &providedThreadSupport);
+  /// RAII container for launching MPI
+  template <int numProcsAtCompileTile>
+  struct MPIInitializer {
+    static std::string hostName;
+    static MathVector<int, 3> size;
+    static MathVector<int, 3> rank;
+    static int rankLeft;
+    static int rankRight;
+    static int rankTop;
+    static int rankBottom;
+    static int rankFront;
+    static int rankBack;
 
-    if (numProcs() != numProcsAtCompileTile) {
-      std::cout << "Compile-time and runtime number of process don't match\n";
-      MPI_Abort(MPI_COMM_WORLD, 1);
-    }
+    /// Launch MPI
+    MPIInitializer(int argc, char** argv) {
+      int providedThreadSupport;
+      MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &providedThreadSupport);
 
-    #ifdef USE_NVSHMEM
+      int hostNameLength;
+      char hostNameChar[MPI_MAX_PROCESSOR_NAME];
+      MPI_Get_processor_name(hostNameChar, &hostNameLength);
+      hostName = std::string(hostNameChar);
+
+      MPI_Comm_size(MPI_COMM_WORLD, &size[d::X]);
+
+      if (size[d::X] != numProcsAtCompileTile) {
+        std::cout << "Compile-time and runtime number of process don't match\n";
+        MPI_Abort(MPI_COMM_WORLD, 1);
+      }
+
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank[d::X]);
+      rankLeft = (rank[d::X] + size[d::X] - 1) % size[d::X];
+      rankRight = (rank[d::X] + 1) % size[d::X];
+
+      #ifdef USE_NVSHMEM
       MPI_Comm comm;
       shmemx_init_attr_t attribute;
       comm = MPI_COMM_WORLD;
 
       attribute.mpi_comm = &comm;
       shmemx_init_attr (SHMEMX_INIT_WITH_MPI_COMM, &attribute);
-    #endif
+      #endif
+    }
 
-  }
+    /// Finalizes MPI
+    ~MPIInitializer() { MPI_Finalize(); }
 
-  int numProcs() const noexcept {
-    int size;
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-    return size;
-  }
+  };  // end class MPIInitializer
 
-  int procRank() const noexcept {
-    int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    return rank;
-  }
+  using MPIInit = MPIInitializer<numProcs>;
 
-  std::string hostName() const noexcept {
-    int hostnameLength;
-    char hostname[MPI_MAX_PROCESSOR_NAME];
-    MPI_Get_processor_name(hostname, &hostnameLength);
-    return std::string(hostname);
-  }
-
-  /// Finalizes MPI
-  ~MPIInitializer() { MPI_Finalize(); }
-
-};  // end class MPIInitializer
+  template<> std::string MPIInit::hostName = "";
+  template<> MathVector<int, 3> MPIInit::size = MathVector<int, 3>{{0}};
+  template<> MathVector<int, 3> MPIInit::rank = MathVector<int, 3>{{0}};
+  template<> int MPIInit::rankLeft = 0;
+  template<> int MPIInit::rankRight = 0;
+  template<> int MPIInit::rankTop = 0;
+  template<> int MPIInit::rankBottom = 0;
+  template<> int MPIInit::rankFront = 0;
+  template<> int MPIInit::rankBack = 0;
 
 }  // end namespace lbm

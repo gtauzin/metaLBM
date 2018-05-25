@@ -18,20 +18,18 @@ namespace lbm {
 
 template <class T, Architecture architecture>
 Field<T, 1, architecture, true> initLocalDensity(
-    const unsigned int numberElements,
-    const MathVector<int, 3>& rankMPI,
     const Stream<architecture>& stream) {
   LBM_INSTRUMENT_ON("initLocalDensity<T>", 2)
 
   Field<T, 1, architecture, true>
-    densityFieldR("density", numberElements, initDensityValue, stream);
+    densityFieldR("density", initDensityValue, stream);
 
   switch (initDensityT) {
     case InitDensityType::Homogeneous: {
       break;
     }
     case InitDensityType::Peak: {
-      if (rankMPI[d::X] == 0) {
+      if (MPIInit::rank[d::X] == 0) {
         const T densityPeakValue = 3.0 * initDensityValue;
         Position center;
 
@@ -42,7 +40,7 @@ Field<T, 1, architecture, true> initLocalDensity(
         center[d::Z] =
             static_cast<unsigned int>((lSD::sLength()[d::Z] - 1) * (T)0.2);
 
-        densityFieldR.setLocalValue(center, densityPeakValue);
+        densityFieldR.setLocalValue(center, densityPeakValue, FFTWInit::numberElements);
       }
       break;
     }
@@ -53,7 +51,6 @@ Field<T, 1, architecture, true> initLocalDensity(
 
 template <class T, Architecture architecture>
 Field<T, L::dimD, architecture, true> initLocalVelocity(
-    const unsigned int numberElements,
     const Stream<architecture>& stream) {
   LBM_INSTRUMENT_ON("initLocalVelocity<T>", 2)
 
@@ -61,7 +58,7 @@ Field<T, L::dimD, architecture, true> initLocalVelocity(
   initVelocityVectorProjected = Project<T, T, L::dimD>::Do(initVelocityVector);
 
   Field<T, L::dimD, architecture, true> velocityFieldR(
-       "velocity", numberElements, initVelocityVectorProjected, stream);
+       "velocity", initVelocityVectorProjected, stream);
 
   switch (initVelocityT) {
     case InitVelocityType::Homogeneous: {
@@ -75,19 +72,17 @@ Field<T, L::dimD, architecture, true> initLocalVelocity(
 
 template <class T, Architecture architecture>
 Field<T, L::dimD, architecture, writeForce> initLocalForce(
-    const unsigned int numberElements,
-    const MathVector<int, 3>& rankMPI,
     const Stream<architecture>& stream) {
   LBM_INSTRUMENT_ON("initLocalForce<T>", 2)
 
   Field<T, L::dimD, architecture, writeForce>
-    forceFieldR("force", numberElements, 0, stream);
+    forceFieldR("force", 0, stream);
 
   Force<T, forceT> force(forceAmplitude, forceWaveLength, forcekMin, forcekMax);
 
   if (writeForce) {
-    force.setLocalForceArray(forceFieldR.getLocalData(), numberElements,
-                             gFD::offset(rankMPI));
+    force.setLocalForceArray(forceFieldR.getLocalData(FFTWInit::numberElements),
+                             gFD::offset(MPIInit::rank));
   }
 
   return forceFieldR;
@@ -95,12 +90,11 @@ Field<T, L::dimD, architecture, writeForce> initLocalForce(
 
 template <class T, Architecture architecture>
 Field<T, 1, architecture, writeAlpha> initLocalAlpha(
-    const unsigned int numberElements,
     const Stream<architecture>& stream) {
   LBM_INSTRUMENT_ON("initLocalAlpha<T>", 2)
 
   Field<T, 1, architecture, writeAlpha>
-    alphaFieldR("alpha", numberElements, (T)2, stream);
+    alphaFieldR("alpha", (T)2, stream);
   return alphaFieldR;
 }
 
@@ -108,21 +102,20 @@ template <class T, Architecture architecture>
 Distribution<T, architecture> initLocalDistribution(
     const Field<T, 1, architecture, true>& densityField,
     const Field<T, L::dimD, architecture, true>& velocityField,
-    const unsigned int numberElements,
-    const MathVector<int, 3>& rankMPI,
     const Stream<architecture>& stream) {
   LBM_INSTRUMENT_ON("initLocalDistribution<T>", 2)
 
-    Distribution<T, architecture> distributionR(densityField.numberElements);
+    Distribution<T, architecture> distributionR;
 
   if (startIteration == 0) {
     Computation<architecture, L::dimD> computationLocal(lSD::sStart(), lSD::sEnd());
 
-    T * localDistribution = distributionR.getLocalData();
+    T * localDistribution = distributionR.getLocalData(FFTWInit::numberElements);
+    unsigned int numberElements = FFTWInit::numberElements;
 
     computationLocal.Do(stream, [=] LBM_HOST LBM_DEVICE (const Position& iP) {
-        T density = densityField.getLocalValue(iP);
-        MathVector<T, L::dimD> velocity = velocityField.getLocalVector(iP);
+        T density = densityField.getLocalValue(iP, numberElements);
+        MathVector<T, L::dimD> velocity = velocityField.getLocalVector(iP, numberElements);
         T velocity2 = velocity.norm2();
 
         for (auto iQ = 0; iQ < L::dimQ; ++iQ) {
@@ -133,7 +126,7 @@ Distribution<T, architecture> initLocalDistribution(
   }
 
   else {
-    DistributionReader_ distributionReader(prefix, rankMPI);
+    DistributionReader_ distributionReader(prefix);
     distributionReader.openFile(startIteration);
     distributionReader.readDistribution(distributionR);
     distributionReader.closeFile();

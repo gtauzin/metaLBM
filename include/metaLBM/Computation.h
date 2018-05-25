@@ -12,14 +12,13 @@ template <Architecture architecture, unsigned int Dimension>
 
 template <unsigned int Dimension>
   class Computation<Architecture::CPU, Dimension> {
- protected:
+ public:
   const Position start;
   const Position end;
   const Position length;
   const Position dir;
 
- public:
-  Computation(const Position& start_in,
+ Computation(const Position& start_in,
               const Position& end_in,
               const Position& dir_in = {{d::X, d::Y, d::Z}})
       : start(start_in), end(end_in), length(end_in - start_in), dir(dir_in) {}

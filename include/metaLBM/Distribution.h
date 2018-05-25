@@ -24,8 +24,8 @@ class Distribution : public Field<T, L::dimQ, architecture, true> {
  public:
   using Base::fieldName;
 
-  Distribution(const unsigned int numberElements_in)
-      : Base("distribution", numberElements_in),
+  Distribution()
+      : Base("distribution"),
         haloArrayPrevious(hSD::volume() * L::dimQ),
         haloArrayNext(hSD::volume() * L::dimQ) {}
 

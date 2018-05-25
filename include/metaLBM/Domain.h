@@ -117,11 +117,10 @@ struct Domain<DomainType::GlobalSpace,
     return pLength()[d::X] * pLength()[d::Y] * pLength()[d::Z];
   }
 
-  LBM_HOST LBM_DEVICE static inline Position pOffset(
-      const MathVector<int, 3>& rankMPI) {
+  LBM_HOST LBM_DEVICE static inline Position pOffset(const MathVector<int, 3>& rank) {
     Position offsetR{{0}};
     for (auto iD = 0; iD < L::dimD; ++iD) {
-      offsetR[iD] = (unsigned int)Base::pLength()[iD] * rankMPI[iD];
+      offsetR[iD] = (unsigned int)Base::pLength()[iD] * rank[iD];
     }
     return offsetR;
   }
@@ -143,11 +142,10 @@ struct Domain<DomainType::GlobalSpace,
     return sLength()[d::X] * sLength()[d::Y] * sLength()[d::Z];
   }
 
-  LBM_HOST LBM_DEVICE static inline Position sOffset(
-      const MathVector<int, 3>& rankMPI) {
+  LBM_HOST LBM_DEVICE static inline Position sOffset(const MathVector<int, 3>& rank) {
     Position offsetR{{0}};
     for (auto iD = 0; iD < L::dimD; ++iD) {
-      offsetR[iD] = (unsigned int)Base::sLength()[iD] * rankMPI[iD];
+      offsetR[iD] = (unsigned int)Base::sLength()[iD] * rank[iD];
     }
     return offsetR;
   }
