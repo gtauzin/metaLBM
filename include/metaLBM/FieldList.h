@@ -46,9 +46,6 @@ class FieldList {
   {}
 
   inline void writeFields() {
-    if (writeVorticity)
-      curlVelocity.executeSpace();
-
     fieldWriter.writeField(density);
     fieldWriter.writeField(velocity);
     fieldWriter.writeField(alpha);

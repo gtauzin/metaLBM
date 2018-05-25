@@ -122,16 +122,17 @@ namespace lbm {
       // Execute LBM algorithm
       for (int iteration = startIteration + 1; iteration <= endIteration;
            ++iteration) {
-        algorithm.isStored = fieldWriter.getIsWritten(iteration) ||
-          scalarAnalysisList.getIsAnalyzed(iteration) ||
-          spectralAnalysisList.getIsAnalyzed(iteration);
+        algorithm.isStored = (fieldWriter.getIsWritten(iteration)
+                              || scalarAnalysisList.getIsAnalyzed(iteration)
+                              || spectralAnalysisList.getIsAnalyzed(iteration));
 
         algorithm.iterate(iteration, defaultStream, bulkStream, leftStream, rightStream,
                           leftEvent, rightEvent);
 
         if (algorithm.isStored) {
-          if (writeVorticity)
+          if (writeVorticity) {
             curlVelocity.executeSpace();
+          }
         }
 
         t0 = Clock::now();

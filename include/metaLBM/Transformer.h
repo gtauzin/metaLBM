@@ -139,7 +139,7 @@ namespace lbm {
     {}
 
     LBM_HOST
-  inline void executeFourier() {
+    inline void executeFourier() {
       computationFourier.Do([=] LBM_HOST(const Position& iFP) {
           auto index = lFD::getIndex(iFP);
 
