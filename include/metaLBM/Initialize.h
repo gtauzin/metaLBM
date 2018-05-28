@@ -132,26 +132,26 @@ namespace lbm {
       distributionReader.readDistribution(distributionR);
       distributionReader.closeFile();
 
-      // computationLocal.Do(stream, [=] LBM_HOST LBM_DEVICE (const Position& iP) {
-      //     unsigned int indexLocal = lSD::getIndex(iP);
+      computationLocal.Do(stream, [=] LBM_HOST LBM_DEVICE (const Position& iP) {
+          unsigned int indexLocal = lSD::getIndex(iP);
 
-      //     localDensity[indexLocal] = 0;
+          localDensity[indexLocal] = 0;
 
-      //     for(auto iD = 0; iD < L::dimD; ++iD) {
-      //       localVelocity[iD * numberElements + indexLocal] = 0;
-      //     }
+          for(auto iD = 0; iD < L::dimD; ++iD) {
+            (localVelocity + iD * numberElements)[indexLocal] = 0;
+          }
 
-      //     for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
-      //       localDensity[indexLocal] +=
-      //         localDistribution[iQ * numberElements + indexLocal];
+          for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
+            localDensity[indexLocal] +=
+              localDistribution[iQ * numberElements + indexLocal];
 
-      //       for(auto iD = 0; iD < L::dimD; ++iD) {
-      //         localVelocity[iD * numberElements + indexLocal] += L::celerity()[iQ][iD]
-      //           * localDistribution[iQ * numberElements + indexLocal];
-      //       }
-      //     }
+            for(auto iD = 0; iD < L::dimD; ++iD) {
+              (localVelocity + iD * numberElements)[indexLocal] += L::celerity()[iQ][iD]
+                * localDistribution[iQ * numberElements + indexLocal];
+            }
+          }
 
-      //   });
+        });
     }
 
     return distributionR;

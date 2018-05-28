@@ -103,6 +103,12 @@ namespace lbm {
       Clock::time_point t0;
       Clock::time_point t1;
 
+      if (writeFieldInit || writeAnalysisInit) {
+        if (writeVorticity) {
+          curlVelocity.executeSpace();
+        }
+      }
+
       if (writeFieldInit) {
         t0 = Clock::now();
         writeFields(startIteration);
