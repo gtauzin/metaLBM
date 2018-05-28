@@ -11,23 +11,26 @@ namespace lbm {
   template <class T>
   struct Packer {
   public:
-    LBM_DEVICE LBM_HOST inline void operator()(const Position& iP, T*
-                                               const local, T* halo,
-                                               const unsigned int numberElements) {
-    auto indexLocal = hSD::getIndexLocal(iP);
-    for (auto iQ = 0; iQ < L::dimQ; ++iQ) {
-      (local + iQ * numberElements)[indexLocal]
-        = halo[hSD::getIndex(iP, iQ)];
-    }
+    LBM_DEVICE LBM_HOST inline
+    void operator()(const Position& iP,
+                    T* const local, T* halo,
+                    const unsigned int numberElements) {
+      auto indexLocal = hSD::getIndexLocal(iP);
+
+      for (auto iQ = 0; iQ < L::dimQ; ++iQ) {
+        (local + iQ * numberElements)[indexLocal]
+          = halo[hSD::getIndex(iP, iQ)];
+      }
     }
   };
 
   template <class T>
   struct Unpacker {
   public:
-    LBM_DEVICE LBM_HOST inline void operator()(const Position& iP,
-                                               T* halo, T* const local,
-                                               const unsigned int numberElements) {
+    LBM_DEVICE LBM_HOST inline
+    void operator()(const Position& iP,
+                    T* halo, T* const local,
+                    const unsigned int numberElements) {
       auto indexLocal = hSD::getIndexLocal(iP);
       for (auto iQ = 0; iQ < L::dimQ; ++iQ) {
         halo[hSD::getIndex(iP, iQ)]

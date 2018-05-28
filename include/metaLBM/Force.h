@@ -74,6 +74,36 @@ class Force<T, ForceType::GenericTimeIndependent>
 };
 
 template <class T>
+class Force<T, ForceType::None>
+    : public Force<T, ForceType::GenericTimeIndependent> {
+ private:
+  using Base = Force<T, ForceType::GenericTimeIndependent>;
+
+  using Base::amplitude;
+
+ public:
+  Force(const MathVector<T, 3>& amplitude_in,
+        const MathVector<T, 3>& waveLength_in,
+        const unsigned int kMin_in,
+        const unsigned int kMax_in)
+    : Base(MathVector<T, 3>{{0}}) {}
+
+  LBM_DEVICE LBM_HOST inline void setForce(const Position& iP,
+                                           MathVector<T, L::dimD>& force) {
+    force = amplitude;
+  }
+
+  LBM_HOST
+  inline void setLocalForceArray(double* localForcePtr,
+                                 const Position& offset) {
+  }
+
+  using Base::setForce;
+  using Base::update;
+};
+
+
+ template <class T>
 class Force<T, ForceType::Constant>
     : public Force<T, ForceType::GenericTimeIndependent> {
  private:

@@ -340,7 +340,7 @@ namespace lbm {
 
         statusHDF5 =
           H5Dwrite(dataSetHDF5, H5T_NATIVE_DOUBLE, dataSpaceHDF5, fileSpaceHDF5,
-                   propertyListHDF5, field.getLocalData(iC));
+                   propertyListHDF5, field.getLocalData(FFTWInit::numberElements, iC));
 
         statusHDF5 = H5Dclose(dataSetHDF5);
         statusHDF5 = H5Sclose(dataSpaceHDF5);
@@ -395,39 +395,33 @@ namespace lbm {
 
         Base::propertyListHDF5 = H5Pcreate(H5P_DATASET_XFER);
       for (auto iC = 0; iC < L::dimQ; ++iC) {
-        Base::fileSpaceHDF5 = H5Screate_simple(
-                                               L::dimD,
-                                               Project<hsize_t, unsigned int, L::dimD>::Do(gSD::pLength()).data(),
-                                               NULL);
+        Base::fileSpaceHDF5 = H5Screate_simple(L::dimD,
+          Project<hsize_t, unsigned int, L::dimD>::Do(gSD::pLength()).data(),
+          NULL);
 
-        Base::dataSetHDF5 = H5Dcreate2(
-                                       Base::fileHDF5, (distribution.fieldName + std::to_string(iC)).c_str(),
-                                       H5T_NATIVE_DOUBLE, Base::fileSpaceHDF5, H5P_DEFAULT, H5P_DEFAULT,
-                                       H5P_DEFAULT);
+        Base::dataSetHDF5 = H5Dcreate2(Base::fileHDF5,
+          (distribution.fieldName + std::to_string(iC)).c_str(),
+          H5T_NATIVE_DOUBLE, Base::fileSpaceHDF5, H5P_DEFAULT, H5P_DEFAULT,
+          H5P_DEFAULT);
 
         Base::statusHDF5 = H5Sclose(Base::fileSpaceHDF5);
 
-        Base::dataSpaceHDF5 = H5Screate_simple(
-                                               L::dimD,
-                                               Project<hsize_t, unsigned int, L::dimD>::Do(lSD::pLength()).data(),
-                                               NULL);
+        Base::dataSpaceHDF5 = H5Screate_simple(L::dimD,
+          Project<hsize_t, unsigned int, L::dimD>::Do(lSD::pLength()).data(),
+          NULL);
 
         Base::fileSpaceHDF5 = H5Dget_space(Base::dataSetHDF5);
 
-        H5Sselect_hyperslab(
-                            Base::fileSpaceHDF5, H5S_SELECT_SET,
-                            Project<hsize_t, unsigned int, L::dimD>::Do(
-                                                                        gSD::pOffset(MPIInit::rank)).data(),
-                            NULL,
-                            Project<hsize_t, unsigned int, L::dimD>::Do(lSD::pLength()).data(),
-                            NULL);
+        H5Sselect_hyperslab(Base::fileSpaceHDF5, H5S_SELECT_SET,
+          Project<hsize_t, unsigned int, L::dimD>::Do(gSD::pOffset(MPIInit::rank)).data(),
+          NULL, Project<hsize_t, unsigned int, L::dimD>::Do(lSD::pLength()).data(), NULL);
 
         H5Pset_dxpl_mpio(Base::propertyListHDF5, H5FD_MPIO_COLLECTIVE);
 
         Base::statusHDF5 =
           H5Dwrite(Base::dataSetHDF5, H5T_NATIVE_DOUBLE, Base::dataSpaceHDF5,
                    Base::fileSpaceHDF5, Base::propertyListHDF5,
-                   distribution.getLocalData(iC));
+                   distribution.getLocalData(FFTWInit::numberElements, iC));
 
         Base::statusHDF5 = H5Dclose(Base::dataSetHDF5);
         Base::statusHDF5 = H5Sclose(Base::dataSpaceHDF5);

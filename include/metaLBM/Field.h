@@ -133,53 +133,39 @@ namespace lbm {
     LBM_HOST
     ~Field() {}
 
-    LBM_DEVICE void operator()(const Position& iP, T * localArrayPtr,
-                               const T initValue, const unsigned int numberElements) {
+    LBM_HOST LBM_DEVICE
+    void operator()(const Position& iP, T * localArrayPtr,
+                    const T initValue, const unsigned int numberElements) {
       for (auto iC = 0; iC < NumberComponents; ++iC) {
         localArrayPtr[iC * numberElements + lSD::getIndex(iP)]
         = initValue;
       }
+
     }
 
-    LBM_DEVICE void operator()(const Position& iP, T * localArrayPtr,
-                               const MathVector<T, L::dimD> initVector,
-                               const unsigned int numberElements) {
+    LBM_HOST LBM_DEVICE
+    void operator()(const Position& iP, T * localArrayPtr,
+                    const MathVector<T, L::dimD> initVector,
+                    const unsigned int numberElements) {
       for (auto iC = 0; iC < NumberComponents; ++iC) {
         localArrayPtr[iC * numberElements + lSD::getIndex(iP)]
           = initVector[iC];
       }
     }
 
-
-    void initByVector(const MathVector<T, NumberComponents>& vector_in,
-                      const Stream<architecture>& stream_in) {
-      Computation<architecture, L::dimD> computationLocal(lSD::sStart(),
-                                                          lSD::sEnd());
-
-      T * localArrayPtr = localArray.data();
-      unsigned int numberElements = FFTWInit::numberElements;
-      computationLocal.Do(stream_in, [=] LBM_HOST LBM_DEVICE (const Position& iP) {
-          for (auto iC = 0; iC < NumberComponents; ++iC) {
-            localArrayPtr[iC * numberElements + lSD::getIndex(iP)]
-              = vector_in[iC];
-          }
-        });
-      computationLocal.synchronize();
-    }
-
     inline DynamicArray<T, Architecture::CPU>& getLocalArray() {
       return localArray;
     }
 
-    LBM_DEVICE LBM_HOST T*
-      getLocalData(const unsigned int numberElements, const unsigned int iC = 0) {
+    LBM_DEVICE LBM_HOST
+    T* getLocalData(const unsigned int numberElements, const unsigned int iC = 0) {
       return localArray.data(iC * numberElements);
     }
 
     LBM_DEVICE LBM_HOST inline
-      void setLocalValue(const Position iP, const T value,
-                         const unsigned int numberElements,
-                         const unsigned int iC = 0) {
+    void setLocalValue(const Position iP, const T value,
+                       const unsigned int numberElements,
+                       const unsigned int iC = 0) {
       (localArray.data(iC * numberElements))[lSD::getIndex(iP)]
         = value;
     }

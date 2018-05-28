@@ -146,7 +146,7 @@ class DistributionReader<T, InputOutput::HDF5>
       Base::statusHDF5 =
           H5Dread(Base::dataSetHDF5, H5T_NATIVE_DOUBLE, Base::fileSpaceHDF5,
                   Base::dataSpaceHDF5, Base::propertyListHDF5,
-                  distribution.getLocalData(iC));
+                  distribution.getLocalData(FFTWInit::numberElements, iC));
 
       Base::statusHDF5 = H5Dclose(Base::dataSetHDF5);
       Base::statusHDF5 = H5Sclose(Base::dataSpaceHDF5);
