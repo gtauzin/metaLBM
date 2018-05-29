@@ -75,7 +75,7 @@ namespace lbm {
   Writer(const std::string& writerFolder_in,
          const std::string& filePrefix_in,
          const std::string& fileExtension_in)
-    : Base(writerFolder_in, filePrefix_in, fileExtension_in, "ascii") {}
+    : Base(writerFolder_in + "/", filePrefix_in, fileExtension_in, "ascii") {}
 
     using Base::getIsWritten;
 
@@ -114,7 +114,7 @@ namespace lbm {
     Writer(const std::string& writerFolder_in,
            const std::string& filePrefix_in,
            const std::string& fileExtension_in)
-      : Base(writerFolder_in, filePrefix_in, fileExtension_in, "binary")
+      : Base(writerFolder_in + "/", filePrefix_in, fileExtension_in, "binary")
     {}
 
     using Base::getIsBackedUp;
@@ -143,16 +143,20 @@ namespace lbm {
   private:
     using Base = Writer<T, InputOutput::Generic, inputOutputFormat>;
     unsigned int startIteration;
+    unsigned int analysisStep;
 
   public:
-  ScalarAnalysisWriter(const std::string& filePrefix_in,
-                       unsigned int startIteration_in)
-    : Base(filePrefix_in + "/", "observables", ".dat")
-    , startIteration(startIteration_in)
+    ScalarAnalysisWriter(const std::string& writerFolder_in,
+                         const std::string& filePrefix_in,
+                         const unsigned int startIteration_in,
+                         const unsigned int analysisStep_in)
+      : Base(writerFolder_in, filePrefix_in, ".dat")
+      , startIteration(startIteration_in)
+      , analysisStep(analysisStep_in)
     {}
 
     inline bool getIsAnalyzed(const unsigned int iteration) {
-      return (iteration % scalarAnalysisStep) == 0;
+      return (iteration % analysisStep) == 0;
     }
 
     inline void openFile(const unsigned int iteration) {
@@ -192,16 +196,20 @@ namespace lbm {
   private:
     using Base = Writer<T, InputOutput::Generic, inputOutputFormat>;
     unsigned int startIteration;
+    unsigned int analysisStep;
 
   public:
-    SpectralAnalysisWriter(const std::string& filePrefix_in,
-                           unsigned int startIteration_in)
-      : Base(filePrefix_in + "/", "spectra", ".dat")
+    SpectralAnalysisWriter(const std::string& writerFolder_in,
+                           const std::string& filePrefix_in,
+                           const unsigned int startIteration_in,
+                           const unsigned int analysisStep_in)
+      : Base(writerFolder_in, filePrefix_in, ".dat")
       , startIteration(startIteration_in)
+      , analysisStep(analysisStep_in)
     {}
 
     inline bool getIsAnalyzed(const unsigned int iteration) {
-      return (iteration % spectralAnalysisStep) == 0;
+      return (iteration % analysisStep) == 0;
     }
 
     inline void openFile(const unsigned int iteration) {

@@ -46,16 +46,7 @@ namespace lbm {
     SpectralAnalysisList<T, architecture> spectralAnalysisList;
 
     Algorithm<dataT, algorithmT, architecture, implementation, overlappingT> algorithm;
-
-    double initialMass;
-    double finalMass;
-    double differenceMass;
-
-    double computationTime;
-    double communicationTime;
-    double writeFieldTime;
-    double writeAnalysisTime;
-    double totalTime;
+    PerformanceAnalysisList performanceAnalysisList;
 
   public:
     Routine()
@@ -76,17 +67,12 @@ namespace lbm {
       , distribution(initLocalDistribution<T, architecture>(fieldList.density,
                                                             fieldList.velocity,
                                                             defaultStream))
-      , scalarAnalysisList(fieldList, communication, startIteration)
-      , spectralAnalysisList(fieldList, communication, startIteration)
+      , scalarAnalysisList(fieldList, communication, scalarAnalysisStep,
+                           startIteration)
+      , spectralAnalysisList(fieldList, communication, spectralAnalysisStep,
+                             startIteration)
       , algorithm(fieldList, distribution, communication)
-      , initialMass(0.0)
-      , finalMass(0.0)
-      , differenceMass(0.0)
-      , computationTime(0.0)
-      , communicationTime(0.0)
-      , writeFieldTime(0.0)
-      , writeAnalysisTime(0.0)
-      , totalTime(0.0)
+      , performanceAnalysisList(performanceAnalysisStep, startIteration)
     {
       printInputs();
     }
@@ -113,17 +99,18 @@ namespace lbm {
         t0 = Clock::now();
         writeFields(startIteration);
         t1 = Clock::now();
-        writeFieldTime += Seconds(t1 - t0).count();
+        performanceAnalysisList.updateWriteFieldTime(Seconds(t1 - t0).count());
       }
 
       if (writeAnalysisInit) {
         t0 = Clock::now();
         writeAnalyses(startIteration);
         t1 = Clock::now();
-        writeAnalysisTime += Seconds(t1 - t0).count();
+        performanceAnalysisList.updateWriteAnalysisTime(Seconds(t1 - t0).count());
       }
 
-      initialMass = communication.reduce(fieldList.density.getLocalData(FFTWInit::numberElements));
+      performanceAnalysisList.setInitialMass(
+        communication.reduce(fieldList.density.getLocalData(FFTWInit::numberElements)));
 
       // Execute LBM algorithm
       for (int iteration = startIteration + 1; iteration <= endIteration;
@@ -144,28 +131,24 @@ namespace lbm {
         t0 = Clock::now();
         writeFields(iteration);
         t1 = Clock::now();
-        writeFieldTime += Seconds(t1 - t0).count();
+        performanceAnalysisList.updateWriteFieldTime(Seconds(t1 - t0).count());
 
         t0 = Clock::now();
         writeAnalyses(iteration);
         t1 = Clock::now();
-        writeAnalysisTime += Seconds(t1 - t0).count();
+        performanceAnalysisList.updateWriteAnalysisTime(Seconds(t1 - t0).count());
 
-        communicationTime += algorithm.getCommunicationTime();
-        computationTime += algorithm.getComputationTime();
+        performanceAnalysisList.updateCommunicationTime(algorithm.getCommunicationTime());
+        performanceAnalysisList.updateComputationTime(algorithm.getComputationTime());
+
       }
 
-      finalMass = communication.reduce(fieldList.density.getLocalData(FFTWInit::numberElements));
-
-      differenceMass = fabs(initialMass - finalMass) / initialMass;
-      totalTime = computationTime + communicationTime + writeFieldTime + writeAnalysisTime;
     }
 
   protected:
     void printInputs() {
       if (MPIInit::rank[d::X] == 0) {
         std::cout.precision(15);
-        // clang-format off
         std::cout << "-------------------OPTIONS-------------------\n"
                   << "Lattice                  : D" << L::dimD << "Q" << L::dimQ << "\n"
                   << "Global lengths           : " << gSD::sLength() << "\n"
@@ -179,26 +162,31 @@ namespace lbm {
                   << "Start iteration          : " << startIteration << "\n"
                   << "End iteration            : " << endIteration << "\n"
                   << "----------------------------------------------\n";
-        // clang-format on
       }
     }
 
     void printOutputs() {
       if (MPIInit::rank[d::X] == 0) {
         std::cout << "-------------------OUTPUTS--------------------\n"
-                  << "Total time               : " << totalTime << " s\n"
-                  << "Computatation time       : " << computationTime << " s\n"
-                  << "Communication time       : " << communicationTime << " s\n"
-                  << "Analysis time            : " << writeAnalysisTime << " s\n"
-                  << "Write time               : " << writeFieldTime << " s\n";
+                  << "Total time               : "
+                  <<  performanceAnalysisList.getTotalTime() << " s\n"
+                  << "Computatation time       : "
+                  << performanceAnalysisList.getComputationTime() << " s\n"
+                  << "Communication time       : "
+                  << performanceAnalysisList.getCommunicationTime() << " s\n"
+                  << "Analysis time            : "
+                  << performanceAnalysisList.getWriteAnalysisTime() << " s\n"
+                  << "Write time               : "
+                  << performanceAnalysisList.getWriteFieldTime() << " s\n";
 
-        const double mlups = (gSD::sVolume() * 1e-6) /
-          (totalTime / (endIteration - startIteration + 1));
-
-        std::cout << "MLUPS                   : " << mlups << "\n"
-                  << "Initial mass            : " << initialMass << "\n"
-                  << "Final mass              : " << finalMass << "\n"
-                  << "% mass diff.            : " << differenceMass << "\n"
+        std::cout << "MLUPS                   : "
+                  << performanceAnalysisList.getMLUPS() << "\n"
+                  << "Initial mass            : "
+                  << performanceAnalysisList.getInitialMass() << "\n"
+                  << "Final mass              : "
+                  << performanceAnalysisList.getFinalMass() << "\n"
+                  << "% mass diff.            : "
+                  << performanceAnalysisList.getDifferenceMass() << "\n"
                   << "----------------------------------------------\n";
       }
     }
@@ -231,7 +219,17 @@ namespace lbm {
       if (spectralAnalysisList.getIsAnalyzed(iteration)) {
         spectralAnalysisList.writeAnalyses(iteration);
       }
+
+      if (performanceAnalysisList.getIsAnalyzed(iteration)) {
+        performanceAnalysisList.updateMass(communication.reduce(
+          fieldList.density.getLocalData(FFTWInit::numberElements)));
+
+        performanceAnalysisList.updateMLUPS(iteration - startIteration);
+
+        performanceAnalysisList.writeAnalyses(iteration);
+      }
     }
+
   };
 
 }  // namespace lbm

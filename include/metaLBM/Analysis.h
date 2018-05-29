@@ -97,6 +97,7 @@ class TotalEnstrophy : public AnalysisScalar<T> {
   using Base::scalar;
 };
 
+
 template <class T, unsigned int maxWaveNumber>
 class AnalysisSpectral {
  public:

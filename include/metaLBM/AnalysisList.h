@@ -34,12 +34,13 @@ class ScalarAnalysisList {
 
   ScalarAnalysisList(FieldList<T, architecture>& fieldList_in,
                      Communication_& communication_in,
-                     unsigned int startIteration_in)
+                     const unsigned int scalarAnalysisStep_in,
+                     const unsigned int startIteration_in)
     : totalEnergy(fieldList_in.density.getLocalData(FFTWInit::numberElements),
                   fieldList_in.velocity.getLocalData(FFTWInit::numberElements))
     , totalEnstrophy(fieldList_in.vorticity.getLocalData(FFTWInit::numberElements))
     , communication(communication_in)
-    , scalarAnalysisWriter(prefix, startIteration_in)
+    , scalarAnalysisWriter(prefix, "observables", scalarAnalysisStep_in, startIteration_in)
     , computationLocal(lSD::sStart(), lSD::sEnd())
   {
     if (MPIInit::rank[d::X] == 0) {
@@ -111,13 +112,14 @@ class SpectralAnalysisList {
 
   SpectralAnalysisList(FieldList<T, architecture>& fieldList_in,
                        Communication_& communication_in,
-                       unsigned int startIteration_in)
+                       const unsigned int spectralAnalysisStep_in,
+                       const unsigned int startIteration_in)
     : energySpectra(fieldList_in.velocity.getLocalData(FFTWInit::numberElements),
                     globalLengthPtrdiff_t, "energy_spectra")
     , forcingSpectra(fieldList_in.force.getLocalData(FFTWInit::numberElements),
                      globalLengthPtrdiff_t, "forcing_spectra")
     , communication(communication_in)
-    , spectralAnalysisWriter(prefix, startIteration_in)
+    , spectralAnalysisWriter(prefix, "spectra", spectralAnalysisStep_in, startIteration_in)
     , offset(gFD::offset(MPIInit::rank))
     , computationFourier(lFD::start(), lFD::end())
   {
@@ -198,6 +200,132 @@ class SpectralAnalysisList {
     spectralAnalysisWriter.writeHeader(header);
   }
 };
+
+
+ class PerformanceAnalysisList {
+ private:
+    double initialMass;
+    double currentMass;
+    double differenceMass;
+
+    double computationTime;
+    double communicationTime;
+    double writeFieldTime;
+    double writeAnalysisTime;
+    double totalTime;
+    double mLUPS;
+    ScalarAnalysisWriter_ scalarAnalysisWriter;
+
+ public:
+   PerformanceAnalysisList(const unsigned int performanceAnalysisStep_in,
+                           const unsigned int startIteration_in)
+     : initialMass(0.0)
+     , currentMass(0.0)
+     , differenceMass(0.0)
+     , computationTime(0.0)
+     , communicationTime(0.0)
+     , writeFieldTime(0.0)
+     , writeAnalysisTime(0.0)
+     , totalTime(0.0)
+     , mLUPS(0.0)
+     , scalarAnalysisWriter(prefix, "performances", performanceAnalysisStep_in,
+                            startIteration_in)
+   {
+     if (MPIInit::rank[d::X] == 0) {
+       writeAnalysesHeader();
+     }
+   }
+
+    inline void setInitialMass(const double mass) {
+      initialMass = mass;
+    }
+
+    inline void updateMass(const double mass) {
+      currentMass = mass;
+      differenceMass = fabs(initialMass - currentMass) / initialMass;
+    }
+
+    inline void updateComputationTime(const double computationDuration) {
+      computationTime += computationDuration;
+      totalTime += computationDuration;
+    }
+
+    inline void updateCommunicationTime(const double communicationDuration) {
+      communicationTime += communicationDuration;
+      totalTime += communicationDuration;
+    }
+
+    inline void updateWriteFieldTime(const double writeFieldDuration) {
+      writeFieldTime += writeFieldDuration;
+      totalTime += writeFieldDuration;
+    }
+
+    inline void updateWriteAnalysisTime(const double writeAnalysisDuration) {
+      writeAnalysisTime += writeAnalysisDuration;
+      totalTime += writeAnalysisDuration;
+    }
+
+    inline void updateMLUPS(const double numberIteration) {
+      mLUPS = (gSD::sVolume() * 1e-6) /
+        (totalTime / numberIteration);
+    }
+
+    inline bool getIsAnalyzed(const unsigned int iteration) {
+      return scalarAnalysisWriter.getIsAnalyzed(iteration);
+    }
+
+    inline void writeAnalysesHeader() {
+      std::string header = "iteration computation_time communication_time write_field_time analysis_time total_time MLUPS mass_difference";
+      scalarAnalysisWriter.writeHeader(header);
+    }
+
+    inline void writeAnalyses(const unsigned int iteration) {
+      if (MPIInit::rank[d::X] == 0) {
+        double scalarList[] = {computationTime, communicationTime, writeFieldTime,
+                               writeAnalysisTime, totalTime, mLUPS, differenceMass};
+        scalarAnalysisWriter.openFile(iteration);
+        scalarAnalysisWriter.writeAnalysis<7>(iteration, scalarList);
+        scalarAnalysisWriter.closeFile();
+      }
+    }
+
+    inline double getComputationTime() {
+      return computationTime;
+    }
+
+     inline double getCommunicationTime() {
+      return communicationTime;
+    }
+
+     inline double getWriteAnalysisTime() {
+      return writeAnalysisTime;
+    }
+
+     inline double getWriteFieldTime() {
+      return writeFieldTime;
+    }
+
+    inline double getTotalTime() {
+      return totalTime;
+    }
+
+    inline double getMLUPS() {
+      return mLUPS;
+    }
+
+    inline double getInitialMass() {
+      return initialMass;
+    }
+
+    inline double getFinalMass() {
+      return currentMass;
+    }
+
+    inline double getDifferenceMass() {
+      return differenceMass;
+    }
+
+ };
 
 }  // namespace lbm
 
