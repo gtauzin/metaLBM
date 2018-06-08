@@ -82,7 +82,7 @@ namespace lbm {
     }
 
     void compute() {
-      LBM_INSTRUMENT_ON("Routine<T>::compute", 1)
+       LBM_INSTRUMENT_ON("Routine<T>::compute", 1)
 
       algorithm.unpack(defaultStream);
 
@@ -142,6 +142,11 @@ namespace lbm {
         performanceAnalysisList.updateComputationTime(algorithm.getComputationTime());
 
       }
+
+      performanceAnalysisList.updateMass(communication.reduce(
+        fieldList.density.getLocalData(FFTWInit::numberElements)));
+
+      performanceAnalysisList.updateMLUPS(endIteration - startIteration);
 
     }
 

@@ -40,7 +40,7 @@ class ScalarAnalysisList {
                   fieldList_in.velocity.getLocalData(FFTWInit::numberElements))
     , totalEnstrophy(fieldList_in.vorticity.getLocalData(FFTWInit::numberElements))
     , communication(communication_in)
-    , scalarAnalysisWriter(prefix, "observables", scalarAnalysisStep_in, startIteration_in)
+    , scalarAnalysisWriter(prefix, "observables", startIteration_in, scalarAnalysisStep_in)
     , computationLocal(lSD::sStart(), lSD::sEnd())
   {
     if (MPIInit::rank[d::X] == 0) {
@@ -119,7 +119,7 @@ class SpectralAnalysisList {
     , forcingSpectra(fieldList_in.force.getLocalData(FFTWInit::numberElements),
                      globalLengthPtrdiff_t, "forcing_spectra")
     , communication(communication_in)
-    , spectralAnalysisWriter(prefix, "spectra", spectralAnalysisStep_in, startIteration_in)
+    , spectralAnalysisWriter(prefix, "spectra", startIteration_in, spectralAnalysisStep_in)
     , offset(gFD::offset(MPIInit::rank))
     , computationFourier(lFD::start(), lFD::end())
   {
@@ -228,8 +228,8 @@ class SpectralAnalysisList {
      , writeAnalysisTime(0.0)
      , totalTime(0.0)
      , mLUPS(0.0)
-     , scalarAnalysisWriter(prefix, "performances", performanceAnalysisStep_in,
-                            startIteration_in)
+     , scalarAnalysisWriter(prefix, "performances", startIteration_in,
+                             performanceAnalysisStep_in)
    {
      if (MPIInit::rank[d::X] == 0) {
        writeAnalysesHeader();
@@ -267,7 +267,7 @@ class SpectralAnalysisList {
 
     inline void updateMLUPS(const double numberIteration) {
       mLUPS = (gSD::sVolume() * 1e-6) /
-        (totalTime / numberIteration);
+        (totalTime / numberIteration + 1);
     }
 
     inline bool getIsAnalyzed(const unsigned int iteration) {
