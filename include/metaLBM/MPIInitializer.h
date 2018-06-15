@@ -40,22 +40,27 @@ namespace lbm {
         MPI_Abort(MPI_COMM_WORLD, 1);
       }
 
-      MPI_Comm_rank(MPI_COMM_WORLD, &rank[d::X]);
+      #ifdef USE_NVSHMEM
+        MPI_Comm comm;
+        shmemx_init_attr_t attribute;
+        comm = MPI_COMM_WORLD;
+
+        attribute.mpi_comm = &comm;
+        shmemx_init_attr(SHMEMX_INIT_WITH_MPI_COMM, &attribute);
+
+        rank[d::X] = shmem_my_pe();
+      #else
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank[d::X]);
+      #endif
+
       rankLeft = (rank[d::X] + size[d::X] - 1) % size[d::X];
       rankRight = (rank[d::X] + 1) % size[d::X];
-
-      #ifdef USE_NVSHMEM
-      MPI_Comm comm;
-      shmemx_init_attr_t attribute;
-      comm = MPI_COMM_WORLD;
-
-      attribute.mpi_comm = &comm;
-      shmemx_init_attr (SHMEMX_INIT_WITH_MPI_COMM, &attribute);
-      #endif
     }
 
     /// Finalizes MPI
-    ~MPIInitializer() { MPI_Finalize(); }
+    ~MPIInitializer() {
+      MPI_Finalize();
+    }
 
   };  // end class MPIInitializer
 

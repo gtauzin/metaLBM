@@ -16,7 +16,7 @@ class Stream<Architecture::GPU> : public Stream<Architecture::Generic> {
     if (isDefault_in) {
       LBM_CUDA_CALL(cudaStreamCreateWithFlags(&stream, cudaStreamDefault));
     } else {
-      LBM_CUDA_CALL(cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking))
+      LBM_CUDA_CALL(cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking));
     }
   }
 

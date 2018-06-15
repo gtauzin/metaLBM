@@ -65,7 +65,7 @@ template <unsigned int Dimension>
       : start(start_in), end(end_in), length(end_in - start_in), dir(dir_in) {}
 
   LBM_INLINE static void synchronize() {
-    LBM_CUDA_CALL( cudaDeviceSynchronize() );
+    LBM_CUDA_CALL(cudaDeviceSynchronize());
   }
 
 };
@@ -91,7 +91,7 @@ template <unsigned int Dimension>
 
       kernel_1D<<<dimGrid, dimBlock, 0, stream.get()>>>(Base::start, Base::end, Base::dir,
 							function, arguments...);
-      LBM_CUDA_CALL ( cudaGetLastError(); );
+      LBM_CUDA_CALL(cudaGetLastError());
     }
   };
 
@@ -136,7 +136,7 @@ template <unsigned int Dimension>
 
      kernel_3D<<<dimGrid, dimBlock, 0, stream.get()>>>(Base::start, Base::end, Base::dir,
 						       function, arguments...);
-     LBM_CUDA_CALL ( cudaGetLastError() );
+     LBM_CUDA_CALL(cudaGetLastError());
    }
  };
 

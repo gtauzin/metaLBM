@@ -135,47 +135,48 @@ namespace lbm {
     void sendAndReceiveHaloXRight(T* haloDistributionPtr) {
       LBM_INSTRUMENT_ON( "Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloXRight", 4)
 
-        for (auto iQ = L::faceQ + 1; iQ < 2 * L::faceQ + 1; ++iQ) {
-          sendToRightBeginX = hMLSD::getIndex(
-            Position({L::halo()[d::X] + lSD::sLength()[d::X] - 1,
-                      hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
-          receivedFromLeftBeginX = hMLSD::getIndex(
-            Position({0, hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
+      for(auto iQ = L::faceQ + 1; iQ < 2 * L::faceQ + 1; ++iQ) {
+        sendToRightBeginX = hMLSD::getIndex(
+          Position({L::halo()[d::X] + lSD::sLength()[d::X] - 1,
+                    hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
+        receivedFromLeftBeginX = hMLSD::getIndex(
+          Position({0, hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
-          MPI_Irecv(haloDistributionPtr + receivedFromLeftBeginX, sizeStripeX,
-                    MPI_DOUBLE, MPIInit::rankLeft, 17, MPI_COMM_WORLD,
-                    &requestXRightMPI[0]);
+        LBM_MPI_CALL(MPI_Irecv(haloDistributionPtr + receivedFromLeftBeginX, sizeStripeX,
+                               MPI_DOUBLE, MPIInit::rankLeft, 17, MPI_COMM_WORLD,
+                               &requestXRightMPI[0]));
 
-          MPI_Isend(haloDistributionPtr + sendToRightBeginX, sizeStripeX,
-                    MPI_DOUBLE, MPIInit::rankRight, 17, MPI_COMM_WORLD,
-                    &requestXRightMPI[1]);
+        LBM_MPI_CALL(MPI_Isend(haloDistributionPtr + sendToRightBeginX, sizeStripeX,
+                               MPI_DOUBLE, MPIInit::rankRight, 17, MPI_COMM_WORLD,
+                               &requestXRightMPI[1]));
 
-          MPI_Waitall(2, requestXRightMPI, statusXRightMPI);
-        }
+        MPI_Waitall(2, requestXRightMPI, statusXRightMPI);
+      }
     }
 
     LBM_HOST
     void sendAndReceiveHaloXLeft(T* haloDistributionPtr) {
       LBM_INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloXLeft", 4)
 
-        for (auto iQ = 1; iQ < L::faceQ + 1; ++iQ) {
-          sendToLeftBeginX = hMLSD::getIndex(
-            Position({L::halo()[d::X], hMLSD::start()[d::Y],
-                      hMLSD::start()[d::Z]}), iQ);
+      for(auto iQ = 1; iQ < L::faceQ + 1; ++iQ) {
+        sendToLeftBeginX = hMLSD::getIndex(
+          Position({L::halo()[d::X], hMLSD::start()[d::Y],
+                hMLSD::start()[d::Z]}), iQ);
 
-          receivedFromRightBeginX = hMLSD::getIndex(
-            Position({L::halo()[d::X] + lSD::sLength()[d::X],
-                      hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
+        receivedFromRightBeginX = hMLSD::getIndex(
+          Position({L::halo()[d::X] + lSD::sLength()[d::X],
+                    hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
-          MPI_Irecv(haloDistributionPtr + receivedFromRightBeginX, sizeStripeX,
-                    MPI_DOUBLE, MPIInit::rankRight, 23, MPI_COMM_WORLD,
-                    &requestXLeftMPI[0]);
+        LBM_MPI_CALL(MPI_Irecv(haloDistributionPtr + receivedFromRightBeginX, sizeStripeX,
+                               MPI_DOUBLE, MPIInit::rankRight, 23, MPI_COMM_WORLD,
+                               &requestXLeftMPI[0]));
 
-          MPI_Isend(haloDistributionPtr + sendToLeftBeginX, sizeStripeX, MPI_DOUBLE,
-                    MPIInit::rankLeft, 23, MPI_COMM_WORLD, &requestXLeftMPI[1]);
+        LBM_MPI_CALL(MPI_Isend(haloDistributionPtr + sendToLeftBeginX, sizeStripeX,
+                               MPI_DOUBLE, MPIInit::rankLeft, 23, MPI_COMM_WORLD,
+                               &requestXLeftMPI[1]));
 
-          MPI_Waitall(2, requestXLeftMPI, statusXLeftMPI);
-        }
+        MPI_Waitall(2, requestXLeftMPI, statusXLeftMPI);
+      }
     }
 
     LBM_HOST
@@ -187,7 +188,6 @@ namespace lbm {
     LBM_HOST
     void sendAndReceiveHaloYTop(T* haloDistributionPtr) {
       LBM_INSTRUMENT_ON("Communication<5, MemoryLayout::SoA>::sendAndReceiveHaloYTop", 4)
-
         // TODO - PACK AND UNPACK
         }
 
@@ -244,12 +244,6 @@ namespace lbm {
     typedef Domain<DomainType::HaloSpace, PartitionningType::Generic,
                    MemoryLayout::AoS, L::dimQ> hMLSD;
 
-    unsigned int sizeStripeX;
-    unsigned int sendToRightBeginX;
-    unsigned int receivedFromLeftBeginX;
-    unsigned int sendToLeftBeginX;
-    unsigned int receivedFromRightBeginX;
-
   public:
     LBM_HOST
     Communication()
@@ -274,6 +268,12 @@ namespace lbm {
     using Base::sendLocalToGlobal;
 
   protected:
+    unsigned int sizeStripeX;
+    unsigned int sendToRightBeginX;
+    unsigned int receivedFromLeftBeginX;
+    unsigned int sendToLeftBeginX;
+    unsigned int receivedFromRightBeginX;
+
     LBM_HOST
     void sendAndReceiveHaloXRight(T* haloDistributionPtr) {
       LBM_INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloXRight", 4)
@@ -292,9 +292,9 @@ namespace lbm {
     void sendAndReceiveHaloXLeft(T* haloDistributionPtr) {
       LBM_INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloXLeft", 4)
 
-        MPI_Irecv(haloDistributionPtr + receivedFromRightBeginX, sizeStripeX,
-                  MPI_DOUBLE, MPIInit::rankRight, 23, MPI_COMM_WORLD,
-                  &requestXLeftMPI[0]);
+      MPI_Irecv(haloDistributionPtr + receivedFromRightBeginX, sizeStripeX,
+                MPI_DOUBLE, MPIInit::rankRight, 23, MPI_COMM_WORLD,
+                &requestXLeftMPI[0]);
 
       MPI_Isend(haloDistributionPtr + sendToLeftBeginX, sizeStripeX, MPI_DOUBLE,
                 MPIInit::rankLeft, 23, MPI_COMM_WORLD, &requestXLeftMPI[1]);
@@ -357,9 +357,10 @@ namespace lbm {
           Base::receivedFromLeftBeginX = hMLSD::getIndex(
             Position({0, hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
-          shmem_double_put(haloDistributionPtr + Base::receivedFromLeftBeginX,
-                           haloDistributionPtr + Base::sendToRightBeginX,
-                           Base::sizeStripeX, MPIInit::rankRight);
+          shmem_putmem(haloDistributionPtr + Base::receivedFromLeftBeginX,
+                       haloDistributionPtr + Base::sendToRightBeginX,
+                       Base::sizeStripeX * sizeof(T), MPIInit::rankRight);
+          //shmem_quiet();
           shmem_barrier_all();
         }
     }
@@ -377,9 +378,10 @@ namespace lbm {
             Position({L::halo()[d::X] + lSD::sLength()[d::X],
                       hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
-          shmem_double_put(haloDistributionPtr + Base::sendToLeftBeginX,
-                           haloDistributionPtr + Base::receivedFromRightBeginX,
-                           Base::sizeStripeX, MPIInit::rankLeft);
+          shmem_putmem(haloDistributionPtr + Base::receivedFromRightBeginX,
+                       haloDistributionPtr + Base::sendToLeftBeginX,
+                       Base::sizeStripeX * sizeof(T), MPIInit::rankLeft);
+          //shmem_quiet();
           shmem_barrier_all();
         }
     }
@@ -415,6 +417,7 @@ namespace lbm {
     using Base::sendToRightBeginX;
     using Base::sizeStripeX;
 
+  public:
     using Base::Communication;
 
     using Base::reduce;
@@ -434,16 +437,16 @@ namespace lbm {
     LBM_HOST void sendAndReceiveHaloXLeft(T* haloDistributionPtr) {
       LBM_INSTRUMENT_ON("Communication<5, MemoryLayout::AoS>::sendAndReceiveHaloX", 4)
 
-      shmem_double_put(haloDistributionPtr + Base::sendToLeftBeginX,
-                       haloDistributionPtr + Base::receivedFromRightBeginX,
+      shmem_double_put(haloDistributionPtr + Base::receivedFromRightBeginX,
+                       haloDistributionPtr + Base::sendToLeftBeginX,
                        Base::sizeStripeX, MPIInit::rankLeft);
       shmem_barrier_all();
     }
 
-    using Base::sendAndReceiveHaloBackZ;
-    using Base::sendAndReceiveHaloFrontZ;
     using Base::sendAndReceiveHaloYBottom;
     using Base::sendAndReceiveHaloYTop;
+    using Base::sendAndReceiveHaloZBack;
+    using Base::sendAndReceiveHaloZFront;
   };
 
   template <class T, LatticeType latticeType, MemoryLayout memoryLayout>

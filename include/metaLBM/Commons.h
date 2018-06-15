@@ -2,19 +2,40 @@
 
 #include <iostream>
 
+
+#define LBM_MPI_CALL(call)                                              \
+  do {                                                                  \
+    int error = (call);                                                 \
+    if (MPI_SUCCESS != error) {                                         \
+      fprintf(stderr, "[%s:%d] MPI failed with %s \n",                  \
+              __FILE__, __LINE__, error);             \
+      exit(-1);                                                         \
+    }                                                                   \
+  } while (0)
+
 #ifdef __NVCC__
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 
-#define LBM_CUDA_CALL(call)                                                \
-  {                                                                        \
-    cudaError_t error = call;                                              \
-    if (error != cudaSuccess) {                                            \
-      std::cerr << "Cuda failure " << __FILE__ << ":" << __LINE__ << ": '" \
-                << cudaGetErrorString(error) << "'" << std::endl;          \
-      exit(0);                                                             \
-    }                                                                      \
-  }
+#define LBM_CUDA_CALL(call)                                             \
+  do {                                                                  \
+    cudaError_t error = (call);                                         \
+    if (cudaSuccess != error) {                                         \
+      fprintf(stderr, "[%s:%d] CUDA failed with %s \n",                 \
+              __FILE__, __LINE__, cudaGetErrorString(error));          \
+      exit(-1);                                                         \
+    }                                                                   \
+  } while (0)
+
+#define LBM_SHMEM_CALL(call)                                            \
+  do {                                                                  \
+    int error = (call);                                                 \
+    if (SHMEM_SUCCESS != error) {                                       \
+      fprintf(stderr, "[%s:%d] SHMEM failed with %s \n",                \
+              __FILE__, __LINE__, error);          \
+      exit(-1);                                                         \
+    }                                                                   \
+  } while (0)
 
 #define LBM_HOST __host__
 #define LBM_DEVICE __device__
@@ -59,6 +80,8 @@ class Tracer {
 #else  // __NVCC__
 #define LBM_CUDA_CALL(call)
 
+#define LBM_SHMEM_CALL(call)
+
 #define LBM_HOST
 #define LBM_DEVICE
 #define LBM_SHARED
@@ -69,7 +92,7 @@ class Tracer {
 #ifdef USE_SCOREP
 #include <scorep/SCOREP_User.h>
 
-#define INSTRUMENT_ON(name, colorID) \
+#define LBM_INSTRUMENT_ON(name, colorID) \
   { SCOREP_USER_REGION(name, SCOREP_USER_REGION_TYPE_FUNCTION) }
 
 #else  // USE_SCOREP
