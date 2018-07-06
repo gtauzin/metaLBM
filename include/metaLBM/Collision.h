@@ -94,9 +94,9 @@ template <class T, Architecture architecture>
                                                        velocity);
   }
 
-  LBM_DEVICE LBM_HOST inline
-  void update(const unsigned int iteration) {
-    forcing.update(fieldList.force.getData(FFTWInit::numberElements),
+  LBM_HOST inline
+  void update(const unsigned int iteration, const unsigned int numberElements) {
+    forcing.update(fieldList.force.getData(numberElements),
                    fieldList, iteration);
   }
 };

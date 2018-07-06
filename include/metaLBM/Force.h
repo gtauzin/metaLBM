@@ -48,7 +48,7 @@ namespace lbm {
     }
 
 
-    LBM_DEVICE LBM_HOST inline
+    LBM_HOST inline
     void update(double * forcePtr,
                 FieldList<double, architecture>& fieldList,
                 const unsigned int iteration) {}
@@ -511,7 +511,7 @@ namespace lbm {
       backward.execute();
     }
 
-    LBM_DEVICE LBM_HOST inline
+    LBM_HOST inline
     void update(double * forcePtr,
                 FieldList<double, architecture>& fieldList,
                 const unsigned int iteration) {
@@ -568,7 +568,7 @@ namespace lbm {
       computationLocal.synchronize();
     }
 
-    LBM_DEVICE LBM_HOST inline
+    LBM_HOST inline
     void update(double * forcePtr,
                 FieldList<double, architecture>& fieldList,
                 const unsigned int iteration) {

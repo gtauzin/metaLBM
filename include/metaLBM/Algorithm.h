@@ -31,14 +31,14 @@ namespace lbm {
             Overlapping overlapping>
   class Algorithm<T, AlgorithmType::Generic, architecture, implementation, overlapping> {
   public:
-    static T* densityPtr;
-    static T* velocityPtr;
-    static T* forcePtr;
-    static T* alphaPtr;
-    static T* T2Ptr;
-    static T* T3Ptr;
-    static T* T4Ptr;
-    static T* distributionPtr;
+    T* densityPtr;
+    T* velocityPtr;
+    T* forcePtr;
+    T* alphaPtr;
+    T* T2Ptr;
+    T* T3Ptr;
+    T* T4Ptr;
+    T* distributionPtr;
 
   protected:
     T* haloDistributionPreviousPtr;
@@ -60,7 +60,15 @@ namespace lbm {
               Distribution<T, architecture>& distribution_in,
               Communication<T, latticeT, algorithmT, memoryL, partitionningT,
                             implementation, L::dimD>& communication_in)
-      : haloDistributionPreviousPtr(distribution_in.getHaloDataPrevious())
+      : densityPtr(fieldList_in.density.getData(FFTWInit::numberElements))
+      , velocityPtr(fieldList_in.velocity.getData(FFTWInit::numberElements))
+      , forcePtr(fieldList_in.force.getData(FFTWInit::numberElements))
+      , alphaPtr(fieldList_in.alpha.getData(FFTWInit::numberElements))
+      , T2Ptr(fieldList_in.T2.getData(FFTWInit::numberElements))
+      , T3Ptr(fieldList_in.T3.getData(FFTWInit::numberElements))
+      , T4Ptr(fieldList_in.T4.getData(FFTWInit::numberElements))
+      , distributionPtr(distribution_in.getData(FFTWInit::numberElements))
+      , haloDistributionPreviousPtr(distribution_in.getHaloDataPrevious())
       , haloDistributionNextPtr(distribution_in.getHaloDataNext())
       , communication(communication_in)
       , collision(relaxationTime, fieldList_in, forceAmplitude, forceWaveLength,
@@ -68,16 +76,7 @@ namespace lbm {
       , dtComputation()
       , dtCommunication()
       , isStored(false)
-    {
-      densityPtr = fieldList_in.density.getData(FFTWInit::numberElements);
-      velocityPtr = fieldList_in.velocity.getData(FFTWInit::numberElements);
-      forcePtr = fieldList_in.force.getData(FFTWInit::numberElements);
-      alphaPtr = fieldList_in.alpha.getData(FFTWInit::numberElements);
-      T2Ptr = fieldList_in.T2.getData(FFTWInit::numberElements);
-      T3Ptr = fieldList_in.T3.getData(FFTWInit::numberElements);
-      T4Ptr = fieldList_in.T4.getData(FFTWInit::numberElements);
-      distributionPtr = distribution_in.getData(FFTWInit::numberElements);
-    }
+    {}
 
     double getCommunicationTime() { return dtCommunication.count(); }
 
@@ -198,7 +197,7 @@ namespace lbm {
 
       std::swap(Base::haloDistributionPreviousPtr, Base::haloDistributionNextPtr);
 
-      Base::collision.update(iteration);
+      Base::collision.update(iteration, FFTWInit::numberElements);
 
       auto t0 = Clock::now();
       Base::communication.communicateHalos(Base::haloDistributionPreviousPtr);
@@ -414,7 +413,7 @@ namespace lbm {
         std::swap(Base::haloDistributionPreviousPtr,
                   Base::haloDistributionNextPtr);
 
-      Base::collision.update(iteration);
+      Base::collision.update(iteration, FFTWInit::numberElements);
 
       auto t0 = Clock::now();
       Base::computationBottom.Do(defaultStream, Base::bottomBoundary,
@@ -438,35 +437,5 @@ namespace lbm {
 
   };
 #endif  // USE_NVSHMEM
-
-  template <class T, Architecture architecture, Implementation implementation,
-            Overlapping overlapping>
-  using Algorithm_Generic
-    = Algorithm<T, AlgorithmType::Generic, architecture, implementation, overlapping>;
-
-  template <class T, Architecture architecture, Implementation implementation,
-            Overlapping overlapping>
-  T* Algorithm_Generic<T, architecture, implementation, overlapping>::densityPtr = NULL;
-  template <class T, Architecture architecture, Implementation implementation,
-            Overlapping overlapping>
-  T* Algorithm_Generic<T, architecture, implementation, overlapping>::velocityPtr = NULL;
-  template <class T, Architecture architecture, Implementation implementation,
-            Overlapping overlapping>
-  T* Algorithm_Generic<T, architecture, implementation, overlapping>::forcePtr = NULL;
-  template <class T, Architecture architecture, Implementation implementation,
-            Overlapping overlapping>
-  T* Algorithm_Generic<T, architecture, implementation, overlapping>::alphaPtr = NULL;
-  template <class T, Architecture architecture, Implementation implementation,
-            Overlapping overlapping>
-  T* Algorithm_Generic<T, architecture, implementation, overlapping>::T2Ptr = NULL;
-  template <class T, Architecture architecture, Implementation implementation,
-            Overlapping overlapping>
-  T* Algorithm_Generic<T, architecture, implementation, overlapping>::T3Ptr = NULL;
-  template <class T, Architecture architecture, Implementation implementation,
-            Overlapping overlapping>
-  T* Algorithm_Generic<T, architecture, implementation, overlapping>::T4Ptr = NULL;
-  template <class T, Architecture architecture, Implementation implementation,
-            Overlapping overlapping>
-  T* Algorithm_Generic<T, architecture, implementation, overlapping>::distributionPtr = NULL;
 
 }  // namespace lbm
