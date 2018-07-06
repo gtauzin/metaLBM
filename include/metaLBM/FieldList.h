@@ -26,6 +26,9 @@ class FieldList {
   Field<T, L::dimD, architecture, true> velocity;
   Field<T, L::dimD, architecture, writeForce> force;
   Field<T, 1, architecture, writeAlpha> alpha;
+  Field<T, 1, architecture, writeT> T2;
+  Field<T, 1, architecture, writeT> T3;
+  Field<T, 1, architecture, writeT> T4;
   Field<T, 2 * L::dimD - 3, architecture, writeVorticity> vorticity;
   FieldWriter_& fieldWriter;
   Curl<double, Architecture::CPU, PartitionningType::OneD, L::dimD, L::dimD>
@@ -33,13 +36,16 @@ class FieldList {
 
   FieldList(FieldWriter_& fieldWriter_in,
             const Stream<architecture>& stream_in)
-    : density(initLocalDensity<T, architecture>(stream_in))
-    , velocity(initLocalVelocity<T, architecture>(stream_in))
-    , force(initLocalForce<T, architecture>(stream_in))
-    , alpha(initLocalAlpha<T, architecture>(stream_in))
+    : density(initDensity<T, architecture>(stream_in))
+    , velocity(initVelocity<T, architecture>(stream_in))
+    , force(initForce<T, architecture>(stream_in))
+    , alpha(initAlpha<T, architecture>(stream_in))
+    , T2("T2")
+    , T3("T3")
+    , T4("T4")
     , vorticity("vorticity")
-    , curlVelocity(velocity.getLocalData(FFTWInit::numberElements),
-                   vorticity.getLocalData(FFTWInit::numberElements),
+    , curlVelocity(velocity.getData(FFTWInit::numberElements),
+                   vorticity.getData(FFTWInit::numberElements),
                    Cast<unsigned int, ptrdiff_t, 3>::Do(gSD::sLength()).data(),
                    gFD::offset(MPIInit::rank))
     , fieldWriter(fieldWriter_in)
@@ -48,9 +54,14 @@ class FieldList {
   inline void writeFields() {
     fieldWriter.writeField(density);
     fieldWriter.writeField(velocity);
-    fieldWriter.writeField(alpha);
-    fieldWriter.writeField(force);
-    fieldWriter.writeField(vorticity);
+    if(writeAlpha) fieldWriter.writeField(alpha);
+    if(writeT) {
+      fieldWriter.writeField(T2);
+      fieldWriter.writeField(T3);
+      fieldWriter.writeField(T4);
+    }
+    if(writeForce) fieldWriter.writeField(force);
+    if(writeVorticity) fieldWriter.writeField(vorticity);
   }
 };
 

@@ -11,7 +11,7 @@
 namespace lbm {
 
 /**
- * Lattice required to define a lattice for a parallel code.
+ * Parameters required to define a lattice stencil.
  *
  * @tparam T data type.
  * @tparam LatticeT lattice type of the form DdQq.
@@ -103,8 +103,10 @@ struct Lattice<T, LatticeType::D2Q5> {
   LBM_HOST static inline constexpr MathVector<MathVector<T, dimD>, dimQ>
   celerity() {
     return {
-        MathVector<T, dimD>{{(T)0, (T)0}}, MathVector<T, dimD>{{(T)-1, (T)0}},
-        MathVector<T, dimD>{{(T)1, (T)0}}, MathVector<T, dimD>{{(T)0, (T)-1}},
+        MathVector<T, dimD>{{(T)0, (T)0}},
+        MathVector<T, dimD>{{(T)-1, (T)0}},
+        MathVector<T, dimD>{{(T)1, (T)0}},
+        MathVector<T, dimD>{{(T)0, (T)-1}},
         MathVector<T, dimD>{{(T)0, (T)1}}};
   }
 
@@ -129,11 +131,11 @@ struct Lattice<T, LatticeType::D2Q9> {
   static constexpr T inv_cs2 = (T)3;
   static constexpr T cs2 = (T)1 / inv_cs2;
 
-  LBM_DEVICE LBM_HOST static inline constexpr MathVector<T, dimQ> iQ_Bottom() {
+  LBM_DEVICE LBM_HOST static inline constexpr MathVector<T, faceQ> iQ_Bottom() {
     return {{3, 4, 7}};
   }
 
-  LBM_DEVICE LBM_HOST static inline constexpr MathVector<T, dimQ> iQ_Top() {
+  LBM_DEVICE LBM_HOST static inline constexpr MathVector<T, faceQ> iQ_Top() {
     return {{1, 6, 8}};
   }
 
@@ -151,11 +153,15 @@ struct Lattice<T, LatticeType::D2Q9> {
   LBM_HOST static inline constexpr MathVector<MathVector<T, dimD>, dimQ>
   celerity() {
     return {
-        MathVector<T, dimD>{{(T)0, (T)0}},  MathVector<T, dimD>{{(T)-1, (T)1}},
-        MathVector<T, dimD>{{(T)-1, (T)0}}, MathVector<T, dimD>{{(T)-1, (T)-1}},
-        MathVector<T, dimD>{{(T)1, (T)-1}}, MathVector<T, dimD>{{(T)1, (T)0}},
-        MathVector<T, dimD>{{(T)1, (T)1}},  MathVector<T, dimD>{{(T)0, (T)-1}},
-        MathVector<T, dimD>{{(T)0, (T)1}}};
+        MathVector<T, dimD>{{(T) 0, (T) 0}},
+        MathVector<T, dimD>{{(T)-1, (T) 1}},
+        MathVector<T, dimD>{{(T)-1, (T) 0}},
+        MathVector<T, dimD>{{(T)-1, (T)-1}},
+        MathVector<T, dimD>{{(T) 1, (T)-1}},
+        MathVector<T, dimD>{{(T) 1, (T) 0}},
+        MathVector<T, dimD>{{(T) 1, (T) 1}},
+        MathVector<T, dimD>{{(T) 0, (T)-1}},
+        MathVector<T, dimD>{{(T) 0, (T) 1}}};
   }
 
   LBM_DEVICE LBM_HOST static inline constexpr MathVector<T, dimQ> weight() {
@@ -163,6 +169,142 @@ struct Lattice<T, LatticeType::D2Q9> {
             (T)1 / (T)9, (T)1 / (T)36, (T)1 / (T)9, (T)1 / (T)9};
   }
 };
+
+
+ template <class T>
+struct Lattice<T, LatticeType::D2Q13> {
+  static constexpr LatticeType Type = LatticeType::D2Q13;
+
+  static constexpr int dimD = 2;
+  static constexpr int dimQ = 13;
+  static constexpr int faceQ = 4;
+
+  LBM_DEVICE LBM_HOST static inline constexpr Position halo() {
+    return Position({2, 2, 0});
+  }
+
+  static constexpr T cs2 = (T) 0.6666616983436102;
+  static constexpr T inv_cs2 = (T)1 / (T)cs2;
+
+  LBM_DEVICE LBM_HOST static inline constexpr MathVector<unsigned int, faceQ> iQ_Bottom() {
+    return {{2, 6, 9, 11}};
+  }
+
+  LBM_DEVICE LBM_HOST static inline constexpr MathVector<unsigned int, faceQ> iQ_Top() {
+    return {{3, 7, 10, 12}};
+  }
+
+  LBM_DEVICE LBM_HOST static inline constexpr MathVector<unsigned int, 0>
+  iQ_Front() {
+    return {{}};
+  }
+
+  LBM_DEVICE LBM_HOST static inline constexpr MathVector<unsigned int, 0>
+  iQ_Back() {
+    return {{}};
+  }
+
+  LBM_DEVICE
+  LBM_HOST static inline constexpr MathVector<MathVector<T, dimD>, dimQ>
+  celerity() {
+    return {
+        MathVector<T, dimD>{{(T) 0, (T) 0}},
+        MathVector<T, dimD>{{(T)-1, (T) 0}},
+        MathVector<T, dimD>{{(T)-1, (T)-1}},
+        MathVector<T, dimD>{{(T)-1, (T) 1}},
+        MathVector<T, dimD>{{(T)-2, (T) 0}},
+        MathVector<T, dimD>{{(T) 1, (T) 0}},
+        MathVector<T, dimD>{{(T) 1, (T)-1}},
+        MathVector<T, dimD>{{(T) 1, (T) 1}},
+        MathVector<T, dimD>{{(T) 2, (T) 0}},
+        MathVector<T, dimD>{{(T) 0, (T)-1}},
+        MathVector<T, dimD>{{(T) 0, (T) 1}},
+        MathVector<T, dimD>{{(T) 0, (T)-2}},
+        MathVector<T, dimD>{{(T) 0, (T) 2}},
+    };
+  }
+
+  static constexpr T w0 = (T) 0.444440304236941283906802;
+  static constexpr T w1 = (T) 0.000003312190686762423810;
+  static constexpr T w2 = (T) 0.111109455009596671400782;
+  static constexpr T w4 = (T) 0.027777156740481245198707;
+
+  LBM_DEVICE LBM_HOST static inline constexpr MathVector<T, dimQ> weight() {
+    return {w0, w1, w2, w2, w4, w1, w2, w2, w4, w1, w1, w4, w4};
+  }
+};
+
+
+template <class T>
+struct Lattice<T, LatticeType::D2Q17> {
+  static constexpr LatticeType Type = LatticeType::D2Q17;
+
+  static constexpr int dimD = 2;
+  static constexpr int dimQ = 17;
+  static constexpr int faceQ = 7;
+
+  LBM_DEVICE LBM_HOST static inline constexpr Position halo() {
+    return Position({3, 3, 0});
+  }
+
+  static constexpr T inv_cs2 = (T)2 / (T)3;
+  static constexpr T cs2 = (T)1 / inv_cs2;
+
+  LBM_DEVICE LBM_HOST static inline constexpr MathVector<unsigned int, faceQ> iQ_Bottom() {
+    return {{1, 3, 6, 8, 10, 13, 15}};
+  }
+
+  LBM_DEVICE LBM_HOST static inline constexpr MathVector<unsigned int, faceQ> iQ_Top() {
+    return {{2, 4, 7, 9, 11, 14, 16}};
+  }
+
+  LBM_DEVICE LBM_HOST static inline constexpr MathVector<unsigned int, 0>
+  iQ_Front() {
+    return {{}};
+  }
+
+  LBM_DEVICE LBM_HOST static inline constexpr MathVector<unsigned int, 0>
+  iQ_Back() {
+    return {{}};
+  }
+
+  LBM_DEVICE
+  LBM_HOST static inline constexpr MathVector<MathVector<T, dimD>, dimQ>
+  celerity() {
+    return {
+        MathVector<T, dimD>{{(T) 0, (T) 0}},
+        MathVector<T, dimD>{{(T)-1, (T)-1}},
+        MathVector<T, dimD>{{(T)-1, (T) 1}},
+        MathVector<T, dimD>{{(T)-2, (T)-2}},
+        MathVector<T, dimD>{{(T)-2, (T) 2}},
+        MathVector<T, dimD>{{(T)-3, (T) 0}},
+        MathVector<T, dimD>{{(T)-3, (T)-3}},
+        MathVector<T, dimD>{{(T)-3, (T) 3}},
+        MathVector<T, dimD>{{(T) 1, (T)-1}},
+        MathVector<T, dimD>{{(T) 1, (T) 1}},
+        MathVector<T, dimD>{{(T) 2, (T)-2}},
+        MathVector<T, dimD>{{(T) 2, (T) 2}},
+        MathVector<T, dimD>{{(T) 3, (T) 0}},
+        MathVector<T, dimD>{{(T) 3, (T)-3}},
+        MathVector<T, dimD>{{(T) 3, (T) 3}},
+        MathVector<T, dimD>{{(T) 0, (T)-3}},
+        MathVector<T, dimD>{{(T) 0, (T) 3}},
+    };
+  }
+
+  LBM_DEVICE LBM_HOST static inline constexpr MathVector<T, dimQ> weight() {
+    return {(T) 0.121527777777777777777778, (T) 0.175781250000000000000000,
+            (T) 0.175781250000000000000000, (T) 0.014062500000000000000000,
+            (T) 0.014062500000000000000000, (T) 0.027777777777777777777778,
+            (T) 0.001996527777777777777778, (T) 0.001996527777777777777778,
+            (T) 0.175781250000000000000000, (T) 0.175781250000000000000000,
+            (T) 0.014062500000000000000000, (T) 0.014062500000000000000000,
+            (T) 0.027777777777777777777778, (T) 0.001996527777777777777778,
+            (T) 0.001996527777777777777778, (T) 0.027777777777777777777778,
+            (T) 0.027777777777777777777778};
+  }
+};
+
 
 template <class T>
 struct Lattice<T, LatticeType::D3Q15> {
@@ -179,19 +321,19 @@ struct Lattice<T, LatticeType::D3Q15> {
   static constexpr T inv_cs2 = (T)3;
   static constexpr T cs2 = (T)1 / inv_cs2;
 
-  LBM_DEVICE LBM_HOST static inline constexpr MathVector<T, dimQ> iQ_Bottom() {
+  LBM_DEVICE LBM_HOST static inline constexpr MathVector<T, faceQ> iQ_Bottom() {
     return {{2, 3, 9, 10, 11}};
   }
 
-  LBM_DEVICE LBM_HOST static inline constexpr MathVector<T, dimQ> iQ_Top() {
+  LBM_DEVICE LBM_HOST static inline constexpr MathVector<T, faceQ> iQ_Top() {
     return {{4, 5, 7, 8, 13}};
   }
 
-  LBM_DEVICE LBM_HOST static inline constexpr MathVector<T, dimQ> iQ_Front() {
+  LBM_DEVICE LBM_HOST static inline constexpr MathVector<T, faceQ> iQ_Front() {
     return {{2, 4, 8, 10, 12}};
   }
 
-  LBM_DEVICE LBM_HOST static inline constexpr MathVector<T, dimQ> iQ_Back() {
+  LBM_DEVICE LBM_HOST static inline constexpr MathVector<T, faceQ> iQ_Back() {
     return {{3, 5, 7, 9, 14}};
   }
 
@@ -199,21 +341,21 @@ struct Lattice<T, LatticeType::D3Q15> {
   LBM_HOST static inline constexpr MathVector<MathVector<T, dimD>, dimQ>
   celerity() {
     return {
-        MathVector<T, dimD>{{(T)0, (T)0, (T)0}},
-        MathVector<T, dimD>{{(T)-1, (T)0, (T)0}},
+        MathVector<T, dimD>{{(T) 0, (T) 0, (T) 0}},
+        MathVector<T, dimD>{{(T)-1, (T) 0, (T) 0}},
         MathVector<T, dimD>{{(T)-1, (T)-1, (T)-1}},
-        MathVector<T, dimD>{{(T)-1, (T)-1, (T)1}},
-        MathVector<T, dimD>{{(T)-1, (T)1, (T)-1}},
-        MathVector<T, dimD>{{(T)-1, (T)1, (T)1}},
-        MathVector<T, dimD>{{(T)1, (T)0, (T)0}},
-        MathVector<T, dimD>{{(T)1, (T)1, (T)1}},
-        MathVector<T, dimD>{{(T)1, (T)1, (T)-1}},
-        MathVector<T, dimD>{{(T)1, (T)-1, (T)1}},
-        MathVector<T, dimD>{{(T)1, (T)-1, (T)-1}},
-        MathVector<T, dimD>{{(T)0, (T)-1, (T)0}},
-        MathVector<T, dimD>{{(T)0, (T)0, (T)-1}},
-        MathVector<T, dimD>{{(T)0, (T)1, (T)0}},
-        MathVector<T, dimD>{{(T)0, (T)0, (T)1}},
+        MathVector<T, dimD>{{(T)-1, (T)-1, (T) 1}},
+        MathVector<T, dimD>{{(T)-1, (T) 1, (T)-1}},
+        MathVector<T, dimD>{{(T)-1, (T) 1, (T) 1}},
+        MathVector<T, dimD>{{(T) 1, (T) 0, (T) 0}},
+        MathVector<T, dimD>{{(T) 1, (T) 1, (T) 1}},
+        MathVector<T, dimD>{{(T) 1, (T) 1, (T)-1}},
+        MathVector<T, dimD>{{(T) 1, (T)-1, (T) 1}},
+        MathVector<T, dimD>{{(T) 1, (T)-1, (T)-1}},
+        MathVector<T, dimD>{{(T) 0, (T)-1, (T) 0}},
+        MathVector<T, dimD>{{(T) 0, (T) 0, (T)-1}},
+        MathVector<T, dimD>{{(T) 0, (T) 1, (T) 0}},
+        MathVector<T, dimD>{{(T) 0, (T) 0, (T) 1}},
     };
   }
 
@@ -262,25 +404,25 @@ struct Lattice<T, LatticeType::D3Q19> {
   LBM_DEVICE
   LBM_HOST static inline constexpr MathVector<MathVector<T, dimD>, dimQ>
   celerity() {
-    return {MathVector<T, dimD>{{(T)0, (T)0, (T)0}},
-            MathVector<T, dimD>{{(T)-1, (T)0, (T)0}},
-            MathVector<T, dimD>{{(T)-1, (T)-1, (T)0}},
-            MathVector<T, dimD>{{(T)-1, (T)1, (T)0}},
-            MathVector<T, dimD>{{(T)-1, (T)0, (T)-1}},
-            MathVector<T, dimD>{{(T)-1, (T)0, (T)1}},
-            MathVector<T, dimD>{{(T)1, (T)0, (T)0}},
-            MathVector<T, dimD>{{(T)1, (T)1, (T)0}},
-            MathVector<T, dimD>{{(T)1, (T)-1, (T)0}},
-            MathVector<T, dimD>{{(T)1, (T)0, (T)1}},
-            MathVector<T, dimD>{{(T)1, (T)0, (T)-1}},
-            MathVector<T, dimD>{{(T)0, (T)-1, (T)0}},
-            MathVector<T, dimD>{{(T)0, (T)0, (T)-1}},
-            MathVector<T, dimD>{{(T)0, (T)-1, (T)-1}},
-            MathVector<T, dimD>{{(T)0, (T)-1, (T)1}},
-            MathVector<T, dimD>{{(T)0, (T)1, (T)0}},
-            MathVector<T, dimD>{{(T)0, (T)0, (T)1}},
-            MathVector<T, dimD>{{(T)0, (T)1, (T)1}},
-            MathVector<T, dimD>{{(T)0, (T)1, (T)-1}}};
+    return {MathVector<T, dimD>{{(T) 0, (T) 0, (T) 0}},
+            MathVector<T, dimD>{{(T)-1, (T) 0, (T) 0}},
+            MathVector<T, dimD>{{(T)-1, (T)-1, (T) 0}},
+            MathVector<T, dimD>{{(T)-1, (T) 1, (T) 0}},
+            MathVector<T, dimD>{{(T)-1, (T) 0, (T)-1}},
+            MathVector<T, dimD>{{(T)-1, (T) 0, (T) 1}},
+            MathVector<T, dimD>{{(T) 1, (T) 0, (T) 0}},
+            MathVector<T, dimD>{{(T) 1, (T) 1, (T) 0}},
+            MathVector<T, dimD>{{(T) 1, (T)-1, (T) 0}},
+            MathVector<T, dimD>{{(T) 1, (T) 0, (T) 1}},
+            MathVector<T, dimD>{{(T) 1, (T) 0, (T)-1}},
+            MathVector<T, dimD>{{(T) 0, (T)-1, (T) 0}},
+            MathVector<T, dimD>{{(T) 0, (T) 0, (T)-1}},
+            MathVector<T, dimD>{{(T) 0, (T)-1, (T)-1}},
+            MathVector<T, dimD>{{(T) 0, (T)-1, (T) 1}},
+            MathVector<T, dimD>{{(T) 0, (T) 1, (T) 0}},
+            MathVector<T, dimD>{{(T) 0, (T) 0, (T) 1}},
+            MathVector<T, dimD>{{(T) 0, (T) 1, (T) 1}},
+            MathVector<T, dimD>{{(T) 0, (T) 1, (T)-1}}};
   }
 
   LBM_DEVICE LBM_HOST static inline constexpr MathVector<T, dimQ> weight() {
@@ -331,33 +473,33 @@ struct Lattice<T, LatticeType::D3Q27> {
   LBM_HOST static inline constexpr MathVector<MathVector<T, dimD>, dimQ>
   celerity() {
     return {
-        MathVector<T, dimD>{{(T)0, (T)0, (T)0}},
-        MathVector<T, dimD>{{(T)-1, (T)0, (T)0}},
-        MathVector<T, dimD>{{(T)-1, (T)-1, (T)0}},
-        MathVector<T, dimD>{{(T)-1, (T)1, (T)0}},
-        MathVector<T, dimD>{{(T)-1, (T)0, (T)-1}},
-        MathVector<T, dimD>{{(T)-1, (T)0, (T)1}},
+        MathVector<T, dimD>{{(T) 0, (T) 0, (T) 0}},
+        MathVector<T, dimD>{{(T)-1, (T) 0, (T) 0}},
+        MathVector<T, dimD>{{(T)-1, (T)-1, (T) 0}},
+        MathVector<T, dimD>{{(T)-1, (T) 1, (T) 0}},
+        MathVector<T, dimD>{{(T)-1, (T) 0, (T)-1}},
+        MathVector<T, dimD>{{(T)-1, (T) 0, (T) 1}},
         MathVector<T, dimD>{{(T)-1, (T)-1, (T)-1}},
-        MathVector<T, dimD>{{(T)-1, (T)-1, (T)1}},
-        MathVector<T, dimD>{{(T)-1, (T)1, (T)-1}},
-        MathVector<T, dimD>{{(T)-1, (T)1, (T)1}},
-        MathVector<T, dimD>{{(T)1, (T)0, (T)0}},
-        MathVector<T, dimD>{{(T)1, (T)1, (T)0}},
-        MathVector<T, dimD>{{(T)1, (T)-1, (T)0}},
-        MathVector<T, dimD>{{(T)1, (T)0, (T)1}},
-        MathVector<T, dimD>{{(T)1, (T)0, (T)-1}},
-        MathVector<T, dimD>{{(T)1, (T)1, (T)1}},
-        MathVector<T, dimD>{{(T)1, (T)1, (T)-1}},
-        MathVector<T, dimD>{{(T)1, (T)-1, (T)1}},
-        MathVector<T, dimD>{{(T)1, (T)-1, (T)-1}},
-        MathVector<T, dimD>{{(T)0, (T)-1, (T)0}},
-        MathVector<T, dimD>{{(T)0, (T)0, (T)-1}},
-        MathVector<T, dimD>{{(T)0, (T)-1, (T)-1}},
-        MathVector<T, dimD>{{(T)0, (T)-1, (T)1}},
-        MathVector<T, dimD>{{(T)0, (T)1, (T)0}},
-        MathVector<T, dimD>{{(T)0, (T)0, (T)1}},
-        MathVector<T, dimD>{{(T)0, (T)1, (T)1}},
-        MathVector<T, dimD>{{(T)0, (T)1, (T)-1}},
+        MathVector<T, dimD>{{(T)-1, (T)-1, (T) 1}},
+        MathVector<T, dimD>{{(T)-1, (T) 1, (T)-1}},
+        MathVector<T, dimD>{{(T)-1, (T) 1, (T) 1}},
+        MathVector<T, dimD>{{(T) 1, (T) 0, (T) 0}},
+        MathVector<T, dimD>{{(T) 1, (T) 1, (T) 0}},
+        MathVector<T, dimD>{{(T) 1, (T)-1, (T) 0}},
+        MathVector<T, dimD>{{(T) 1, (T) 0, (T) 1}},
+        MathVector<T, dimD>{{(T) 1, (T) 0, (T)-1}},
+        MathVector<T, dimD>{{(T) 1, (T) 1, (T) 1}},
+        MathVector<T, dimD>{{(T) 1, (T) 1, (T)-1}},
+        MathVector<T, dimD>{{(T) 1, (T)-1, (T) 1}},
+        MathVector<T, dimD>{{(T) 1, (T)-1, (T)-1}},
+        MathVector<T, dimD>{{(T) 0, (T)-1, (T) 0}},
+        MathVector<T, dimD>{{(T) 0, (T) 0, (T)-1}},
+        MathVector<T, dimD>{{(T) 0, (T)-1, (T)-1}},
+        MathVector<T, dimD>{{(T) 0, (T)-1, (T) 1}},
+        MathVector<T, dimD>{{(T) 0, (T) 1, (T) 0}},
+        MathVector<T, dimD>{{(T) 0, (T) 0, (T) 1}},
+        MathVector<T, dimD>{{(T) 0, (T) 1, (T) 1}},
+        MathVector<T, dimD>{{(T) 0, (T) 1, (T)-1}},
     };
   }
 
@@ -371,6 +513,95 @@ struct Lattice<T, LatticeType::D3Q27> {
             (T)2 / (T)27,  (T)1 / (T)54,  (T)1 / (T)54};
   }
 };
+
+
+template <class T>
+struct Lattice<T, LatticeType::D3Q33> {
+  static constexpr LatticeType Type = LatticeType::D3Q33;
+
+  static constexpr int dimD = 3;
+  static constexpr int dimQ = 33;
+  static constexpr int faceQ = 10;
+
+  LBM_DEVICE LBM_HOST static inline constexpr Position halo() {
+    return Position({2, 2, 2});
+  }
+
+  static constexpr T cs2 = (T) 0.4156023517935171;
+  static constexpr T inv_cs2 = (T)1 / cs2;
+
+  LBM_DEVICE LBM_HOST static inline constexpr MathVector<unsigned int, faceQ>
+  iQ_Bottom() {
+    return {{2, 6, 7, 13, 18, 19, 21, 23, 24, 30}};
+  }
+
+  LBM_DEVICE LBM_HOST static inline constexpr MathVector<unsigned int, faceQ>
+  iQ_Top() {
+    return {{3, 8, 9, 12, 16, 17, 25, 27, 28, 29}};
+  }
+
+  LBM_DEVICE LBM_HOST static inline constexpr MathVector<unsigned int, faceQ>
+  iQ_Front() {
+    return {{4, 6, 8, 15, 17, 19, 22, 23, 28, 32}};
+  }
+
+  LBM_DEVICE LBM_HOST static inline constexpr MathVector<unsigned int, faceQ>
+  iQ_Back() {
+    return {{5, 7, 9, 14, 16, 18, 24, 26, 27, 31}};
+  }
+
+  LBM_DEVICE
+  LBM_HOST static inline constexpr MathVector<MathVector<T, dimD>, dimQ>
+  celerity() {
+    return {
+        MathVector<T, dimD>{{(T) 0, (T) 0, (T) 0}},
+        MathVector<T, dimD>{{(T)-1, (T) 0, (T) 0}},
+        MathVector<T, dimD>{{(T)-1, (T)-1, (T) 0}},
+        MathVector<T, dimD>{{(T)-1, (T) 1, (T) 0}},
+        MathVector<T, dimD>{{(T)-1, (T) 0, (T)-1}},
+        MathVector<T, dimD>{{(T)-1, (T) 0, (T) 1}},
+        MathVector<T, dimD>{{(T)-1, (T)-1, (T)-1}},
+        MathVector<T, dimD>{{(T)-1, (T)-1, (T) 1}},
+        MathVector<T, dimD>{{(T)-1, (T) 1, (T)-1}},
+        MathVector<T, dimD>{{(T)-1, (T) 1, (T) 1}},
+        MathVector<T, dimD>{{(T)-2, (T) 0, (T) 0}},
+        MathVector<T, dimD>{{(T) 1, (T) 0, (T) 0}},
+        MathVector<T, dimD>{{(T) 1, (T) 1, (T) 0}},
+        MathVector<T, dimD>{{(T) 1, (T)-1, (T) 0}},
+        MathVector<T, dimD>{{(T) 1, (T) 0, (T) 1}},
+        MathVector<T, dimD>{{(T) 1, (T) 0, (T)-1}},
+        MathVector<T, dimD>{{(T) 1, (T) 1, (T) 1}},
+        MathVector<T, dimD>{{(T) 1, (T) 1, (T)-1}},
+        MathVector<T, dimD>{{(T) 1, (T)-1, (T) 1}},
+        MathVector<T, dimD>{{(T) 1, (T)-1, (T)-1}},
+        MathVector<T, dimD>{{(T) 2, (T) 0, (T) 0}},
+        MathVector<T, dimD>{{(T) 0, (T)-1, (T) 0}},
+        MathVector<T, dimD>{{(T) 0, (T) 0, (T)-1}},
+        MathVector<T, dimD>{{(T) 0, (T)-1, (T)-1}},
+        MathVector<T, dimD>{{(T) 0, (T)-1, (T) 1}},
+        MathVector<T, dimD>{{(T) 0, (T) 1, (T) 0}},
+        MathVector<T, dimD>{{(T) 0, (T) 0, (T) 1}},
+        MathVector<T, dimD>{{(T) 0, (T) 1, (T) 1}},
+        MathVector<T, dimD>{{(T) 0, (T) 1, (T)-1}},
+        MathVector<T, dimD>{{(T) 0, (T) 2, (T) 0}},
+        MathVector<T, dimD>{{(T) 0, (T)-2, (T) 0}},
+        MathVector<T, dimD>{{(T) 0, (T) 0, (T) 2}},
+        MathVector<T, dimD>{{(T) 0, (T) 0, (T)-2}},
+      };
+  }
+
+  static constexpr T w0 = (T) 0.177627658370520295649084;
+  static constexpr T w1 = (T) 0.103315974899246818673111;
+  static constexpr T w2 = (T) 0.000513472406731114352456;
+  static constexpr T w3 = (T) 0.021333928148672240120078;
+  static constexpr T w4 = (T) 0.004273899693974583187026;
+
+  LBM_DEVICE LBM_HOST static inline constexpr MathVector<T, dimQ> weight() {
+    return {w0, w1, w2, w2, w2, w2, w3, w3, w3, w3, w4, w1, w2, w2, w2, w2,
+            w3, w3, w3, w3, w4, w1, w1, w2, w2, w1, w1, w2, w2, w4, w4, w4, w4};
+  }
+ };
+
 
 typedef Lattice<dataT, latticeT> L;
 typedef Lattice<unsigned int, latticeT> uiL;

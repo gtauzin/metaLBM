@@ -9,7 +9,8 @@ namespace lbm {
 
   enum p { Re, Im };
 
-  enum class LatticeType { Generic, D1Q3, D2Q5, D2Q9, D2Q37, D3Q15, D3Q19, D3Q27 };
+  enum class LatticeType { Generic, D1Q3, D2Q5, D2Q9, D2Q13, D2Q17, D2Q37,
+                           D3Q15, D3Q19, D3Q27, D3Q33 };
 
   enum class MemoryLayout { Generic, Default, SoA, AoS };
   enum class Implementation { Generic, MPI, NVSHMEM_OUT, NVSHMEM_IN };
@@ -36,7 +37,8 @@ namespace lbm {
 
  enum class ForcingSchemeType { Generic, None, Guo, ShanChen, ExactDifferenceMethod };
  enum class ForceType { None, Generic, GenericTimeIndependent, GenericTimeDependent,
-                       Constant, Sinusoidal, Kolmogorov, ConstantShell, Time };
+                        Constant, Sinusoidal, Kolmogorov, ConstantShell, EnergyRemoval,
+                        Turbulent2D };
 
  enum class BoundaryType { Generic, None, Periodic, BounceBack_Halfway, Entropic };
 

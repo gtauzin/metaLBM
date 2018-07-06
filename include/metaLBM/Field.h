@@ -47,7 +47,7 @@ namespace lbm {
     using Base = FieldAllocator<T, NumberComponents, Architecture::Generic, true>;
 
   protected:
-    DynamicArray<T, Architecture::CPU> localArray;
+    DynamicArray<T, Architecture::CPU> array;
 
   public:
     using Base::fieldName;
@@ -55,7 +55,7 @@ namespace lbm {
 
     FieldAllocator(const std::string& fieldName_in)
       : Base(fieldName_in)
-      , localArray(FFTWInit::numberElements * NumberComponents)
+      , array(FFTWInit::numberElements * NumberComponents)
     {}
   };
 
@@ -66,7 +66,7 @@ namespace lbm {
     using Base = FieldAllocator<T, NumberComponents, Architecture::Generic, true>;
 
   protected:
-    DynamicArray<T, Architecture::CPUPinned> localArray;
+    DynamicArray<T, Architecture::CPUPinned> array;
 
   public:
     using Base::IsWritten;
@@ -74,7 +74,7 @@ namespace lbm {
 
     FieldAllocator(const std::string& fieldName_in)
       : Base(fieldName_in)
-      , localArray(FFTWInit::numberElements * NumberComponents)
+      , array(FFTWInit::numberElements * NumberComponents)
     {}
   };
 
@@ -89,7 +89,7 @@ namespace lbm {
     using Base = FieldAllocator<T, NumberComponents, architecture, true>;
 
   protected:
-    using Base::localArray;
+    using Base::array;
 
   public:
     using Base::fieldName;
@@ -106,8 +106,8 @@ namespace lbm {
       : Base(fieldName_in)
       , computationLocal(lSD::sStart(), lSD::sEnd())
     {
-      T * localArrayPtr = localArray.data();
-      computationLocal.Do(stream_in, *this, localArrayPtr, value_in,
+      T * arrayPtr = array.data();
+      computationLocal.Do(stream_in, *this, arrayPtr, value_in,
                           FFTWInit::numberElements);
       computationLocal.synchronize();
     }
@@ -118,80 +118,81 @@ namespace lbm {
       : Base(fieldName_in)
       , computationLocal(lSD::sStart(), lSD::sEnd())
   {
-    T * localArrayPtr = localArray.data();
-    computationLocal.Do(stream_in, *this, localArrayPtr, vector_in,
+    T * arrayPtr = array.data();
+    computationLocal.Do(stream_in, *this, arrayPtr, vector_in,
                         FFTWInit::numberElements);
     computationLocal.synchronize();
   }
 
     Field(const std::string& fieldName_in,
-          const DynamicArray<T, Architecture::CPU>& localArray_in)
-      : Base(fieldName_in) {
-      localArray.copyFrom(localArray_in);
+          const DynamicArray<T, Architecture::CPU>& array_in)
+      : Base(fieldName_in)
+    {
+      array.copyFrom(array_in);
     }
 
     LBM_HOST
     ~Field() {}
 
     LBM_HOST LBM_DEVICE
-    void operator()(const Position& iP, T * localArrayPtr,
+    void operator()(const Position& iP, T * arrayPtr,
                     const T initValue, const unsigned int numberElements) {
       for (auto iC = 0; iC < NumberComponents; ++iC) {
-        localArrayPtr[iC * numberElements + lSD::getIndex(iP)]
+        arrayPtr[iC * numberElements + lSD::getIndex(iP)]
         = initValue;
       }
 
     }
 
     LBM_HOST LBM_DEVICE
-    void operator()(const Position& iP, T * localArrayPtr,
+    void operator()(const Position& iP, T * arrayPtr,
                     const MathVector<T, L::dimD> initVector,
                     const unsigned int numberElements) {
       for (auto iC = 0; iC < NumberComponents; ++iC) {
-        localArrayPtr[iC * numberElements + lSD::getIndex(iP)]
+        arrayPtr[iC * numberElements + lSD::getIndex(iP)]
           = initVector[iC];
       }
     }
 
-    inline DynamicArray<T, Architecture::CPU>& getLocalArray() {
-      return localArray;
+    inline DynamicArray<T, Architecture::CPU>& getArray() {
+      return array;
     }
 
     LBM_DEVICE LBM_HOST
-    T* getLocalData(const unsigned int numberElements, const unsigned int iC = 0) {
-      return localArray.data(iC * numberElements);
+    T* getData(const unsigned int numberElements, const unsigned int iC = 0) {
+      return array.data(iC * numberElements);
     }
 
     LBM_DEVICE LBM_HOST inline
-    void setLocalValue(const Position iP, const T value,
+    void setValue(const Position iP, const T value,
                        const unsigned int numberElements,
                        const unsigned int iC = 0) {
-      (localArray.data(iC * numberElements))[lSD::getIndex(iP)]
+      (array.data(iC * numberElements))[lSD::getIndex(iP)]
         = value;
     }
 
     LBM_DEVICE LBM_HOST inline
-    void setLocalVector(const Position iP,
+    void setVector(const Position iP,
                         const MathVector<T, NumberComponents> vector,
                         const unsigned int numberElements) {
       for (auto iC = 0; iC < NumberComponents; ++iC) {
-        setLocalValue(iP, vector[iC], numberElements, iC);
+        setValue(iP, vector[iC], numberElements, iC);
       }
     }
 
     LBM_DEVICE LBM_HOST inline
-      T getLocalValue(const Position& iP,
+      T getValue(const Position& iP,
                       const unsigned int numberElements,
                       const unsigned int iC = 0) const {
-      return (localArray.data(iC * numberElements))[lSD::getIndex(iP)];
+      return (array.data(iC * numberElements))[lSD::getIndex(iP)];
     }
 
     LBM_DEVICE LBM_HOST inline
-    MathVector<T, NumberComponents> getLocalVector(const Position& iP,
-                                                   const unsigned int numberElements) const {
+    MathVector<T, NumberComponents> getVector(const Position& iP,
+                                              const unsigned int numberElements) const {
       MathVector<T, NumberComponents> vectorR;
       for (auto iC = 0; iC < NumberComponents; ++iC) {
-        vectorR[iC] = getLocalValue(iP, numberElements, iC);
+        vectorR[iC] = getValue(iP, numberElements, iC);
       }
 
       return vectorR;
@@ -220,21 +221,21 @@ namespace lbm {
       : fieldName(fieldName_in)
     {}
 
-    T* getLocalData(const unsigned int numberElements,
+    T* getData(const unsigned int numberElements,
                     const unsigned int iC = 0) { return NULL; }
 
-    DynamicArray<T, Architecture::CPU> getLocalArray() {
+    DynamicArray<T, Architecture::CPU> getArray() {
       return DynamicArray<T, Architecture::CPU>();
     }
 
-    LBM_DEVICE LBM_HOST T getLocalValue(const unsigned int index,
+    LBM_DEVICE LBM_HOST T getValue(const unsigned int index,
                                         const unsigned int numberElements,
                                         const unsigned int iC = 0) {
       return (T)-1;
     }
 
     LBM_DEVICE LBM_HOST
-    MathVector<T, NumberComponents> getLocalVector(const unsigned int index,
+    MathVector<T, NumberComponents> getVector(const unsigned int index,
                                const unsigned int numberElements) {
       return MathVector<T, NumberComponents>{{(T)-1}};
     }

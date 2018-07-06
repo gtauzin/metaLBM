@@ -12,8 +12,7 @@ namespace lbm {
   struct Packer {
   public:
     LBM_DEVICE LBM_HOST inline
-    void operator()(const Position& iP,
-                    T* const local, T* halo,
+    void operator()(const Position& iP, T* const local, T* halo,
                     const unsigned int numberElements) {
       auto indexLocal = hSD::getIndexLocal(iP);
 
@@ -28,8 +27,7 @@ namespace lbm {
   struct Unpacker {
   public:
     LBM_DEVICE LBM_HOST inline
-    void operator()(const Position& iP,
-                    T* halo, T* const local,
+    void operator()(const Position& iP, T* halo, T* const local,
                     const unsigned int numberElements) {
       auto indexLocal = hSD::getIndexLocal(iP);
       for (auto iQ = 0; iQ < L::dimQ; ++iQ) {
@@ -48,65 +46,59 @@ namespace lbm {
   class Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
                  PartitionningType::Generic, Implementation::Generic,
                  Dimension> {
- public:
-  LBM_DEVICE LBM_HOST LBM_INLINE static void applyYBottom(const Position& iP,
-                                                          T* haloDistributionPtr) {
-    LBM_INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyYBottom", 5)
+  public:
+    LBM_DEVICE LBM_HOST LBM_INLINE
+    static void applyYBottom(const Position& iP, T* haloDistributionPtr) {
+      LBM_INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyYBottom", 5)
 
-    Position iP_Destination = {iP[d::X], iP[d::Y] + lSD::sLength()[d::Y],
-                               iP[d::Z]};
+      Position iP_Destination{iP[d::X], iP[d::Y] + lSD::sLength()[d::Y], iP[d::Z]};
 
-    #pragma unroll
-    for (auto iQ = 0; iQ < L::faceQ; ++iQ) {
-      haloDistributionPtr[hSD::getIndex(iP_Destination, L::iQ_Bottom()[iQ])] =
+      #pragma unroll
+      for(auto iQ = 0; iQ < L::faceQ; ++iQ) {
+        haloDistributionPtr[hSD::getIndex(iP_Destination, L::iQ_Bottom()[iQ])] =
           haloDistributionPtr[hSD::getIndex(iP, L::iQ_Bottom()[iQ])];
+      }
     }
-  }
 
-  LBM_DEVICE LBM_HOST LBM_INLINE static void applyYTop(const Position& iP,
-                                                       T* haloDistributionPtr) {
-    LBM_INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyYTop", 5)
+    LBM_DEVICE LBM_HOST LBM_INLINE
+    static void applyYTop(const Position& iP, T* haloDistributionPtr) {
+      LBM_INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyYTop", 5)
 
-    Position iP_Destination{
-        iP[d::X], iP[d::Y] - (L::halo()[d::Y] + lSD::sLength()[d::Y] - 1),
-        iP[d::Z]};
+      Position iP_Destination{iP[d::X], iP[d::Y] - lSD::sLength()[d::Y], iP[d::Z]};
 
-    #pragma unroll
-    for (auto iQ = 0; iQ < L::faceQ; ++iQ) {
-      haloDistributionPtr[hSD::getIndex(iP_Destination, L::iQ_Top()[iQ])] =
+      #pragma unroll
+      for(auto iQ = 0; iQ < L::faceQ; ++iQ) {
+        haloDistributionPtr[hSD::getIndex(iP_Destination, L::iQ_Top()[iQ])] =
           haloDistributionPtr[hSD::getIndex(iP, L::iQ_Top()[iQ])];
+      }
     }
-  }
 
-  LBM_DEVICE LBM_HOST LBM_INLINE static void applyZFront(const Position& iP,
-                                                         T* haloDistributionPtr) {
-    LBM_INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyZFront", 5)
+    LBM_DEVICE LBM_HOST LBM_INLINE
+    static void applyZFront(const Position& iP, T* haloDistributionPtr) {
+      LBM_INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyZFront", 5)
 
-    Position iP_Destination = {iP[d::X], iP[d::Y],
-                               iP[d::Z] + lSD::sLength()[d::Z]};
+      Position iP_Destination{iP[d::X], iP[d::Y], iP[d::Z] + lSD::sLength()[d::Z]};
 
-    #pragma unroll
-    for (auto iQ = 0; iQ < L::faceQ; ++iQ) {
-      haloDistributionPtr[hSD::getIndex(iP_Destination, L::iQ_Front()[iQ])] =
+      #pragma unroll
+      for(auto iQ = 0; iQ < L::faceQ; ++iQ) {
+        haloDistributionPtr[hSD::getIndex(iP_Destination, L::iQ_Front()[iQ])] =
           haloDistributionPtr[hSD::getIndex(iP, L::iQ_Front()[iQ])];
+      }
     }
-  }
 
-  LBM_DEVICE LBM_HOST LBM_INLINE static void applyZBack(const Position& iP,
-                                                        T* haloDistributionPtr) {
-    LBM_INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyZBack", 5)
+    LBM_DEVICE LBM_HOST LBM_INLINE
+    static void applyZBack(const Position& iP, T* haloDistributionPtr) {
+      LBM_INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyZBack", 5)
 
-    Position iP_Destination{
-        iP[d::X], iP[d::Y],
-        iP[d::Z] - (L::halo()[d::Z] + lSD::sLength()[d::Z] - 1)};
+      Position iP_Destination{iP[d::X], iP[d::Y], iP[d::Z] - lSD::sLength()[d::Z]};
 
-    #pragma unroll
-    for (auto iQ = 0; iQ < L::faceQ; ++iQ) {
-      haloDistributionPtr[hSD::getIndex(iP_Destination, L::iQ_Back()[iQ])] =
+      #pragma unroll
+      for(auto iQ = 0; iQ < L::faceQ; ++iQ) {
+        haloDistributionPtr[hSD::getIndex(iP_Destination, L::iQ_Back()[iQ])] =
           haloDistributionPtr[hSD::getIndex(iP, L::iQ_Back()[iQ])];
+      }
     }
-  }
-};
+  };
 
   template <class T, Implementation implementation>
   class Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,

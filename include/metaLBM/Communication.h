@@ -137,8 +137,8 @@ namespace lbm {
 
       for(auto iQ = L::faceQ + 1; iQ < 2 * L::faceQ + 1; ++iQ) {
         sendToRightBeginX = hMLSD::getIndex(
-          Position({L::halo()[d::X] + lSD::sLength()[d::X] - 1,
-                    hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
+          Position({lSD::sLength()[d::X],
+                hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
         receivedFromLeftBeginX = hMLSD::getIndex(
           Position({0, hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), iQ);
 
@@ -209,7 +209,7 @@ namespace lbm {
     LBM_HOST
     Communication()
       : Base()
-      , sizeStripeX(hMLSD::volume() / hMLSD::length()[d::X])
+      , sizeStripeX(L::halo()[d::X] * hMLSD::volume() / hMLSD::length()[d::X])
       , sendToRightBeginX(0)
       , receivedFromLeftBeginX(0)
       , sendToLeftBeginX(0)
@@ -251,7 +251,7 @@ namespace lbm {
       , sizeStripeX(L::dimQ * hMLSD::volume() * L::halo()[d::X] /
                   hMLSD::length()[d::X])
       , sendToRightBeginX(hMLSD::getIndex(
-          Position({L::halo()[d::X] + lSD::sLength()[d::X] - 1,
+          Position({lSD::sLength()[d::X],
                     hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), 0))
       , receivedFromLeftBeginX(hMLSD::getIndex(
           Position({0, hMLSD::start()[d::Y], hMLSD::start()[d::Z]}), 0))

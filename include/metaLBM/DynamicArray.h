@@ -64,12 +64,15 @@ class DynamicArray<U, Architecture::CPU>
 
   DynamicArray() : Base() {}
 
-  DynamicArray(const unsigned int numberElements_in) : Base(numberElements_in) {
+  DynamicArray(const unsigned int numberElements_in)
+    : Base(numberElements_in)
+  {
     dArrayPtr = (U*)MALLOC_CPU(numberElements_in * sizeof(U));
   }
 
   DynamicArray(const DynamicArray<U, Architecture::CPU>& dArray_in)
-      : Base(dArray_in.size()) {
+    : Base(dArray_in.size())
+  {
     dArrayPtr = (U*)MALLOC_CPU(dArray_in.size() * sizeof(U));
     copyFrom(dArray_in);
   }

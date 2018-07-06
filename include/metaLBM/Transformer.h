@@ -295,32 +295,67 @@ namespace lbm {
     LBM_HOST
     inline void executeFourier() {
       computationFourier.Do([=] LBM_HOST(const Position& iFP) {
+          WaveNumber iK{{0}};
+          Position iFP_symmetric{{0}};
+          WaveNumber iK_symmetric{{0}};
+
           auto index = lFD::getIndex(iFP);
 
-          WaveNumber iK{{0}};
           iK[d::X] = iFP[d::X] + offset[d::X] <= gSD::sLength()[d::X] / 2
-            ? iFP[d::X] + offset[d::X]
-            : iFP[d::X] + offset[d::X] - gSD::sLength()[d::X];
+            ? iFP[d::X] + offset[d::X] : iFP[d::X] + offset[d::X] - gSD::sLength()[d::X];
           iK[d::Y] = iFP[d::Y] <= gSD::sLength()[d::Y] / 2
-            ? iFP[d::Y]
-            : iFP[d::Y] - gSD::sLength()[d::Y];
+            ? iFP[d::Y] : iFP[d::Y] - gSD::sLength()[d::Y];
 
           ((fftw_complex*)(backwardOut.localFourierPtr +
-                       FFTWInit::numberElements * (d::X)))[index][p::Re] =
-            -iK[d::Y] * localFourierInPtr[index][p::Im];
+                       FFTWInit::numberElements * (d::X)))[index][p::Re]
+            = -iK[d::Y] * localFourierInPtr[index][p::Im];
 
           ((fftw_complex*)(backwardOut.localFourierPtr +
-                           FFTWInit::numberElements * (d::X)))[index][p::Im] =
-            iK[d::Y] * localFourierInPtr[index][p::Re];
+                           FFTWInit::numberElements * (d::X)))[index][p::Im]
+            = iK[d::Y] * localFourierInPtr[index][p::Re];
 
           ((fftw_complex*)(backwardOut.localFourierPtr +
-                       FFTWInit::numberElements * (d::Y)))[index][p::Re] =
-            iK[d::X] * localFourierInPtr[index][p::Im];
+                       FFTWInit::numberElements * (d::Y)))[index][p::Re]
+            = iK[d::X] * localFourierInPtr[index][p::Im];
 
           ((fftw_complex*)(backwardOut.localFourierPtr +
-                           FFTWInit::numberElements * (d::Y)))[index][p::Im] =
-            -iK[d::X] * localFourierInPtr[index][p::Re];
+                           FFTWInit::numberElements * (d::Y)))[index][p::Im]
+            = -iK[d::X] * localFourierInPtr[index][p::Re];
+
+          if (iFP[d::Y] == 0) {
+            iFP_symmetric[d::X] = gSD::sLength()[d::X] - iFP[d::X];
+            if (iFP_symmetric[d::X] < lFD::length()[d::X]) {
+              iFP_symmetric[d::Y] = 0;
+
+              iK_symmetric[d::X] =
+                iFP_symmetric[d::X] + offset[d::X] <= gSD::sLength()[d::X] / 2
+                ? iFP_symmetric[d::X] + offset[d::X]
+                : iFP_symmetric[d::X] + offset[d::X] - gSD::sLength()[d::X];
+              iK_symmetric[d::Y] =
+                iFP_symmetric[d::Y] <= gSD::sLength()[d::Y] / 2
+                ? iFP_symmetric[d::Y]
+                : iFP_symmetric[d::Y] - gSD::sLength()[d::Y];
+
+              auto index_symmetric = lFD::getIndex(iFP_symmetric);
+              ((fftw_complex*)(backwardOut.localFourierPtr +
+                               FFTWInit::numberElements * (d::X)))[index_symmetric][p::Re] =
+                -iK_symmetric[d::Y] * localFourierInPtr[index_symmetric][p::Im];
+
+              ((fftw_complex*)(backwardOut.localFourierPtr +
+                               FFTWInit::numberElements * (d::X)))[index_symmetric][p::Im] =
+                iK_symmetric[d::Y] * localFourierInPtr[index_symmetric][p::Re];
+
+              ((fftw_complex*)(backwardOut.localFourierPtr +
+                               FFTWInit::numberElements * (d::Y)))[index_symmetric][p::Re] =
+            iK_symmetric[d::X] * localFourierInPtr[index_symmetric][p::Im];
+
+              ((fftw_complex*)(backwardOut.localFourierPtr +
+                               FFTWInit::numberElements * (d::Y)))[index_symmetric][p::Im] =
+                -iK_symmetric[d::X] * localFourierInPtr[index_symmetric][p::Re];
+            }
+          }
         });
+
       computationFourier.synchronize();
 
       backwardOut.execute();

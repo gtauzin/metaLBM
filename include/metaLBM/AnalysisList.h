@@ -36,9 +36,9 @@ class ScalarAnalysisList {
                      Communication_& communication_in,
                      const unsigned int scalarAnalysisStep_in,
                      const unsigned int startIteration_in)
-    : totalEnergy(fieldList_in.density.getLocalData(FFTWInit::numberElements),
-                  fieldList_in.velocity.getLocalData(FFTWInit::numberElements))
-    , totalEnstrophy(fieldList_in.vorticity.getLocalData(FFTWInit::numberElements))
+    : totalEnergy(fieldList_in.density.getData(FFTWInit::numberElements),
+                  fieldList_in.velocity.getData(FFTWInit::numberElements))
+    , totalEnstrophy(fieldList_in.vorticity.getData(FFTWInit::numberElements))
     , communication(communication_in)
     , scalarAnalysisWriter(prefix, "observables", startIteration_in, scalarAnalysisStep_in)
     , computationLocal(lSD::sStart(), lSD::sEnd())
@@ -114,9 +114,9 @@ class SpectralAnalysisList {
                        Communication_& communication_in,
                        const unsigned int spectralAnalysisStep_in,
                        const unsigned int startIteration_in)
-    : energySpectra(fieldList_in.velocity.getLocalData(FFTWInit::numberElements),
+    : energySpectra(fieldList_in.velocity.getData(FFTWInit::numberElements),
                     globalLengthPtrdiff_t, "energy_spectra")
-    , forcingSpectra(fieldList_in.force.getLocalData(FFTWInit::numberElements),
+    , forcingSpectra(fieldList_in.force.getData(FFTWInit::numberElements),
                      globalLengthPtrdiff_t, "forcing_spectra")
     , communication(communication_in)
     , spectralAnalysisWriter(prefix, "spectra", startIteration_in, spectralAnalysisStep_in)

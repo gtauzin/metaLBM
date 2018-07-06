@@ -19,7 +19,7 @@ class Distribution : public Field<T, L::dimQ, architecture, true> {
   DynamicArray<T, architecture> haloArrayNext;
 
  protected:
-  using Base::localArray;
+  using Base::array;
 
  public:
   using Base::fieldName;
@@ -29,7 +29,7 @@ class Distribution : public Field<T, L::dimQ, architecture, true> {
         haloArrayPrevious(hSD::volume() * L::dimQ),
         haloArrayNext(hSD::volume() * L::dimQ) {}
 
-  using Base::getLocalData;
+  using Base::getData;
 
   LBM_DEVICE LBM_HOST T* getHaloDataPrevious() {
     return haloArrayPrevious.data();

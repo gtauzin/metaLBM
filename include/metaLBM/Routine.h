@@ -26,6 +26,9 @@ namespace lbm {
     using Clock = std::chrono::high_resolution_clock;
     using Seconds = std::chrono::duration<double>;
 
+    using Algorithm_
+      = Algorithm<T, algorithmT, architecture, implementation, overlappingT>;
+
     Communication_ communication;
     Stream<architecture> defaultStream;
     Stream<architecture> bulkStream;
@@ -45,7 +48,7 @@ namespace lbm {
     ScalarAnalysisList<T, architecture> scalarAnalysisList;
     SpectralAnalysisList<T, architecture> spectralAnalysisList;
 
-    Algorithm<dataT, algorithmT, architecture, implementation, overlappingT> algorithm;
+    Algorithm_ algorithm;
     PerformanceAnalysisList performanceAnalysisList;
 
   public:
@@ -60,13 +63,13 @@ namespace lbm {
       , fieldWriter(prefix)
       , distributionWriter(prefix)
       , fieldList(fieldWriter, defaultStream)
-      , curlVelocity(fieldList.velocity.getLocalData(FFTWInit::numberElements),
-                     fieldList.vorticity.getLocalData(FFTWInit::numberElements),
+      , curlVelocity(fieldList.velocity.getData(FFTWInit::numberElements),
+                     fieldList.vorticity.getData(FFTWInit::numberElements),
                      Cast<unsigned int, ptrdiff_t, 3>::Do(gSD::sLength()).data(),
                      gFD::offset(MPIInit::rank))
-      , distribution(initLocalDistribution<T, architecture>(fieldList.density,
-                                                            fieldList.velocity,
-                                                            defaultStream))
+      , distribution(initDistribution<T, architecture>(fieldList.density,
+                                                       fieldList.velocity,
+                                                       defaultStream))
       , scalarAnalysisList(fieldList, communication, scalarAnalysisStep,
                            startIteration)
       , spectralAnalysisList(fieldList, communication, spectralAnalysisStep,
@@ -110,7 +113,7 @@ namespace lbm {
       }
 
       performanceAnalysisList.setInitialMass(
-        communication.reduce(fieldList.density.getLocalData(FFTWInit::numberElements)));
+        communication.reduce(fieldList.density.getData(FFTWInit::numberElements)));
 
       // Execute LBM algorithm
       for (int iteration = startIteration + 1; iteration <= endIteration;
@@ -144,7 +147,7 @@ namespace lbm {
       }
 
       performanceAnalysisList.updateMass(communication.reduce(
-        fieldList.density.getLocalData(FFTWInit::numberElements)));
+        fieldList.density.getData(FFTWInit::numberElements)));
 
       performanceAnalysisList.updateMLUPS(endIteration - startIteration);
 
@@ -227,7 +230,7 @@ namespace lbm {
 
       if (performanceAnalysisList.getIsAnalyzed(iteration)) {
         performanceAnalysisList.updateMass(communication.reduce(
-          fieldList.density.getLocalData(FFTWInit::numberElements)));
+          fieldList.density.getData(FFTWInit::numberElements)));
 
         performanceAnalysisList.updateMLUPS(iteration - startIteration);
 
