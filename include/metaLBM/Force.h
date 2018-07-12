@@ -351,6 +351,33 @@ namespace lbm {
           iK[d::Z] = iFP[d::Z] <= gSD::sLength()[d::Z] / 2
             ? iFP[d::Z] : iFP[d::Z] - gSD::sLength()[d::Z];
 
+          for (auto iD = 0; iD < 2 * L::dimD - 3; ++iD) {
+            fftw_complex* fourierTempPtr =
+              (fftw_complex*)(spaceTempPtr + iD * FFTWInit::numberElements);
+
+            fourierTempPtr[index][p::Re] = 0.0;
+            fourierTempPtr[index][p::Im] = 0.0;
+
+            if (iFP[L::dimD - 1] == 0) {
+              iFP_symmetric[d::X] = gSD::sLength()[d::X] - iFP[d::X];
+              if (iFP_symmetric[d::X] < lFD::length()[d::X]) {
+                iFP_symmetric[d::Y] = gSD::sLength()[d::Y] - iFP[d::Y];
+                iFP_symmetric[L::dimD - 1] = 0;
+
+                iK_symmetric[d::X] =
+                  iFP_symmetric[d::X] + offset[d::X] <= gSD::sLength()[d::X] / 2
+                  ? iFP_symmetric[d::X] + offset[d::X]
+                  : iFP_symmetric[d::X] + offset[d::X] - gSD::sLength()[d::X];
+                iK_symmetric[d::Y] = iFP_symmetric[d::Y] <= gSD::sLength()[d::Y] / 2
+                  ? iFP_symmetric[d::Y] : iFP_symmetric[d::Y] - gSD::sLength()[d::Y];
+
+                auto index_symmetric = lFD::getIndex(iFP_symmetric);
+                fourierTempPtr[index_symmetric][p::Re] = 0.0;
+                fourierTempPtr[index_symmetric][p::Im] = 0.0;
+              }
+            }
+          }
+
           kNormSquared = iK.norm2();
           if (kNormSquared >= kMin * kMin && kNormSquared <= kMax * kMax) {
             for (auto iD = 0; iD < 2 * L::dimD - 3; ++iD) {
