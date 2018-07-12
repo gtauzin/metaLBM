@@ -288,7 +288,7 @@ namespace lbm {
       std::swap(Base::haloDistributionPreviousPtr,
                 Base::haloDistributionNextPtr);
 
-      Base::collision.update(iteration);
+      Base::collision.update(iteration, FFTWInit::numberElements);
 
       auto t0 = Clock::now();
       Base::computationBottom.Do(bulkStream, Base::bottomBoundary,

@@ -140,6 +140,7 @@ namespace lbm {
   private:
     using Base = Force<T, ForceType::GenericTimeIndependent, architecture>;
 
+    using Base::offset;
     using Base::amplitude;
 
   public:
@@ -167,7 +168,7 @@ namespace lbm {
           auto index = lSD::getIndex(iP);
 
           MathVector<T, L::dimD> force;
-          setForce(iP + Base::offset, force);
+          setForce(iP + offset, force);
           for (auto iD = 0; iD < L::dimD; ++iD) {
             (forcePtr + iD * FFTWInit::numberElements)[index] = force[iD];
           }
@@ -187,6 +188,7 @@ namespace lbm {
     using Base = Force<T, ForceType::GenericTimeIndependent, architecture>;
 
   protected:
+    using Base::offset;
     using Base::amplitude;
     MathVector<T, L::dimD> waveLength;
 
@@ -221,7 +223,7 @@ namespace lbm {
           MathVector<T, L::dimD> force;
 
           auto index = lSD::getIndex(iP);
-          setForce(iP + Base::offset, force);
+          setForce(iP + offset, force);
           for (auto iD = 0; iD < L::dimD; ++iD) {
             (forcePtr + iD * FFTWInit::numberElements)[index] = force[iD];
           }
@@ -240,6 +242,7 @@ namespace lbm {
   private:
     using Base = Force<T, ForceType::GenericTimeIndependent, architecture>;
 
+    using Base::offset;
     using Base::amplitude;
     MathVector<T, L::dimD> waveLength;
 
@@ -274,7 +277,7 @@ namespace lbm {
       computationLocal.Do([=] LBM_HOST(const Position& iP) {
           MathVector<T, L::dimD> force;
           auto index = lSD::getIndex(iP);
-          setForce(forcePtr, iP + Base::offset, force, numberElements);
+          setForce(forcePtr, iP + offset, force, numberElements);
 
           for (auto iD = 0; iD < L::dimD; ++iD) {
             (forcePtr + iD * numberElements)[index] = force[iD];
@@ -301,6 +304,7 @@ namespace lbm {
 
 
   protected:
+    using Base::offset;
     using Base::amplitude;
 
   public:
@@ -320,7 +324,7 @@ namespace lbm {
       double* spaceTempPtr = tempArray.data();
 
       MakeIncompressible<double, Architecture::CPU, PartitionningType::OneD, L::dimD>
-        makeIncompressible(spaceTempPtr, forcePtr, globalLengthPtrdiff_t, Base::offset);
+        makeIncompressible(spaceTempPtr, forcePtr, globalLengthPtrdiff_t, offset);
 
       makeIncompressible.executeFourier();
     }
@@ -339,9 +343,9 @@ namespace lbm {
 
           auto index = lFD::getIndex(iFP);
 
-          iK[d::X] = iFP[d::X] + Base::offset[d::X] <= gSD::sLength()[d::X] / 2
-            ? iFP[d::X] + Base::offset[d::X]
-            : iFP[d::X] + Base::offset[d::X] - gSD::sLength()[d::X];
+          iK[d::X] = iFP[d::X] + offset[d::X] <= gSD::sLength()[d::X] / 2
+            ? iFP[d::X] + offset[d::X]
+            : iFP[d::X] + offset[d::X] - gSD::sLength()[d::X];
           iK[d::Y] = iFP[d::Y] <= gSD::sLength()[d::Y] / 2
             ? iFP[d::Y] : iFP[d::Y] - gSD::sLength()[d::Y];
           iK[d::Z] = iFP[d::Z] <= gSD::sLength()[d::Z] / 2
@@ -363,9 +367,9 @@ namespace lbm {
                   iFP_symmetric[L::dimD - 1] = 0;
 
                   iK_symmetric[d::X] =
-                    iFP_symmetric[d::X] + Base::offset[d::X] <= gSD::sLength()[d::X] / 2
-                    ? iFP_symmetric[d::X] + Base::offset[d::X]
-                    : iFP_symmetric[d::X] + Base::offset[d::X] -
+                    iFP_symmetric[d::X] + offset[d::X] <= gSD::sLength()[d::X] / 2
+                    ? iFP_symmetric[d::X] + offset[d::X]
+                    : iFP_symmetric[d::X] + offset[d::X] -
                     gSD::sLength()[d::X];
                   iK_symmetric[d::Y] =
                     iFP_symmetric[d::Y] <= gSD::sLength()[d::Y] / 2
@@ -398,6 +402,7 @@ namespace lbm {
     const unsigned int kMin, kMax;
 
   protected:
+    using Base::offset;
     using Base::amplitude;
 
   public:
@@ -449,9 +454,9 @@ namespace lbm {
           WaveNumber iK_symmetric{{0}};
           auto index = lFD::getIndex(iFP);
 
-          iK[d::X] = iFP[d::X] + Base::offset[d::X] <= gSD::sLength()[d::X] / 2
-            ? iFP[d::X] + Base::offset[d::X]
-            : iFP[d::X] + Base::offset[d::X] - gSD::sLength()[d::X];
+          iK[d::X] = iFP[d::X] + offset[d::X] <= gSD::sLength()[d::X] / 2
+            ? iFP[d::X] + offset[d::X]
+            : iFP[d::X] + offset[d::X] - gSD::sLength()[d::X];
           iK[d::Y] = iFP[d::Y] <= gSD::sLength()[d::Y] / 2
             ? iFP[d::Y] : iFP[d::Y] - gSD::sLength()[d::Y];
           iK[d::Z] = iFP[d::Z] <= gSD::sLength()[d::Z] / 2
@@ -485,9 +490,9 @@ namespace lbm {
                   iFP_symmetric[L::dimD - 1] = 0;
 
                   iK_symmetric[d::X] =
-                    iFP_symmetric[d::X] + Base::offset[d::X] <= gSD::sLength()[d::X] / 2
-                    ? iFP_symmetric[d::X] + Base::offset[d::X]
-                    : iFP_symmetric[d::X] + Base::offset[d::X] -
+                    iFP_symmetric[d::X] + offset[d::X] <= gSD::sLength()[d::X] / 2
+                    ? iFP_symmetric[d::X] + offset[d::X]
+                    : iFP_symmetric[d::X] + offset[d::X] -
                     gSD::sLength()[d::X];
                   iK_symmetric[d::Y] =
                     iFP_symmetric[d::Y] <= gSD::sLength()[d::Y] / 2
