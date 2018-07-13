@@ -237,6 +237,7 @@ protected:
   using Base::getForce;
   using Base::getHydrodynamicVelocity;
   using Base::getVelocity;
+
   LBM_DEVICE LBM_HOST inline T getT2() { return T2; }
   LBM_DEVICE LBM_HOST inline T getT3() { return T3; }
   LBM_DEVICE LBM_HOST inline T getT4() { return T4; }
@@ -335,9 +336,8 @@ protected:
 
       else {
         T alphaMin = 1.;
-        Base::alpha =
-            solveAlpha(haloDistributionNextPtr, haloDistributionPreviousPtr,
-                       iP, alphaMin, alphaMax);
+        Base::alpha = solveAlpha(haloDistributionNextPtr, haloDistributionPreviousPtr,
+                                 iP, alphaMin, alphaMax);
       }
     }
   }

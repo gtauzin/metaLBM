@@ -18,14 +18,14 @@ namespace lbm {
   constexpr int globalLengthY = GLOBAL_LENGTH_Y;
   constexpr int globalLengthZ = GLOBAL_LENGTH_Z;
 
-  constexpr unsigned int startIteration = 0;
-  constexpr unsigned int endIteration = 5;
-  constexpr unsigned int writeStep = 1;
+  constexpr unsigned int startIteration = 200000;
+  constexpr unsigned int endIteration = 500000;
+  constexpr unsigned int writeStep = 2000;
   constexpr unsigned int backUpStep = 5000;
 
-  constexpr unsigned int scalarAnalysisStep = 1;
+  constexpr unsigned int scalarAnalysisStep = 200;
   constexpr unsigned int spectralAnalysisStep = 1000;
-
+  constexpr unsigned int performanceAnalysisStep = 5000;
   constexpr unsigned int successiveWriteStep = 3;
 
   constexpr AlgorithmType algorithmT = AlgorithmType::Pull;
@@ -34,7 +34,7 @@ namespace lbm {
   constexpr MemoryLayout memoryL = MemoryLayout::SoA;
   constexpr Overlapping overlappingT = Overlapping::On;
 
-  constexpr dataT relaxationTime = 0.502;
+  constexpr dataT relaxationTime = 0.505;
   constexpr CollisionType collisionT = CollisionType::ELBM;
   constexpr EquilibriumType equilibriumT = EquilibriumType::Incompressible;
 
@@ -46,16 +46,15 @@ namespace lbm {
   constexpr ForcingSchemeType forcingSchemeT = ForcingSchemeType::ExactDifferenceMethod;
   constexpr ForceType forceT = ForceType::ConstantShell;
 
-  constexpr Vector forceAmplitude = { {1e1, 1e1, 1e1} };
+  constexpr Vector forceAmplitude = { {5e-4, 5e-4, 5e-4} };
   constexpr Vector forceWaveLength = { {32.0, 32.0, 32.0} };
-  constexpr int forcekMin = 1;
-  constexpr int forcekMax = 2;
+  constexpr int forcekMin = 5;
+  constexpr int forcekMax = 7;
 
-  constexpr Vector removalForceAmplitude = { {1e1, 1e1, 1e1} };
+  constexpr Vector removalForceAmplitude = { {1.5e-6, 1.5e-6, 1.5e-6} };
   constexpr Vector removalForceWaveLength = { {32.0, 32.0, 32.0} };
-  constexpr int removalForcekMin = 10;
-  constexpr int removalForcekMax = 12;
-
+  constexpr int removalForcekMin = 1;
+  constexpr int removalForcekMax = 2;
 
   constexpr BoundaryType boundaryT = BoundaryType::Generic;
 
@@ -68,6 +67,7 @@ namespace lbm {
   constexpr bool writeForce = 1;
   constexpr bool writeEntropy = 0;
   constexpr bool writeAlpha = 1;
+  constexpr bool writeT = 1;
   constexpr bool writeVorticity = 1;
 
   constexpr bool analyzeTotalEnergy = 1;
