@@ -457,12 +457,10 @@ namespace lbm {
           const auto index = lSD::getIndex(iP);
 
           momentumPtr[index] = 0;
-
           for (auto iD = 0; iD < L::dimD; ++iD) {
             momentumPtr[index] +=
               (velocityPtr + iD * numberElements)[index];
           }
-
           momentumPtr[index] *= densityPtr[index];
         });
       computationLocal.synchronize();
