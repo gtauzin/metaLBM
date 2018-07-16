@@ -232,7 +232,7 @@ struct Lattice<T, LatticeType::D2Q13> {
     };
   }
 
-  static constexpr T w0 = (T) 5 / (T) 24;
+  static constexpr T w0 = (T) 15 / (T) 24;
   static constexpr T w1 = (T) 4 / (T) 15;
   static constexpr T w2 = (T) 1 / (T) 10;
   static constexpr T w4 = (T) 1 / (T) 120;
