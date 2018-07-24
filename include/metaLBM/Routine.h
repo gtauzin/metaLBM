@@ -93,9 +93,8 @@ namespace lbm {
       Clock::time_point t1;
 
       if (writeFieldInit || writeAnalysisInit) {
-        if (writeVorticity) {
           curlVelocity.executeSpace();
-        }
+          curlVelocity.normalize();
       }
 
       if (writeFieldInit) {
@@ -116,8 +115,7 @@ namespace lbm {
         communication.reduce(fieldList.density.getData(FFTWInit::numberElements)));
 
       // Execute LBM algorithm
-      for (int iteration = startIteration + 1; iteration <= endIteration;
-           ++iteration) {
+      for (int iteration = startIteration + 1; iteration <= endIteration; ++iteration) {
         algorithm.isStored = (fieldWriter.getIsWritten(iteration)
                               || scalarAnalysisList.getIsAnalyzed(iteration)
                               || spectralAnalysisList.getIsAnalyzed(iteration));
@@ -126,9 +124,8 @@ namespace lbm {
                           leftEvent, rightEvent);
 
         if (algorithm.isStored) {
-          if (writeVorticity) {
-            curlVelocity.executeSpace();
-          }
+          curlVelocity.executeSpace();
+          curlVelocity.normalize();
         }
 
         t0 = Clock::now();

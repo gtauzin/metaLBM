@@ -31,8 +31,7 @@ class FieldList {
   Field<T, 1, architecture, writeT> T4;
   Field<T, 2 * L::dimD - 3, architecture, writeVorticity> vorticity;
   FieldWriter_& fieldWriter;
-  Curl<double, Architecture::CPU, PartitionningType::OneD, L::dimD, L::dimD>
-      curlVelocity;
+
 
   FieldList(FieldWriter_& fieldWriter_in,
             const Stream<architecture>& stream_in)
@@ -44,10 +43,6 @@ class FieldList {
     , T3("T3")
     , T4("T4")
     , vorticity("vorticity")
-    , curlVelocity(velocity.getData(FFTWInit::numberElements),
-                   vorticity.getData(FFTWInit::numberElements),
-                   Cast<unsigned int, ptrdiff_t, 3>::Do(gSD::sLength()).data(),
-                   gFD::offset(MPIInit::rank))
     , fieldWriter(fieldWriter_in)
   {}
 

@@ -152,6 +152,18 @@ template <class T, Architecture architecture>
                                                      equilibrium_iQ, iQ);
   }
 
+  LBM_DEVICE LBM_HOST void
+  calculateTs(const T* haloDistributionPreviousPtr,
+              const T* haloDistributionNextPtr,
+              const Position& iP) {
+    LBM_INSTRUMENT_OFF("Moment<T>::calculateMoments", 4)
+
+  }
+
+  LBM_DEVICE LBM_HOST inline T getT2() { return 0; }
+  LBM_DEVICE LBM_HOST inline T getT3() { return 0; }
+  LBM_DEVICE LBM_HOST inline T getT4() { return 0; }
+
   using Base::getDensity;
   using Base::getForce;
   using Base::getHydrodynamicVelocity;

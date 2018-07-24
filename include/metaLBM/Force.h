@@ -344,8 +344,7 @@ namespace lbm {
           auto index = lFD::getIndex(iFP);
 
           iK[d::X] = iFP[d::X] + offset[d::X] <= gSD::sLength()[d::X] / 2
-            ? iFP[d::X] + offset[d::X]
-            : iFP[d::X] + offset[d::X] - gSD::sLength()[d::X];
+            ? iFP[d::X] + offset[d::X] : iFP[d::X] + offset[d::X] - gSD::sLength()[d::X];
           iK[d::Y] = iFP[d::Y] <= gSD::sLength()[d::Y] / 2
             ? iFP[d::Y] : iFP[d::Y] - gSD::sLength()[d::Y];
           iK[d::Z] = iFP[d::Z] <= gSD::sLength()[d::Z] / 2
@@ -396,12 +395,10 @@ namespace lbm {
                   iK_symmetric[d::X] =
                     iFP_symmetric[d::X] + offset[d::X] <= gSD::sLength()[d::X] / 2
                     ? iFP_symmetric[d::X] + offset[d::X]
-                    : iFP_symmetric[d::X] + offset[d::X] -
-                    gSD::sLength()[d::X];
+                    : iFP_symmetric[d::X] + offset[d::X] - gSD::sLength()[d::X];
                   iK_symmetric[d::Y] =
                     iFP_symmetric[d::Y] <= gSD::sLength()[d::Y] / 2
-                    ? iFP_symmetric[d::Y]
-                    : iFP_symmetric[d::Y] - gSD::sLength()[d::Y];
+                    ? iFP_symmetric[d::Y] : iFP_symmetric[d::Y] - gSD::sLength()[d::Y];
 
                   auto index_symmetric = lFD::getIndex(iFP_symmetric);
                   fourierTempPtr[index_symmetric][p::Re] = amplitude[iD];
@@ -456,13 +453,12 @@ namespace lbm {
       computationLocal.Do([=] LBM_HOST(const Position& iP) {
           const auto index = lSD::getIndex(iP);
 
-          momentumPtr[index] = 0;
           for (auto iD = 0; iD < L::dimD; ++iD) {
-            momentumPtr[index] +=
-              (velocityPtr + iD * numberElements)[index];
+            (momentumPtr + iD * numberElements)[index] =
+              densityPtr[index] * (velocityPtr + iD * numberElements)[index];
           }
-          momentumPtr[index] *= densityPtr[index];
-        });
+      });
+
       computationLocal.synchronize();
 
       ForwardFFT<double, Architecture::CPU, PartitionningType::OneD,
@@ -480,8 +476,7 @@ namespace lbm {
           auto index = lFD::getIndex(iFP);
 
           iK[d::X] = iFP[d::X] + offset[d::X] <= gSD::sLength()[d::X] / 2
-            ? iFP[d::X] + offset[d::X]
-            : iFP[d::X] + offset[d::X] - gSD::sLength()[d::X];
+            ? iFP[d::X] + offset[d::X] : iFP[d::X] + offset[d::X] - gSD::sLength()[d::X];
           iK[d::Y] = iFP[d::Y] <= gSD::sLength()[d::Y] / 2
             ? iFP[d::Y] : iFP[d::Y] - gSD::sLength()[d::Y];
           iK[d::Z] = iFP[d::Z] <= gSD::sLength()[d::Z] / 2

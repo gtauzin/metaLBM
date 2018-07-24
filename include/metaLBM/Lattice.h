@@ -190,7 +190,7 @@ struct Lattice<T, LatticeType::D2Q13> {
     return Position({2, 2, 0});
   }
 
-  static constexpr T cs2 = (T) 0.4;
+  static constexpr T cs2 = (T) 0.5;
   static constexpr T inv_cs2 = (T)1 / (T)cs2;
 
   LBM_DEVICE LBM_HOST
@@ -232,10 +232,10 @@ struct Lattice<T, LatticeType::D2Q13> {
     };
   }
 
-  static constexpr T w0 = (T) 15 / (T) 24;
-  static constexpr T w1 = (T) 4 / (T) 15;
-  static constexpr T w2 = (T) 1 / (T) 10;
-  static constexpr T w4 = (T) 1 / (T) 120;
+  static constexpr T w0 = (T) 3 / (T) 8;
+  static constexpr T w1 = (T) 1 / (T) 12;
+  static constexpr T w2 = (T) 1 / (T) 16;
+  static constexpr T w4 = (T) 1 / (T) 96;
 
   LBM_DEVICE LBM_HOST
   static inline constexpr MathVector<T, dimQ> weight() {
