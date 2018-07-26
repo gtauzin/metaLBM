@@ -129,7 +129,7 @@ template <class T, Architecture architecture>
   LBM_DEVICE LBM_HOST LBM_INLINE
   void calculateRelaxationTime(const T* haloDistributionNextPtr,
                                const T* haloDistributionPreviousPtr,
-                               const Position& iP) {
+                               const Position& iP, const T alphaGuess) {
     LBM_INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::calculate", 4)
   }
 
@@ -210,7 +210,7 @@ protected:
   LBM_DEVICE LBM_HOST inline
   void calculateRelaxationTime(T * haloDistributionNextPtr,
                                T * haloDistributionPreviousPtr,
-                               const Position& iP) {
+                               const Position& iP, const T alphaGuess) {
     LBM_INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::calculate", 4)
 
     for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
@@ -218,7 +218,8 @@ protected:
         haloDistributionPreviousPtr[hSD::getIndex(iP - uiL::celerity()[iQ], iQ)]
         - Equilibrium_::calculate(Base::density, Base::velocity, Base::velocity2, iQ);
     }
-
+    
+    Base::alpha = alphaGuess;
     calculateAlpha(haloDistributionNextPtr, haloDistributionPreviousPtr, iP);
     Base::tau = (T)1.0 / (Base::alpha * Base::beta);
   }
@@ -312,8 +313,8 @@ protected:
     EntropicStepFunctor<T>
         entropicStepFunctor(haloDistributionNextPtr,
                             haloDistributionPreviousPtr, iP);
-    const T tolerance = 1e-5;
-    const int iterationMax = 20;
+    const T tolerance = 1e-8;
+    const int iterationMax = 50;
     T alphaR = Base::alpha;
 
     bool hasConverged =

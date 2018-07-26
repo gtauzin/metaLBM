@@ -164,7 +164,7 @@ class SpectralAnalysisList {
     if(MPIInit::rank[d::X] == 0) {
       T* spectraList[2] = {energySpectra.spectra, forcingSpectra.spectra};
       spectralAnalysisWriter.openFile(iteration);
-      spectralAnalysisWriter.writeAnalysis<1, gFD::maxWaveNumber()>(
+      spectralAnalysisWriter.writeAnalysis<2, gFD::maxWaveNumber()>(
           iteration, spectraList);
       spectralAnalysisWriter.closeFile();
     }

@@ -166,7 +166,9 @@ namespace lbm {
 
       Base::collision.setForce(Base::forcePtr, iP, gSD::sOffset(rank), numberElements);
       Base::collision.calculateRelaxationTime(Base::haloDistributionNextPtr,
-                                              Base::haloDistributionPreviousPtr, iP);
+                                              Base::haloDistributionPreviousPtr, iP,
+					      Base::alphaPtr[hSD::getIndexLocal(iP)]);
+      Base::alphaPtr[hSD::getIndexLocal(iP)] = Base::collision.getAlpha();
 
       if (Base::isStored) {
         Base::collision.calculateTs(Base::haloDistributionPreviousPtr,
@@ -386,7 +388,9 @@ namespace lbm {
 
       Base::collision.setForce(Base::forcePtr, iP, gSD::sOffset(rank), numberElements);
       Base::collision.calculateRelaxationTime(Base::haloDistributionNextPtr,
-                                              Base::haloDistributionPreviousPtr, iP);
+                                              Base::haloDistributionPreviousPtr, iP,
+					      Base::alphaPtr[hSD::getIndexLocal(iP)]);
+      Base::alphaPtr[hSD::getIndexLocal(iP)] = Base::collision.getAlpha();
 
 #pragma unroll
       for (auto iQ = 0; iQ < L::dimQ; ++iQ) {
