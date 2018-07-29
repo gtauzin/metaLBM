@@ -9,20 +9,23 @@
 
 namespace lbm {
 
+  template <class T, bool isFmirrorForced = false>
+  struct EntropicStepFunctor {};
+
   template <class T>
-  struct EntropicStepFunctor {
+  struct EntropicStepFunctor<T, false> {
   private:
-    const T* haloDistributionNext_Ptr;
-    const T* haloDistributionPrevious_Ptr;
+    const T* haloDistributionNextPtr;
+    const T* haloDistributionPreviousPtr;
     const Position iP;
 
   public:
     LBM_HOST LBM_DEVICE
-    EntropicStepFunctor(const T* haloDistributionNext_Ptr_in,
-                        const T* haloDistributionPrevious_Ptr_in,
+    EntropicStepFunctor(const T* haloDistributionNextPtr_in,
+                        const T* haloDistributionPreviousPtr_in,
                         const Position& iP_in)
-      : haloDistributionNext_Ptr(haloDistributionNext_Ptr_in),
-        haloDistributionPrevious_Ptr(haloDistributionPrevious_Ptr_in),
+      : haloDistributionNextPtr(haloDistributionNextPtr_in),
+        haloDistributionPreviousPtr(haloDistributionPreviousPtr_in),
         iP(iP_in) {}
 
     LBM_HOST LBM_DEVICE inline
@@ -30,9 +33,9 @@ namespace lbm {
       T entropicStepFunction = (T)0;
 
       for (auto iQ = 0; iQ < L::dimQ; ++iQ) {
-        T f_iQ = haloDistributionPrevious_Ptr[hSD::getIndex(iP - uiL::celerity()[iQ], iQ)];
+        T f_iQ = haloDistributionPreviousPtr[hSD::getIndex(iP - uiL::celerity()[iQ], iQ)];
         T fmAlphafNeq_iQ =
-          f_iQ - alpha * haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)];;
+          f_iQ - alpha * haloDistributionNextPtr[hSD::getIndex(iP, iQ)];;
         entropicStepFunction +=
           f_iQ * log(f_iQ / L::weight()[iQ]) -
           fmAlphafNeq_iQ * log(fmAlphafNeq_iQ / L::weight()[iQ]);
@@ -46,9 +49,9 @@ namespace lbm {
       T entropicStepFunctionDerivative = (T)0;
 
       for (auto iQ = 0; iQ < L::dimQ; ++iQ) {
-        T fNeq_iQ = haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)];
+        T fNeq_iQ = haloDistributionNextPtr[hSD::getIndex(iP, iQ)];
         T fmAlphafNeq_iQ =
-          haloDistributionPrevious_Ptr[hSD::getIndex(iP - uiL::celerity()[iQ], iQ)]
+          haloDistributionPreviousPtr[hSD::getIndex(iP - uiL::celerity()[iQ], iQ)]
           - alpha * fNeq_iQ;
 
         entropicStepFunctionDerivative +=
@@ -58,6 +61,52 @@ namespace lbm {
       return entropicStepFunctionDerivative;
     }
   };
+
+  template <class T>
+  struct EntropicStepFunctor<T, true> {
+  private:
+    const T* haloDistributionNextPtr;
+    const T* haloDistributionPreviousPtr;
+    const Position iP;
+
+  public:
+    LBM_HOST LBM_DEVICE
+    EntropicStepFunctor(const T* haloDistributionNextPtr_in,
+                        const T* haloDistributionPreviousPtr_in,
+                        const Position& iP_in)
+      : haloDistributionNextPtr(haloDistributionNextPtr_in)
+      , haloDistributionPreviousPtr(haloDistributionPreviousPtr_in)
+      , iP(iP_in)
+    {}
+
+    LBM_HOST LBM_DEVICE inline T evaluateFunction(T const& alpha) {
+    T entropicStepFunction = (T)0;
+
+    for (auto iQ = 0; iQ < L::dimQ; ++iQ) {
+      T f_iQ = haloDistributionNextPtr[hSD::getIndex(iP, iQ)];
+      T fmAlphafNeq_iQ = f_iQ - alpha
+        * haloDistributionPreviousPtr[hSD::getIndex(iP - uiL::celerity()[iQ], iQ)];
+      entropicStepFunction += f_iQ * log(f_iQ / L::weight()[iQ])
+        - fmAlphafNeq_iQ * log(fmAlphafNeq_iQ / L::weight()[iQ]);
+    }
+
+    return entropicStepFunction;
+  }
+
+    LBM_HOST LBM_DEVICE inline T evaluateDerivative(T const& alpha) {
+    T entropicStepFunctionDerivative = (T)0;
+
+    for (auto iQ = 0; iQ < L::dimQ; ++iQ) {
+      T fNeq_iQ = haloDistributionPreviousPtr[hSD::getIndex(iP - uiL::celerity()[iQ], iQ)];
+      T fmAlphafNeq_iQ = haloDistributionNextPtr[hSD::getIndex(iP, iQ)] - alpha * fNeq_iQ;
+
+      entropicStepFunctionDerivative += fNeq_iQ * (1 + log(fmAlphafNeq_iQ / L::weight()[iQ]));
+    }
+
+    return entropicStepFunctionDerivative;
+    }
+  };
+
 
   template <class T>
   LBM_HOST LBM_DEVICE inline

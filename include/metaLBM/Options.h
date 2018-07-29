@@ -32,7 +32,7 @@ namespace lbm {
 
  enum class CollisionType { GenericSRT, BGK, ELBM, Approached_ELBM, Malaspinas_ELBM,
                             Essentially1_ELBM, Essentially2_ELBM,
-                            ForcedNR_ELBM, ForcedBNR_ELBM,
+                            ForcedNR_ELBM, ForcedBNR_ELBM, ForcedNR_ELBM_Forcing,
                             GenericMRT };
 
  enum class ForcingSchemeType { Generic, None, Guo, ShanChen, ExactDifferenceMethod };
