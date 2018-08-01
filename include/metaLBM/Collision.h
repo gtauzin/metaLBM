@@ -206,7 +206,7 @@ protected:
   LBM_DEVICE LBM_HOST inline
   void calculateRelaxationTime(T * haloDistributionNextPtr, T * haloDistributionPreviousPtr,
                                const Position& iP, const T alphaGuess) {
-    LBM_INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::calculate", 4)
+    LBM_INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::calculate", 4)
 
     for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
       haloDistributionNextPtr[hSD::getIndex(iP, iQ)] =
@@ -222,7 +222,7 @@ protected:
   LBM_DEVICE LBM_HOST inline
   void collideAndStream(T* haloDistributionNextPtr, const T* haloDistributionPreviousPtr,
                         const Position& iP, const unsigned int iQ) {
-    LBM_INSTRUMENT_OFF("Collision<T, CollisionType::GenericSRT>::calculate", 4)
+    LBM_INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::calculate", 4)
 
     T equilibrium_iQ =
       haloDistributionPreviousPtr[hSD::getIndex(iP - uiL::celerity()[iQ], iQ)]
@@ -706,13 +706,22 @@ template <class T, Architecture architecture>
   using Base::setForce;
   using Base::update;
 
-  using Base::collideAndStream;
-
   using Base::getAlpha;
   using Base::getDensity;
   using Base::getForce;
   using Base::getHydrodynamicVelocity;
   using Base::getVelocity;
+
+  LBM_DEVICE LBM_HOST void
+  calculateTs(const T* haloDistributionPreviousPtr, const T* haloDistributionNextPtr,
+              const Position& iP) {
+    LBM_INSTRUMENT_OFF("Moment<T>::calculateMoments", 4)
+
+    if(writeT) {
+      Moment_::calculateT_forcing(haloDistributionPreviousPtr, haloDistributionNextPtr, iP,
+                                  Base::T2, Base::T3, Base::T4);
+    }
+  }
 
   LBM_DEVICE LBM_HOST inline
   void calculateRelaxationTime(T * haloDistributionNextPtr, T * haloDistributionPreviousPtr,
@@ -732,11 +741,68 @@ template <class T, Architecture architecture>
 
     Base::alpha = alphaGuess;
 
-    Base::calculateAlpha(haloDistributionNextPtr, haloDistributionPreviousPtr, iP);
+    calculateAlpha(haloDistributionNextPtr, haloDistributionPreviousPtr, iP);
+
     Base::tau = (T)1.0 / (Base::alpha * Base::beta);
   }
 
+  LBM_DEVICE LBM_HOST inline
+    void collideAndStream(T* haloDistributionNext_Ptr, const T* haloDistributionPrevious_Ptr,
+                          const Position& iP, const unsigned int iQ) {
+    LBM_INSTRUMENT_OFF("Collision<T, CollisionType::ForceNR_ELBM_Forcing>::calculate", 4)
+
+    haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)] -=
+        (T)1.0 / Base::tau *
+        haloDistributionPrevious_Ptr[hSD::getIndex(iP - uiL::celerity()[iQ],
+                                                   iQ)];
+  }
+
+
  private:
+  LBM_DEVICE LBM_HOST inline
+  void calculateAlpha(const T* haloDistributionNextPtr, const T* haloDistributionPreviousPtr,
+                      const Position& iP) {
+    LBM_INSTRUMENT_OFF("Collision<T, CollisionType::ForcedNR_ELBM_Forcing>::calculateAlpha", 5)
+
+    T alphaMax = calculateAlphaMax(haloDistributionNextPtr,
+                                   haloDistributionPreviousPtr, iP);
+
+    if (alphaMax < 2.) {
+      Base::alpha = 0.95 * alphaMax;
+    }
+
+    else {
+      T alphaMin = 1.;
+      Base::alpha = solveAlpha(haloDistributionNextPtr, haloDistributionPreviousPtr,
+                               iP, alphaMin, alphaMax);
+    }
+  }
+
+  LBM_HOST LBM_DEVICE T calculateAlphaMax(const T* haloDistributionNext_Ptr,
+                                          const T* haloDistributionPrevious_Ptr,
+                                          const Position& iP) {
+    LBM_INSTRUMENT_OFF("Collision<T, CollisionType::ForcedNR_ELBM_Forcing>::calculateAlphaMax", 6)
+
+    T alphaMaxR = 2.5;
+    T alphaMaxTemp;
+
+    for (unsigned int iQ = 0; iQ < L::dimQ; ++iQ) {
+      if (haloDistributionPrevious_Ptr[hSD::getIndex(iP - uiL::celerity()[iQ],
+                                                     iQ)] > 0) {
+        alphaMaxTemp = fabs(haloDistributionNext_Ptr[hSD::getIndex(iP, iQ)] /
+                            haloDistributionPrevious_Ptr[hSD::getIndex(
+                                iP - uiL::celerity()[iQ], iQ)]);
+
+        if (alphaMaxTemp < alphaMaxR) {
+          alphaMaxR = alphaMaxTemp;
+        }
+      }
+    }
+
+    return alphaMaxR;
+  }
+
+
   LBM_HOST LBM_DEVICE inline
   T solveAlpha(const T* haloDistributionNextPtr, const T* haloDistributionPreviousPtr,
                const Position& iP, const T alphaMin, const T alphaMax) {

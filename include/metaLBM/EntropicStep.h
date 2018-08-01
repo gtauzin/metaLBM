@@ -108,9 +108,9 @@ namespace lbm {
   };
 
 
-  template <class T>
+  template <class T, bool isFmirrorForced = false>
   LBM_HOST LBM_DEVICE inline
-  bool NewtonRaphsonSolver(EntropicStepFunctor<T> functor,
+    bool NewtonRaphsonSolver(EntropicStepFunctor<T, isFmirrorForced> functor,
                            const T tolerance, const int iterationMax,
                            T& xR, const T xMin, const T xMax) {
     T error = 1 + tolerance;
@@ -139,9 +139,9 @@ namespace lbm {
     return false;
   }
 
-  template <class T>
+  template <class T, bool isFmirrorForced = false>
   LBM_HOST LBM_DEVICE inline
-  bool Bisection_NewtonRaphsonSolver(EntropicStepFunctor<T> functor,
+    bool Bisection_NewtonRaphsonSolver(EntropicStepFunctor<T, isFmirrorForced> functor,
                                      const T tolerance, const int iterationMax,
                                      T& xR, const T xMin, const T xMax) {
     T xLow, xHigh;

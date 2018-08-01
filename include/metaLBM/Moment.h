@@ -49,8 +49,7 @@ class Moment {
 
 
   LBM_DEVICE LBM_HOST LBM_INLINE
-  static void calculateT(const T* haloDistributionPreviousPtr,
-                         const T* haloDistributionNextPtr,
+  static void calculateT(const T* haloDistributionPreviousPtr, const T* haloDistributionNextPtr,
                          const Position& iP, T& T2, T& T3, T& T4) {
     LBM_INSTRUMENT_OFF("Moment<T>::calculateVelocity", 5)
 
@@ -71,6 +70,35 @@ class Moment {
       T equilibrium_iQ =
         haloDistributionPreviousPtr[hSD::getIndex(iP - uiL::celerity()[iQ], iQ)]
         - haloDistributionNextPtr[hSD::getIndex(iP, iQ)];
+
+      T2 += non_equilibrium_iQ * non_equilibrium_iQ / equilibrium_iQ;
+      T3 += non_equilibrium_iQ * non_equilibrium_iQ * non_equilibrium_iQ
+        / equilibrium_iQ / equilibrium_iQ;
+      T4 += non_equilibrium_iQ * non_equilibrium_iQ * non_equilibrium_iQ * non_equilibrium_iQ
+        / equilibrium_iQ / equilibrium_iQ /equilibrium_iQ;
+    }
+  }
+
+
+  LBM_DEVICE LBM_HOST LBM_INLINE
+  static void calculateT_forcing(const T* haloDistributionPreviousPtr, const T* haloDistributionNextPtr,
+                                 const Position& iP, T& T2, T& T3, T& T4) {
+    LBM_INSTRUMENT_OFF("Moment<T>::calculateVelocity", 5)
+
+    T non_equilibrium_0 = haloDistributionPreviousPtr[hSD::getIndex(iP - uiL::celerity()[0], 0)];
+    T equilibrium_0 = haloDistributionNextPtr[hSD::getIndex(iP, 0)] - non_equilibrium_0;
+
+
+    T2 = non_equilibrium_0 * non_equilibrium_0 / equilibrium_0;
+    T3 = non_equilibrium_0 * non_equilibrium_0 * non_equilibrium_0
+      / equilibrium_0 / equilibrium_0;
+    T4 = non_equilibrium_0 * non_equilibrium_0 * non_equilibrium_0 * non_equilibrium_0
+      / equilibrium_0 / equilibrium_0 /equilibrium_0;
+
+    #pragma unroll
+    for (auto iQ = 1; iQ < L::dimQ; ++iQ) {
+    T non_equilibrium_iQ = haloDistributionPreviousPtr[hSD::getIndex(iP - uiL::celerity()[iQ], iQ)];
+    T equilibrium_iQ = haloDistributionNextPtr[hSD::getIndex(iP, iQ)] - non_equilibrium_iQ;
 
       T2 += non_equilibrium_iQ * non_equilibrium_iQ / equilibrium_iQ;
       T3 += non_equilibrium_iQ * non_equilibrium_iQ * non_equilibrium_iQ
