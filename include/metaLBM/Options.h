@@ -9,7 +9,7 @@ namespace lbm {
 
   enum p { Re, Im };
 
-  enum class LatticeType { Generic, D1Q3, D2Q5, D2Q9, D2Q13, D2Q17, D2Q37,
+  enum class LatticeType { Generic, D1Q3, D2Q5, D2Q9, D2Q13, D2Q17, D2Q21, D2Q37,
                            D3Q15, D3Q19, D3Q27, D3Q33 };
 
   enum class MemoryLayout { Generic, Default, SoA, AoS };
@@ -28,7 +28,7 @@ namespace lbm {
 
  enum class FieldType { Generic, Density, Velocity, Force, Alpha, Entropy };
 
- enum class EquilibriumType { Generic, Incompressible };
+ enum class EquilibriumType { Generic, Exact, TruncationMa2, TruncationMa3 };
 
  enum class CollisionType { GenericSRT, BGK, ELBM, Approached_ELBM, Malaspinas_ELBM,
                             Essentially1_ELBM, Essentially2_ELBM,
