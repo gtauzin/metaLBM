@@ -29,6 +29,9 @@ class FieldList {
   Field<T, 1, architecture, writeT> T2;
   Field<T, 1, architecture, writeT> T3;
   Field<T, 1, architecture, writeT> T4;
+  Field<T, 1, architecture, writeT> T2_approx;
+  Field<T, 1, architecture, writeT> T3_approx;
+  Field<T, 1, architecture, writeT> T4_approx;
   Field<T, 2 * L::dimD - 3, architecture, writeVorticity> vorticity;
   FieldWriter_& fieldWriter;
 
@@ -42,6 +45,9 @@ class FieldList {
     , T2("T2")
     , T3("T3")
     , T4("T4")
+    , T2_approx("T2_approx")
+    , T3_approx("T3_approx")
+    , T4_approx("T4_approx")
     , vorticity("vorticity")
     , fieldWriter(fieldWriter_in)
   {}
@@ -54,6 +60,10 @@ class FieldList {
       fieldWriter.writeField(T2);
       fieldWriter.writeField(T3);
       fieldWriter.writeField(T4);
+
+      fieldWriter.writeField(T2_approx);
+      fieldWriter.writeField(T3_approx);
+      fieldWriter.writeField(T4_approx);
     }
     if(writeForce) fieldWriter.writeField(force);
     if(writeVorticity) fieldWriter.writeField(vorticity);

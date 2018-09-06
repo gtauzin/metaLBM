@@ -38,6 +38,9 @@ namespace lbm {
     T* T2Ptr;
     T* T3Ptr;
     T* T4Ptr;
+    T* T2_approxPtr;
+    T* T3_approxPtr;
+    T* T4_approxPtr;
     T* distributionPtr;
 
   protected:
@@ -67,6 +70,9 @@ namespace lbm {
       , T2Ptr(fieldList_in.T2.getData(FFTWInit::numberElements))
       , T3Ptr(fieldList_in.T3.getData(FFTWInit::numberElements))
       , T4Ptr(fieldList_in.T4.getData(FFTWInit::numberElements))
+      , T2_approxPtr(fieldList_in.T2_approx.getData(FFTWInit::numberElements))
+      , T3_approxPtr(fieldList_in.T3_approx.getData(FFTWInit::numberElements))
+      , T4_approxPtr(fieldList_in.T4_approx.getData(FFTWInit::numberElements))
       , distributionPtr(distribution_in.getData(FFTWInit::numberElements))
       , haloDistributionPreviousPtr(distribution_in.getHaloDataPrevious())
       , haloDistributionNextPtr(distribution_in.getHaloDataNext())
@@ -103,6 +109,10 @@ namespace lbm {
         T2Ptr[indexLocal] = collision.getT2();
         T3Ptr[indexLocal] = collision.getT3();
         T4Ptr[indexLocal] = collision.getT4();
+
+        T2_approxPtr[indexLocal] = collision.getT2_approx();
+        T3_approxPtr[indexLocal] = collision.getT3_approx();
+        T4_approxPtr[indexLocal] = collision.getT4_approx();
       }
 
       if(writeForce) {
