@@ -161,6 +161,10 @@ template <class T, Architecture architecture>
   LBM_DEVICE LBM_HOST inline T getT3() { return 0; }
   LBM_DEVICE LBM_HOST inline T getT4() { return 0; }
 
+  LBM_DEVICE LBM_HOST inline T getT2_approx() { return 0; }
+  LBM_DEVICE LBM_HOST inline T getT3_approx() { return 0; }
+  LBM_DEVICE LBM_HOST inline T getT4_approx() { return 0; }
+
   using Base::getDensity;
   using Base::getForce;
   using Base::getHydrodynamicVelocity;
@@ -176,7 +180,7 @@ template <class T, Architecture architecture>
   using Base = Collision<T, CollisionType::BGK, architecture>;
 
 protected:
-  T T2, T3, T4;
+  T T2, T3, T4, T2_approx, T3_approx, T4_approx;
 
  public:
   Collision(const T tau_in,
@@ -186,7 +190,7 @@ protected:
             const unsigned int kMin_in,
             const unsigned int kMax_in)
     : Base(tau_in, fieldList_in, amplitude_in, waveLength_in, kMin_in, kMax_in)
-    , T2((T)0), T3((T)0), T4((T)0)
+    , T2((T)0), T3((T)0), T4((T)0), T2_approx((T)0), T3_approx((T)0), T4_approx((T)0)
   {}
 
   using Base::setForce;
@@ -197,8 +201,8 @@ protected:
     LBM_INSTRUMENT_OFF("Moment<T>::calculateMoments", 4)
 
     if(writeT) {
-      Moment_::calculateT(haloDistributionPreviousPtr, haloDistributionNextPtr, iP,
-                          T2, T3, T4);
+      Moment_::calculateT(haloDistributionPreviousPtr, haloDistributionNextPtr, Base::density, iP,
+                          T2, T3, T4, T2_approx, T3_approx, T4_approx);
     }
   }
 
@@ -247,6 +251,10 @@ protected:
   LBM_DEVICE LBM_HOST inline T getT2() { return T2; }
   LBM_DEVICE LBM_HOST inline T getT3() { return T3; }
   LBM_DEVICE LBM_HOST inline T getT4() { return T4; }
+
+  LBM_DEVICE LBM_HOST inline T getT2_approx() { return T2_approx; }
+  LBM_DEVICE LBM_HOST inline T getT3_approx() { return T3_approx; }
+  LBM_DEVICE LBM_HOST inline T getT4_approx() { return T4_approx; }
 
  protected:
   using Base::forcingScheme;
@@ -718,8 +726,8 @@ template <class T, Architecture architecture>
     LBM_INSTRUMENT_OFF("Moment<T>::calculateMoments", 4)
 
     if(writeT) {
-      Moment_::calculateT_forcing(haloDistributionPreviousPtr, haloDistributionNextPtr, iP,
-                                  Base::T2, Base::T3, Base::T4);
+      Moment_::calculateT_forcing(haloDistributionPreviousPtr, haloDistributionNextPtr, Base::density, iP,
+                                  Base::T2, Base::T3, Base::T4, Base::T2_approx, Base::T3_approx, Base::T4_approx);
     }
   }
 
@@ -862,8 +870,8 @@ template <class T, Architecture architecture>
     EntropicStepFunctor<T>
         entropicStepFunctor(haloDistributionNextPtr,
                             haloDistributionPreviousPtr, iP);
-    const T tolerance = 1e-5;
-    const int iterationMax = 20;
+    const T tolerance = 1e-8;
+    const int iterationMax = 50;
     T alphaR = Base::alpha;
 
     bool hasConverged =
