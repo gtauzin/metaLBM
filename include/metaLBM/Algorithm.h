@@ -350,9 +350,9 @@ namespace lbm {
 
 #ifdef USE_NVSHMEM
 
-  template <class T, Overlapping overlapping>
+  template <class T>
   class Algorithm<T, AlgorithmType::Pull, Architecture::GPU,
-                  Implementation::NVSHMEM_IN, overlapping>
+    Implementation::NVSHMEM_IN, Overlapping::Off>
     : public Algorithm<T, AlgorithmType::Generic, Architecture::GPU,
                        Implementation::MPI, Overlapping::Off> {
   private:
@@ -366,16 +366,23 @@ namespace lbm {
 
     LBM_DEVICE void operator()(const Position& iP, const unsigned int numberElements,
                                const MathVector<int, 3> rank) {
+      Position iP_Source;
       if(iP[d::X] == Base::computationLocal.start[Base::computationLocal.dir[d::X]]) {
         for (auto iQ = 1; iQ < L::faceQ + 1; ++iQ) {
-          Base::haloDistributionPtr[hSD::getIndex(iP_Destination, iQ)] =
-            haloDistributionLeftPtr[hSD::getIndex(iP, iQ)];
+          iP_Source = hSD::getSourcePositionLeft(iP, iQ);
+
+          //NVSHMEM
+          Base::haloDistributionPtr[hSD::getIndex(iP, iQ)] =
+            haloDistributionLeftPtr[hSD::getIndex(iP_Source, iQ)];
         }
       }
       else if(iP[d::X] == Base::computationLocal.end[Base::computationLocal.dir[d::X]]) {
         for (auto iQ = 1; iQ < L::faceQ + 1; ++iQ) {
-          Base::haloDistributionPtr[hSD::getIndex(iP_Destination, iQ)] =
-            haloDistributionRightPtr[hSD::getIndex(iP, iQ)];
+          iP_Source = hSD::getSourcePositionRight(iP, iQ);
+
+          //NVSHMEM
+          Base::haloDistributionPtr[hSD::getIndex(iP, iQ)] =
+            haloDistributionRightPtr[hSD::getIndex(iP_Source, iQ)];
         }
       }
 
@@ -402,7 +409,7 @@ namespace lbm {
 					      Base::alphaPtr[hSD::getIndexLocal(iP)]);
       Base::alphaPtr[hSD::getIndexLocal(iP)] = Base::collision.getAlpha();
 
-#pragma unroll
+      #pragma unroll
       for (auto iQ = 0; iQ < L::dimQ; ++iQ) {
         Base::collision.collideAndStream(Base::haloDistributionNextPtr,
                                          Base::haloDistributionPreviousPtr, iP,
@@ -429,17 +436,7 @@ namespace lbm {
 
       Base::collision.update(iteration, FFTWInit::numberElements);
 
-      auto t0 = Clock::now();
-      Base::computationBottom.Do(defaultStream, Base::bottomBoundary,
-                           Base::haloDistributionPreviousPtr);
-      Base::computationTop.Do(defaultStream, Base::topBoundary,
-                        Base::haloDistributionPreviousPtr);
-      Base::computationFront.Do(defaultStream, Base::frontBoundary,
-                          Base::haloDistributionPreviousPtr);
-      Base::computationBack.Do(defaultStream, Base::backBoundary,
-                         Base::haloDistributionPreviousPtr);
       auto t1 = Clock::now();
-      Base::dtCommunication = (t1 - t0);
 
       Base::computationLocal.Do(defaultStream, *this, FFTWInit::numberElements,
                                 MPIInit::rank);
