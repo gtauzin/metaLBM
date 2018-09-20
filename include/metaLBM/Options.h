@@ -21,7 +21,7 @@ namespace lbm {
  enum class DomainType { Generic, GlobalSpace, LocalSpace, HaloSpace, BufferXSpace,
                          GlobalFourier,  LocalFourier };
 
- enum class AlgorithmType { Generic, Pull };
+ enum class AlgorithmType { Generic, Pull, Push };
 
  enum class InitDensityType { Homogeneous, Peak };
  enum class InitVelocityType { Homogeneous, Perturbated, Wave, Decay };

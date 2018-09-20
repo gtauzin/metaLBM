@@ -45,16 +45,19 @@ struct Domain<DomainType::LocalSpace,
               MemoryLayout::Generic,
               NumberComponents> {
  public:
-  LBM_HOST LBM_DEVICE static inline constexpr Position pStart() {
+  LBM_HOST LBM_DEVICE static inline
+  constexpr Position pStart() {
     return Position({0, 0, 0});
   }
 
-  LBM_HOST LBM_DEVICE static LBM_INLINE constexpr Position pEnd() {
+  LBM_HOST LBM_DEVICE static LBM_INLINE
+  constexpr Position pEnd() {
     return ProjectPadRealAndLeave1<unsigned int, L::dimD>::Do(
         {{globalLengthX / numProcs, globalLengthY, globalLengthZ}});
   }
 
-  LBM_HOST LBM_DEVICE static LBM_INLINE constexpr Position pLength() {
+  LBM_HOST LBM_DEVICE static LBM_INLINE
+  constexpr Position pLength() {
     return pEnd();
   }
 
@@ -66,58 +69,62 @@ struct Domain<DomainType::LocalSpace,
     return Position({0, 0, 0});
   }
 
-  LBM_HOST LBM_DEVICE static LBM_INLINE constexpr Position sEnd() {
+  LBM_HOST LBM_DEVICE static LBM_INLINE
+  constexpr Position sEnd() {
     return localLength;
   }
 
-  LBM_HOST LBM_DEVICE static LBM_INLINE constexpr Position sLength() {
+  LBM_HOST LBM_DEVICE static LBM_INLINE
+  constexpr Position sLength() {
     return sEnd();
   }
 
-  LBM_HOST LBM_DEVICE static LBM_INLINE unsigned int sVolume() {
+  LBM_HOST LBM_DEVICE static LBM_INLINE
+  unsigned int sVolume() {
     return sLength()[d::X] * sLength()[d::Y] * sLength()[d::Z];
   }
 
-  LBM_HOST LBM_DEVICE static LBM_INLINE unsigned int getIndex(
+  LBM_HOST LBM_DEVICE static LBM_INLINE
+  unsigned int getIndex(
       const Position& iP) {
     return pLength()[d::Z] * (pLength()[d::Y] * iP[d::X] + iP[d::Y]) + iP[d::Z];
   }
 };
 
 template <PartitionningType partitionningType, unsigned int NumberComponents>
-struct Domain<DomainType::GlobalSpace,
-              partitionningType,
-              MemoryLayout::Generic,
-              NumberComponents> : public Domain<DomainType::LocalSpace,
-                                                PartitionningType::Generic,
-                                                MemoryLayout::Generic,
-                                                NumberComponents> {
+struct Domain<DomainType::GlobalSpace, partitionningType,
+              MemoryLayout::Generic, NumberComponents>
+  : public Domain<DomainType::LocalSpace, PartitionningType::Generic,
+                  MemoryLayout::Generic, NumberComponents> {
  private:
-  using Base = Domain<DomainType::LocalSpace,
-                      PartitionningType::Generic,
-                      MemoryLayout::Generic,
-                      NumberComponents>;
+  using Base = Domain<DomainType::LocalSpace, PartitionningType::Generic,
+                      MemoryLayout::Generic, NumberComponents>;
 
  public:
-  LBM_HOST LBM_DEVICE static LBM_INLINE constexpr Position pStart() {
+  LBM_HOST LBM_DEVICE static LBM_INLINE
+  constexpr Position pStart() {
     return Position({0, 0, 0});
   }
 
-  LBM_HOST LBM_DEVICE static LBM_INLINE constexpr Position pEnd() {
+  LBM_HOST LBM_DEVICE static LBM_INLINE
+  constexpr Position pEnd() {
     return ProjectAndLeave1<unsigned int, L::dimD>::Do(
         {{numProcs * Base::pLength()[d::X], Base::pLength()[d::Y],
           Base::pLength()[d::Z]}});
   }
 
-  LBM_HOST LBM_DEVICE static LBM_INLINE constexpr Position pLength() {
+  LBM_HOST LBM_DEVICE static LBM_INLINE
+  constexpr Position pLength() {
     return pEnd();
   }
 
-  LBM_HOST LBM_DEVICE static LBM_INLINE unsigned int pVolume() {
+  LBM_HOST LBM_DEVICE static LBM_INLINE
+  unsigned int pVolume() {
     return pLength()[d::X] * pLength()[d::Y] * pLength()[d::Z];
   }
 
-  LBM_HOST LBM_DEVICE static inline Position pOffset(const MathVector<int, 3>& rank) {
+  LBM_HOST LBM_DEVICE static inline
+  Position pOffset(const MathVector<int, 3>& rank) {
     Position offsetR{{0}};
     for (auto iD = 0; iD < L::dimD; ++iD) {
       offsetR[iD] = (unsigned int)Base::pLength()[iD] * rank[iD];
@@ -129,20 +136,24 @@ struct Domain<DomainType::GlobalSpace,
     return Position({0, 0, 0});
   }
 
-  LBM_HOST LBM_DEVICE static LBM_INLINE constexpr Position sEnd() {
+  LBM_HOST LBM_DEVICE static LBM_INLINE
+  constexpr Position sEnd() {
     return ProjectAndLeave1<unsigned int, L::dimD>::Do(
         {{globalLengthX, globalLengthY, globalLengthZ}});
   }
 
-  LBM_HOST LBM_DEVICE static LBM_INLINE constexpr Position sLength() {
+  LBM_HOST LBM_DEVICE static LBM_INLINE
+  constexpr Position sLength() {
     return sEnd();
   }
 
-  LBM_HOST LBM_DEVICE static LBM_INLINE unsigned int sVolume() {
+  LBM_HOST LBM_DEVICE static LBM_INLINE
+  unsigned int sVolume() {
     return sLength()[d::X] * sLength()[d::Y] * sLength()[d::Z];
   }
 
-  LBM_HOST LBM_DEVICE static inline Position sOffset(const MathVector<int, 3>& rank) {
+  LBM_HOST LBM_DEVICE static inline
+  Position sOffset(const MathVector<int, 3>& rank) {
     Position offsetR{{0}};
     for (auto iD = 0; iD < L::dimD; ++iD) {
       offsetR[iD] = (unsigned int)Base::sLength()[iD] * rank[iD];
@@ -150,8 +161,8 @@ struct Domain<DomainType::GlobalSpace,
     return offsetR;
   }
 
-  LBM_HOST LBM_DEVICE static LBM_INLINE unsigned int getIndex(
-      const Position& iP) {
+  LBM_HOST LBM_DEVICE static LBM_INLINE
+  unsigned int getIndex(const Position& iP) {
     const unsigned int indexLocal = Base::getIndex(
         {iP[d::X] - iP[d::X] / Base::length()[d::X] * Base::length()[d::X],
          iP[d::Y], iP[d::Z]});
@@ -163,43 +174,43 @@ template <>
 struct Domain<DomainType::HaloSpace,
               PartitionningType::Generic,
               MemoryLayout::Generic,
-              L::dimQ> : public Domain<DomainType::LocalSpace,
-                                       PartitionningType::Generic,
-                                       MemoryLayout::Generic,
-                                       L::dimQ> {
+              L::dimQ> : public Domain<DomainType::LocalSpace, PartitionningType::Generic,
+                                       MemoryLayout::Generic, L::dimQ> {
  private:
-  using Base = Domain<DomainType::LocalSpace,
-                      PartitionningType::Generic,
-                      MemoryLayout::Generic,
-                      L::dimQ>;
+  using Base = Domain<DomainType::LocalSpace, PartitionningType::Generic,
+                      MemoryLayout::Generic,  L::dimQ>;
 
  public:
-  LBM_HOST LBM_DEVICE static inline constexpr Position start() {
+  LBM_HOST LBM_DEVICE static inline
+  constexpr Position start() {
     return Position({0, 0, 0});
   }
 
-  LBM_HOST LBM_DEVICE static inline constexpr Position end() {
+  LBM_HOST LBM_DEVICE static inline
+  constexpr Position end() {
     return Base::sLength() + L::halo() + L::halo();
   }
 
-  LBM_HOST LBM_DEVICE static LBM_INLINE constexpr Position length() {
+  LBM_HOST LBM_DEVICE static LBM_INLINE
+  constexpr Position length() {
     return Base::sLength() + L::halo() + L::halo();
   }
 
-  LBM_HOST LBM_DEVICE static inline unsigned int volume() {
+  LBM_HOST LBM_DEVICE static inline
+  unsigned int volume() {
     return length()[d::X] * length()[d::Y] * length()[d::Z];
   }
 
-  LBM_HOST LBM_DEVICE static LBM_INLINE unsigned int getIndex(
-      const Position& iP) {
+  LBM_HOST LBM_DEVICE static LBM_INLINE
+  unsigned int getIndex(const Position& iP) {
     return length()[d::Z] * (length()[d::Y] * iP[d::X] + iP[d::Y]) + iP[d::Z];
   }
 
-  LBM_HOST LBM_DEVICE static LBM_INLINE unsigned int getIndexLocal(
-      const Position& iP) {
+  LBM_HOST LBM_DEVICE static LBM_INLINE
+  unsigned int getIndexLocal(const Position& iP) {
     return Base::getIndex(iP - L::halo());
   }
-};
+ };
 
 template <>
 struct Domain<DomainType::HaloSpace,

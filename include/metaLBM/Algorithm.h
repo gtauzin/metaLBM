@@ -156,17 +156,17 @@ namespace lbm {
               implementation, L::dimD>& communication_in)
       : Base(fieldList_in, distribution_in, communication_in)
       , computationLocal(L::halo(), lSD::sEnd() + L::halo(), {d::X, d::Y, d::Z})
-      , computationBottom({hSD::start()[d::X], L::halo()[d::Y], hSD::start()[d::Z]},
-          {hSD::end()[d::X], 2 * L::halo()[d::Y], hSD::end()[d::Z]},
+      , computationBottom({hSD::start()[d::X], hSD::start()[d::Y], hSD::start()[d::Z]},
+          {hSD::end()[d::X], L::halo()[d::Y], hSD::end()[d::Z]},
           {d::X, d::Y, d::Z})
-      , computationTop({hSD::start()[d::X], lSD::sLength()[d::Y], hSD::start()[d::Z]},
-          {hSD::end()[d::X], L::halo()[d::Y] + lSD::sLength()[d::Y], hSD::end()[d::Z]},
+      , computationTop({hSD::start()[d::X], L::halo()[d::Y] + lSD::sLength()[d::Y], hSD::start()[d::Z]},
+          {hSD::end()[d::X], 2 * L::halo()[d::Y] + lSD::sLength()[d::Y], hSD::end()[d::Z]},
           {d::X, d::Y, d::Z})
-      , computationFront({hSD::start()[d::X], hSD::start()[d::Y], L::halo()[d::Z]},
-          {hSD::end()[d::X], hSD::end()[d::Y], 2 * L::halo()[d::Z]},
+      , computationFront({hSD::start()[d::X], hSD::start()[d::Y], hSD::start()[d::Z]},
+          {hSD::end()[d::X], hSD::end()[d::Y], L::halo()[d::Z]},
           {d::X, d::Y, d::Z})
-      , computationBack({hSD::start()[d::X], hSD::start()[d::Y], lSD::sLength()[d::Z]},
-          {hSD::end()[d::X], hSD::end()[d::Y], L::halo()[d::Z] + lSD::sLength()[d::Z]},
+      , computationBack({hSD::start()[d::X], hSD::start()[d::Y],  L::halo()[d::Z] + lSD::sLength()[d::Z]},
+          {hSD::end()[d::X], hSD::end()[d::Y], 2 * L::halo()[d::Z] + lSD::sLength()[d::Z]},
           {d::X, d::Y, d::Z})
     {}
 
@@ -366,40 +366,63 @@ namespace lbm {
 
     LBM_DEVICE void operator()(const Position& iP, const unsigned int numberElements,
                                const MathVector<int, 3> rank) {
-      Position iP_Source;
-      if(iP[d::X] == Base::computationLocal.start[Base::computationLocal.dir[d::X]]) {
-        for (auto iQ = 1; iQ < L::faceQ + 1; ++iQ) {
-          iP_Source = hSD::getSourcePositionLeft(iP, iQ);
+      if(iP[d::X] <= L::halo()[d::X]) {
+        Position iP_Destination, iP_Source;
 
-          //NVSHMEM
-          Base::haloDistributionPtr[hSD::getIndex(iP, iQ)] =
-            haloDistributionLeftPtr[hSD::getIndex(iP_Source, iQ)];
+
+        #pragma unroll
+        for(auto iQ = L::faceQ + 1; iQ < 2 * L::faceQ + 1; ++iQ) {
+          iP_Destination = iP - uiL::celerity()[iQ];
+
+          iP_Source{iP_Destination[d::X] < L::halo()[d::X] ? iP_Destination[d::X] + lSD::sLength()[d::X]
+                                                           : iP_Destination[d::X],
+                    iP_Destination[d::Y] < L::halo()[d::Y] ? iP_Destination[d::Y] + lSD::sLength()[d::Y]
+                                                           : iP_Destination[d::Y],
+                    iP_Destination[d::Z] < L::halo()[d::Z] ? iP_Destination[d::Z] + lSD::sLength()[d::Z]
+                                                           : iP_Destination[d::Z]};
+
+          haloDistributionPtr[hSD::getIndex(iP_Destination, iQ)] =
+            haloDistributionPtr[hSD::getIndex(iP_Source, iQ)];
         }
       }
-      else if(iP[d::X] == Base::computationLocal.end[Base::computationLocal.dir[d::X]]) {
-        for (auto iQ = 1; iQ < L::faceQ + 1; ++iQ) {
-          iP_Source = hSD::getSourcePositionRight(iP, iQ);
+    }
+    else if(iP[d::X] >=  lSD::sLength()[d::X] - L::halo()[d::X]) { // to check
+        Position iP_Destination, iP_Source;
 
-          //NVSHMEM
-          Base::haloDistributionPtr[hSD::getIndex(iP, iQ)] =
-            haloDistributionRightPtr[hSD::getIndex(iP_Source, iQ)];
+        #pragma unroll
+        for(auto iQ = 1; iQ < L::faceQ + 1; ++iQ) {
+          iP_Destination = iP - uiL::celerity()[L::iQ_Top()[iQ]];
+
+          iP_Source{iP_Destination[d::X] <= L::halo()[d::X] ? iP_Destination[d::X]
+                                                            : iP_Destination[d::X] - lSD::sLength()[d::X],
+                    iP_Destination[d::Y] <= L::halo()[d::Y] ? iP_Destination[d::Y]
+                                                            : iP_Destination[d::Y] - lSD::sLength()[d::Y],
+                    iP_Destination[d::Z] <= L::halo()[d::Z] ? iP_Destination[d::Z]
+                                                            : iP_Destination[d::Z] - lSD::sLength()[d::Z]};
+
+          haloDistributionPtr[hSD::getIndex(iP_Destination, iQ)] =
+            haloDistributionPtr[hSD::getIndex(iP_Source, iQ)];
         }
       }
 
-      else if(iP[d::Y] == Base::computationLocal.start[Base::computationLocal.dir[d::Y]]) {
+      else {
+        if(iP[d::X] <= L::halo()[d::Y]) {
+          Base::bottomBoundary(iP, haloDistributionPtr);
+        }
 
+        else if(iP[d::X] >=  lSD::sLength()[d::Y] - L::halo()[d::Y]) {
+          Base::topBoundary(iP, haloDistributionPtr);
+        }
+
+        else {
+          if((iP[d::X] <= L::halo()[d::Z])) {
+            Base::frontBoundary(iP, haloDistributionPtr);
+          }
+          else if(iP[d::X] >=  lSD::sLength()[d::Z] - L::halo()[d::Z]) {
+            Base::backBoundary(iP, haloDistributionPtr);
+          }
+        }
       }
-
-      else if(iP[d::Y] == Base::computationLocal.end[Base::computationLocal.dir[d::Y]]) {
-      }
-
-      else if(iP[d::Z] == Base::computationLocal.start[Base::computationLocal.dir[d::Z]]) {
-      }
-
-      else if(iP[d::Z] == Base::computationLocal.end[Base::computationLocal.dir[d::Z]]) {
-      }
-
-      // handle corners!!!!!
 
       Base::collision.calculateMoments(Base::haloDistributionPreviousPtr, iP);
 
