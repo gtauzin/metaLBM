@@ -366,12 +366,11 @@ namespace lbm {
 
     LBM_DEVICE void operator()(const Position& iP, const unsigned int numberElements,
                                const MathVector<int, 3> rank) {
-      if(iP[d::X] <= L::halo()[d::X]) {
+      if(iP[d::X] < L::dimH) {
         Position iP_Destination, iP_Source;
 
-
         #pragma unroll
-        for(auto iQ = L::faceQ + 1; iQ < 2 * L::faceQ + 1; ++iQ) {
+        for(auto iQ = L::faceQ + 1; iQ < L::faceQ + 1 + L::level()[0]; ++iQ) {
           iP_Destination = iP - uiL::celerity()[iQ];
 
           iP_Source{iP_Destination[d::X] < L::halo()[d::X] ? iP_Destination[d::X] + lSD::sLength()[d::X]
@@ -385,12 +384,31 @@ namespace lbm {
             haloDistributionPtr[hSD::getIndex(iP_Source, iQ)];
         }
       }
+
+      for(auto iH = 1; iH < L::dimH - iP[d::X]; ++iQ) {
+
+          #pragma unroll
+          for(auto iQ = L::faceQ + 1 + L::level()[iH-1]; iQ < L::faceQ + 1 + L::level()[iH]; ++iQ) {
+              iP_Destination = iP - uiL::celerity()[iQ];
+
+              iP_Source{iP_Destination[d::X] < L::halo()[d::X] ? iP_Destination[d::X] + lSD::sLength()[d::X]
+                                                               : iP_Destination[d::X],
+                        iP_Destination[d::Y] < L::halo()[d::Y] ? iP_Destination[d::Y] + lSD::sLength()[d::Y]
+                                                               : iP_Destination[d::Y],
+                        iP_Destination[d::Z] < L::halo()[d::Z] ? iP_Destination[d::Z] + lSD::sLength()[d::Z]
+                                                               : iP_Destination[d::Z]};
+
+            haloDistributionPtr[hSD::getIndex(iP_Destination, iQ)] =
+              haloDistributionPtr[hSD::getIndex(iP_Source, iQ)];
+          }
+        }
+      }
     }
-    else if(iP[d::X] >=  lSD::sLength()[d::X] - L::halo()[d::X]) { // to check
+    else if(iP[d::X] >  lSD::sLength()[d::X] - 1 - L::dimH) {
         Position iP_Destination, iP_Source;
 
         #pragma unroll
-        for(auto iQ = 1; iQ < L::faceQ + 1; ++iQ) {
+        for(auto iQ = 1; iQ < 1 + L::level()[0]; ++iQ) {
           iP_Destination = iP - uiL::celerity()[L::iQ_Top()[iQ]];
 
           iP_Source{iP_Destination[d::X] <= L::halo()[d::X] ? iP_Destination[d::X]
@@ -403,45 +421,47 @@ namespace lbm {
           haloDistributionPtr[hSD::getIndex(iP_Destination, iQ)] =
             haloDistributionPtr[hSD::getIndex(iP_Source, iQ)];
         }
-      }
+
+        for(auto iH = 1; iH < lSD::sLength()[d::X] - 1 - L::dimH - iP[d::X]; ++iQ) {
+
+          #pragma unroll
+          for(auto iQ = 1 + L::level()[iH-1]; iQ < 1 + L::level()[iH]; ++iQ) {
+            iP_Destination = iP - uiL::celerity()[L::iQ_Top()[iQ]];
+
+            iP_Source{iP_Destination[d::X] <= L::halo()[d::X] ? iP_Destination[d::X]
+                                                              : iP_Destination[d::X] - lSD::sLength()[d::X],
+                      iP_Destination[d::Y] <= L::halo()[d::Y] ? iP_Destination[d::Y]
+                                                              : iP_Destination[d::Y] - lSD::sLength()[d::Y],
+                      iP_Destination[d::Z] <= L::halo()[d::Z] ? iP_Destination[d::Z]
+                                                              : iP_Destination[d::Z] - lSD::sLength()[d::Z]};
+
+            haloDistributionPtr[hSD::getIndex(iP_Destination, iQ)] =
+              haloDistributionPtr[hSD::getIndex(iP_Source, iQ)];
+          }
+
+    }
 
       else {
-        if(iP[d::X] <= L::halo()[d::Y]) {
+        if(iP[d::X] < L::halo()[d::Y]) {
           Base::bottomBoundary(iP, haloDistributionPtr);
         }
 
-        else if(iP[d::X] >=  lSD::sLength()[d::Y] - L::halo()[d::Y]) {
+        else if(iP[d::X] >  lSD::sLength()[d::Y] - 1 - L::halo()[d::Y]) {
           Base::topBoundary(iP, haloDistributionPtr);
         }
 
         else {
-          if((iP[d::X] <= L::halo()[d::Z])) {
+          if((iP[d::X] < L::halo()[d::Z])) {
             Base::frontBoundary(iP, haloDistributionPtr);
           }
-          else if(iP[d::X] >=  lSD::sLength()[d::Z] - L::halo()[d::Z]) {
+          else if(iP[d::X] >  lSD::sLength()[d::Z] - 1 - L::halo()[d::Z]) {
             Base::backBoundary(iP, haloDistributionPtr);
           }
         }
       }
 
-      Base::collision.calculateMoments(Base::haloDistributionPreviousPtr, iP);
+    Base(iP, numberElements, rank);
 
-      Base::collision.setForce(Base::forcePtr, iP, gSD::sOffset(rank), numberElements);
-      Base::collision.calculateRelaxationTime(Base::haloDistributionNextPtr,
-                                              Base::haloDistributionPreviousPtr, iP,
-					      Base::alphaPtr[hSD::getIndexLocal(iP)]);
-      Base::alphaPtr[hSD::getIndexLocal(iP)] = Base::collision.getAlpha();
-
-      #pragma unroll
-      for (auto iQ = 0; iQ < L::dimQ; ++iQ) {
-        Base::collision.collideAndStream(Base::haloDistributionNextPtr,
-                                         Base::haloDistributionPreviousPtr, iP,
-                                         iQ);
-      }
-
-      if (Base::isStored) {
-        Base::storeFields(iP);
-      }
     }
 
     LBM_HOST

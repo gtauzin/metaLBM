@@ -115,11 +115,11 @@ namespace lbm {
       for(auto iQ = 0; iQ < L::faceQ; ++iQ) {
         iP_Destination = iP - uiL::celerity()[L::iQ_Bottom()[iQ]];
 
-        iP_Source{iP_Destination[d::X],
-                  iP_Destination[d::Y] < L::halo()[d::Y] ? iP_Destination[d::Y] + lSD::sLength()[d::Y]
-                                                         : iP_Destination[d::Y],
-                  iP_Destination[d::Z] < L::halo()[d::Z] ? iP_Destination[d::Z] + lSD::sLength()[d::Z]
-                                                         : iP_Destination[d::Z]};
+        iP_Source = {iP_Destination[d::X],
+                     iP_Destination[d::Y] < L::halo()[d::Y] ? iP_Destination[d::Y] + lSD::sLength()[d::Y]
+                                                            : iP_Destination[d::Y],
+                     iP_Destination[d::Z] < L::halo()[d::Z] ? iP_Destination[d::Z] + lSD::sLength()[d::Z]
+                                                            : iP_Destination[d::Z]};
 
         haloDistributionPtr[hSD::getIndex(iP_Destination, L::iQ_Bottom()[iQ])] =
           haloDistributionPtr[hSD::getIndex(iP_Source, L::iQ_Bottom()[iQ])];
@@ -136,11 +136,11 @@ namespace lbm {
       for(auto iQ = 0; iQ < L::faceQ; ++iQ) {
         iP_Destination = iP - uiL::celerity()[L::iQ_Top()[iQ]];
 
-        iP_Source{iP_Destination[d::X],
-                  iP_Destination[d::Y] <= L::halo()[d::Y] ? iP_Destination[d::Y]
-                                                          : iP_Destination[d::Y] - lSD::sLength()[d::Y],
-                  iP_Destination[d::Z] <= L::halo()[d::Z] ? iP_Destination[d::Z]
-                                                          : iP_Destination[d::Z] - lSD::sLength()[d::Z]};
+        iP_Source = {iP_Destination[d::X],
+                     iP_Destination[d::Y] <= L::halo()[d::Y] ? iP_Destination[d::Y]
+                                                             : iP_Destination[d::Y] - lSD::sLength()[d::Y],
+                     iP_Destination[d::Z] <= L::halo()[d::Z] ? iP_Destination[d::Z]
+                                                             : iP_Destination[d::Z] - lSD::sLength()[d::Z]};
 
         haloDistributionPtr[hSD::getIndex(iP_Destination, L::iQ_Top()[iQ])] =
           haloDistributionPtr[hSD::getIndex(iP_Source, L::iQ_Top()[iQ])];
@@ -157,9 +157,9 @@ namespace lbm {
       for(auto iQ = 0; iQ < L::faceQ; ++iQ) {
         iP_Destination = iP - uiL::celerity()[L::iQ_Front()[iQ]];
 
-        iP_Source{iP_Destination[d::X], iP_Destination[d::Y],
-                  iP_Destination[d::Z] < L::halo()[d::Z] ? iP_Destination[d::Z] + lSD::sLength()[d::Z]
-                                                         : iP_Destination[d::Z]};
+        iP_Source = {iP_Destination[d::X], iP_Destination[d::Y],
+                     iP_Destination[d::Z] < L::halo()[d::Z] ? iP_Destination[d::Z] + lSD::sLength()[d::Z]
+                                                            : iP_Destination[d::Z]};
 
         haloDistributionPtr[hSD::getIndex(iP_Destination, L::iQ_Front()[iQ])] =
           haloDistributionPtr[hSD::getIndex(iP_Source, L::iQ_Front()[iQ])];
@@ -176,9 +176,9 @@ namespace lbm {
       for(auto iQ = 0; iQ < L::faceQ; ++iQ) {
         iP_Destination = iP - uiL::celerity()[L::iQ_Back()[iQ]];
 
-        iP_Source{iP_Destination[d::X], iP_Destination[d::Y],
-                  iP_Destination[d::Z] <= L::halo()[d::Z] ? iP_Destination[d::Z]
-                                                          : iP_Destination[d::Z] - lSD::sLength()[d::Z]};
+        iP_Source = {iP_Destination[d::X], iP_Destination[d::Y],
+                     iP_Destination[d::Z] <= L::halo()[d::Z] ? iP_Destination[d::Z]
+                                                             : iP_Destination[d::Z] - lSD::sLength()[d::Z]};
 
         haloDistributionPtr[hSD::getIndex(iP_Destination, L::iQ_Back()[iQ])] =
           haloDistributionPtr[hSD::getIndex(iP_Source, L::iQ_Back()[iQ])];
