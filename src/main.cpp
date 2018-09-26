@@ -12,7 +12,8 @@ int main(int argc, char* argv[]) {
   auto mpiLauncher = MPIInitializer<numProcs>{argc, argv};
   auto fftwLauncher = FFTWInitializer<numThreads>{};
 
-  Routine<dataT, Architecture::CPU, implementationT> routine;
+  Routine<dataT, algorithmT, Architecture::CPU, memoryL, partitionningT,
+          communicationT, overlappingT> routine;
 
   routine.compute();
 }

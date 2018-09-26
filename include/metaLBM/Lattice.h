@@ -38,7 +38,7 @@ namespace lbm {
 
     LBM_DEVICE LBM_HOST static inline
     constexpr MathVector<unsigned int, dimH> level() {
-      return Position({1});
+      return {{1}};
     }
 
     LBM_DEVICE LBM_HOST
@@ -92,7 +92,7 @@ namespace lbm {
 
     LBM_DEVICE LBM_HOST static inline
     constexpr MathVector<unsigned int, dimH> level() {
-      return Position({1});
+      return {{1}};
     }
 
     LBM_DEVICE LBM_HOST
@@ -153,7 +153,7 @@ namespace lbm {
 
     LBM_DEVICE LBM_HOST static inline
     constexpr MathVector<unsigned int, dimH> level() {
-      return Position({3});
+      return {{3}};
     }
 
     LBM_DEVICE LBM_HOST
@@ -217,7 +217,7 @@ namespace lbm {
 
     LBM_DEVICE LBM_HOST static inline
     constexpr MathVector<unsigned int, dimH> level() {
-      return Position({3, 1});
+      return {{3, 1}};
     }
 
     LBM_DEVICE LBM_HOST
@@ -290,7 +290,7 @@ namespace lbm {
 
     LBM_DEVICE LBM_HOST static inline
     constexpr MathVector<unsigned int, dimH> level() {
-      return Position({2, 2, 3});
+      return {{2, 2, 3}};
     }
 
     LBM_DEVICE LBM_HOST
@@ -368,7 +368,7 @@ namespace lbm {
 
     LBM_DEVICE LBM_HOST static inline
     constexpr MathVector<unsigned int, dimH> level() {
-      return Position({3, 3, 1});
+      return {{3, 3, 1}};
     }
 
     LBM_DEVICE LBM_HOST
@@ -452,7 +452,7 @@ namespace lbm {
 
     LBM_DEVICE LBM_HOST static inline
     constexpr MathVector<unsigned int, dimH> level() {
-      return Position({1});
+      return {{5}};
     }
 
     LBM_DEVICE LBM_HOST
@@ -523,7 +523,7 @@ namespace lbm {
 
     LBM_DEVICE LBM_HOST static inline
     constexpr MathVector<unsigned int, dimH> level() {
-      return Position({5});
+      return {{5}};
     }
 
     LBM_DEVICE LBM_HOST
@@ -598,7 +598,7 @@ namespace lbm {
 
     LBM_DEVICE LBM_HOST static inline
     constexpr MathVector<unsigned int, dimH> level() {
-      return Position({9});
+      return {{9}};
     }
 
     LBM_DEVICE LBM_HOST
@@ -686,7 +686,7 @@ namespace lbm {
 
     LBM_DEVICE LBM_HOST static inline
     constexpr MathVector<unsigned int, dimH> level() {
-      return Position({9, 1});
+      return {{9, 1}};
     }
 
     LBM_DEVICE LBM_HOST

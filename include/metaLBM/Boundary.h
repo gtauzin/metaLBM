@@ -38,13 +38,13 @@ namespace lbm {
   };
 
   template <class T, BoundaryType boundaryType, AlgorithmType algorithmType,
-            PartitionningType partitionningType, Implementation implementation,
+            PartitionningType partitionningType, CommunicationType communicationType,
             unsigned int Dimension>
   class Boundary {};
 
   template <class T, unsigned int Dimension>
   class Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                 PartitionningType::Generic, Implementation::Generic,
+                 PartitionningType::Generic, CommunicationType::Generic,
                  Dimension> {
   public:
     LBM_DEVICE LBM_HOST LBM_INLINE
@@ -103,7 +103,7 @@ namespace lbm {
 
   template <class T, unsigned int Dimension>
   class Boundary<T, BoundaryType::Periodic, AlgorithmType::Pull,
-                 PartitionningType::Generic, Implementation::NVSHMEM_IN, Dimension> {
+                 PartitionningType::Generic, CommunicationType::NVSHMEM_IN, Dimension> {
   public:
     LBM_DEVICE LBM_HOST LBM_INLINE
     static void applyYBottom(const Position& iP, T* haloDistributionPtr) {
@@ -115,11 +115,12 @@ namespace lbm {
       for(auto iQ = 0; iQ < L::faceQ; ++iQ) {
         iP_Destination = iP - uiL::celerity()[L::iQ_Bottom()[iQ]];
 
-        iP_Source = {iP_Destination[d::X],
-                     iP_Destination[d::Y] < L::halo()[d::Y] ? iP_Destination[d::Y] + lSD::sLength()[d::Y]
-                                                            : iP_Destination[d::Y],
-                     iP_Destination[d::Z] < L::halo()[d::Z] ? iP_Destination[d::Z] + lSD::sLength()[d::Z]
-                                                            : iP_Destination[d::Z]};
+        iP_Source =
+          Position{{iP_Destination[d::X],
+                    iP_Destination[d::Y] < L::halo()[d::Y] ? iP_Destination[d::Y] + lSD::sLength()[d::Y]
+                                                           : iP_Destination[d::Y],
+                    iP_Destination[d::Z] < L::halo()[d::Z] ? iP_Destination[d::Z] + lSD::sLength()[d::Z]
+                                                           : iP_Destination[d::Z]}};
 
         haloDistributionPtr[hSD::getIndex(iP_Destination, L::iQ_Bottom()[iQ])] =
           haloDistributionPtr[hSD::getIndex(iP_Source, L::iQ_Bottom()[iQ])];
@@ -136,11 +137,12 @@ namespace lbm {
       for(auto iQ = 0; iQ < L::faceQ; ++iQ) {
         iP_Destination = iP - uiL::celerity()[L::iQ_Top()[iQ]];
 
-        iP_Source = {iP_Destination[d::X],
-                     iP_Destination[d::Y] <= L::halo()[d::Y] ? iP_Destination[d::Y]
-                                                             : iP_Destination[d::Y] - lSD::sLength()[d::Y],
-                     iP_Destination[d::Z] <= L::halo()[d::Z] ? iP_Destination[d::Z]
-                                                             : iP_Destination[d::Z] - lSD::sLength()[d::Z]};
+        iP_Source =
+          Position{{iP_Destination[d::X],
+                    iP_Destination[d::Y] <= L::halo()[d::Y] ? iP_Destination[d::Y]
+                                                            : iP_Destination[d::Y] - lSD::sLength()[d::Y],
+                    iP_Destination[d::Z] <= L::halo()[d::Z] ? iP_Destination[d::Z]
+                                                            : iP_Destination[d::Z] - lSD::sLength()[d::Z]}};
 
         haloDistributionPtr[hSD::getIndex(iP_Destination, L::iQ_Top()[iQ])] =
           haloDistributionPtr[hSD::getIndex(iP_Source, L::iQ_Top()[iQ])];
@@ -157,9 +159,10 @@ namespace lbm {
       for(auto iQ = 0; iQ < L::faceQ; ++iQ) {
         iP_Destination = iP - uiL::celerity()[L::iQ_Front()[iQ]];
 
-        iP_Source = {iP_Destination[d::X], iP_Destination[d::Y],
-                     iP_Destination[d::Z] < L::halo()[d::Z] ? iP_Destination[d::Z] + lSD::sLength()[d::Z]
-                                                            : iP_Destination[d::Z]};
+        iP_Source =
+          Position{{iP_Destination[d::X], iP_Destination[d::Y],
+                    iP_Destination[d::Z] < L::halo()[d::Z] ? iP_Destination[d::Z] + lSD::sLength()[d::Z]
+                                                           : iP_Destination[d::Z]}};
 
         haloDistributionPtr[hSD::getIndex(iP_Destination, L::iQ_Front()[iQ])] =
           haloDistributionPtr[hSD::getIndex(iP_Source, L::iQ_Front()[iQ])];
@@ -176,9 +179,10 @@ namespace lbm {
       for(auto iQ = 0; iQ < L::faceQ; ++iQ) {
         iP_Destination = iP - uiL::celerity()[L::iQ_Back()[iQ]];
 
-        iP_Source = {iP_Destination[d::X], iP_Destination[d::Y],
-                     iP_Destination[d::Z] <= L::halo()[d::Z] ? iP_Destination[d::Z]
-                                                             : iP_Destination[d::Z] - lSD::sLength()[d::Z]};
+        iP_Source =
+          Position{{iP_Destination[d::X], iP_Destination[d::Y],
+                    iP_Destination[d::Z] <= L::halo()[d::Z] ? iP_Destination[d::Z]
+                                                            : iP_Destination[d::Z] - lSD::sLength()[d::Z]}};
 
         haloDistributionPtr[hSD::getIndex(iP_Destination, L::iQ_Back()[iQ])] =
           haloDistributionPtr[hSD::getIndex(iP_Source, L::iQ_Back()[iQ])];
@@ -187,11 +191,11 @@ namespace lbm {
   };
 
 
-  template <class T, AlgorithmType algorithmType, Implementation implementation>
+  template <class T, AlgorithmType algorithmType, CommunicationType communicationType>
   class Boundary<T, BoundaryType::Periodic, algorithmType,
-                 PartitionningType::OneD, implementation, 1>
+                 PartitionningType::OneD, communicationType, 1>
     : public Boundary<T, BoundaryType::Periodic, algorithmType,
-                      PartitionningType::Generic, Implementation::Generic, 1> {
+                      PartitionningType::Generic, CommunicationType::Generic, 1> {
   public:
     LBM_DEVICE LBM_HOST LBM_INLINE static void applyYBottom(const Position& iP,
                                                             T* haloDistributionPtr) {}
@@ -206,14 +210,14 @@ namespace lbm {
                                                           T* haloDistributionPtr) {}
   };
 
-  template <class T, AlgorithmType algorithmType, Implementation implementation>
+  template <class T, AlgorithmType algorithmType, CommunicationType communicationType>
   class Boundary<T, BoundaryType::Periodic, algorithmType,
-                 PartitionningType::OneD, implementation, 2>
+                 PartitionningType::OneD, communicationType, 2>
     : public Boundary<T, BoundaryType::Periodic, algorithmType,
-                      PartitionningType::Generic, Implementation::Generic, 2> {
+                      PartitionningType::Generic, CommunicationType::Generic, 2> {
   private:
     using Base = Boundary<T, BoundaryType::Periodic, algorithmType,
-                          PartitionningType::Generic, Implementation::Generic, 2>;
+                          PartitionningType::Generic, CommunicationType::Generic, 2>;
 
   public:
     using Base::applyYBottom;
@@ -226,11 +230,11 @@ namespace lbm {
                                                           T* haloDistributionPtr) {}
   };
 
-  template <class T, AlgorithmType algorithmType, Implementation implementation>
+  template <class T, AlgorithmType algorithmType, CommunicationType communicationType>
   class Boundary<T, BoundaryType::Periodic, algorithmType,
-                 PartitionningType::TwoD, implementation, 2>
+                 PartitionningType::TwoD, communicationType, 2>
     : public Boundary<T, BoundaryType::Periodic, algorithmType,
-                      PartitionningType::Generic, Implementation::Generic, 2> {
+                      PartitionningType::Generic, CommunicationType::Generic, 2> {
   public:
     LBM_DEVICE LBM_HOST LBM_INLINE static void applyYBottom(const Position& iP,
                                                             T* haloDistributionPtr) {}
@@ -246,14 +250,14 @@ namespace lbm {
                                                           T* haloDistributionPtr) {}
   };
 
-  template <class T, AlgorithmType algorithmType, Implementation implementation>
+  template <class T, AlgorithmType algorithmType, CommunicationType communicationType>
   class Boundary<T, BoundaryType::Periodic, algorithmType,
-                 PartitionningType::OneD, implementation, 3>
+                 PartitionningType::OneD, communicationType, 3>
     : public Boundary<T, BoundaryType::Periodic, algorithmType,
-                      PartitionningType::Generic, Implementation::Generic, 3> {
+                      PartitionningType::Generic, CommunicationType::Generic, 3> {
   private:
     using Base = Boundary<T, BoundaryType::Periodic, algorithmType,
-                          PartitionningType::Generic, Implementation::Generic, 3>;
+                          PartitionningType::Generic, CommunicationType::Generic, 3>;
 
   public:
     using Base::applyYBottom;
@@ -262,14 +266,14 @@ namespace lbm {
     using Base::applyZFront;
   };
 
-  template <class T, AlgorithmType algorithmType, Implementation implementation>
+  template <class T, AlgorithmType algorithmType, CommunicationType communicationType>
   class Boundary<T, BoundaryType::Periodic, algorithmType,
-                 PartitionningType::TwoD, implementation, 3>
+                 PartitionningType::TwoD, communicationType, 3>
     : public Boundary<T, BoundaryType::Periodic, algorithmType,
-                      PartitionningType::Generic, Implementation::Generic, 3> {
+                      PartitionningType::Generic, CommunicationType::Generic, 3> {
   private:
     using Base = Boundary<T, BoundaryType::Periodic, algorithmType,
-                          PartitionningType::Generic, Implementation::Generic, 3>;
+                          PartitionningType::Generic, CommunicationType::Generic, 3>;
 
   public:
     LBM_DEVICE LBM_HOST LBM_INLINE static void applyYBottom(const Position& iP,
@@ -283,11 +287,11 @@ namespace lbm {
     using Base::applyZFront;
   };
 
-  template <class T, AlgorithmType algorithmType, Implementation implementation>
+  template <class T, AlgorithmType algorithmType, CommunicationType communicationType>
   class Boundary<T, BoundaryType::Periodic, algorithmType,
-                 PartitionningType::ThreeD, implementation, 3>
+                 PartitionningType::ThreeD, communicationType, 3>
     : public Boundary<T, BoundaryType::Periodic, algorithmType,
-                      PartitionningType::Generic, Implementation::Generic, 3> {
+                      PartitionningType::Generic, CommunicationType::Generic, 3> {
   public:
     LBM_DEVICE LBM_HOST LBM_INLINE static void applyYBottom(const Position& iP,
                                                             T* haloDistributionPtr) {}
@@ -303,13 +307,13 @@ namespace lbm {
   };
 
   template <class T, BoundaryType boundaryType, AlgorithmType algorithmType,
-            PartitionningType partitionningType, Implementation implementation,
+            PartitionningType partitionningType, CommunicationType communicationType,
             unsigned int Dimension>
   class BottomBoundary : public Boundary<T, boundaryType, algorithmType, partitionningType,
-                                         implementation, Dimension> {
+                                         communicationType, Dimension> {
   private:
     using Base = Boundary<T, boundaryType, algorithmType, partitionningType,
-                          implementation, Dimension>;
+                          communicationType, Dimension>;
 
   public:
     LBM_HOST LBM_DEVICE void operator()(const Position& iP,
@@ -319,13 +323,13 @@ namespace lbm {
   };
 
   template <class T, BoundaryType boundaryType, AlgorithmType algorithmType,
-            PartitionningType partitionningType, Implementation implementation,
+            PartitionningType partitionningType, CommunicationType communicationType,
             unsigned int Dimension>
   class TopBoundary : public Boundary<T, boundaryType, algorithmType, partitionningType,
-                                      implementation, Dimension> {
+                                      communicationType, Dimension> {
   private:
     using Base = Boundary<T, boundaryType, algorithmType, partitionningType,
-                          implementation, Dimension>;
+                          communicationType, Dimension>;
 
   public:
     LBM_HOST LBM_DEVICE void operator()(const Position& iP,
@@ -335,13 +339,13 @@ namespace lbm {
   };
 
   template <class T, BoundaryType boundaryType, AlgorithmType algorithmType,
-            PartitionningType partitionningType, Implementation implementation,
+            PartitionningType partitionningType, CommunicationType communicationType,
             unsigned int Dimension>
   class FrontBoundary : public Boundary<T, boundaryType, algorithmType, partitionningType,
-                                        implementation, Dimension> {
+                                        communicationType, Dimension> {
   private:
     using Base = Boundary<T, boundaryType, algorithmType, partitionningType,
-                          implementation, Dimension>;
+                          communicationType, Dimension>;
 
   public:
     LBM_HOST LBM_DEVICE void operator()(const Position& iP,
@@ -351,13 +355,13 @@ namespace lbm {
   };
 
   template <class T, BoundaryType boundaryType, AlgorithmType algorithmType,
-            PartitionningType partitionningType, Implementation implementation,
+            PartitionningType partitionningType, CommunicationType communicationType,
             unsigned int Dimension>
   class BackBoundary : public Boundary<T, boundaryType, algorithmType, partitionningType,
-                                       implementation, Dimension> {
+                                       communicationType, Dimension> {
   private:
     using Base = Boundary<T, boundaryType, algorithmType, partitionningType,
-                          implementation, Dimension>;
+                          communicationType, Dimension>;
 
   public:
     LBM_HOST LBM_DEVICE void operator()(const Position& iP,
@@ -367,21 +371,21 @@ namespace lbm {
   };
 
   template <class T, AlgorithmType algorithmType, PartitionningType partitionningType,
-            Implementation implementation, unsigned int Dimension>
+            CommunicationType communicationType, unsigned int Dimension>
   class Boundary<T, BoundaryType::BounceBack_Halfway, algorithmType,
-                 partitionningType, implementation, Dimension>
+                 partitionningType, communicationType, Dimension>
     : public Boundary<T, BoundaryType::Generic, algorithmType, PartitionningType::Generic,
-                      Implementation::Generic, Dimension> {
+                      CommunicationType::Generic, Dimension> {
   public:
     void apply() {}
   };
 
   template <class T, AlgorithmType algorithmType, PartitionningType partitionningType,
-            Implementation implementation, unsigned int Dimension>
+            CommunicationType communicationType, unsigned int Dimension>
   class Boundary<T, BoundaryType::Entropic, algorithmType, partitionningType,
-                 implementation, Dimension>
+                 communicationType, Dimension>
     : public Boundary<T, BoundaryType::Generic, algorithmType, PartitionningType::Generic,
-                      Implementation::Generic, Dimension> {
+                      CommunicationType::Generic, Dimension> {
   public:
     void apply() {}
   };

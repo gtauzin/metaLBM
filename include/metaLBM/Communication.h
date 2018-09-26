@@ -20,12 +20,12 @@ namespace lbm {
 
   template <class T, LatticeType latticeType, AlgorithmType algorithmType,
             MemoryLayout memoryLayout, PartitionningType partitionningType,
-            Implementation implementation, unsigned int Dimension>
+            CommunicationType communicationType, unsigned int Dimension>
   class Communication {};
 
   template <class T, LatticeType latticeType>
   class Communication<T, latticeType, AlgorithmType::Pull, MemoryLayout::Generic,
-                      PartitionningType::Generic, Implementation::MPI, 0> {
+                      PartitionningType::Generic, CommunicationType::MPI, 0> {
   protected:
     Computation<Architecture::CPU, L::dimD> computationLocal;
 
@@ -103,12 +103,12 @@ namespace lbm {
 
   template <class T, LatticeType latticeType>
   class Communication<T, latticeType, AlgorithmType::Pull, MemoryLayout::SoA,
-                      PartitionningType::Generic, Implementation::MPI, 0>
+                      PartitionningType::Generic, CommunicationType::MPI, 0>
     : public Communication<T, latticeType, AlgorithmType::Pull, MemoryLayout::Generic,
-                           PartitionningType::Generic, Implementation::MPI, 0> {
+                           PartitionningType::Generic, CommunicationType::MPI, 0> {
   protected:
     using Base = Communication<T, latticeType, AlgorithmType::Pull, MemoryLayout::Generic,
-                               PartitionningType::Generic, Implementation::MPI, 0>;
+                               PartitionningType::Generic, CommunicationType::MPI, 0>;
 
     using Base::requestXLeftMPI;
     using Base::requestXRightMPI;
@@ -223,12 +223,12 @@ namespace lbm {
 
   template <class T, LatticeType latticeType>
   class Communication<T, latticeType, AlgorithmType::Pull, MemoryLayout::AoS,
-                      PartitionningType::Generic, Implementation::MPI, 0>
+                      PartitionningType::Generic, CommunicationType::MPI, 0>
     : public Communication<T, latticeType, AlgorithmType::Pull, MemoryLayout::Generic,
-                           PartitionningType::Generic, Implementation::MPI, 0> {
+                           PartitionningType::Generic, CommunicationType::MPI, 0> {
   private:
     using Base = Communication<T, latticeType, AlgorithmType::Pull, MemoryLayout::Generic,
-                               PartitionningType::Generic, Implementation::MPI, 0>;
+                               PartitionningType::Generic, CommunicationType::MPI, 0>;
 
     using Base::requestXLeftMPI;
     using Base::requestXRightMPI;
@@ -335,13 +335,13 @@ namespace lbm {
 
   template <class T, LatticeType latticeType>
   class Communication<T, latticeType, AlgorithmType::Pull, MemoryLayout::SoA,
-                      PartitionningType::Generic, Implementation::NVSHMEM_OUT, 0>
+                      PartitionningType::Generic, CommunicationType::NVSHMEM_OUT, 0>
     : public Communication<T, latticeType, AlgorithmType::Pull, MemoryLayout::SoA,
-                           PartitionningType::Generic, Implementation::MPI, 0> {
+                           PartitionningType::Generic, CommunicationType::MPI, 0> {
 
   private:
     using Base = Communication<T, latticeType, AlgorithmType::Pull, MemoryLayout::SoA,
-                               PartitionningType::Generic, Implementation::MPI, 0>;
+                               PartitionningType::Generic, CommunicationType::MPI, 0>;
 
     typedef Domain<DomainType::HaloSpace, PartitionningType::Generic,
                    MemoryLayout::SoA, L::dimQ> hMLSD;
@@ -401,12 +401,12 @@ namespace lbm {
 
   template <class T, LatticeType latticeType>
   class Communication<T, latticeType, AlgorithmType::Pull, MemoryLayout::AoS,
-                      PartitionningType::Generic, Implementation::NVSHMEM_OUT, 0>
+                      PartitionningType::Generic, CommunicationType::NVSHMEM_OUT, 0>
     : public Communication<T, latticeType, AlgorithmType::Pull, MemoryLayout::AoS,
-                               PartitionningType::Generic, Implementation::MPI, 0> {
+                               PartitionningType::Generic, CommunicationType::MPI, 0> {
   private:
     using Base = Communication<T, latticeType, AlgorithmType::Pull, MemoryLayout::AoS,
-                               PartitionningType::Generic, Implementation::MPI, 0>;
+                               PartitionningType::Generic, CommunicationType::MPI, 0>;
 
     typedef Domain<DomainType::HaloSpace, PartitionningType::Generic,
                    MemoryLayout::AoS, L::dimQ> hMLSD;
@@ -451,12 +451,12 @@ namespace lbm {
 
   template <class T, LatticeType latticeType, MemoryLayout memoryLayout>
   class Communication<T, latticeType, AlgorithmType::Pull, memoryLayout,
-                      PartitionningType::Generic, Implementation::NVSHMEM_IN, 0>
-    : public Communication<T, latticeType, AlgorithmType::Pull, MemoryLayout::Generic,
-                           PartitionningType::Generic, Implementation::MPI, 0> {
+                      PartitionningType::Generic, CommunicationType::NVSHMEM_IN, 0>
+    : public Communication<T, latticeType, AlgorithmType::Pull, memoryLayout,
+                           PartitionningType::Generic, CommunicationType::MPI, 0> {
   private:
-    using Base = Communication<T, latticeType, AlgorithmType::Pull, MemoryLayout::Generic,
-                               PartitionningType::Generic, Implementation::MPI, 0>;
+    using Base = Communication<T, latticeType, AlgorithmType::Pull, memoryLayout,
+                               PartitionningType::Generic, CommunicationType::MPI, 0>;
 
   public:
     using Base::Communication;
@@ -472,17 +472,17 @@ namespace lbm {
     LBM_HOST void sendAndReceiveHaloXLeft(T* haloDistributionPtr) {
     }
   };
-#endif  // USE_NVSHMEM
+  #endif  // USE_NVSHMEM
 
   template <class T, LatticeType latticeType, MemoryLayout memoryLayout,
-            Implementation implementation, unsigned int Dimension>
+            CommunicationType communicationType, unsigned int Dimension>
   class Communication<T, latticeType, AlgorithmType::Pull, memoryLayout,
-                      PartitionningType::OneD, implementation, Dimension>
+                      PartitionningType::OneD, communicationType, Dimension>
     : public Communication<T, latticeType, AlgorithmType::Pull, memoryLayout,
-                           PartitionningType::Generic, implementation, 0> {
+                           PartitionningType::Generic, communicationType, 0> {
   private:
     using Base = Communication<T, latticeType, AlgorithmType::Pull, memoryLayout,
-                               PartitionningType::Generic, implementation, 0>;
+                               PartitionningType::Generic, communicationType, 0>;
 
   public:
     using Base::Communication;
@@ -501,14 +501,14 @@ namespace lbm {
   };
 
   template <class T, LatticeType latticeType, MemoryLayout memoryLayout,
-            Implementation implementation, unsigned int Dimension>
+            CommunicationType communicationType, unsigned int Dimension>
   class Communication<T, latticeType, AlgorithmType::Pull, memoryLayout,
-                      PartitionningType::TwoD, implementation, Dimension>
+                      PartitionningType::TwoD, communicationType, Dimension>
     : public Communication<T, latticeType, AlgorithmType::Pull, memoryLayout,
-                           PartitionningType::Generic, implementation, 0> {
+                           PartitionningType::Generic, communicationType, 0> {
   private:
     using Base = Communication<T, latticeType, AlgorithmType::Pull, memoryLayout,
-                               PartitionningType::Generic, implementation, 0>;
+                               PartitionningType::Generic, communicationType, 0>;
 
   public:
     using Base::Communication;
@@ -519,14 +519,14 @@ namespace lbm {
   };
 
   template <class T, LatticeType latticeType, MemoryLayout memoryLayout,
-            Implementation implementation>
+            CommunicationType communicationType>
   class Communication<T, latticeType, AlgorithmType::Pull, memoryLayout,
-                      PartitionningType::TwoD, implementation, 2>
+                      PartitionningType::TwoD, communicationType, 2>
     : public Communication<T, latticeType, AlgorithmType::Pull, memoryLayout,
-                           PartitionningType::Generic, implementation, 0> {
+                           PartitionningType::Generic, communicationType, 0> {
   private:
     using Base = Communication<T, latticeType, AlgorithmType::Pull, memoryLayout,
-                               PartitionningType::Generic, implementation, 0>;
+                               PartitionningType::Generic, communicationType, 0>;
 
   public:
     using Base::Communication;
@@ -547,14 +547,14 @@ namespace lbm {
   };
 
   template <class T, LatticeType latticeType, MemoryLayout memoryLayout,
-            Implementation implementation>
+            CommunicationType communicationType>
   class Communication<T,  latticeType, AlgorithmType::Pull, memoryLayout,
-                      PartitionningType::TwoD, implementation, 3>
+                      PartitionningType::TwoD, communicationType, 3>
     : public Communication<T, latticeType, AlgorithmType::Pull, memoryLayout,
-                           PartitionningType::TwoD, implementation, 2> {
+                           PartitionningType::TwoD, communicationType, 2> {
   private:
     using Base = Communication<T, latticeType, AlgorithmType::Pull, memoryLayout,
-                               PartitionningType::TwoD, implementation, 2>;
+                               PartitionningType::TwoD, communicationType, 2>;
 
   public:
     using Base::Communication;
@@ -567,14 +567,14 @@ namespace lbm {
   };
 
   template <class T, LatticeType latticeType, MemoryLayout memoryLayout,
-            Implementation implementation, unsigned int Dimension>
+            CommunicationType communicationType, unsigned int Dimension>
   class Communication<T, latticeType, AlgorithmType::Pull, memoryLayout,
-                      PartitionningType::ThreeD, implementation, Dimension>
+                      PartitionningType::ThreeD, communicationType, Dimension>
     : public Communication<T, latticeType, AlgorithmType::Pull, memoryLayout,
-                           PartitionningType::Generic, implementation, 0> {
+                           PartitionningType::Generic, communicationType, 0> {
   private:
     using Base = Communication<T, latticeType, AlgorithmType::Pull, memoryLayout,
-                           PartitionningType::Generic, implementation, 0>;
+                           PartitionningType::Generic, communicationType, 0>;
 
     using Base::Communication;
 
@@ -587,14 +587,14 @@ namespace lbm {
   };
 
   template <class T, LatticeType latticeType, MemoryLayout memoryLayout,
-            Implementation implementation>
+            CommunicationType communicationType>
   class Communication<T, latticeType, AlgorithmType::Pull, memoryLayout,
-                      PartitionningType::ThreeD, implementation, 3>
+                      PartitionningType::ThreeD, communicationType, 3>
     : public Communication<T, latticeType, AlgorithmType::Pull, memoryLayout,
-                           PartitionningType::Generic, implementation, 0> {
+                           PartitionningType::Generic, communicationType, 0> {
   private:
     using Base = Communication<T, latticeType, AlgorithmType::Pull, memoryLayout,
-                               PartitionningType::Generic, implementation, 0>;
+                               PartitionningType::Generic, communicationType, 0>;
 
   public:
     using Base::Communication;
@@ -617,6 +617,6 @@ namespace lbm {
   };
 
   typedef Communication<dataT, latticeT, algorithmT, memoryL, partitionningT,
-                        implementationT, L::dimD> Communication_;
+                        communicationT, L::dimD> Communication_;
 
 }  // namespace lbm

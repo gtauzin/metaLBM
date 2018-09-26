@@ -17,7 +17,8 @@ int main(int argc, char* argv[]) {
   auto cudaLauncher = CUDAInitializer{};
   auto fftwLauncher = FFTWInitializer<numThreads>{};
 
-  Routine<dataT, Architecture::GPU, implementationT> routine;
+  Routine<dataT, algorithmT, Architecture::CPU, memoryL, partitionningT,
+          communicationT, overlappingT> routine;
 
   routine.compute();
 }

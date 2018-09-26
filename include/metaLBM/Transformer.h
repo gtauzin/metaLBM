@@ -178,7 +178,6 @@ namespace lbm {
 
     LBM_HOST
     inline void normalize() {
-      const unsigned int numberElements = FFTWInit::numberElements;
       computationLocal.Do([=] LBM_HOST(const Position& iP) {
           backwardOut.fourierPtr[lSD::getIndex(iP)] /= gSD::sVolume();
       });

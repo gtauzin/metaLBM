@@ -19,25 +19,24 @@ namespace lbm {
   constexpr int globalLengthZ = GLOBAL_LENGTH_Z;
 
   constexpr unsigned int startIteration = 0;
-  constexpr unsigned int endIteration = 101;
+  constexpr unsigned int endIteration = 750000;
   constexpr unsigned int writeStep = 2000;
-  constexpr unsigned int backUpStep = 5000;
+  constexpr unsigned int backUpStep = 100000;
 
-  constexpr unsigned int scalarAnalysisStep = 1;
+  constexpr unsigned int scalarAnalysisStep = 200;
   constexpr unsigned int spectralAnalysisStep = 2000;
-  constexpr unsigned int performanceAnalysisStep = 100;
-
-  constexpr unsigned int successiveWriteStep = 1;
+  constexpr unsigned int performanceAnalysisStep = 5000;
+  constexpr unsigned int successiveWriteStep = 3;
 
   constexpr AlgorithmType algorithmT = AlgorithmType::Pull;
   constexpr PartitionningType partitionningT = PartitionningType::OneD;
-  constexpr CommunicationType communicationT = CommunicationType::MPI;
+  constexpr Implementation implementationT = Implementation::MPI;
   constexpr MemoryLayout memoryL = MemoryLayout::SoA;
-  constexpr Overlapping overlappingT = Overlapping::Off;
+  constexpr Overlapping overlappingT = Overlapping::On;
 
-  constexpr dataT relaxationTime = 0.7;
-  constexpr CollisionType collisionT = CollisionType::BGK;
-  constexpr EquilibriumType equilibriumT = EquilibriumType::TruncationMa3;
+  constexpr dataT relaxationTime = 0.50000032;
+  constexpr CollisionType collisionT = CollisionType::ForcedNR_ELBM;
+  constexpr EquilibriumType equilibriumT = EquilibriumType::Incompressible;
 
   constexpr InitDensityType initDensityT = InitDensityType::Homogeneous;
   constexpr dataT initDensityValue = 1.0;
@@ -45,12 +44,12 @@ namespace lbm {
   constexpr Vector initVelocityVector = { {0.0, 0.0, 0.0} };
 
   constexpr ForcingSchemeType forcingSchemeT = ForcingSchemeType::ExactDifferenceMethod;
-  constexpr ForceType forceT = ForceType::Kolmogorov;
+  constexpr ForceType forceT = ForceType::Turbulent2D;
 
-  constexpr Vector forceAmplitude = { {1e-5, 1e-5, 1e-5} };
+  constexpr Vector forceAmplitude = { {5e-4, 5e-4, 5e-4} };
   constexpr Vector forceWaveLength = { {32.0, 32.0, 32.0} };
-  constexpr int forcekMin = 1;
-  constexpr int forcekMax = 2;
+  constexpr int forcekMin = 5;
+  constexpr int forcekMax = 7;
 
   constexpr Vector removalForceAmplitude = { {1.e-6, 1.e-6, 1.e-6} };
   constexpr Vector removalForceWaveLength = { {32.0, 32.0, 32.0} };
@@ -63,7 +62,7 @@ namespace lbm {
   constexpr auto prefix = LBM_POSTFIX;
 
   constexpr bool writeFieldInit = 1;
-  constexpr bool writeAnalysisInit = 1;
+  constexpr bool writeAnalysisInit = 0;
 
   constexpr bool writeForce = 1;
   constexpr bool writeEntropy = 0;

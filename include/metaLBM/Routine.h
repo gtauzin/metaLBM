@@ -20,14 +20,17 @@
 namespace lbm {
 
   /// Initializes all fields and starts the LBM method
-  template <class T, Architecture architecture, Implementation implementation>
+  template <class T, AlgorithmType algorithmType, Architecture architecture,
+            MemoryLayout memoryLayout, PartitionningType partitionningType,
+            CommunicationType communicationType, Overlapping overlapping>
   class Routine {
   protected:
     using Clock = std::chrono::high_resolution_clock;
     using Seconds = std::chrono::duration<double>;
 
     using Algorithm_
-      = Algorithm<T, algorithmT, architecture, implementation, overlappingT>;
+    = Algorithm<T, algorithmType, architecture, memoryLayout, partitionningType,
+                communicationType, overlapping>;
 
     Communication_ communication;
     Stream<architecture> defaultStream;
@@ -85,16 +88,16 @@ namespace lbm {
     }
 
     void compute() {
-       LBM_INSTRUMENT_ON("Routine<T>::compute", 1)
+      LBM_INSTRUMENT_ON("Routine<T>::compute", 1)
 
-      algorithm.unpack(defaultStream);
+        algorithm.unpack(defaultStream);
 
       Clock::time_point t0;
       Clock::time_point t1;
 
       if (writeFieldInit || writeAnalysisInit) {
-          curlVelocity.executeSpace();
-          curlVelocity.normalize();
+        curlVelocity.executeSpace();
+        curlVelocity.normalize();
       }
 
       if (writeFieldInit) {
@@ -112,7 +115,7 @@ namespace lbm {
       }
 
       performanceAnalysisList.setInitialMass(
-        communication.reduce(fieldList.density.getData(FFTWInit::numberElements)));
+                                             communication.reduce(fieldList.density.getData(FFTWInit::numberElements)));
 
       // Execute LBM algorithm
       for (int iteration = startIteration + 1; iteration <= endIteration; ++iteration) {
@@ -144,7 +147,7 @@ namespace lbm {
       }
 
       performanceAnalysisList.updateMass(communication.reduce(
-        fieldList.density.getData(FFTWInit::numberElements)));
+                                                              fieldList.density.getData(FFTWInit::numberElements)));
 
       performanceAnalysisList.updateMLUPS(endIteration - startIteration);
 
@@ -199,12 +202,12 @@ namespace lbm {
     void writeFields(const unsigned int iteration) {
       LBM_INSTRUMENT_ON("Routine<T>::writeFields", 2)
 
-      if (fieldWriter.getIsWritten(iteration)) {
-        fieldWriter.openFile(iteration);
+        if (fieldWriter.getIsWritten(iteration)) {
+          fieldWriter.openFile(iteration);
 
-        fieldList.writeFields();
-        fieldWriter.closeFile();
-      }
+          fieldList.writeFields();
+          fieldWriter.closeFile();
+        }
 
       if (distributionWriter.getIsBackedUp(iteration)) {
         algorithm.pack(defaultStream);
@@ -217,9 +220,9 @@ namespace lbm {
     void writeAnalyses(const unsigned int iteration) {
       LBM_INSTRUMENT_ON("Routine<T>::writeFields", 2)
 
-      if (scalarAnalysisList.getIsAnalyzed(iteration)) {
-        scalarAnalysisList.writeAnalyses(iteration);
-      }
+        if (scalarAnalysisList.getIsAnalyzed(iteration)) {
+          scalarAnalysisList.writeAnalyses(iteration);
+        }
 
       if (spectralAnalysisList.getIsAnalyzed(iteration)) {
         spectralAnalysisList.writeAnalyses(iteration);
@@ -227,7 +230,7 @@ namespace lbm {
 
       if (performanceAnalysisList.getIsAnalyzed(iteration)) {
         performanceAnalysisList.updateMass(communication.reduce(
-          fieldList.density.getData(FFTWInit::numberElements)));
+                                                                fieldList.density.getData(FFTWInit::numberElements)));
 
         performanceAnalysisList.updateMLUPS(iteration - startIteration);
 
