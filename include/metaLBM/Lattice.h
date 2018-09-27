@@ -20,7 +20,8 @@ namespace lbm {
   struct Lattice {};
 
   template <class T>
-  struct Lattice<T, LatticeType::D1Q3> {
+  struct Lattice<T, LatticeType::D1Q3>
+    : public Lattice<T, LatticeType::Generic> {
     static constexpr LatticeType Type = LatticeType::D1Q3;
 
     static constexpr T inv_cs2 = (T)3;
@@ -71,10 +72,14 @@ namespace lbm {
     static inline constexpr MathVector<T, dimQ> weight() {
       return {(T)2 / (T)3, (T)1 / (T)6, (T)1 / (T)6};
     }
+
+    static const MathVector<MathVector<T, dimD>, dimQ> qDiagonal;
+    static const MathVector<MathVector<T, 2*dimD-3>, dimQ> qSymmetric;
   };
 
   template <class T>
-  struct Lattice<T, LatticeType::D2Q5> {
+  struct Lattice<T, LatticeType::D2Q5>
+    : public Lattice<T, LatticeType::Generic> {
     static constexpr LatticeType Type = LatticeType::D2Q5;
 
     static constexpr T inv_cs2 = (T)3;
@@ -132,10 +137,14 @@ namespace lbm {
       return {(T)4 / (T)6, (T)1 / (T)12, (T)1 / (T)12, (T)1 / (T)12,
               (T)1 / (T)12};
     }
+
+    static const MathVector<MathVector<T, dimD>, dimQ> qDiagonal;
+    static const MathVector<MathVector<T, 2*dimD-3>, dimQ> qSymmetric;
   };
 
   template <class T>
-  struct Lattice<T, LatticeType::D2Q9> {
+  struct Lattice<T, LatticeType::D2Q9>
+    : public Lattice<T, LatticeType::Generic> {
     static constexpr LatticeType Type = LatticeType::D2Q9;
 
     static constexpr T inv_cs2 = (T)3;
@@ -195,11 +204,15 @@ namespace lbm {
       return {(T)4 / (T)9, (T)1 / (T)36, (T)1 / (T)9, (T)1 / (T)36, (T)1 / (T)36,
               (T)1 / (T)9, (T)1 / (T)36, (T)1 / (T)9, (T)1 / (T)9};
     }
+
+    static const MathVector<MathVector<T, dimD>, dimQ> qDiagonal;
+    static const MathVector<MathVector<T, 2*dimD-3>, dimQ> qSymmetric;
   };
 
 
    template <class T>
-   struct Lattice<T, LatticeType::D2Q13> {
+   struct Lattice<T, LatticeType::D2Q13>
+    : public Lattice<T, LatticeType::Generic> {
     static constexpr LatticeType Type = LatticeType::D2Q13;
 
     static constexpr T inv_cs2 = (T) 3;
@@ -268,11 +281,15 @@ namespace lbm {
     static inline constexpr MathVector<T, dimQ> weight() {
       return {w0, w1, w2, w2, w4, w1, w2, w2, w4, w1, w1, w4, w4};
     }
+
+    static const MathVector<MathVector<T, dimD>, dimQ> qDiagonal;
+    static const MathVector<MathVector<T, 2*dimD-3>, dimQ> qSymmetric;
   };
 
 
   template <class T>
-  struct Lattice<T, LatticeType::D2Q17> {
+  struct Lattice<T, LatticeType::D2Q17>
+    : public Lattice<T, LatticeType::Generic> {
     static constexpr LatticeType Type = LatticeType::D2Q17;
 
     static constexpr T inv_cs2 = (T) 2 / (T)3;
@@ -346,11 +363,15 @@ namespace lbm {
     static inline constexpr MathVector<T, dimQ> weight() {
       return { w0, w2, w2, w8, w8, w9, w18, w18, w2, w2, w8, w8, w9, w18, w18, w9, w9 };
     }
+
+    static const MathVector<MathVector<T, dimD>, dimQ> qDiagonal;
+    static const MathVector<MathVector<T, 2*dimD-3>, dimQ> qSymmetric;
   };
 
 
    template <class T>
-   struct Lattice<T, LatticeType::D2Q21> {
+   struct Lattice<T, LatticeType::D2Q21>
+    : public Lattice<T, LatticeType::Generic> {
      static constexpr LatticeType Type = LatticeType::D2Q21;
 
      static constexpr T cs2 = (T) 2 / (T) 3;
@@ -430,11 +451,15 @@ namespace lbm {
       return { w0, w1, w2, w2, w4, w8, w8, w9, w1, w2, w2, w4, w8, w8,
                w9, w1, w1, w4, w4, w9, w9 };
     }
+
+    static const MathVector<MathVector<T, dimD>, dimQ> qDiagonal;
+    static const MathVector<MathVector<T, 2*dimD-3>, dimQ> qSymmetric;
   };
 
 
   template <class T>
-  struct Lattice<T, LatticeType::D3Q15> {
+  struct Lattice<T, LatticeType::D3Q15>
+    : public Lattice<T, LatticeType::Generic> {
     static constexpr LatticeType Type = LatticeType::D3Q15;
 
     static constexpr T inv_cs2 = (T)3;
@@ -502,10 +527,14 @@ namespace lbm {
               (T)1 / (T)72, (T)1 / (T)9, (T)1 / (T)72, (T)1 / (T)72, (T)1 / (T)72,
               (T)1 / (T)72, (T)1 / (T)9, (T)1 / (T)9,  (T)1 / (T)9,  (T)1 / (T)9};
     }
+
+    static const MathVector<MathVector<T, dimD>, dimQ> qDiagonal;
+    static const MathVector<MathVector<T, 2*dimD-3>, dimQ> qSymmetric;
   };
 
   template <class T>
-  struct Lattice<T, LatticeType::D3Q19> {
+  struct Lattice<T, LatticeType::D3Q19>
+    : public Lattice<T, LatticeType::Generic> {
     static constexpr LatticeType Type = LatticeType::D3Q19;
 
     static constexpr T inv_cs2 = (T)3;
@@ -577,10 +606,14 @@ namespace lbm {
               (T)1 / (T)18, (T)1 / (T)36, (T)1 / (T)36, (T)1 / (T)18,
               (T)1 / (T)18, (T)1 / (T)36, (T)1 / (T)36};
     }
+
+    static const MathVector<MathVector<T, dimD>, dimQ> qDiagonal;
+    static const MathVector<MathVector<T, 2*dimD-3>, dimQ> qSymmetric;
   };
 
   template <class T>
-  struct Lattice<T, LatticeType::D3Q27> {
+  struct Lattice<T, LatticeType::D3Q27>
+    : public Lattice<T, LatticeType::Generic> {
     static constexpr LatticeType Type = LatticeType::D3Q27;
 
     static constexpr T inv_cs2 = (T)3;
@@ -664,11 +697,15 @@ namespace lbm {
               (T)2 / (T)27,  (T)1 / (T)54,  (T)1 / (T)54,  (T)2 / (T)27,
               (T)2 / (T)27,  (T)1 / (T)54,  (T)1 / (T)54};
     }
+
+    static const MathVector<MathVector<T, dimD>, dimQ> qDiagonal;
+    static const MathVector<MathVector<T, 2*dimD-3>, dimQ> qSymmetric;
   };
 
 
   template <class T>
-  struct Lattice<T, LatticeType::D3Q33> {
+  struct Lattice<T, LatticeType::D3Q33>
+    : public Lattice<T, LatticeType::Generic> {
     static constexpr LatticeType Type = LatticeType::D3Q33;
 
     static constexpr T cs2 = (T) 0.4156023517935171;
@@ -759,10 +796,46 @@ namespace lbm {
       return {w0, w1, w2, w2, w2, w2, w3, w3, w3, w3, w4, w1, w2, w2, w2, w2,
               w3, w3, w3, w3, w4, w1, w1, w2, w2, w1, w1, w2, w2, w4, w4, w4, w4};
     }
+
+    static const MathVector<MathVector<T, dimD>, dimQ> qDiagonal;
+    static const MathVector<MathVector<T, 2*dimD-3>, dimQ> qSymmetric;
+
   };
 
-
   typedef Lattice<dataT, latticeT> L;
+  typedef Lattice<dataT, LatticeType::Generic> genericL;
   typedef Lattice<unsigned int, latticeT> uiL;
+
+
+  LBM_DEVICE LBM_HOST inline
+  static MathVector<MathVector<dataT, L::dimD>, L::dimQ> calculateQDiagonal() {
+    MathVector<MathVector<dataT, L::dimD>, L::dimQ> qDiagonalR{{0}};
+
+    for (auto iQ = 0; iQ < L::dimQ; ++iQ) {
+      for (auto iD = 0; iD < L::dimD; ++iD) {
+          qDiagonalR[iQ][iD] = L::celerity()[iQ][iD] * L::celerity()[iQ][iD] - L::cs2;
+      }
+    }
+    return qDiagonalR;
+  }
+
+  LBM_DEVICE LBM_HOST inline
+  static MathVector<MathVector<dataT, 2*L::dimD-3>, L::dimQ> calculateQSymmetric() {
+    MathVector<MathVector<dataT, 2*L::dimD-3>, L::dimQ> qSymmetricR{{0}};
+
+    for (auto iQ = 0; iQ < L::dimQ; ++iQ) {
+      qSymmetricR[iQ][d::X] = L::celerity()[iQ][d::X] * L::celerity()[iQ][d::Y];
+
+      for (auto iD = 1; iD < 2 * L::dimD - 3; ++iD) {
+        qSymmetricR[iQ][iD] = L::celerity()[iQ][iD-1] * L::celerity()[iQ][d::Z];
+      }
+    }
+    return qSymmetricR;
+  }
+
+  template<> const MathVector<MathVector<dataT, L::dimD>, L::dimQ> L::qDiagonal
+    = calculateQDiagonal();
+  template<> const MathVector<MathVector<dataT, 2*L::dimD-3>, L::dimQ> L::qSymmetric
+    = calculateQSymmetric();
 
 }  // namespace lbm

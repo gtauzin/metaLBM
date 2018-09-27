@@ -151,8 +151,8 @@ template <class T, Architecture architecture>
   }
 
   LBM_DEVICE LBM_HOST
-  void calculateTs(const T* haloDistributionPreviousPtr, const T* haloDistributionNextPtr,
-                   const Position& iP) {
+  void calculateObservables(const T* haloDistributionPreviousPtr, const T* haloDistributionNextPtr,
+                            const Position& iP) {
     LBM_INSTRUMENT_OFF("Moment<T>::calculateMoments", 4)
 
   }
@@ -182,6 +182,12 @@ template <class T, Architecture architecture>
 protected:
   T T2, T3, T4, T2_approx, T3_approx, T4_approx;
 
+  MathVector<T, L::dimD> pi1Diagonal;
+  MathVector<T, 2*L::dimD-3> pi1Symmetric;
+
+  T squaredQContractedPi1;
+  T cubedQContractedPi1;
+
  public:
   Collision(const T tau_in,
             FieldList<T, architecture>& fieldList_in,
@@ -191,18 +197,20 @@ protected:
             const unsigned int kMax_in)
     : Base(tau_in, fieldList_in, amplitude_in, waveLength_in, kMin_in, kMax_in)
     , T2((T)0), T3((T)0), T4((T)0), T2_approx((T)0), T3_approx((T)0), T4_approx((T)0)
-  {}
+    , pi1Diagonal({0}), pi1Symmetric({0}), squaredQContractedPi1((T)0), squaredQContractedPi1((T)0)
+    {}
 
   using Base::setForce;
 
   LBM_DEVICE LBM_HOST void
-  calculateTs(const T* haloDistributionPreviousPtr, const T* haloDistributionNextPtr,
-              const Position& iP) {
+  calculateObservables(const T* haloDistributionPreviousPtr, const T* haloDistributionNextPtr,
+                       const Position& iP) {
     LBM_INSTRUMENT_OFF("Moment<T>::calculateMoments", 4)
 
     if(writeT) {
-      Moment_::calculateT(haloDistributionPreviousPtr, haloDistributionNextPtr, Base::density, iP,
-                          T2, T3, T4, T2_approx, T3_approx, T4_approx);
+      Moment_::calculateObservables(haloDistributionPreviousPtr, haloDistributionNextPtr, Base::density, iP,
+                                    T2, T3, T4, T2_approx, T3_approx, T4_approx,
+                                    pi1Diagonal, pi1Symmetric, squaredQContractedPi1, squaredQContractedPi1);
     }
   }
 
@@ -721,13 +729,13 @@ template <class T, Architecture architecture>
   using Base::getVelocity;
 
   LBM_DEVICE LBM_HOST void
-  calculateTs(const T* haloDistributionPreviousPtr, const T* haloDistributionNextPtr,
-              const Position& iP) {
+  calculateObservables(const T* haloDistributionPreviousPtr, const T* haloDistributionNextPtr,
+                       const Position& iP) {
     LBM_INSTRUMENT_OFF("Moment<T>::calculateMoments", 4)
 
     if(writeT) {
-      Moment_::calculateT_forcing(haloDistributionPreviousPtr, haloDistributionNextPtr, Base::density, iP,
-                                  Base::T2, Base::T3, Base::T4, Base::T2_approx, Base::T3_approx, Base::T4_approx);
+      Moment_::calculateObservables_forcing(haloDistributionPreviousPtr, haloDistributionNextPtr, Base::density, iP,
+                                            Base::T2, Base::T3, Base::T4, Base::T2_approx, Base::T3_approx, Base::T4_approx);
     }
   }
 
