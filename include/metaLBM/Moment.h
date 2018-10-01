@@ -51,6 +51,8 @@ class Moment {
   static void calculateObservables(const T* haloDistributionPreviousPtr, const T* haloDistributionNextPtr,
                                    const T density, const Position& iP, T& T2, T& T3, T& T4,
                                    T& T2_approx, T& T3_approx, T& T4_approx,
+                                   const MathVector<MathVector<dataT, L::dimD>, L::dimQ>& qDiagonal,
+                                   const MathVector<MathVector<dataT, 2*L::dimD-3>, L::dimQ>& qSymmetric,
                                    MathVector<T, L::dimD>& pi1Diagonal,
                                    MathVector<T, 2*L::dimD-3>& pi1Symmetric,
                                    T& squaredQContractedPi1, T& cubedQContractedPi1) {
@@ -58,7 +60,8 @@ class Moment {
 
     calculatePi1Diagonal(haloDistributionNextPtr, iP, pi1Diagonal);
     calculatePi1Symmetric(haloDistributionNextPtr, iP, pi1Symmetric);
-    calculatePowerQContractedPi1(pi1Diagonal, pi1Symmetric, squaredQContractedPi1, cubedQContractedPi1);
+    calculatePowerQContractedPi1(qDiagonal, qSymmetric, pi1Diagonal, pi1Symmetric,
+                                 squaredQContractedPi1, cubedQContractedPi1);
 
 
     T non_equilibrium_0 = haloDistributionNextPtr[hSD::getIndex(iP, 0)];
@@ -190,8 +193,8 @@ class Moment {
   }
 
   LBM_DEVICE LBM_HOST inline
-  static MathVector<T, 2*L::dimD-3> calculatePi1Symmetric(const T* haloDistributionNextPtr, const Position& iP,
-                                                          MathVector<T, 2*L::dimD-3>& pi1Symmetric) {
+  static void calculatePi1Symmetric(const T* haloDistributionNextPtr, const Position& iP,
+                                    MathVector<T, 2*L::dimD-3>& pi1Symmetric) {
     LBM_INSTRUMENT_OFF("Moment<T>::calculatePi1Symmetric", 5)
 
     T non_equilibrium_0 = haloDistributionNextPtr[hSD::getIndex(iP, 0)];
@@ -199,7 +202,7 @@ class Moment {
       * non_equilibrium_0;
 
     for (auto iD = 1; iD < 2 * L::dimD - 3; ++iD) {
-      pi1Symmetric[iD] += L::celerity()[0][iD-1] * L::celerity()[0][d::Z];
+      pi1Symmetric[iD] += L::celerity()[0][iD-1] * L::celerity()[0][d::Z]
       * non_equilibrium_0;
     }
 
@@ -210,15 +213,17 @@ class Moment {
         * non_equilibrium_iQ;
 
       for (auto iD = 1; iD < 2 * L::dimD - 3; ++iD) {
-        pi1Symmetric[iD] += L::celerity()[iQ][iD-1] * L::celerity()[iQ][d::Z];
+        pi1Symmetric[iD] += L::celerity()[iQ][iD-1] * L::celerity()[iQ][d::Z]
         * non_equilibrium_iQ;
       }
     }
   }
 
   LBM_DEVICE LBM_HOST inline
-  static void calculatePowerQContractedPi1(const MathVector<T, L::dimD>& pi1Diagonal,
-                                           const MathVector<T, 2*L::dimD-3>& pi1Symmetric,
+    static void calculatePowerQContractedPi1( const MathVector<MathVector<dataT, L::dimD>, L::dimQ> qDiagonal,
+                                              const MathVector<MathVector<dataT, 2*L::dimD-3>, L::dimQ> qSymmetric,
+                                              const MathVector<T, L::dimD>& pi1Diagonal,
+                                              const MathVector<T, 2*L::dimD-3>& pi1Symmetric,
                                            T& squaredQContractedPi1, T& cubedQContractedPi1) {
     LBM_INSTRUMENT_OFF("Moment<T>::calculatePowerQContractedPi1", 5)
 
@@ -231,11 +236,11 @@ class Moment {
       qContractedPi1_iQ = 0;
 
       for (auto iD = 0; iD < L::dimD; ++iD) {
-        qContractedPi1_iQ += L::qDiagonal[iQ][iD] * pi1Diagonal[iQ][iD];
+        qContractedPi1_iQ += qDiagonal[iQ][iD] * pi1Diagonal[iD];
 
       }
       for (auto iD = 0; iD < 2 * L::dimD - 3; ++iD) {
-        qContractedPi1_iQ += 2 * L::qSymmetric[iQ][iD] * pi1Symmetric[iQ][iD];
+        qContractedPi1_iQ += 2 * qSymmetric[iQ][iD] * pi1Symmetric[iD];
       }
       squaredQContractedPi1 += qContractedPi1_iQ * qContractedPi1_iQ;
       cubedQContractedPi1 += qContractedPi1_iQ * qContractedPi1_iQ * qContractedPi1_iQ;

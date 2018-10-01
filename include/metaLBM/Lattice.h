@@ -73,8 +73,8 @@ namespace lbm {
       return {(T)2 / (T)3, (T)1 / (T)6, (T)1 / (T)6};
     }
 
-    static const MathVector<MathVector<T, dimD>, dimQ> qDiagonal;
-    static const MathVector<MathVector<T, 2*dimD-3>, dimQ> qSymmetric;
+    // static const MathVector<MathVector<T, dimD>, dimQ> qDiagonal;
+    // static const MathVector<MathVector<T, 2*dimD-3>, dimQ> qSymmetric;
   };
 
   template <class T>
@@ -138,8 +138,8 @@ namespace lbm {
               (T)1 / (T)12};
     }
 
-    static const MathVector<MathVector<T, dimD>, dimQ> qDiagonal;
-    static const MathVector<MathVector<T, 2*dimD-3>, dimQ> qSymmetric;
+    // static const MathVector<MathVector<T, dimD>, dimQ> qDiagonal;
+    // static const MathVector<MathVector<T, 2*dimD-3>, dimQ> qSymmetric;
   };
 
   template <class T>
@@ -205,8 +205,8 @@ namespace lbm {
               (T)1 / (T)9, (T)1 / (T)36, (T)1 / (T)9, (T)1 / (T)9};
     }
 
-    static const MathVector<MathVector<T, dimD>, dimQ> qDiagonal;
-    static const MathVector<MathVector<T, 2*dimD-3>, dimQ> qSymmetric;
+    // static const MathVector<MathVector<T, dimD>, dimQ> qDiagonal;
+    // static const MathVector<MathVector<T, 2*dimD-3>, dimQ> qSymmetric;
   };
 
 
@@ -282,8 +282,8 @@ namespace lbm {
       return {w0, w1, w2, w2, w4, w1, w2, w2, w4, w1, w1, w4, w4};
     }
 
-    static const MathVector<MathVector<T, dimD>, dimQ> qDiagonal;
-    static const MathVector<MathVector<T, 2*dimD-3>, dimQ> qSymmetric;
+    // static const MathVector<MathVector<T, dimD>, dimQ> qDiagonal;
+    // static const MathVector<MathVector<T, 2*dimD-3>, dimQ> qSymmetric;
   };
 
 
@@ -364,8 +364,8 @@ namespace lbm {
       return { w0, w2, w2, w8, w8, w9, w18, w18, w2, w2, w8, w8, w9, w18, w18, w9, w9 };
     }
 
-    static const MathVector<MathVector<T, dimD>, dimQ> qDiagonal;
-    static const MathVector<MathVector<T, 2*dimD-3>, dimQ> qSymmetric;
+    // static const MathVector<MathVector<T, dimD>, dimQ> qDiagonal;
+    // static const MathVector<MathVector<T, 2*dimD-3>, dimQ> qSymmetric;
   };
 
 
@@ -452,8 +452,8 @@ namespace lbm {
                w9, w1, w1, w4, w4, w9, w9 };
     }
 
-    static const MathVector<MathVector<T, dimD>, dimQ> qDiagonal;
-    static const MathVector<MathVector<T, 2*dimD-3>, dimQ> qSymmetric;
+    // static const MathVector<MathVector<T, dimD>, dimQ> qDiagonal;
+    // static const MathVector<MathVector<T, 2*dimD-3>, dimQ> qSymmetric;
   };
 
 
@@ -528,8 +528,8 @@ namespace lbm {
               (T)1 / (T)72, (T)1 / (T)9, (T)1 / (T)9,  (T)1 / (T)9,  (T)1 / (T)9};
     }
 
-    static const MathVector<MathVector<T, dimD>, dimQ> qDiagonal;
-    static const MathVector<MathVector<T, 2*dimD-3>, dimQ> qSymmetric;
+    // static const MathVector<MathVector<T, dimD>, dimQ> qDiagonal;
+    // static const MathVector<MathVector<T, 2*dimD-3>, dimQ> qSymmetric;
   };
 
   template <class T>
@@ -607,8 +607,8 @@ namespace lbm {
               (T)1 / (T)18, (T)1 / (T)36, (T)1 / (T)36};
     }
 
-    static const MathVector<MathVector<T, dimD>, dimQ> qDiagonal;
-    static const MathVector<MathVector<T, 2*dimD-3>, dimQ> qSymmetric;
+    // static const MathVector<MathVector<T, dimD>, dimQ> qDiagonal;
+    // static const MathVector<MathVector<T, 2*dimD-3>, dimQ> qSymmetric;
   };
 
   template <class T>
@@ -698,8 +698,8 @@ namespace lbm {
               (T)2 / (T)27,  (T)1 / (T)54,  (T)1 / (T)54};
     }
 
-    static const MathVector<MathVector<T, dimD>, dimQ> qDiagonal;
-    static const MathVector<MathVector<T, 2*dimD-3>, dimQ> qSymmetric;
+    // static const MathVector<MathVector<T, dimD>, dimQ> qDiagonal;
+    // static const MathVector<MathVector<T, 2*dimD-3>, dimQ> qSymmetric;
   };
 
 
@@ -797,9 +797,8 @@ namespace lbm {
               w3, w3, w3, w3, w4, w1, w1, w2, w2, w1, w1, w2, w2, w4, w4, w4, w4};
     }
 
-    static const MathVector<MathVector<T, dimD>, dimQ> qDiagonal;
-    static const MathVector<MathVector<T, 2*dimD-3>, dimQ> qSymmetric;
-
+    // static const MathVector<MathVector<T, dimD>, dimQ> qDiagonal;
+    // static const MathVector<MathVector<T, 2*dimD-3>, dimQ> qSymmetric;
   };
 
   typedef Lattice<dataT, latticeT> L;
@@ -808,7 +807,7 @@ namespace lbm {
 
 
   LBM_DEVICE LBM_HOST inline
-  static MathVector<MathVector<dataT, L::dimD>, L::dimQ> calculateQDiagonal() {
+  MathVector<MathVector<dataT, L::dimD>, L::dimQ> calculateQDiagonal() {
     MathVector<MathVector<dataT, L::dimD>, L::dimQ> qDiagonalR{{0}};
 
     for (auto iQ = 0; iQ < L::dimQ; ++iQ) {
@@ -820,7 +819,7 @@ namespace lbm {
   }
 
   LBM_DEVICE LBM_HOST inline
-  static MathVector<MathVector<dataT, 2*L::dimD-3>, L::dimQ> calculateQSymmetric() {
+  MathVector<MathVector<dataT, 2*L::dimD-3>, L::dimQ> calculateQSymmetric() {
     MathVector<MathVector<dataT, 2*L::dimD-3>, L::dimQ> qSymmetricR{{0}};
 
     for (auto iQ = 0; iQ < L::dimQ; ++iQ) {
@@ -833,9 +832,9 @@ namespace lbm {
     return qSymmetricR;
   }
 
-  template<> const MathVector<MathVector<dataT, L::dimD>, L::dimQ> L::qDiagonal
-    = calculateQDiagonal();
-  template<> const MathVector<MathVector<dataT, 2*L::dimD-3>, L::dimQ> L::qSymmetric
-    = calculateQSymmetric();
+  /* template<> const MathVector<MathVector<dataT, L::dimD>, L::dimQ> L::qDiagonal */
+  /*   = calculateQDiagonal(); */
+  /* template<> const MathVector<MathVector<dataT, 2*L::dimD-3>, L::dimQ> L::qSymmetric */
+  /*   = calculateQSymmetric(); */
 
 }  // namespace lbm

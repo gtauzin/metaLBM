@@ -188,6 +188,8 @@ template <class T, Architecture architecture>
 protected:
   T T2, T3, T4, T2_approx, T3_approx, T4_approx;
 
+  const MathVector<MathVector<dataT, L::dimD>, L::dimQ> qDiagonal;
+  const MathVector<MathVector<dataT, 2*L::dimD-3>, L::dimQ> qSymmetric;
   MathVector<T, L::dimD> pi1Diagonal;
   MathVector<T, 2*L::dimD-3> pi1Symmetric;
 
@@ -203,6 +205,7 @@ protected:
             const unsigned int kMax_in)
     : Base(tau_in, fieldList_in, amplitude_in, waveLength_in, kMin_in, kMax_in)
     , T2((T)0), T3((T)0), T4((T)0), T2_approx((T)0), T3_approx((T)0), T4_approx((T)0)
+    , qDiagonal(calculateQDiagonal()), qSymmetric(calculateQSymmetric())
     , pi1Diagonal({0}), pi1Symmetric({0}), squaredQContractedPi1((T)0), cubedQContractedPi1((T)0)
     {}
 
@@ -215,7 +218,7 @@ protected:
 
     if(writeKinetics) {
       Moment_::calculateObservables(haloDistributionPreviousPtr, haloDistributionNextPtr, Base::density, iP,
-                                    T2, T3, T4, T2_approx, T3_approx, T4_approx,
+                                    T2, T3, T4, T2_approx, T3_approx, T4_approx, qDiagonal, qSymmetric,
                                     pi1Diagonal, pi1Symmetric, squaredQContractedPi1, squaredQContractedPi1);
     }
   }
