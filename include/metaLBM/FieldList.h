@@ -26,12 +26,16 @@ class FieldList {
   Field<T, L::dimD, architecture, true> velocity;
   Field<T, L::dimD, architecture, writeForce> force;
   Field<T, 1, architecture, writeAlpha> alpha;
-  Field<T, 1, architecture, writeT> T2;
-  Field<T, 1, architecture, writeT> T3;
-  Field<T, 1, architecture, writeT> T4;
-  Field<T, 1, architecture, writeT> T2_approx;
-  Field<T, 1, architecture, writeT> T3_approx;
-  Field<T, 1, architecture, writeT> T4_approx;
+  Field<T, 1, architecture, writeKinetics> T2;
+  Field<T, 1, architecture, writeKinetics> T3;
+  Field<T, 1, architecture, writeKinetics> T4;
+  Field<T, 1, architecture, writeKinetics> T2_approx;
+  Field<T, 1, architecture, writeKinetics> T3_approx;
+  Field<T, 1, architecture, writeKinetics> T4_approx;
+  Field<T, L::dimD, architecture, writeKinetics> pi1Diagonal;
+  Field<T, 2 * L::dimD - 3, architecture, writeKinetics> pi1Symmetric;
+  Field<T, 1, architecture, writeKinetics> squaredQContractedPi1;
+  Field<T, 1, architecture, writeKinetics> cubedQContractedPi1;
   Field<T, 2 * L::dimD - 3, architecture, writeVorticity> vorticity;
   FieldWriter_& fieldWriter;
 
@@ -48,6 +52,10 @@ class FieldList {
     , T2_approx("T2_approx")
     , T3_approx("T3_approx")
     , T4_approx("T4_approx")
+    , pi1Diagonal("pi1Diagonal")
+    , pi1Symmetric("pi1Symmetric")
+    , squaredQContractedPi1("squaredQContractedPi1")
+    , cubedQContractedPi1("cubedQContractedPi1")
     , vorticity("vorticity")
     , fieldWriter(fieldWriter_in)
   {}
@@ -56,7 +64,7 @@ class FieldList {
     fieldWriter.writeField(density);
     fieldWriter.writeField(velocity);
     if(writeAlpha) fieldWriter.writeField(alpha);
-    if(writeT) {
+    if(writeKinetics) {
       fieldWriter.writeField(T2);
       fieldWriter.writeField(T3);
       fieldWriter.writeField(T4);
@@ -64,6 +72,11 @@ class FieldList {
       fieldWriter.writeField(T2_approx);
       fieldWriter.writeField(T3_approx);
       fieldWriter.writeField(T4_approx);
+
+      fieldWriter.writeField(pi1Diagonal);
+      fieldWriter.writeField(pi1Symmetric);
+      fieldWriter.writeField(squaredQContractedPi1);
+      fieldWriter.writeField(cubedQContractedPi1);
     }
     if(writeForce) fieldWriter.writeField(force);
     if(writeVorticity) fieldWriter.writeField(vorticity);

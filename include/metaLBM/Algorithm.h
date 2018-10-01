@@ -43,6 +43,10 @@ namespace lbm {
     T* T2_approxPtr;
     T* T3_approxPtr;
     T* T4_approxPtr;
+    T* pi1DiagonalPtr;
+    T* pi1SymmetricPtr;
+    T* squaredQContractedPi1Ptr;
+    T* cubedQContractedPi1Ptr;
     T* distributionPtr;
 
   protected:
@@ -73,6 +77,10 @@ namespace lbm {
       , T2_approxPtr(fieldList_in.T2_approx.getData(FFTWInit::numberElements))
       , T3_approxPtr(fieldList_in.T3_approx.getData(FFTWInit::numberElements))
       , T4_approxPtr(fieldList_in.T4_approx.getData(FFTWInit::numberElements))
+      , pi1DiagonalPtr(fieldList_in.pi1Diagonal.getData(FFTWInit::numberElements))
+      , pi1SymmetricPtr(fieldList_in.pi1Symmetric.getData(FFTWInit::numberElements))
+      , squaredQContractedPi1Ptr(fieldList_in.squaredQContractedPi1.getData(FFTWInit::numberElements))
+      , cubedQContractedPi1Ptr(fieldList_in.cubedQContractedPi1.getData(FFTWInit::numberElements))
       , distributionPtr(distribution_in.getData(FFTWInit::numberElements))
       , haloDistributionPreviousPtr(distribution_in.getHaloDataPrevious())
       , haloDistributionNextPtr(distribution_in.getHaloDataNext())
@@ -96,8 +104,8 @@ namespace lbm {
       alphaPtr[hSD::getIndexLocal(iP)] = collision.getAlpha();
 
       if (isStored) {
-        collision.calculateTs(haloDistributionPreviousPtr,
-                              haloDistributionNextPtr, iP);
+        collision.calculateObservables(haloDistributionPreviousPtr,
+                                       haloDistributionNextPtr, iP);
       }
 
 #pragma unroll
@@ -150,7 +158,7 @@ namespace lbm {
         alphaPtr[indexLocal] = collision.getAlpha();
       }
 
-      if(writeT) {
+      if(writeKinetics) {
         T2Ptr[indexLocal] = collision.getT2();
         T3Ptr[indexLocal] = collision.getT3();
         T4Ptr[indexLocal] = collision.getT4();
@@ -158,6 +166,19 @@ namespace lbm {
         T2_approxPtr[indexLocal] = collision.getT2_approx();
         T3_approxPtr[indexLocal] = collision.getT3_approx();
         T4_approxPtr[indexLocal] = collision.getT4_approx();
+
+        for(auto iD = 0; iD < L::dimD; ++iD) {
+          (pi1DiagonalPtr + iD * numberElements)[indexLocal] =
+            collision.getPi1Diagonal()[iD];
+        }
+        for(auto iD = 0; iD < 2 * L::dimD - 3; ++iD) {
+          (pi1SymmetricPtr + iD * numberElements)[indexLocal] =
+            collision.getPi1Symmetric()[iD];
+        }
+
+        squaredQContractedPi1Ptr[indexLocal] = collision.getSquaredQContractedPi1();
+        cubedQContractedPi1Ptr[indexLocal] = collision.getCubedQContractedPi1();
+
       }
 
       if(writeForce) {

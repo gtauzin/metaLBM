@@ -165,6 +165,12 @@ template <class T, Architecture architecture>
   LBM_DEVICE LBM_HOST inline T getT3_approx() { return 0; }
   LBM_DEVICE LBM_HOST inline T getT4_approx() { return 0; }
 
+
+  LBM_DEVICE LBM_HOST inline MathVector<T, L::dimD> getPi1Diagonal() { return 0; }
+  LBM_DEVICE LBM_HOST inline MathVector<T, 2*L::dimD-3> getPi1Symmetric() { return 0; }
+  LBM_DEVICE LBM_HOST inline T getSquaredQContractedPi1() { return 0; }
+  LBM_DEVICE LBM_HOST inline T getCubedQContractedPi1() { return 0; }
+
   using Base::getDensity;
   using Base::getForce;
   using Base::getHydrodynamicVelocity;
@@ -197,7 +203,7 @@ protected:
             const unsigned int kMax_in)
     : Base(tau_in, fieldList_in, amplitude_in, waveLength_in, kMin_in, kMax_in)
     , T2((T)0), T3((T)0), T4((T)0), T2_approx((T)0), T3_approx((T)0), T4_approx((T)0)
-    , pi1Diagonal({0}), pi1Symmetric({0}), squaredQContractedPi1((T)0), squaredQContractedPi1((T)0)
+    , pi1Diagonal({0}), pi1Symmetric({0}), squaredQContractedPi1((T)0), cubedQContractedPi1((T)0)
     {}
 
   using Base::setForce;
@@ -207,7 +213,7 @@ protected:
                        const Position& iP) {
     LBM_INSTRUMENT_OFF("Moment<T>::calculateMoments", 4)
 
-    if(writeT) {
+    if(writeKinetics) {
       Moment_::calculateObservables(haloDistributionPreviousPtr, haloDistributionNextPtr, Base::density, iP,
                                     T2, T3, T4, T2_approx, T3_approx, T4_approx,
                                     pi1Diagonal, pi1Symmetric, squaredQContractedPi1, squaredQContractedPi1);
@@ -263,6 +269,11 @@ protected:
   LBM_DEVICE LBM_HOST inline T getT2_approx() { return T2_approx; }
   LBM_DEVICE LBM_HOST inline T getT3_approx() { return T3_approx; }
   LBM_DEVICE LBM_HOST inline T getT4_approx() { return T4_approx; }
+
+  LBM_DEVICE LBM_HOST inline MathVector<T, L::dimD> getPi1Diagonal() { return pi1Diagonal; }
+  LBM_DEVICE LBM_HOST inline MathVector<T, 2*L::dimD-3> getPi1Symmetric() { return pi1Symmetric; }
+  LBM_DEVICE LBM_HOST inline T getSquaredQContractedPi1() { return squaredQContractedPi1; }
+  LBM_DEVICE LBM_HOST inline T getCubedQContractedPi1() { return cubedQContractedPi1; }
 
  protected:
   using Base::forcingScheme;
@@ -733,7 +744,7 @@ template <class T, Architecture architecture>
                        const Position& iP) {
     LBM_INSTRUMENT_OFF("Moment<T>::calculateMoments", 4)
 
-    if(writeT) {
+    if(writeKinetics) {
       Moment_::calculateObservables_forcing(haloDistributionPreviousPtr, haloDistributionNextPtr, Base::density, iP,
                                             Base::T2, Base::T3, Base::T4, Base::T2_approx, Base::T3_approx, Base::T4_approx);
     }
