@@ -166,8 +166,8 @@ template <class T, Architecture architecture>
   LBM_DEVICE LBM_HOST inline T getT4_approx() { return 0; }
 
 
-  LBM_DEVICE LBM_HOST inline MathVector<T, L::dimD> getPi1Diagonal() { return 0; }
-  LBM_DEVICE LBM_HOST inline MathVector<T, 2*L::dimD-3> getPi1Symmetric() { return 0; }
+  LBM_DEVICE LBM_HOST inline MathVector<T, L::dimD> getPi1Diagonal() { return MathVector<T, L::dimD>{0}; }
+  LBM_DEVICE LBM_HOST inline MathVector<T, 2*L::dimD-3> getPi1Symmetric() { return MathVector<T, 2*L::dimD-3>{{0}}; }
   LBM_DEVICE LBM_HOST inline T getSquaredQContractedPi1() { return 0; }
   LBM_DEVICE LBM_HOST inline T getCubedQContractedPi1() { return 0; }
 

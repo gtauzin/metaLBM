@@ -220,8 +220,8 @@ class Moment {
   }
 
   LBM_DEVICE LBM_HOST inline
-    static void calculatePowerQContractedPi1( const MathVector<MathVector<dataT, L::dimD>, L::dimQ> qDiagonal,
-                                              const MathVector<MathVector<dataT, 2*L::dimD-3>, L::dimQ> qSymmetric,
+    static void calculatePowerQContractedPi1( const MathVector<MathVector<dataT, L::dimD>, L::dimQ>& qDiagonal,
+                                              const MathVector<MathVector<dataT, 2*L::dimD-3>, L::dimQ>& qSymmetric,
                                               const MathVector<T, L::dimD>& pi1Diagonal,
                                               const MathVector<T, 2*L::dimD-3>& pi1Symmetric,
                                            T& squaredQContractedPi1, T& cubedQContractedPi1) {
