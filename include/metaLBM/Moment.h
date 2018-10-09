@@ -220,11 +220,11 @@ class Moment {
   }
 
   LBM_DEVICE LBM_HOST inline
-    static void calculatePowerQContractedPi1( const MathVector<MathVector<dataT, L::dimD>, L::dimQ>& qDiagonal,
-                                              const MathVector<MathVector<dataT, 2*L::dimD-3>, L::dimQ>& qSymmetric,
-                                              const MathVector<T, L::dimD>& pi1Diagonal,
-                                              const MathVector<T, 2*L::dimD-3>& pi1Symmetric,
-                                           T& squaredQContractedPi1, T& cubedQContractedPi1) {
+    static void calculatePowerQContractedPi1(const MathVector<MathVector<dataT, L::dimD>, L::dimQ>& qDiagonal,
+                                             const MathVector<MathVector<dataT, 2*L::dimD-3>, L::dimQ>& qSymmetric,
+                                             const MathVector<T, L::dimD>& pi1Diagonal,
+                                             const MathVector<T, 2*L::dimD-3>& pi1Symmetric,
+                                             T& squaredQContractedPi1, T& cubedQContractedPi1) {
     LBM_INSTRUMENT_OFF("Moment<T>::calculatePowerQContractedPi1", 5)
 
     T qContractedPi1_iQ;
@@ -237,13 +237,14 @@ class Moment {
 
       for (auto iD = 0; iD < L::dimD; ++iD) {
         qContractedPi1_iQ += qDiagonal[iQ][iD] * pi1Diagonal[iD];
-
       }
+
       for (auto iD = 0; iD < 2 * L::dimD - 3; ++iD) {
         qContractedPi1_iQ += 2 * qSymmetric[iQ][iD] * pi1Symmetric[iD];
       }
-      squaredQContractedPi1 += qContractedPi1_iQ * qContractedPi1_iQ;
-      cubedQContractedPi1 += qContractedPi1_iQ * qContractedPi1_iQ * qContractedPi1_iQ;
+
+      squaredQContractedPi1 += L::weight()[iQ] * qContractedPi1_iQ * qContractedPi1_iQ;
+      cubedQContractedPi1 += L::weight()[iQ] * qContractedPi1_iQ * qContractedPi1_iQ * qContractedPi1_iQ;
     }
   }
 

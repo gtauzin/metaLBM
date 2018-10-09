@@ -157,19 +157,19 @@ template <class T, Architecture architecture>
 
   }
 
-  LBM_DEVICE LBM_HOST inline T getT2() { return 0; }
-  LBM_DEVICE LBM_HOST inline T getT3() { return 0; }
-  LBM_DEVICE LBM_HOST inline T getT4() { return 0; }
+  LBM_DEVICE LBM_HOST inline T getT2() { return -1; }
+  LBM_DEVICE LBM_HOST inline T getT3() { return -1; }
+  LBM_DEVICE LBM_HOST inline T getT4() { return -1; }
 
-  LBM_DEVICE LBM_HOST inline T getT2_approx() { return 0; }
-  LBM_DEVICE LBM_HOST inline T getT3_approx() { return 0; }
-  LBM_DEVICE LBM_HOST inline T getT4_approx() { return 0; }
+  LBM_DEVICE LBM_HOST inline T getT2_approx() { return -1; }
+  LBM_DEVICE LBM_HOST inline T getT3_approx() { return -1; }
+  LBM_DEVICE LBM_HOST inline T getT4_approx() { return -1; }
 
 
-  LBM_DEVICE LBM_HOST inline MathVector<T, L::dimD> getPi1Diagonal() { return MathVector<T, L::dimD>{0}; }
-  LBM_DEVICE LBM_HOST inline MathVector<T, 2*L::dimD-3> getPi1Symmetric() { return MathVector<T, 2*L::dimD-3>{{0}}; }
-  LBM_DEVICE LBM_HOST inline T getSquaredQContractedPi1() { return 0; }
-  LBM_DEVICE LBM_HOST inline T getCubedQContractedPi1() { return 0; }
+  LBM_DEVICE LBM_HOST inline MathVector<T, L::dimD> getPi1Diagonal() { return MathVector<T, L::dimD>{-1}; }
+  LBM_DEVICE LBM_HOST inline MathVector<T, 2*L::dimD-3> getPi1Symmetric() { return MathVector<T, 2*L::dimD-3>{{-1}}; }
+  LBM_DEVICE LBM_HOST inline T getSquaredQContractedPi1() { return -1; }
+  LBM_DEVICE LBM_HOST inline T getCubedQContractedPi1() { return -1; }
 
   using Base::getDensity;
   using Base::getForce;
@@ -219,7 +219,7 @@ protected:
     if(writeKinetics) {
       Moment_::calculateObservables(haloDistributionPreviousPtr, haloDistributionNextPtr, Base::density, iP,
                                     T2, T3, T4, T2_approx, T3_approx, T4_approx, qDiagonal, qSymmetric,
-                                    pi1Diagonal, pi1Symmetric, squaredQContractedPi1, squaredQContractedPi1);
+                                    pi1Diagonal, pi1Symmetric, squaredQContractedPi1, cubedQContractedPi1);
     }
   }
 

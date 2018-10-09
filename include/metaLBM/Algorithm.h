@@ -47,6 +47,7 @@ namespace lbm {
     T* pi1SymmetricPtr;
     T* squaredQContractedPi1Ptr;
     T* cubedQContractedPi1Ptr;
+    T* fNonEq8Ptr;
     T* distributionPtr;
 
   protected:
@@ -81,6 +82,7 @@ namespace lbm {
       , pi1SymmetricPtr(fieldList_in.pi1Symmetric.getData(FFTWInit::numberElements))
       , squaredQContractedPi1Ptr(fieldList_in.squaredQContractedPi1.getData(FFTWInit::numberElements))
       , cubedQContractedPi1Ptr(fieldList_in.cubedQContractedPi1.getData(FFTWInit::numberElements))
+      , fNonEq8Ptr(fieldList_in.fNonEq8.getData(FFTWInit::numberElements))
       , distributionPtr(distribution_in.getData(FFTWInit::numberElements))
       , haloDistributionPreviousPtr(distribution_in.getHaloDataPrevious())
       , haloDistributionNextPtr(distribution_in.getHaloDataNext())
@@ -106,6 +108,9 @@ namespace lbm {
       if (isStored) {
         collision.calculateObservables(haloDistributionPreviousPtr,
                                        haloDistributionNextPtr, iP);
+        if(writeKinetics) {
+          fNonEq8Ptr[hSD::getIndexLocal(iP)] = haloDistributionNextPtr[hSD::getIndex(iP, 8)];
+        }
       }
 
 #pragma unroll
@@ -178,7 +183,6 @@ namespace lbm {
 
         squaredQContractedPi1Ptr[indexLocal] = collision.getSquaredQContractedPi1();
         cubedQContractedPi1Ptr[indexLocal] = collision.getCubedQContractedPi1();
-
       }
 
       if(writeForce) {

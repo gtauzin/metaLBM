@@ -36,6 +36,7 @@ class FieldList {
   Field<T, 2 * L::dimD - 3, architecture, writeKinetics> pi1Symmetric;
   Field<T, 1, architecture, writeKinetics> squaredQContractedPi1;
   Field<T, 1, architecture, writeKinetics> cubedQContractedPi1;
+  Field<T, 1, architecture, writeKinetics> fNonEq8;
   Field<T, 2 * L::dimD - 3, architecture, writeVorticity> vorticity;
   FieldWriter_& fieldWriter;
 
@@ -56,6 +57,7 @@ class FieldList {
     , pi1Symmetric("pi1Symmetric")
     , squaredQContractedPi1("squaredQContractedPi1")
     , cubedQContractedPi1("cubedQContractedPi1")
+    , fNonEq8("fNonEq_8")
     , vorticity("vorticity")
     , fieldWriter(fieldWriter_in)
   {}
@@ -77,6 +79,7 @@ class FieldList {
       fieldWriter.writeField(pi1Symmetric);
       fieldWriter.writeField(squaredQContractedPi1);
       fieldWriter.writeField(cubedQContractedPi1);
+      fieldWriter.writeField(fNonEq8);
     }
     if(writeForce) fieldWriter.writeField(force);
     if(writeVorticity) fieldWriter.writeField(vorticity);
