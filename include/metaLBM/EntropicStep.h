@@ -153,7 +153,7 @@ namespace lbm {
 
     if ((function_xLow > 0.0 && function_xHigh > 0.0) ||
         (function_xLow < 0.0 && function_xHigh < 0.0)) {
-      numberIterations = - (T) -1;
+      numberIterations = - (T) 1;
       return false;
     }
 

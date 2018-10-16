@@ -18,12 +18,12 @@ namespace lbm {
   constexpr int globalLengthY = GLOBAL_LENGTH_Y;
   constexpr int globalLengthZ = GLOBAL_LENGTH_Z;
 
-  constexpr unsigned int startIteration = 0;
-  constexpr unsigned int endIteration = 101;
-  constexpr unsigned int writeStep = 2000;
-  constexpr unsigned int backUpStep = 5000;
+  constexpr unsigned int startIteration = 6000000;
+  constexpr unsigned int endIteration = 100000000;
+  constexpr unsigned int writeStep = 40000;
+  constexpr unsigned int backUpStep = 500000;
 
-  constexpr unsigned int scalarAnalysisStep = 1;
+  constexpr unsigned int scalarAnalysisStep = 200;
   constexpr unsigned int spectralAnalysisStep = 2000;
   constexpr unsigned int performanceAnalysisStep = 100;
 
@@ -35,8 +35,8 @@ namespace lbm {
   constexpr MemoryLayout memoryL = MemoryLayout::SoA;
   constexpr Overlapping overlappingT = Overlapping::Off;
 
-  constexpr dataT relaxationTime = 0.7;
-  constexpr CollisionType collisionT = CollisionType::BGK;
+  constexpr dataT relaxationTime = 0.50001; // 9// 0.5000010476; // 17//
+  constexpr CollisionType collisionT = CollisionType::ForcedNR_ELBM;
   constexpr EquilibriumType equilibriumT = EquilibriumType::TruncationMa3;
 
   constexpr InitDensityType initDensityT = InitDensityType::Homogeneous;
@@ -44,8 +44,8 @@ namespace lbm {
   constexpr InitVelocityType initVelocityT = InitVelocityType::Homogeneous;
   constexpr Vector initVelocityVector = { {0.0, 0.0, 0.0} };
 
-  constexpr ForcingSchemeType forcingSchemeT = ForcingSchemeType::ExactDifferenceMethod;
-  constexpr ForceType forceT = ForceType::Kolmogorov;
+  constexpr ForcingSchemeType forcingSchemeT = ForcingSchemeType::None;
+  constexpr ForceType forceT = ForceType::None;
 
   constexpr Vector forceAmplitude = { {1e-5, 1e-5, 1e-5} };
   constexpr Vector forceWaveLength = { {32.0, 32.0, 32.0} };
@@ -70,6 +70,7 @@ namespace lbm {
   constexpr bool writeAlpha = 1;
   constexpr bool writeT = 1;
   constexpr bool writeVorticity = 1;
+  constexpr bool writeKinetics = 1;
 
   constexpr bool analyzeTotalEnergy = 1;
   constexpr bool analyzeTotalEnstrophy = 1;
