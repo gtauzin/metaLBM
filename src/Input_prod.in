@@ -13,12 +13,12 @@ namespace lbm {
   constexpr int numProcs = NPROCS;
   constexpr int numThreads = NTHREADS;
 
-  constexpr LatticeType latticeT = LatticeType::D2Q9;
+  constexpr LatticeType latticeT = LatticeType::D2Q17;
   constexpr int globalLengthX = GLOBAL_LENGTH_X;
   constexpr int globalLengthY = GLOBAL_LENGTH_Y;
   constexpr int globalLengthZ = GLOBAL_LENGTH_Z;
 
-  constexpr unsigned int startIteration = 6000000;
+  constexpr unsigned int startIteration = 3000000;
   constexpr unsigned int endIteration = 100000000;
   constexpr unsigned int writeStep = 40000;
   constexpr unsigned int backUpStep = 500000;
@@ -35,7 +35,7 @@ namespace lbm {
   constexpr MemoryLayout memoryL = MemoryLayout::SoA;
   constexpr Overlapping overlappingT = Overlapping::Off;
 
-  constexpr dataT relaxationTime = 0.50001; // 9// 0.5000010476; // 17//
+  constexpr dataT relaxationTime = 0.5000010476; // 17// 0.50001; // 9// 
   constexpr CollisionType collisionT = CollisionType::ForcedNR_ELBM;
   constexpr EquilibriumType equilibriumT = EquilibriumType::TruncationMa3;
 

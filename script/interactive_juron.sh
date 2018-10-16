@@ -5,8 +5,8 @@ NHOURS=$2
 
 bsub \
     -n ${NPROCS} \
+    -gpu "num=4:j_exclusive=yes" \
     -R "span[ptile=4]" \
-    -R "rusage[ngpus_shared=4]" \
     -W ${NHOURS}:00 \
     -x \
     -Is \
