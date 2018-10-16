@@ -16,11 +16,11 @@
 
 namespace lbm {
 
-  template <class T, InputOutput inputOutput, InputOutputFormat inputOutputFormat>
+  template <InputOutput inputOutput, InputOutputFormat inputOutputFormat>
     class Writer {};
 
-  template <class T>
-    class Writer<T, InputOutput::Generic, InputOutputFormat::Generic> {
+  template <>
+  class Writer<InputOutput::Generic, InputOutputFormat::Generic> {
   protected:
     const std::string writeFolder;
     const std::string writerFolder;
@@ -65,11 +65,11 @@ namespace lbm {
     }
   };
 
-  template <class T>
-    class Writer<T, InputOutput::Generic, InputOutputFormat::ascii>
-    : public Writer<T, InputOutput::Generic, InputOutputFormat::Generic> {
+  template <>
+    class Writer<InputOutput::Generic, InputOutputFormat::ascii>
+    : public Writer<InputOutput::Generic, InputOutputFormat::Generic> {
   private:
-    using Base = Writer<T, InputOutput::Generic, InputOutputFormat::Generic>;
+    using Base = Writer<InputOutput::Generic, InputOutputFormat::Generic>;
 
   public:
   Writer(const std::string& writerFolder_in,
@@ -98,17 +98,17 @@ namespace lbm {
       }
     }
 
-    template <class U>
-    inline void write(const U data) {
+    template <class T>
+    inline void write(const T data) {
       Base::file << data;
     }
   };
 
-  template <class T>
-  class Writer<T, InputOutput::Generic, InputOutputFormat::binary>
-    : public Writer<T, InputOutput::Generic, InputOutputFormat::Generic> {
+  template <>
+  class Writer<InputOutput::Generic, InputOutputFormat::binary>
+    : public Writer<InputOutput::Generic, InputOutputFormat::Generic> {
   private:
-    using Base = Writer<T, InputOutput::Generic, InputOutputFormat::Generic>;
+    using Base = Writer<InputOutput::Generic, InputOutputFormat::Generic>;
 
   public:
     Writer(const std::string& writerFolder_in,
@@ -117,7 +117,7 @@ namespace lbm {
       : Base(writerFolder_in + "/", filePrefix_in, fileExtension_in, "binary")
     {}
 
-    using Base::getIsBackedUp;
+    //using Base::getIsBackedUp;
     using Base::getIsWritten;
 
   protected:
@@ -131,17 +131,17 @@ namespace lbm {
                       std::ofstream::binary);
     }
 
-    template <class U>
-    inline void write(U data) {
+    template <class T>
+    inline void write(T data) {
       Base::file.write(reinterpret_cast<char*>(&data), sizeof(data));
     }
   };
 
-  template <class T, InputOutputFormat inputOutputFormat>
+  template <InputOutputFormat inputOutputFormat>
   class ScalarAnalysisWriter
-    : public Writer<T, InputOutput::Generic, inputOutputFormat> {
+    : public Writer<InputOutput::Generic, inputOutputFormat> {
   private:
-    using Base = Writer<T, InputOutput::Generic, inputOutputFormat>;
+    using Base = Writer<InputOutput::Generic, inputOutputFormat>;
     unsigned int startIteration;
     unsigned int analysisStep;
 
@@ -165,7 +165,7 @@ namespace lbm {
 
     inline void closeFile() { Base::file.close(); }
 
-    template <unsigned int NumberScalarAnalyses>
+    template <class T, unsigned int NumberScalarAnalyses>
     void writeAnalysis(const unsigned int iteration, T* data) {
       LBM_INSTRUMENT_ON("ScalarAnalysisWriter::writeAnalysis<NumberScalarAnalysis>", 3)
 
@@ -190,11 +190,11 @@ namespace lbm {
     }
   };
 
-  template <class T, InputOutputFormat inputOutputFormat>
+  template <InputOutputFormat inputOutputFormat>
   class SpectralAnalysisWriter
-    : public Writer<T, InputOutput::Generic, inputOutputFormat> {
+    : public Writer<InputOutput::Generic, inputOutputFormat> {
   private:
-    using Base = Writer<T, InputOutput::Generic, inputOutputFormat>;
+    using Base = Writer<InputOutput::Generic, inputOutputFormat>;
     unsigned int startIteration;
     unsigned int analysisStep;
 
@@ -218,7 +218,7 @@ namespace lbm {
 
     inline void closeFile() { Base::file.close(); }
 
-    template <unsigned int NumberSpectralAnalyses, unsigned int MaxWaveNumber>
+    template <class T, unsigned int NumberSpectralAnalyses, unsigned int MaxWaveNumber>
     void writeAnalysis(const unsigned int iteration,
                        T* data[NumberSpectralAnalyses]) {
       LBM_INSTRUMENT_ON("SpectralAnalysisWriter::writeAnalysis<NumberComponents>",3)
@@ -249,210 +249,15 @@ namespace lbm {
     }
   };
 
-  template <class T, InputOutput inputOutput>
+  template <InputOutput inputOutput>
   class FieldWriter {};
 
-  template <class T>
-  class FieldWriter<T, InputOutput::HDF5>
-    : public Writer<T, InputOutput::Generic, InputOutputFormat::Generic> {
+
+    template <>
+  class FieldWriter<InputOutput::XDMF>
+    : public Writer<InputOutput::Generic, InputOutputFormat::ascii> {
   private:
-    using Base = Writer<T, InputOutput::Generic, InputOutputFormat::Generic>;
-
-  protected:
-    hid_t fileHDF5;
-    hid_t datasetHDF5;
-    herr_t statusHDF5;
-    hid_t groupHDF5;
-    hid_t dataSetHDF5;
-    hid_t dataSpaceHDF5;
-    hid_t fileSpaceHDF5;
-    hid_t propertyListHDF5;
-    FieldWriter<T, InputOutput::XDMF> writerXDMF;
-
-  public:
-    FieldWriter(const std::string& filePrefix_in,
-                const std::string& name_in = "field")
-      : Base(filePrefix_in + "/", name_in, ".h5", "binary")
-      , writerXDMF(filePrefix_in, name_in)
-    {
-      if (MPIInit::rank[d::X] == 0) {
-        int dirError = mkdir(Base::writeFolder.c_str(),
-                             S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-        dirError = mkdir((Base::writeFolder + Base::writerFolder).c_str(),
-                         S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-        if (dirError == -1) {
-          // std::cout << "Error creating directory! It probably already
-          // exists..."
-          //          << std::endl;
-        }
-      }
-    }
-
-    using Base::getIsWritten;
-
-    inline void openFile(const unsigned int iteration) {
-      std::string fileName = Base::getFileName(iteration);
-      open(fileName);
-
-      if (MPIInit::rank[d::X] == 0) {
-        writerXDMF.openFile(iteration);
-      }
-    }
-
-    inline void closeFile() {
-      statusHDF5 = H5Fclose(fileHDF5);
-
-      if (MPIInit::rank[d::X] == 0) {
-        writerXDMF.closeFile();
-      }
-    }
-
-    template <unsigned int NumberComponents, Architecture architecture>
-    void writeField(Field<T, NumberComponents, architecture, true>& field) {
-      LBM_INSTRUMENT_ON("Writer<HDF5>::writeField<NumberComponents>",3)
-
-        std::string fieldName = field.fieldName;
-      propertyListHDF5 = H5Pcreate(H5P_DATASET_XFER);
-
-      for (auto iC = 0; iC < NumberComponents; ++iC) {
-        if (NumberComponents > 1) {
-          fieldName = field.fieldName + dName[iC];
-        }
-        fileSpaceHDF5 = H5Screate_simple(
-                                         L::dimD,
-                                         Project<hsize_t, unsigned int, L::dimD>::Do(gSD::pLength()).data(),
-                                         NULL);
-
-        dataSetHDF5 =
-          H5Dcreate2(fileHDF5, (fieldName).c_str(), H5T_NATIVE_DOUBLE,
-                     fileSpaceHDF5, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-
-        statusHDF5 = H5Sclose(fileSpaceHDF5);
-
-        dataSpaceHDF5 = H5Screate_simple(
-                                         L::dimD,
-                                         Project<hsize_t, unsigned int, L::dimD>::Do(lSD::pLength()).data(),
-                                         NULL);
-
-        fileSpaceHDF5 = H5Dget_space(dataSetHDF5);
-
-        H5Sselect_hyperslab(
-                            fileSpaceHDF5, H5S_SELECT_SET,
-                            Project<hsize_t, unsigned int, L::dimD>::Do(gSD::pOffset(MPIInit::rank))
-                            .data(),
-                            NULL,
-                            Project<hsize_t, unsigned int, L::dimD>::Do(lSD::pLength()).data(),
-                            NULL);
-
-        H5Pset_dxpl_mpio(propertyListHDF5, H5FD_MPIO_COLLECTIVE);
-
-        statusHDF5 =
-          H5Dwrite(dataSetHDF5, H5T_NATIVE_DOUBLE, dataSpaceHDF5, fileSpaceHDF5,
-                   propertyListHDF5, field.getData(FFTWInit::numberElements, iC));
-
-        statusHDF5 = H5Dclose(dataSetHDF5);
-        statusHDF5 = H5Sclose(dataSpaceHDF5);
-        statusHDF5 = H5Sclose(fileSpaceHDF5);
-
-        if (MPIInit::rank[d::X] == 0) {
-          writerXDMF.write(fieldName, NumberComponents);
-        }
-      }
-
-      statusHDF5 = H5Pclose(propertyListHDF5);
-    }
-
-    template <unsigned int NumberComponents, Architecture architecture>
-    void writeField(Field<T, NumberComponents, architecture, false>& field) {}
-
-    inline void open(const std::string& fileName) {
-      propertyListHDF5 = H5Pcreate(H5P_FILE_ACCESS);
-      H5Pset_fapl_mpio(propertyListHDF5, MPI_COMM_WORLD, MPI_INFO_NULL);
-
-      fileHDF5 = H5Fcreate(fileName.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT,
-                           propertyListHDF5);
-      H5Pclose(propertyListHDF5);
-
-      if (!fileHDF5) {
-        std::cout << "Could not open file " << fileName << std::endl;
-      }
-    }
-  };
-
-  template <class T, InputOutput inputOutput>
-  class DistributionWriter {};
-
-  template <class T>
-    class DistributionWriter<T, InputOutput::HDF5>
-    : public FieldWriter<T, InputOutput::HDF5> {
-  private:
-    using Base = FieldWriter<T, InputOutput::HDF5>;
-
-  public:
-    DistributionWriter(const std::string& filePrefix_in)
-      : Base(filePrefix_in, "distribution")
-    {}
-
-    inline bool getIsBackedUp(const unsigned int iteration) {
-      return (iteration % backUpStep) == 0;
-    }
-
-    template <Architecture architecture>
-    void writeDistribution(Distribution<T, architecture>& distribution) {
-      LBM_INSTRUMENT_ON("Writer<HDF5>::writeField<NumberComponents>", 3)
-
-        Base::propertyListHDF5 = H5Pcreate(H5P_DATASET_XFER);
-      for (auto iC = 0; iC < L::dimQ; ++iC) {
-        Base::fileSpaceHDF5 = H5Screate_simple(L::dimD,
-          Project<hsize_t, unsigned int, L::dimD>::Do(gSD::pLength()).data(),
-          NULL);
-
-        Base::dataSetHDF5 = H5Dcreate2(Base::fileHDF5,
-          (distribution.fieldName + std::to_string(iC)).c_str(),
-          H5T_NATIVE_DOUBLE, Base::fileSpaceHDF5, H5P_DEFAULT, H5P_DEFAULT,
-          H5P_DEFAULT);
-
-        Base::statusHDF5 = H5Sclose(Base::fileSpaceHDF5);
-
-        Base::dataSpaceHDF5 = H5Screate_simple(L::dimD,
-          Project<hsize_t, unsigned int, L::dimD>::Do(lSD::pLength()).data(),
-          NULL);
-
-        Base::fileSpaceHDF5 = H5Dget_space(Base::dataSetHDF5);
-
-        H5Sselect_hyperslab(Base::fileSpaceHDF5, H5S_SELECT_SET,
-          Project<hsize_t, unsigned int, L::dimD>::Do(gSD::pOffset(MPIInit::rank)).data(),
-          NULL, Project<hsize_t, unsigned int, L::dimD>::Do(lSD::pLength()).data(), NULL);
-
-        H5Pset_dxpl_mpio(Base::propertyListHDF5, H5FD_MPIO_COLLECTIVE);
-
-        Base::statusHDF5 =
-          H5Dwrite(Base::dataSetHDF5, H5T_NATIVE_DOUBLE, Base::dataSpaceHDF5,
-                   Base::fileSpaceHDF5, Base::propertyListHDF5,
-                   distribution.getData(FFTWInit::numberElements, iC));
-
-        Base::statusHDF5 = H5Dclose(Base::dataSetHDF5);
-        Base::statusHDF5 = H5Sclose(Base::dataSpaceHDF5);
-        Base::statusHDF5 = H5Sclose(Base::fileSpaceHDF5);
-
-        if (MPIInit::rank[d::X] == 0) {
-          Base::writerXDMF.write(distribution.fieldName + std::to_string(iC),
-                                 L::dimQ);
-        }
-      }
-
-      Base::statusHDF5 = H5Pclose(Base::propertyListHDF5);
-    }
-
-    using Base::closeFile;
-    using Base::openFile;
-  };
-
-  template <class T>
-  class FieldWriter<T, InputOutput::XDMF>
-    : public Writer<T, InputOutput::Generic, InputOutputFormat::ascii> {
-  private:
-    using Base = Writer<T, InputOutput::Generic, InputOutputFormat::ascii>;
+    using Base = Writer<InputOutput::Generic, InputOutputFormat::ascii>;
 
   public:
     FieldWriter(const std::string& filePrefix_in, const std::string& name_in)
@@ -557,11 +362,209 @@ namespace lbm {
     }
   };
 
-  typedef FieldWriter<dataT, InputOutput::HDF5> FieldWriter_;
-  typedef DistributionWriter<dataT, InputOutput::HDF5> DistributionWriter_;
-  typedef ScalarAnalysisWriter<dataT, InputOutputFormat::ascii>
+
+  template <>
+  class FieldWriter<InputOutput::HDF5>
+    : public Writer<InputOutput::Generic, InputOutputFormat::Generic> {
+  private:
+    using Base = Writer<InputOutput::Generic, InputOutputFormat::Generic>;
+
+  protected:
+    hid_t fileHDF5;
+    hid_t datasetHDF5;
+    herr_t statusHDF5;
+    hid_t groupHDF5;
+    hid_t dataSetHDF5;
+    hid_t dataSpaceHDF5;
+    hid_t fileSpaceHDF5;
+    hid_t propertyListHDF5;
+    FieldWriter<InputOutput::XDMF> writerXDMF;
+
+  public:
+    FieldWriter(const std::string& filePrefix_in,
+                const std::string& name_in = "field")
+      : Base(filePrefix_in + "/", name_in, ".h5", "binary")
+      , writerXDMF(filePrefix_in, name_in)
+    {
+      if (MPIInit::rank[d::X] == 0) {
+        int dirError = mkdir(Base::writeFolder.c_str(),
+                             S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+        dirError = mkdir((Base::writeFolder + Base::writerFolder).c_str(),
+                         S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+        if (dirError == -1) {
+          // std::cout << "Error creating directory! It probably already
+          // exists..."
+          //          << std::endl;
+        }
+      }
+    }
+
+    using Base::getIsWritten;
+
+    inline void openFile(const unsigned int iteration) {
+      std::string fileName = Base::getFileName(iteration);
+      open(fileName);
+
+      if (MPIInit::rank[d::X] == 0) {
+        writerXDMF.openFile(iteration);
+      }
+    }
+
+    inline void closeFile() {
+      statusHDF5 = H5Fclose(fileHDF5);
+
+      if (MPIInit::rank[d::X] == 0) {
+        writerXDMF.closeFile();
+      }
+    }
+
+    template <class T, unsigned int NumberComponents, Architecture architecture>
+    void writeField(Field<T, NumberComponents, architecture, true>& field) {
+      LBM_INSTRUMENT_ON("Writer<HDF5>::writeField<NumberComponents>",3)
+
+        std::string fieldName = field.fieldName;
+      propertyListHDF5 = H5Pcreate(H5P_DATASET_XFER);
+
+      for (auto iC = 0; iC < NumberComponents; ++iC) {
+        if (NumberComponents > 1) {
+          fieldName = field.fieldName + dName[iC];
+        }
+        fileSpaceHDF5 = H5Screate_simple(
+                                         L::dimD,
+                                         Project<hsize_t, unsigned int, L::dimD>::Do(gSD::pLength()).data(),
+                                         NULL);
+
+        dataSetHDF5 =
+          H5Dcreate2(fileHDF5, (fieldName).c_str(), H5T_NATIVE_DOUBLE,
+                     fileSpaceHDF5, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+        statusHDF5 = H5Sclose(fileSpaceHDF5);
+
+        dataSpaceHDF5 = H5Screate_simple(
+                                         L::dimD,
+                                         Project<hsize_t, unsigned int, L::dimD>::Do(lSD::pLength()).data(),
+                                         NULL);
+
+        fileSpaceHDF5 = H5Dget_space(dataSetHDF5);
+
+        H5Sselect_hyperslab(
+                            fileSpaceHDF5, H5S_SELECT_SET,
+                            Project<hsize_t, unsigned int, L::dimD>::Do(gSD::pOffset(MPIInit::rank))
+                            .data(),
+                            NULL,
+                            Project<hsize_t, unsigned int, L::dimD>::Do(lSD::pLength()).data(),
+                            NULL);
+
+        H5Pset_dxpl_mpio(propertyListHDF5, H5FD_MPIO_COLLECTIVE);
+
+        statusHDF5 =
+          H5Dwrite(dataSetHDF5, H5T_NATIVE_DOUBLE, dataSpaceHDF5, fileSpaceHDF5,
+                   propertyListHDF5, field.getData(FFTWInit::numberElements, iC));
+
+        statusHDF5 = H5Dclose(dataSetHDF5);
+        statusHDF5 = H5Sclose(dataSpaceHDF5);
+        statusHDF5 = H5Sclose(fileSpaceHDF5);
+
+        if (MPIInit::rank[d::X] == 0) {
+          writerXDMF.write(fieldName, NumberComponents);
+        }
+      }
+
+      statusHDF5 = H5Pclose(propertyListHDF5);
+    }
+
+    template <class T, unsigned int NumberComponents, Architecture architecture>
+    void writeField(Field<T, NumberComponents, architecture, false>& field) {}
+
+    inline void open(const std::string& fileName) {
+      propertyListHDF5 = H5Pcreate(H5P_FILE_ACCESS);
+      H5Pset_fapl_mpio(propertyListHDF5, MPI_COMM_WORLD, MPI_INFO_NULL);
+
+      fileHDF5 = H5Fcreate(fileName.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT,
+                           propertyListHDF5);
+      H5Pclose(propertyListHDF5);
+
+      if (!fileHDF5) {
+        std::cout << "Could not open file " << fileName << std::endl;
+      }
+    }
+  };
+
+  template <InputOutput inputOutput>
+  class DistributionWriter {};
+
+  template <>
+    class DistributionWriter<InputOutput::HDF5>
+    : public FieldWriter<InputOutput::HDF5> {
+  private:
+    using Base = FieldWriter<InputOutput::HDF5>;
+
+  public:
+    DistributionWriter(const std::string& filePrefix_in)
+      : Base(filePrefix_in, "distribution")
+    {}
+
+    inline bool getIsBackedUp(const unsigned int iteration) {
+      return (iteration % backUpStep) == 0;
+    }
+
+    template <class T, Architecture architecture>
+    void writeDistribution(Distribution<T, architecture>& distribution) {
+      LBM_INSTRUMENT_ON("Writer<HDF5>::writeField<NumberComponents>", 3)
+
+        Base::propertyListHDF5 = H5Pcreate(H5P_DATASET_XFER);
+      for (auto iC = 0; iC < L::dimQ; ++iC) {
+        Base::fileSpaceHDF5 = H5Screate_simple(L::dimD,
+          Project<hsize_t, unsigned int, L::dimD>::Do(gSD::pLength()).data(),
+          NULL);
+
+        Base::dataSetHDF5 = H5Dcreate2(Base::fileHDF5,
+          (distribution.fieldName + std::to_string(iC)).c_str(),
+          H5T_NATIVE_DOUBLE, Base::fileSpaceHDF5, H5P_DEFAULT, H5P_DEFAULT,
+          H5P_DEFAULT);
+
+        Base::statusHDF5 = H5Sclose(Base::fileSpaceHDF5);
+
+        Base::dataSpaceHDF5 = H5Screate_simple(L::dimD,
+          Project<hsize_t, unsigned int, L::dimD>::Do(lSD::pLength()).data(),
+          NULL);
+
+        Base::fileSpaceHDF5 = H5Dget_space(Base::dataSetHDF5);
+
+        H5Sselect_hyperslab(Base::fileSpaceHDF5, H5S_SELECT_SET,
+          Project<hsize_t, unsigned int, L::dimD>::Do(gSD::pOffset(MPIInit::rank)).data(),
+          NULL, Project<hsize_t, unsigned int, L::dimD>::Do(lSD::pLength()).data(), NULL);
+
+        H5Pset_dxpl_mpio(Base::propertyListHDF5, H5FD_MPIO_COLLECTIVE);
+
+        Base::statusHDF5 =
+          H5Dwrite(Base::dataSetHDF5, H5T_NATIVE_DOUBLE, Base::dataSpaceHDF5,
+                   Base::fileSpaceHDF5, Base::propertyListHDF5,
+                   distribution.getData(FFTWInit::numberElements, iC));
+
+        Base::statusHDF5 = H5Dclose(Base::dataSetHDF5);
+        Base::statusHDF5 = H5Sclose(Base::dataSpaceHDF5);
+        Base::statusHDF5 = H5Sclose(Base::fileSpaceHDF5);
+
+        if (MPIInit::rank[d::X] == 0) {
+          Base::writerXDMF.write(distribution.fieldName + std::to_string(iC),
+                                 L::dimQ);
+        }
+      }
+
+      Base::statusHDF5 = H5Pclose(Base::propertyListHDF5);
+    }
+
+    using Base::closeFile;
+    using Base::openFile;
+  };
+
+
+  typedef FieldWriter<InputOutput::HDF5> FieldWriter_;
+  typedef DistributionWriter<InputOutput::HDF5> DistributionWriter_;
+  typedef ScalarAnalysisWriter<InputOutputFormat::ascii>
     ScalarAnalysisWriter_;
-  typedef SpectralAnalysisWriter<dataT, InputOutputFormat::ascii>
+  typedef SpectralAnalysisWriter<InputOutputFormat::ascii>
     SpectralAnalysisWriter_;
 
 }  // namespace lbm

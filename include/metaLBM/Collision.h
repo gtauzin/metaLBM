@@ -109,6 +109,7 @@ template <class T, Architecture architecture>
  protected:
   T alpha;
   const T beta;
+  T numberIterations;
 
  public:
   Collision(const T tau_in,
@@ -118,7 +119,7 @@ template <class T, Architecture architecture>
             const unsigned int kMin_in,
             const unsigned int kMax_in)
     : Base(tau_in, fieldList_in, amplitude_in, waveLength_in, kMin_in, kMax_in)
-    , alpha((T)2)
+    , alpha((T)2), numberIterations(0)
     , beta((T)1.0 / (2.0 * tau_in))
   {}
 
@@ -165,9 +166,21 @@ template <class T, Architecture architecture>
   LBM_DEVICE LBM_HOST inline T getT3_approx() { return -1; }
   LBM_DEVICE LBM_HOST inline T getT4_approx() { return -1; }
 
+  LBM_DEVICE LBM_HOST inline
+    MathVector<T, 3> getFNeq_5_6_8() { return MathVector<T, 3>{-1}; }
+  LBM_DEVICE LBM_HOST inline
+    MathVector<T, 3> getF1_5_6_8() { return MathVector<T, 3>{-1}; }
 
-  LBM_DEVICE LBM_HOST inline MathVector<T, L::dimD> getPi1Diagonal() { return MathVector<T, L::dimD>{-1}; }
-  LBM_DEVICE LBM_HOST inline MathVector<T, 2*L::dimD-3> getPi1Symmetric() { return MathVector<T, 2*L::dimD-3>{{-1}}; }
+  LBM_DEVICE LBM_HOST inline
+  MathVector<T, L::dimD> getPiNeqDiagonal() { return MathVector<T, L::dimD>{-1}; }
+  LBM_DEVICE LBM_HOST inline
+  MathVector<T, 2*L::dimD-3> getPiNeqSymmetric() { return MathVector<T, 2*L::dimD-3>{{-1}}; }
+  LBM_DEVICE LBM_HOST inline
+  MathVector<T, L::dimD> getPi1Diagonal() { return MathVector<T, L::dimD>{-1}; }
+  LBM_DEVICE LBM_HOST inline
+  MathVector<T, 2*L::dimD-3> getPi1Symmetric() { return MathVector<T, 2*L::dimD-3>{{-1}}; }
+  LBM_DEVICE LBM_HOST inline T getSquaredQContractedPiNeq() { return -1; }
+  LBM_DEVICE LBM_HOST inline T getCubedQContractedPiNeq() { return -1; }
   LBM_DEVICE LBM_HOST inline T getSquaredQContractedPi1() { return -1; }
   LBM_DEVICE LBM_HOST inline T getCubedQContractedPi1() { return -1; }
 
@@ -177,6 +190,8 @@ template <class T, Architecture architecture>
   using Base::getVelocity;
 
   LBM_DEVICE LBM_HOST inline T getAlpha() { return alpha; }
+  LBM_DEVICE LBM_HOST inline T getNumberIterations() { return  numberIterations; }
+
 };
 
 template <class T, Architecture architecture>
@@ -190,9 +205,17 @@ protected:
 
   const MathVector<MathVector<dataT, L::dimD>, L::dimQ> qDiagonal;
   const MathVector<MathVector<dataT, 2*L::dimD-3>, L::dimQ> qSymmetric;
+
+  MathVector<T, 3> fNeq_5_6_8;
+  MathVector<T, 3> f1_5_6_8;
+
+  MathVector<T, L::dimD> piNeqDiagonal;
+  MathVector<T, 2*L::dimD-3> piNeqSymmetric;
   MathVector<T, L::dimD> pi1Diagonal;
   MathVector<T, 2*L::dimD-3> pi1Symmetric;
 
+  T squaredQContractedPiNeq;
+  T cubedQContractedPiNeq;
   T squaredQContractedPi1;
   T cubedQContractedPi1;
 
@@ -206,7 +229,10 @@ protected:
     : Base(tau_in, fieldList_in, amplitude_in, waveLength_in, kMin_in, kMax_in)
     , T2((T)0), T3((T)0), T4((T)0), T2_approx((T)0), T3_approx((T)0), T4_approx((T)0)
     , qDiagonal(calculateQDiagonal()), qSymmetric(calculateQSymmetric())
-    , pi1Diagonal({0}), pi1Symmetric({0}), squaredQContractedPi1((T)0), cubedQContractedPi1((T)0)
+    , fNeq_5_6_8({0}), f1_5_6_8({0})
+    , piNeqDiagonal({0}), piNeqSymmetric({0}), pi1Diagonal({0}), pi1Symmetric({0})
+    , squaredQContractedPiNeq((T)0), cubedQContractedPiNeq((T)0)
+    , squaredQContractedPi1((T)0), cubedQContractedPi1((T)0)
     {}
 
   using Base::setForce;
@@ -217,9 +243,13 @@ protected:
     LBM_INSTRUMENT_OFF("Moment<T>::calculateMoments", 4)
 
     if(writeKinetics) {
-      Moment_::calculateObservables(haloDistributionPreviousPtr, haloDistributionNextPtr, Base::density, iP,
-                                    T2, T3, T4, T2_approx, T3_approx, T4_approx, qDiagonal, qSymmetric,
-                                    pi1Diagonal, pi1Symmetric, squaredQContractedPi1, cubedQContractedPi1);
+      Moment_::calculateObservables(haloDistributionPreviousPtr, haloDistributionNextPtr,
+                                    Base::density, iP, T2, T3, T4,
+                                    T2_approx, T3_approx, T4_approx, qDiagonal, qSymmetric,
+                                    fNeq_5_6_8, f1_5_6_8,
+                                    piNeqDiagonal, piNeqSymmetric, pi1Diagonal, pi1Symmetric,
+                                    squaredQContractedPiNeq, cubedQContractedPiNeq,
+                                    squaredQContractedPi1, cubedQContractedPi1);
     }
   }
 
@@ -235,10 +265,39 @@ protected:
         - Equilibrium_::calculate(Base::density, Base::velocity, Base::velocity2, iQ);
     }
 
+    //calculateRegularizedDistribution(haloDistributionNextPtr, iP);
+
     Base::alpha = alphaGuess;
     calculateAlpha(haloDistributionNextPtr, haloDistributionPreviousPtr, iP);
     Base::tau = (T)1.0 / (Base::alpha * Base::beta);
   }
+
+  LBM_DEVICE LBM_HOST inline
+  void calculateRegularizedDistribution(T* haloDistributionNextPtr,
+                                        const Position& iP) {
+    LBM_INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::CalculateRegDist", 5)
+
+    Moment_::calculatePiNeqDiagonal(haloDistributionNextPtr, iP, piNeqDiagonal);
+    Moment_::calculatePiNeqSymmetric(haloDistributionNextPtr, iP, piNeqSymmetric);
+
+    for (auto iQ = 0; iQ < L::dimQ; ++iQ) {
+      auto index_iQ = hSD::getIndex(iP, iQ);
+      haloDistributionNextPtr[index_iQ] = 0;
+
+      for (auto iD = 0; iD < L::dimD; ++iD) {
+        haloDistributionNextPtr[index_iQ] += qDiagonal[iQ][iD] * piNeqDiagonal[iD];
+      }
+
+      for (auto iD = 0; iD < 2 * L::dimD - 3; ++iD) {
+        haloDistributionNextPtr[index_iQ] += 2 * qSymmetric[iQ][iD] * piNeqSymmetric[iD];
+      }
+
+      haloDistributionNextPtr[index_iQ] *= L::weight()[iQ] / (2. * L::cs2 * L::cs2);
+    }
+
+
+  }
+
 
   LBM_DEVICE LBM_HOST inline
   void collideAndStream(T* haloDistributionNextPtr, const T* haloDistributionPreviousPtr,
@@ -260,6 +319,7 @@ protected:
   using Base::update;
 
   using Base::getAlpha;
+  using Base::getNumberIterations;
   using Base::getDensity;
   using Base::getForce;
   using Base::getHydrodynamicVelocity;
@@ -273,8 +333,20 @@ protected:
   LBM_DEVICE LBM_HOST inline T getT3_approx() { return T3_approx; }
   LBM_DEVICE LBM_HOST inline T getT4_approx() { return T4_approx; }
 
-  LBM_DEVICE LBM_HOST inline MathVector<T, L::dimD> getPi1Diagonal() { return pi1Diagonal; }
-  LBM_DEVICE LBM_HOST inline MathVector<T, 2*L::dimD-3> getPi1Symmetric() { return pi1Symmetric; }
+  LBM_DEVICE LBM_HOST inline
+  MathVector<T, 3> getFNeq_5_6_8() { return fNeq_5_6_8; }
+  LBM_DEVICE LBM_HOST inline MathVector<T, 3> getF1_5_6_8() { return f1_5_6_8; }
+
+  LBM_DEVICE LBM_HOST inline
+  MathVector<T, L::dimD> getPiNeqDiagonal() { return piNeqDiagonal; }
+  LBM_DEVICE LBM_HOST inline
+  MathVector<T, 2*L::dimD-3> getPiNeqSymmetric() { return piNeqSymmetric; }
+  LBM_DEVICE LBM_HOST inline
+  MathVector<T, L::dimD> getPi1Diagonal() { return pi1Diagonal; }
+  LBM_DEVICE LBM_HOST inline
+  MathVector<T, 2*L::dimD-3> getPi1Symmetric() { return pi1Symmetric; }
+  LBM_DEVICE LBM_HOST inline T getSquaredQContractedPiNeq() { return squaredQContractedPiNeq; }
+  LBM_DEVICE LBM_HOST inline T getCubedQContractedPiNeq() { return cubedQContractedPiNeq; }
   LBM_DEVICE LBM_HOST inline T getSquaredQContractedPi1() { return squaredQContractedPi1; }
   LBM_DEVICE LBM_HOST inline T getCubedQContractedPi1() { return cubedQContractedPi1; }
 
@@ -338,8 +410,8 @@ protected:
     T alphaR = Base::alpha;
 
     bool hasConverged =
-        NewtonRaphsonSolver(entropicStepFunctor, tolerance, iterationMax,
-                            alphaR, alphaMin, alphaMax);
+      NewtonRaphsonSolver(entropicStepFunctor, tolerance, iterationMax, Base::numberIterations,
+                          alphaR, alphaMin, alphaMax);
 
     if(!hasConverged) {
       return 2.0;
@@ -356,6 +428,7 @@ protected:
     if(isDeviationSmall(haloDistributionNextPtr, haloDistributionPreviousPtr,
                          iP, (T)1.0e-3)) {
       Base::alpha = 2.0;
+      Base::numberIterations = - (T) 1;
     }
 
     else {
@@ -390,6 +463,7 @@ template <class T, Architecture architecture>
   using Base::collideAndStream;
 
   using Base::getAlpha;
+  using Base::getNumberIterations;
   using Base::getDensity;
   using Base::getForce;
   using Base::getHydrodynamicVelocity;
@@ -473,6 +547,8 @@ template <class T, Architecture architecture>
   using Base::collideAndStream;
 
   using Base::getAlpha;
+  using Base::getNumberIterations;
+
   using Base::getDensity;
   using Base::getForce;
   using Base::getHydrodynamicVelocity;
@@ -555,6 +631,7 @@ template <class T, Architecture architecture>
   using Base::collideAndStream;
 
   using Base::getAlpha;
+  using Base::getNumberIterations;
   using Base::getDensity;
   using Base::getForce;
   using Base::getHydrodynamicVelocity;
@@ -607,6 +684,7 @@ template <class T, Architecture architecture>
   using Base::collideAndStream;
 
   using Base::getAlpha;
+  using Base::getNumberIterations;
   using Base::getDensity;
   using Base::getForce;
   using Base::getHydrodynamicVelocity;
@@ -696,10 +774,29 @@ template <class T, Architecture architecture>
   using Base::collideAndStream;
 
   using Base::getAlpha;
+  using Base::getNumberIterations;
   using Base::getDensity;
   using Base::getForce;
   using Base::getHydrodynamicVelocity;
   using Base::getVelocity;
+
+  LBM_DEVICE LBM_HOST inline
+  void calculateRelaxationTime(T * haloDistributionNextPtr, T * haloDistributionPreviousPtr,
+                               const Position& iP, const T alphaGuess) {
+    LBM_INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::calculate", 4)
+
+    for(auto iQ = 0; iQ < L::dimQ; ++iQ) {
+      haloDistributionNextPtr[hSD::getIndex(iP, iQ)] =
+        haloDistributionPreviousPtr[hSD::getIndex(iP - uiL::celerity()[iQ], iQ)]
+        - Equilibrium_::calculate(Base::density, Base::velocity, Base::velocity2, iQ);
+    }
+
+    //Base::calculateRegularizedDistribution(haloDistributionNextPtr, iP);
+
+    Base::alpha = alphaGuess;
+    calculateAlpha(haloDistributionNextPtr, haloDistributionPreviousPtr, iP);
+    Base::tau = (T)1.0 / (Base::alpha * Base::beta);
+  }
 
  protected:
   LBM_DEVICE LBM_HOST inline
@@ -737,6 +834,7 @@ template <class T, Architecture architecture>
   using Base::update;
 
   using Base::getAlpha;
+  using Base::getNumberIterations;
   using Base::getDensity;
   using Base::getForce;
   using Base::getHydrodynamicVelocity;
@@ -844,7 +942,7 @@ template <class T, Architecture architecture>
     const int iterationMax = 50;
     T alphaR = Base::alpha;
 
-    bool hasConverged = NewtonRaphsonSolver(entropicStepFunctor, tolerance, iterationMax,
+    bool hasConverged = NewtonRaphsonSolver(entropicStepFunctor, tolerance, iterationMax, Base::numberIterations,
                                             alphaR, alphaMin, alphaMax);
 
     if(!hasConverged) {
@@ -876,6 +974,7 @@ template <class T, Architecture architecture>
   using Base::collideAndStream;
 
   using Base::getAlpha;
+  using Base::getNumberIterations;
   using Base::getDensity;
   using Base::getForce;
   using Base::getHydrodynamicVelocity;
@@ -897,8 +996,8 @@ template <class T, Architecture architecture>
     T alphaR = Base::alpha;
 
     bool hasConverged =
-        Bisection_NewtonRaphsonSolver(entropicStepFunctor, tolerance,
-                                      iterationMax, alphaR, alphaMin, alphaMax);
+      Bisection_NewtonRaphsonSolver(entropicStepFunctor, tolerance, iterationMax, Base::numberIterations,
+                                    alphaR, alphaMin, alphaMax);
 
     if (!hasConverged) {
       return 2.0;

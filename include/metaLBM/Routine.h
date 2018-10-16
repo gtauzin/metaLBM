@@ -52,7 +52,7 @@ namespace lbm {
     SpectralAnalysisList<T, architecture> spectralAnalysisList;
 
     Algorithm_ algorithm;
-    PerformanceAnalysisList performanceAnalysisList;
+    PerformanceAnalysisList_ performanceAnalysisList;
 
   public:
     Routine()

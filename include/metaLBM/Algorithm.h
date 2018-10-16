@@ -37,17 +37,23 @@ namespace lbm {
     T* velocityPtr;
     T* forcePtr;
     T* alphaPtr;
+    T* numberIterationsPtr;
     T* T2Ptr;
     T* T3Ptr;
     T* T4Ptr;
     T* T2_approxPtr;
     T* T3_approxPtr;
     T* T4_approxPtr;
+    T* fNeq_5_6_8Ptr;
+    T* f1_5_6_8Ptr;
+    T* piNeqDiagonalPtr;
+    T* piNeqSymmetricPtr;
     T* pi1DiagonalPtr;
     T* pi1SymmetricPtr;
+    T* squaredQContractedPiNeqPtr;
+    T* cubedQContractedPiNeqPtr;
     T* squaredQContractedPi1Ptr;
     T* cubedQContractedPi1Ptr;
-    T* fNonEq8Ptr;
     T* distributionPtr;
 
   protected:
@@ -72,17 +78,23 @@ namespace lbm {
       , velocityPtr(fieldList_in.velocity.getData(FFTWInit::numberElements))
       , forcePtr(fieldList_in.force.getData(FFTWInit::numberElements))
       , alphaPtr(fieldList_in.alpha.getData(FFTWInit::numberElements))
+      , numberIterationsPtr(fieldList_in.numberIterations.getData(FFTWInit::numberElements))
       , T2Ptr(fieldList_in.T2.getData(FFTWInit::numberElements))
       , T3Ptr(fieldList_in.T3.getData(FFTWInit::numberElements))
       , T4Ptr(fieldList_in.T4.getData(FFTWInit::numberElements))
       , T2_approxPtr(fieldList_in.T2_approx.getData(FFTWInit::numberElements))
       , T3_approxPtr(fieldList_in.T3_approx.getData(FFTWInit::numberElements))
       , T4_approxPtr(fieldList_in.T4_approx.getData(FFTWInit::numberElements))
+      , fNeq_5_6_8Ptr(fieldList_in.fNeq_5_6_8.getData(FFTWInit::numberElements))
+      , f1_5_6_8Ptr(fieldList_in.f1_5_6_8.getData(FFTWInit::numberElements))
+      , piNeqDiagonalPtr(fieldList_in.piNeqDiagonal.getData(FFTWInit::numberElements))
+      , piNeqSymmetricPtr(fieldList_in.piNeqSymmetric.getData(FFTWInit::numberElements))
       , pi1DiagonalPtr(fieldList_in.pi1Diagonal.getData(FFTWInit::numberElements))
       , pi1SymmetricPtr(fieldList_in.pi1Symmetric.getData(FFTWInit::numberElements))
+      , squaredQContractedPiNeqPtr(fieldList_in.squaredQContractedPiNeq.getData(FFTWInit::numberElements))
+      , cubedQContractedPiNeqPtr(fieldList_in.cubedQContractedPiNeq.getData(FFTWInit::numberElements))
       , squaredQContractedPi1Ptr(fieldList_in.squaredQContractedPi1.getData(FFTWInit::numberElements))
       , cubedQContractedPi1Ptr(fieldList_in.cubedQContractedPi1.getData(FFTWInit::numberElements))
-      , fNonEq8Ptr(fieldList_in.fNonEq8.getData(FFTWInit::numberElements))
       , distributionPtr(distribution_in.getData(FFTWInit::numberElements))
       , haloDistributionPreviousPtr(distribution_in.getHaloDataPrevious())
       , haloDistributionNextPtr(distribution_in.getHaloDataNext())
@@ -108,9 +120,6 @@ namespace lbm {
       if (isStored) {
         collision.calculateObservables(haloDistributionPreviousPtr,
                                        haloDistributionNextPtr, iP);
-        if(writeKinetics) {
-          fNonEq8Ptr[hSD::getIndexLocal(iP)] = haloDistributionNextPtr[hSD::getIndex(iP, 8)];
-        }
       }
 
 #pragma unroll
@@ -161,6 +170,7 @@ namespace lbm {
 
       if(writeAlpha) {
         alphaPtr[indexLocal] = collision.getAlpha();
+        numberIterationsPtr[indexLocal] = collision.getNumberIterations();
       }
 
       if(writeKinetics) {
@@ -172,14 +182,27 @@ namespace lbm {
         T3_approxPtr[indexLocal] = collision.getT3_approx();
         T4_approxPtr[indexLocal] = collision.getT4_approx();
 
+        for(auto iD = 0; iD < 3; ++iD) {
+          (fNeq_5_6_8Ptr + iD * numberElements)[indexLocal] =
+            collision.getFNeq_5_6_8()[iD];
+          (f1_5_6_8Ptr + iD * numberElements)[indexLocal] =
+            collision.getF1_5_6_8()[iD];
+        }
         for(auto iD = 0; iD < L::dimD; ++iD) {
+          (piNeqDiagonalPtr + iD * numberElements)[indexLocal] =
+            collision.getPiNeqDiagonal()[iD];
           (pi1DiagonalPtr + iD * numberElements)[indexLocal] =
             collision.getPi1Diagonal()[iD];
         }
         for(auto iD = 0; iD < 2 * L::dimD - 3; ++iD) {
+          (piNeqSymmetricPtr + iD * numberElements)[indexLocal] =
+            collision.getPiNeqSymmetric()[iD];
           (pi1SymmetricPtr + iD * numberElements)[indexLocal] =
             collision.getPi1Symmetric()[iD];
         }
+
+        squaredQContractedPiNeqPtr[indexLocal] = collision.getSquaredQContractedPiNeq();
+        cubedQContractedPiNeqPtr[indexLocal] = collision.getCubedQContractedPiNeq();
 
         squaredQContractedPi1Ptr[indexLocal] = collision.getSquaredQContractedPi1();
         cubedQContractedPi1Ptr[indexLocal] = collision.getCubedQContractedPi1();

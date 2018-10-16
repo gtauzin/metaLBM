@@ -111,12 +111,12 @@ namespace lbm {
   template <class T, bool isFmirrorForced = false>
   LBM_HOST LBM_DEVICE inline
     bool NewtonRaphsonSolver(EntropicStepFunctor<T, isFmirrorForced> functor,
-                           const T tolerance, const int iterationMax,
-                           T& xR, const T xMin, const T xMax) {
+                             const T tolerance, const int iterationMax, T& numberIterations,
+                             T& xR, const T xMin, const T xMax) {
     T error = 1 + tolerance;
     T xStep = 0.0;
 
-    for (int iteration = 1; iteration <= iterationMax; ++iteration) {
+    for (unsigned int iteration = 1; iteration <= iterationMax; ++iteration) {
       xR = xR - xStep;
 
       T functionEvaluation = functor.evaluateFunction(xR);
@@ -127,22 +127,25 @@ namespace lbm {
 
       if (error <= tolerance) {
         if (xR > xMin && xR < xMax) {
+          numberIterations = (T) iteration;
           return true;
         }
 
         else {
+          numberIterations = - (T) iteration;
           return false;
         }
       }
     }
 
+    numberIterations = (T) iterationMax;
     return false;
   }
 
   template <class T, bool isFmirrorForced = false>
   LBM_HOST LBM_DEVICE inline
     bool Bisection_NewtonRaphsonSolver(EntropicStepFunctor<T, isFmirrorForced> functor,
-                                     const T tolerance, const int iterationMax,
+                                     const T tolerance, const int iterationMax, T& numberIterations,
                                      T& xR, const T xMin, const T xMax) {
     T xLow, xHigh;
     T function_xLow = functor.evaluateFunction(xMin);
@@ -150,16 +153,19 @@ namespace lbm {
 
     if ((function_xLow > 0.0 && function_xHigh > 0.0) ||
         (function_xLow < 0.0 && function_xHigh < 0.0)) {
+      numberIterations = - (T) -1;
       return false;
     }
 
     if (function_xLow == 0.0) {
       xR = xMin;
+      numberIterations = (T) 1;
       return true;
     }
 
     if (function_xHigh == 0.0) {
       xR = xMax;
+      numberIterations = (T) 1;
       return true;
     }
 
@@ -180,7 +186,7 @@ namespace lbm {
     T functionEvaluation = functor.evaluateFunction(xR);
     T derivativeEvaluation = functor.evaluateDerivative(xR);
 
-    for (int iteration = 1; iteration <= iterationMax; ++iteration) {
+    for (unsigned int iteration = 1; iteration <= iterationMax; ++iteration) {
       if ((((xR - xHigh) * derivativeEvaluation - functionEvaluation) *
            ((xR - xLow) * derivativeEvaluation - functionEvaluation) > 0.0)
           || (fabs(2.0 * functionEvaluation) > fabs(xStepPrevious * derivativeEvaluation))) {
@@ -189,6 +195,7 @@ namespace lbm {
         xR = xLow + xStep;
 
         if (xLow == xR) {
+          numberIterations = (T) iteration;
           return true;
         }
       } else {
@@ -198,11 +205,13 @@ namespace lbm {
         xR -= xStep;
 
         if (xTemp == xR) {
+          numberIterations = (T) iteration;
           return true;
         }
       }
 
       if (fabs(xStep) <= tolerance) {
+        numberIterations = (T) iteration;
         return true;
       }
 
@@ -216,6 +225,7 @@ namespace lbm {
       }
     }
 
+    numberIterations = (T) iterationMax;
     return false;
   }
 

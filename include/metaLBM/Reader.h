@@ -11,14 +11,14 @@
 
 namespace lbm {
 
-template <class T, InputOutput inputOutput>
+template <InputOutput inputOutput>
 class FieldReader {};
 
-template <class T>
-class FieldReader<T, InputOutput::HDF5>
-    : public FieldWriter<T, InputOutput::HDF5> {
+template <>
+class FieldReader<InputOutput::HDF5>
+    : public FieldWriter<InputOutput::HDF5> {
  private:
-  using Base = FieldWriter<T, InputOutput::HDF5>;
+  using Base = FieldWriter<InputOutput::HDF5>;
 
  public:
   FieldReader(const std::string& filePrefix_in,
@@ -34,7 +34,7 @@ class FieldReader<T, InputOutput::HDF5>
 
   inline void closeFile() { Base::statusHDF5 = H5Fclose(Base::fileHDF5); }
 
-  template <unsigned int NumberComponents, Architecture architecture>
+  template <class T, unsigned int NumberComponents, Architecture architecture>
   void readField(Field<T, NumberComponents, architecture, true>& field) {
     LBM_INSTRUMENT_ON("Reader<HDF5>::readField<NumberComponents>", 3)
 
@@ -86,7 +86,7 @@ class FieldReader<T, InputOutput::HDF5>
     Base::statusHDF5 = H5Pclose(Base::propertyListHDF5);
   }
 
-  template <unsigned int NumberComponents, Architecture architecture>
+  template <class T, unsigned int NumberComponents, Architecture architecture>
   void readField(Field<T, NumberComponents, architecture, false>& field) {}
 
   inline void open(const std::string& fileName) {
@@ -103,20 +103,20 @@ class FieldReader<T, InputOutput::HDF5>
   }
 };
 
-template <class T, InputOutput inputOutput>
+template <InputOutput inputOutput>
 class DistributionReader {};
 
-template <class T>
-class DistributionReader<T, InputOutput::HDF5>
-    : public FieldReader<T, InputOutput::HDF5> {
+template <>
+class DistributionReader<InputOutput::HDF5>
+    : public FieldReader<InputOutput::HDF5> {
  private:
-  using Base = FieldReader<T, InputOutput::HDF5>;
+  using Base = FieldReader<InputOutput::HDF5>;
 
  public:
   DistributionReader(const std::string& filePrefix_in)
       : Base(filePrefix_in, "distribution") {}
 
-  template <Architecture architecture>
+  template <class T, Architecture architecture>
   void readDistribution(Distribution<T, architecture>& distribution) {
     LBM_INSTRUMENT_ON("Reader<HDF5>::readField<NumberComponents>", 3)
 
@@ -160,7 +160,7 @@ class DistributionReader<T, InputOutput::HDF5>
   using Base::openFile;
 };
 
-typedef FieldReader<dataT, InputOutput::HDF5> FieldReader_;
-typedef DistributionReader<dataT, InputOutput::HDF5> DistributionReader_;
+typedef FieldReader<InputOutput::HDF5> FieldReader_;
+typedef DistributionReader<InputOutput::HDF5> DistributionReader_;
 
 }  // namespace lbm

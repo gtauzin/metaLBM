@@ -67,7 +67,7 @@ class ScalarAnalysisList {
     if (MPIInit::rank[d::X] == 0) {
       T scalarList[] = {totalEnergy.scalar, totalEnstrophy.scalar};
       scalarAnalysisWriter.openFile(iteration);
-      scalarAnalysisWriter.writeAnalysis<2>(iteration, scalarList);
+      scalarAnalysisWriter.writeAnalysis<T, 2>(iteration, scalarList);
       scalarAnalysisWriter.closeFile();
     }
   }
@@ -164,7 +164,7 @@ class SpectralAnalysisList {
     if(MPIInit::rank[d::X] == 0) {
       T* spectraList[2] = {energySpectra.spectra, forcingSpectra.spectra};
       spectralAnalysisWriter.openFile(iteration);
-      spectralAnalysisWriter.writeAnalysis<2, gFD::maxWaveNumber()>(
+      spectralAnalysisWriter.writeAnalysis<T, 2, gFD::maxWaveNumber()>(
           iteration, spectraList);
       spectralAnalysisWriter.closeFile();
     }
@@ -201,7 +201,7 @@ class SpectralAnalysisList {
   }
 };
 
-
+ template <class T>
  class PerformanceAnalysisList {
  private:
     double initialMass;
@@ -284,7 +284,7 @@ class SpectralAnalysisList {
         double scalarList[] = {computationTime, communicationTime, writeFieldTime,
                                writeAnalysisTime, totalTime, mLUPS, differenceMass};
         scalarAnalysisWriter.openFile(iteration);
-        scalarAnalysisWriter.writeAnalysis<7>(iteration, scalarList);
+        scalarAnalysisWriter.writeAnalysis<T, 7>(iteration, scalarList);
         scalarAnalysisWriter.closeFile();
       }
     }
@@ -326,6 +326,8 @@ class SpectralAnalysisList {
     }
 
  };
+
+typedef PerformanceAnalysisList<dataT> PerformanceAnalysisList_;
 
 }  // namespace lbm
 
