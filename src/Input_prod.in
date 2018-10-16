@@ -19,7 +19,7 @@ namespace lbm {
   constexpr int globalLengthZ = GLOBAL_LENGTH_Z;
 
   constexpr unsigned int startIteration = 3000000;
-  constexpr unsigned int endIteration = 100000000;
+  constexpr unsigned int endIteration = 200000000;
   constexpr unsigned int writeStep = 40000;
   constexpr unsigned int backUpStep = 500000;
 

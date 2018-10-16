@@ -23,12 +23,12 @@ make ${TARGET_NAME} -j 8
 
 cd ../bin
 
-# bsub \
-#     -n ${NPROCS} \
-#     -gpu "num=4:j_exclusive=yes" \
-#     -R "span[ptile=4]" \
-#     -W 24:00 \
-#     -q normal \
-#     -oo "${LBM_POSTFIX}.out" \
-#     -eo "${LBM_POSTFIX}.err" \
-#     "mpirun -np ${NPROCS} ${TARGET_NAME}"
+bsub \
+    -n ${NPROCS} \
+    -gpu "num=4:j_exclusive=yes" \
+    -R "span[ptile=4]" \
+    -W 24:00 \
+    -q normal \
+    -oo "${LBM_POSTFIX}.out" \
+    -eo "${LBM_POSTFIX}.err" \
+    "mpirun -np ${NPROCS} ${TARGET_NAME}"

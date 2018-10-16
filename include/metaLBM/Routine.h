@@ -90,7 +90,7 @@ namespace lbm {
     void compute() {
       LBM_INSTRUMENT_ON("Routine<T>::compute", 1)
 
-        algorithm.unpack(defaultStream);
+      algorithm.unpack(defaultStream);
 
       Clock::time_point t0;
       Clock::time_point t1;
@@ -114,15 +114,13 @@ namespace lbm {
         performanceAnalysisList.updateWriteAnalysisTime(Seconds(t1 - t0).count());
       }
 
-      performanceAnalysisList.setInitialMass(
-                                             communication.reduce(fieldList.density.getData(FFTWInit::numberElements)));
+      performanceAnalysisList.setInitialMass(communication.reduce(fieldList.density.getData(FFTWInit::numberElements)));
 
       // Execute LBM algorithm
       for (int iteration = startIteration + 1; iteration <= endIteration; ++iteration) {
         algorithm.isStored = (fieldWriter.getIsWritten(iteration)
                               || scalarAnalysisList.getIsAnalyzed(iteration)
                               || spectralAnalysisList.getIsAnalyzed(iteration));
-
         algorithm.iterate(iteration, defaultStream, bulkStream, leftStream, rightStream,
                           leftEvent, rightEvent);
 
@@ -130,6 +128,7 @@ namespace lbm {
           curlVelocity.executeSpace();
           curlVelocity.normalize();
         }
+
 
         t0 = Clock::now();
         writeFields(iteration);
@@ -146,8 +145,7 @@ namespace lbm {
 
       }
 
-      performanceAnalysisList.updateMass(communication.reduce(
-                                                              fieldList.density.getData(FFTWInit::numberElements)));
+      performanceAnalysisList.updateMass(communication.reduce(fieldList.density.getData(FFTWInit::numberElements)));
 
       performanceAnalysisList.updateMLUPS(endIteration - startIteration);
 

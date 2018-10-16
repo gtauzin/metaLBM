@@ -234,6 +234,7 @@ namespace lbm {
     Computation<architecture, L::dimD> computationTop;
     Computation<architecture, L::dimD> computationFront;
     Computation<architecture, L::dimD> computationBack;
+    using Base::computationLocal;
 
     BottomBoundary<T, BoundaryType::Periodic, AlgorithmType::Pull, partitionningT,
                    CommunicationType::MPI, L::dimD> bottomBoundary;
@@ -270,13 +271,13 @@ namespace lbm {
   template <class T, Architecture architecture, MemoryLayout memoryLayout>
   class Algorithm<T, AlgorithmType::Pull, architecture, memoryLayout,
                   PartitionningType::OneD, CommunicationType::Generic, Overlapping::On>
-    : public Algorithm<T, AlgorithmType::Generic, architecture, memoryLayout,
-                       PartitionningType::Generic, CommunicationType::Generic,
+    : public Algorithm<T, AlgorithmType::Pull, architecture, memoryLayout,
+                       PartitionningType::OneD, CommunicationType::Generic,
                        Overlapping::Off> {
   private:
     using Base =
-      Algorithm<T, AlgorithmType::Generic, architecture, memoryLayout,
-                PartitionningType::Generic, CommunicationType::Generic, Overlapping::Off>;
+      Algorithm<T, AlgorithmType::Pull, architecture, memoryLayout,
+                PartitionningType::OneD, CommunicationType::Generic, Overlapping::Off>;
     using Clock = std::chrono::high_resolution_clock;
 
   protected:
@@ -284,10 +285,16 @@ namespace lbm {
     Computation<architecture, L::dimD> computationRight;
     Computation<architecture, L::dimD> computationLeft;
 
-    using Base::ComputationBottom;
-    using Base::ComputationTop;
-    using Base::ComputationFront;
-    using Base::ComputationBack;
+    using Base::computationLocal;
+    using Base::computationBottom;
+    using Base::computationTop;
+    using Base::computationFront;
+    using Base::computationBack;
+
+    using Base::bottomBoundary;
+    using Base::topBoundary;
+    using Base::frontBoundary;
+    using Base::backBoundary;
 
   public:
     Algorithm(FieldList<T, architecture>& fieldList_in,
@@ -346,6 +353,7 @@ namespace lbm {
       , communication(communication_in)
     {}
 
+
     LBM_HOST
     void iterate(const unsigned int iteration,
                  Stream<architecture>& defaultStream,
@@ -356,7 +364,7 @@ namespace lbm {
                  Event<architecture>& rightEvent) {
       LBM_INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate", 2)
 
-        std::swap(Base::haloDistributionPreviousPtr, Base::haloDistributionNextPtr);
+      std::swap(Base::haloDistributionPreviousPtr, Base::haloDistributionNextPtr);
 
       Base::collision.update(iteration, FFTWInit::numberElements);
 
@@ -371,13 +379,16 @@ namespace lbm {
                                 Base::haloDistributionPreviousPtr);
       Base::computationBack.Do(defaultStream, Base::backBoundary,
                                Base::haloDistributionPreviousPtr);
+
+
       auto t1 = Clock::now();
       Base::dtCommunication = (t1 - t0);
-
       Base::computationLocal.Do(defaultStream, *this, FFTWInit::numberElements, MPIInit::rank);
       Base::computationLocal.synchronize();
+
       t0 = Clock::now();
       Base::dtComputation = (t0 - t1);
+
     }
 
     using Base::pack;
