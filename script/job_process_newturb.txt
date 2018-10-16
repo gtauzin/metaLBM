@@ -1,0 +1,29 @@
+#!/bin/bash
+#
+#PBS -N process_%PREFIX%_%TIME%
+#PBS -o stdout_%PREFIX%_%TIME%
+#PBS -e stderr_%PREFIX%_%TIME%
+#PBS -m abe
+#PBS -M guillaumetauzin.ut@gmail.com
+#PBS -l nodes=1:ppn=24,walltime=24:00:00
+
+
+export PATH=/scratch/tauzin/software/anaconda2/envs/py27/bin:$PATH
+echo $PATH
+
+python --version
+
+cd /mnt/beegfs/tauzin/metaLBM_private/processing
+
+volume=(180 128 90 64 45 32 22 16 10 7 4 3 2)
+
+# python process.py --prefix=%PREFIX% --time %TIME% --length %LENGTH% %LENGTH% %LENGTH% --tau %TAU% --analysis="energy_balance_256_256_256_1"  &
+python process.py --prefix=%PREFIX% --time %TIME% --length %LENGTH% %LENGTH% %LENGTH% --tau %TAU% --analysis="enstrophy_balance_256_256_256_1"  &
+
+for v in "${volume[@]}"
+do
+    # python process.py --prefix=%PREFIX% --time %TIME% --length %LENGTH% %LENGTH% %LENGTH% --tau %TAU% --analysis="energy_balance_${v}_${v}_${v}_10000"  &
+    python process.py --prefix=%PREFIX% --time %TIME% --length %LENGTH% %LENGTH% %LENGTH% --tau %TAU% --analysis="enstrophy_balance_${v}_${v}_${v}_10000"  &
+done
+
+wait
