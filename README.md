@@ -91,20 +91,10 @@ The [src](src) directory contains several subdirectories which are aiming
 at exploiting different type of parallelism. They are included if the corresponding option
 is passed to CMake.
 
-Input parameters files are read from the [input](input) directory.
-- The [input/inputJSON](input/inputJSON) directory contains the json files with
-simulation parameters.
-- The [input/inputPy](input/inputPy) directory contains the python scripts required
-to convert the input file to a header file.
-Alternatively, Input.h in the [input](input) directory can be directly modified.
 
 Output files are dumped in the [output](output) directory.
 - The [output/outputVTR](output/outputVTR) directory contains all generated VTK
 files.
-- The [output/outputHDF5](output/outputHDF5) directory contains all generated HDF5
-files.
-- The [output/outputBackup](output/outputBackup) directory contains all generated
-backup VTR files used to restart a simulation.
 
 ## Building metaLBM
 
@@ -127,14 +117,6 @@ cmake .. -DCMAKE_CXX_COMPILER=/path/to/compiler
 metaLBM requires a `MPI 3.0` compliant library implementation is needed (eg
 `OpenMPI`, `MPICH`). If the library is already installed, `CMake ` usually
 finds the library without problems. In case multiple `MPI` libraries are installed, do
-
-```shell
-man mpicxx
-```
-
-to check if it is pointing to the right library. `CMake` uses it to determine
-the correct library locations.
-
 To build tests, you will need a working intallation of
 [GoogleTest](https://github.com/google/googletest). You may have to set the
 environment variable `GTEST_ROOT` to the location of the `GTest`'s root directory
