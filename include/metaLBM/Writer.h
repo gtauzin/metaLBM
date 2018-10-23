@@ -41,6 +41,11 @@ namespace lbm {
       , fileFormat(fileFormat_in)
     {}
 
+    inline std::string getFileName(const std::string& postfix = "") {
+      return writeFolder + writerFolder + filePrefix + postfix + fileExtension;
+    }
+
+  public:
     inline std::string getFileName(const unsigned int iteration) {
       std::ostringstream number;
 
@@ -49,11 +54,6 @@ namespace lbm {
         fileExtension;
     }
 
-    inline std::string getFileName(const std::string& postfix = "") {
-      return writeFolder + writerFolder + filePrefix + postfix + fileExtension;
-    }
-
-  public:
     inline bool getIsWritten(const unsigned int iteration) {
       bool isWritten = false;
 

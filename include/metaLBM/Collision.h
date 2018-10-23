@@ -405,8 +405,8 @@ protected:
     EntropicStepFunctor<T>
         entropicStepFunctor(haloDistributionNextPtr,
                             haloDistributionPreviousPtr, iP);
-    const T tolerance = 1e-8;
-    const int iterationMax = 50;
+    const T tolerance = 1e-7;
+    const int iterationMax = 100;
     T alphaR = Base::alpha;
 
     bool hasConverged =
@@ -809,6 +809,7 @@ template <class T, Architecture architecture>
 
     if (alphaMax < 2.) {
       Base::alpha = 0.95 * alphaMax;
+      Base::numberIterations = -10;
     }
 
     else {
@@ -938,8 +939,8 @@ template <class T, Architecture architecture>
 
       EntropicStepFunctor<T, true> entropicStepFunctor(haloDistributionNextPtr,
                                                        haloDistributionPreviousPtr, iP);
-    const T tolerance = 1e-8;
-    const int iterationMax = 50;
+    const T tolerance = 1e-7;
+    const int iterationMax = 100;
     T alphaR = Base::alpha;
 
     bool hasConverged = NewtonRaphsonSolver(entropicStepFunctor, tolerance, iterationMax, Base::numberIterations,
@@ -991,8 +992,9 @@ template <class T, Architecture architecture>
     EntropicStepFunctor<T>
         entropicStepFunctor(haloDistributionNextPtr,
                             haloDistributionPreviousPtr, iP);
-    const T tolerance = 1e-8;
-    const int iterationMax = 50;
+    const T tolerance = 1e-7;
+    const int iterationMax = 100;
+
     T alphaR = Base::alpha;
 
     bool hasConverged =

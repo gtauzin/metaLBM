@@ -47,7 +47,11 @@ namespace lbm {
     Distribution<T, architecture> distribution;
 
     Curl<double, Architecture::CPU, PartitionningType::OneD, L::dimD, L::dimD>
-    curlVelocity;
+      curlVelocity;
+    StrainDiagonalCalculator<double, Architecture::CPU, PartitionningType::OneD, L::dimD>
+      strainDiagonalCalculator;
+    StrainSymmetricCalculator<double, Architecture::CPU, PartitionningType::OneD, L::dimD>
+      strainSymmetricCalculator;
     ScalarAnalysisList<T, architecture> scalarAnalysisList;
     SpectralAnalysisList<T, architecture> spectralAnalysisList;
 
@@ -70,8 +74,14 @@ namespace lbm {
                      fieldList.vorticity.getData(FFTWInit::numberElements),
                      Cast<unsigned int, ptrdiff_t, 3>::Do(gSD::sLength()).data(),
                      gFD::offset(MPIInit::rank))
-      , distribution(initDistribution<T, architecture>(fieldList.density,
-                                                       fieldList.velocity,
+      , strainDiagonalCalculator(fieldList.velocity.getData(FFTWInit::numberElements),
+                                 fieldList.strainDiagonal.getData(FFTWInit::numberElements),
+                                 globalLengthPtrdiff_t, gFD::offset(MPIInit::rank))
+      , strainSymmetricCalculator(fieldList.velocity.getData(FFTWInit::numberElements),
+                                  fieldList.strainSymmetric.getData(FFTWInit::numberElements),
+                                  globalLengthPtrdiff_t, gFD::offset(MPIInit::rank))
+      , distribution(initDistribution<T, architecture>(fieldList.density, fieldList.velocity,
+                                                       fieldList.strainDiagonal, fieldList.strainSymmetric,
                                                        defaultStream))
       , scalarAnalysisList(fieldList, communication, scalarAnalysisStep,
                            startIteration)
@@ -90,7 +100,7 @@ namespace lbm {
     void compute() {
       LBM_INSTRUMENT_ON("Routine<T>::compute", 1)
 
-      algorithm.unpack(defaultStream);
+        algorithm.unpack(defaultStream);
 
       Clock::time_point t0;
       Clock::time_point t1;
@@ -98,6 +108,8 @@ namespace lbm {
       if (writeFieldInit || writeAnalysisInit) {
         curlVelocity.executeSpace();
         curlVelocity.normalize();
+        strainDiagonalCalculator.executeSpace();
+        strainSymmetricCalculator.executeSpace();
       }
 
       if (writeFieldInit) {
@@ -121,14 +133,16 @@ namespace lbm {
         algorithm.isStored = (fieldWriter.getIsWritten(iteration)
                               || scalarAnalysisList.getIsAnalyzed(iteration)
                               || spectralAnalysisList.getIsAnalyzed(iteration));
+
         algorithm.iterate(iteration, defaultStream, bulkStream, leftStream, rightStream,
                           leftEvent, rightEvent);
 
         if (algorithm.isStored) {
           curlVelocity.executeSpace();
           curlVelocity.normalize();
+          strainDiagonalCalculator.executeSpace();
+          strainSymmetricCalculator.executeSpace();
         }
-
 
         t0 = Clock::now();
         writeFields(iteration);

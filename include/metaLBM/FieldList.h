@@ -24,6 +24,8 @@ class FieldList {
  public:
   Field<T, 1, architecture, true> density;
   Field<T, L::dimD, architecture, true> velocity;
+  Field<T, L::dimD, architecture, true> strainDiagonal;
+  Field<T, 2 * L::dimD - 3, architecture, true> strainSymmetric;
   Field<T, L::dimD, architecture, writeForce> force;
   Field<T, 1, architecture, writeAlpha> alpha;
   Field<T, 1, architecture, writeAlpha> numberIterations;
@@ -51,6 +53,8 @@ class FieldList {
             const Stream<architecture>& stream_in)
     : density(initDensity<T, architecture>(stream_in))
     , velocity(initVelocity<T, architecture>(stream_in))
+    , strainDiagonal("strainDiagonal")
+    , strainSymmetric("strainSymmetric")
     , force(initForce<T, architecture>(stream_in))
     , alpha(initAlpha<T, architecture>(stream_in))
     , numberIterations("numberIterations")
@@ -77,6 +81,9 @@ class FieldList {
   inline void writeFields() {
     fieldWriter.writeField(density);
     fieldWriter.writeField(velocity);
+    fieldWriter.writeField(strainDiagonal);
+    fieldWriter.writeField(strainSymmetric);
+
     if(writeAlpha) {
       fieldWriter.writeField(alpha);
       fieldWriter.writeField(numberIterations);

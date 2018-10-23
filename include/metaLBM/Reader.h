@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <fstream>
 
 #include "Commons.h"
 #include "Domain.h"
@@ -32,6 +33,12 @@ class FieldReader<InputOutput::HDF5>
     open(fileName);
   }
 
+  inline bool fileExists (const unsigned int iteration) {
+    std::string fileName = Base::getFileName(iteration);
+    std::ifstream f(fileName.c_str());
+    return f.good();
+}
+
   inline void closeFile() { Base::statusHDF5 = H5Fclose(Base::fileHDF5); }
 
   template <class T, unsigned int NumberComponents, Architecture architecture>
@@ -45,38 +52,27 @@ class FieldReader<InputOutput::HDF5>
       if (NumberComponents > 1) {
         fieldName = field.fieldName + dName[iC];
       }
-      Base::fileSpaceHDF5 = H5Screate_simple(
-          L::dimD,
-          Project<hsize_t, unsigned int, L::dimD>::Do(gSD::pLength()).data(),
-          NULL);
 
-      Base::dataSetHDF5 = H5Dcreate2(Base::fileHDF5, fieldName.c_str(),
-                                     H5T_NATIVE_DOUBLE, Base::fileSpaceHDF5,
-                                     H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+      Base::dataSetHDF5 = H5Dopen2(Base::fileHDF5, fieldName.c_str(),
+                                   H5P_DEFAULT);
 
-      Base::statusHDF5 = H5Sclose(Base::fileSpaceHDF5);
+      Base::fileSpaceHDF5
+        = H5Screate_simple(L::dimD, Project<hsize_t, unsigned int, L::dimD>::Do(gSD::pLength()).data(), NULL);
 
-      Base::dataSpaceHDF5 = H5Screate_simple(
-          L::dimD,
-          Project<hsize_t, unsigned int, L::dimD>::Do(lSD::pLength()).data(),
-          NULL);
+      Base::dataSpaceHDF5
+        = H5Screate_simple(L::dimD, Project<hsize_t, unsigned int, L::dimD>::Do(lSD::pLength()).data(), NULL);
 
       Base::fileSpaceHDF5 = H5Dget_space(Base::dataSetHDF5);
 
-      H5Sselect_hyperslab(
-          Base::fileSpaceHDF5, H5S_SELECT_SET,
-          Project<hsize_t, unsigned int, L::dimD>::Do(
-              gSD::pOffset(MPIInit::rank))
-              .data(),
-          NULL,
-          Project<hsize_t, unsigned int, L::dimD>::Do(lSD::pLength()).data(),
-          NULL);
+      H5Sselect_hyperslab(Base::fileSpaceHDF5, H5S_SELECT_SET,
+                          Project<hsize_t, unsigned int, L::dimD>::Do(gSD::pOffset(MPIInit::rank)).data(),
+                          NULL, Project<hsize_t, unsigned int, L::dimD>::Do(lSD::pLength()).data(), NULL);
 
       H5Pset_dxpl_mpio(Base::propertyListHDF5, H5FD_MPIO_COLLECTIVE);
 
-      Base::statusHDF5 = H5Dread(
-          Base::dataSetHDF5, H5T_NATIVE_DOUBLE, Base::dataSpaceHDF5,
-          Base::fileSpaceHDF5, Base::propertyListHDF5, field.getData(iC));
+      Base::statusHDF5 = H5Dread(Base::dataSetHDF5, H5T_NATIVE_DOUBLE, Base::dataSpaceHDF5,
+                                 Base::fileSpaceHDF5, Base::propertyListHDF5,
+                                 field.getData(FFTWInit::numberElements, iC));
 
       Base::statusHDF5 = H5Dclose(Base::dataSetHDF5);
       Base::statusHDF5 = H5Sclose(Base::dataSpaceHDF5);
@@ -113,33 +109,28 @@ class DistributionReader<InputOutput::HDF5>
   using Base = FieldReader<InputOutput::HDF5>;
 
  public:
-  DistributionReader(const std::string& filePrefix_in)
-      : Base(filePrefix_in, "distribution") {}
+  DistributionReader(const std::string& filePrefix_in,
+                     const std::string& name_in = "distribution")
+  : Base(filePrefix_in, name_in) {}
 
   template <class T, Architecture architecture>
   void readDistribution(Distribution<T, architecture>& distribution) {
-    LBM_INSTRUMENT_ON("Reader<HDF5>::readField<NumberComponents>", 3)
+    LBM_INSTRUMENT_ON("Reader<HDF5>::readDistribution", 3)
 
     Base::propertyListHDF5 = H5Pcreate(H5P_DATASET_XFER);
 
     for (auto iC = 0; iC < L::dimQ; ++iC) {
-      Base::dataSetHDF5 = H5Dopen2(Base::fileHDF5,
-                                   (distribution.fieldName + std::to_string(iC)).c_str(),
-                                   H5P_DEFAULT);
+      Base::dataSetHDF5
+        = H5Dopen2(Base::fileHDF5, (distribution.fieldName + std::to_string(iC)).c_str(), H5P_DEFAULT);
 
-      Base::fileSpaceHDF5 = H5Screate_simple(
-          L::dimD,
-          Project<hsize_t, unsigned int, L::dimD>::Do(lSD::pLength()).data(),
-          NULL);
+      Base::fileSpaceHDF5
+        = H5Screate_simple(L::dimD, Project<hsize_t, unsigned int, L::dimD>::Do(lSD::pLength()).data(), NULL);
 
       Base::dataSpaceHDF5 = H5Dget_space(Base::dataSetHDF5);
 
-      H5Sselect_hyperslab(
-          Base::dataSpaceHDF5, H5S_SELECT_SET,
-          Project<hsize_t, unsigned int, L::dimD>::Do(gSD::pOffset(MPIInit::rank)).data(),
-          NULL,
-          Project<hsize_t, unsigned int, L::dimD>::Do(lSD::pLength()).data(),
-          NULL);
+      H5Sselect_hyperslab(Base::dataSpaceHDF5, H5S_SELECT_SET,
+                          Project<hsize_t, unsigned int, L::dimD>::Do(gSD::pOffset(MPIInit::rank)).data(),
+                          NULL, Project<hsize_t, unsigned int, L::dimD>::Do(lSD::pLength()).data(), NULL);
 
       H5Pset_dxpl_mpio(Base::propertyListHDF5, H5FD_MPIO_COLLECTIVE);
 
