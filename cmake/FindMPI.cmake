@@ -671,6 +671,11 @@ function (_MPI_interrogate_compiler LANG)
     # We only consider options of the form -Wl or -Xlinker:
     string(REGEX MATCHALL "(^| )(-Wl,|-Xlinker +)([^\" ]+|\"[^\"]+\")" MPI_ALL_LINK_FLAGS "${MPI_LINK_CMDLINE_FILTERED}")
 
+    # ************************ TEO's FIX FOR NVCC ************************
+    string(REPLACE "-Wl," "-Xlinker " MPI_ALL_LINK_FLAGS "${MPI_LINK_CMDLINE_FILTERED}")
+    string(REPLACE "-pthread" "" MPI_ALL_LINK_FLAGS "${MPI_ALL_LINK_FLAGS}")
+    # ************************ TEO's FIX FOR NVCC ************************
+
     # As a next step, we assemble the linker flags extracted in a preliminary flags string
     foreach(_MPI_LINK_FLAG IN LISTS MPI_ALL_LINK_FLAGS)
       string(STRIP "${_MPI_LINK_FLAG}" _MPI_LINK_FLAG)
