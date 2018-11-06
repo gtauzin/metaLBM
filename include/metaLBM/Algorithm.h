@@ -673,7 +673,7 @@ namespace lbm {
       if(iP[d::X] < L::dimH) {
         Position iP_Destination, iP_Source;
 
-#pragma unroll
+        #pragma unroll
         for(auto iQ = L::faceQ + 1; iQ < L::faceQ + 1 + L::level()[0]; ++iQ) {
           iP_Destination = iP - uiL::celerity()[iQ];
 
@@ -693,7 +693,7 @@ namespace lbm {
         }
 
         for(auto iH = 1; iH < L::dimH - iP[d::X]; ++iH) {
-#pragma unroll
+          #pragma unroll
           for(auto iQ = L::faceQ + 1 + L::level()[iH-1]; iQ < L::faceQ + 1 + L::level()[iH]; ++iQ) {
             iP_Destination = iP - uiL::celerity()[iQ];
 

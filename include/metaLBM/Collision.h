@@ -562,7 +562,7 @@ protected:
     EntropicStepFunctor<T>
         entropicStepFunctor(haloDistributionNextPtr,
                             haloDistributionPreviousPtr, iP);
-    const T tolerance = 1e-7;
+    const T tolerance = 1e-5;
     const int iterationMax = 1000;
     T alphaR = Base::alpha;
 
@@ -608,24 +608,13 @@ protected:
 
   template <class T, Architecture architecture>
   class Collision<T, CollisionType::Regularized_ELBM, architecture>
-    : public Collision<T, CollisionType::Regularized_BGK, architecture>
-    , public Collision<T, CollisionType::ELBM, architecture> {
+    : public Collision<T, CollisionType::ELBM, architecture> {
   private:
-    using BaseRBGK = Collision<T, CollisionType::Regularized_BGK, architecture>;
-    using BaseELBM = Collision<T, CollisionType::ELBM, architecture>;
+    using Base = Collision<T, CollisionType::ELBM, architecture>;
 
   public:
-    Collision(const T tau_in,
-              FieldList<T, architecture>& fieldList_in,
-              const MathVector<T, 3>& amplitude_in,
-              const MathVector<T, 3>& waveLength_in,
-              const unsigned int kMin_in,
-              const unsigned int kMax_in)
-      : BaseRBGK(tau_in, fieldList_in, amplitude_in, waveLength_in, kMin_in, kMax_in)
-      , BaseELBM(tau_in, fieldList_in, amplitude_in, waveLength_in, kMin_in, kMax_in)
-    {}
-
-   using BaseELBM::setForce;
+    using Base::Collision;
+    using Base::setForce;
 
 
     LBM_DEVICE LBM_HOST inline
@@ -633,42 +622,67 @@ protected:
                                  const Position& iP, const T alphaGuess) {
       LBM_INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::calculate", 4)
 
-      BaseRBGK::calculateRelaxationTime(haloDistributionNextPtr, haloDistributionPreviousPtr, iP, alphaGuess);
+      calculateRelaxationTime(haloDistributionNextPtr, haloDistributionPreviousPtr, iP, alphaGuess);
 
-      BaseELBM::alpha = alphaGuess;
-      BaseELBM::calculateAlpha(haloDistributionNextPtr, haloDistributionPreviousPtr, iP);
-      BaseELBM::tau = (T)1.0 / (BaseELBM::alpha * BaseELBM::beta);
+      Base::alpha = alphaGuess;
+      Base::calculateAlpha(haloDistributionNextPtr, haloDistributionPreviousPtr, iP);
+      Base::tau = (T)1.0 / (Base::alpha * Base::beta);
     }
 
-    using BaseELBM::collideAndStream;
+    LBM_DEVICE LBM_HOST inline
+    void calculateRegularizedDistribution(T* haloDistributionNextPtr,
+                                          const Position& iP) {
+    LBM_INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::CalculateRegDist", 5)
 
-    using BaseELBM::update;
+    Moment_::calculatePiNeqDiagonal(haloDistributionNextPtr, iP, Base::piNeqDiagonal);
+    Moment_::calculatePiNeqSymmetric(haloDistributionNextPtr, iP, Base::piNeqSymmetric);
 
-    using BaseELBM::getAlpha;
-    using BaseELBM::getNumberIterations;
-    using BaseELBM::getDensity;
-    using BaseELBM::getForce;
-    using BaseELBM::getHydrodynamicVelocity;
-    using BaseELBM::getVelocity;
+    for (auto iQ = 0; iQ < L::dimQ; ++iQ) {
+      auto index_iQ = hSD::getIndex(iP, iQ);
+      haloDistributionNextPtr[index_iQ] = 0;
 
-    using BaseELBM::getT2;
-    using BaseELBM::getT3;
-    using BaseELBM::getT4;
+      for (auto iD = 0; iD < L::dimD; ++iD) {
+        haloDistributionNextPtr[index_iQ] += Base::qDiagonal[iQ][iD] * Base::piNeqDiagonal[iD];
+      }
 
-    using BaseELBM::getT2_approx;
-    using BaseELBM::getT3_approx;
-    using BaseELBM::getT4_approx;
+      for (auto iD = 0; iD < 2 * L::dimD - 3; ++iD) {
+        haloDistributionNextPtr[index_iQ] += 2 * Base::qSymmetric[iQ][iD] * Base::piNeqSymmetric[iD];
+      }
 
-    using BaseELBM::getFNeq_5_6_8;
-    using BaseELBM::getF1_5_6_8;
-    using BaseELBM::getPiNeqDiagonal;
-    using BaseELBM::getPiNeqSymmetric;
-    using BaseELBM::getPi1Diagonal;
-    using BaseELBM::getPi1Symmetric;
-    using BaseELBM::getSquaredQContractedPiNeq;
-    using BaseELBM::getCubedQContractedPiNeq;
-    using BaseELBM::getSquaredQContractedPi1;
-    using BaseELBM::getCubedQContractedPi1;
+      haloDistributionNextPtr[index_iQ] *= L::weight()[iQ] / (2. * L::cs2 * L::cs2);
+    }
+  }
+
+
+    using Base::collideAndStream;
+
+    using Base::update;
+
+    using Base::getAlpha;
+    using Base::getNumberIterations;
+    using Base::getDensity;
+    using Base::getForce;
+    using Base::getHydrodynamicVelocity;
+    using Base::getVelocity;
+
+    using Base::getT2;
+    using Base::getT3;
+    using Base::getT4;
+
+    using Base::getT2_approx;
+    using Base::getT3_approx;
+    using Base::getT4_approx;
+
+    using Base::getFNeq_5_6_8;
+    using Base::getF1_5_6_8;
+    using Base::getPiNeqDiagonal;
+    using Base::getPiNeqSymmetric;
+    using Base::getPi1Diagonal;
+    using Base::getPi1Symmetric;
+    using Base::getSquaredQContractedPiNeq;
+    using Base::getCubedQContractedPiNeq;
+    using Base::getSquaredQContractedPi1;
+    using Base::getCubedQContractedPi1;
 };
 
 
@@ -1224,7 +1238,7 @@ template <class T, Architecture architecture>
 
       EntropicStepFunctor<T, true> entropicStepFunctor(haloDistributionNextPtr,
                                                        haloDistributionPreviousPtr, iP);
-    const T tolerance = 1e-7;
+    const T tolerance = 1e-5;
     const int iterationMax = 1000;
     T alphaR = Base::alpha;
 
@@ -1277,7 +1291,7 @@ template <class T, Architecture architecture>
     EntropicStepFunctor<T>
         entropicStepFunctor(haloDistributionNextPtr,
                             haloDistributionPreviousPtr, iP);
-    const T tolerance = 1e-7;
+    const T tolerance = 1e-5;
     const int iterationMax = 1000;
     T alphaR = Base::alpha;
 
