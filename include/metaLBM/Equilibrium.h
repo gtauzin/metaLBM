@@ -12,6 +12,24 @@ namespace lbm {
   class Equilibrium {};
 
   template <class T, LatticeType latticeType>
+  class Equilibrium<T, latticeType, EquilibriumType::TruncationMa2> {
+  public:
+    LBM_DEVICE LBM_HOST static inline
+    T calculate(const T& density, const MathVector<T, L::dimD>& velocity,
+                const T& velocity2, const unsigned int iQ) {
+      LBM_INSTRUMENT_OFF("Equilibrium::calculate",5)
+
+      T cu = L::celerity()[iQ].dot(velocity);
+
+      T fEq_iQ = 1.0 + cu * L::inv_cs2 - 0.5 * velocity2 * L::inv_cs2 +
+        0.5 * Power<T, 2>::Do(L::inv_cs2) * cu * cu -
+        0.5 * Power<T, 2>::Do(L::inv_cs2) * cu * velocity2;
+
+      return density * L::weight()[iQ] * fEq_iQ;
+    }
+  };
+
+  template <class T, LatticeType latticeType>
   class Equilibrium<T, latticeType, EquilibriumType::TruncationMa3> {
   public:
     LBM_DEVICE LBM_HOST static inline

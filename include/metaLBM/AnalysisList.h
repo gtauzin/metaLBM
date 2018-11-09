@@ -266,8 +266,7 @@ class SpectralAnalysisList {
     }
 
     inline void updateMLUPS(const double numberIteration) {
-      mLUPS = (gSD::sVolume() * 1e-6) /
-        (totalTime / numberIteration + 1);
+      mLUPS = gSD::sVolume() * numberIteration / totalTime /(1e6);
     }
 
     inline bool getIsAnalyzed(const unsigned int iteration) {
