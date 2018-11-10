@@ -43,7 +43,7 @@ namespace lbm {
                         Constant, Sinusoidal, Kolmogorov, ConstantShell, EnergyRemoval,
                         Turbulent2D };
 
- enum class BoundaryType { Generic, None, Periodic, BounceBack_Halfway, Entropic };
+ enum class BoundaryType { Generic, None, Periodic_OUT, Periodic_IN, BounceBack_Halfway, Entropic };
 
  enum class InputOutput { Generic, None, DAT, HDF5, XDMF };
  enum class InputOutputFormat { Generic, ascii, binary };

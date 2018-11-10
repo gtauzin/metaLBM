@@ -236,14 +236,10 @@ namespace lbm {
     Computation<architecture, L::dimD> computationBack;
     using Base::computationLocal;
 
-    BottomBoundary<T, BoundaryType::Periodic, AlgorithmType::Pull, partitionningT,
-                   CommunicationType::MPI, L::dimD> bottomBoundary;
-    TopBoundary<T,BoundaryType::Periodic, AlgorithmType::Pull, partitionningT,
-                CommunicationType::MPI, L::dimD> topBoundary;
-    FrontBoundary<T, BoundaryType::Periodic, AlgorithmType::Pull, partitionningT,
-                  CommunicationType::MPI, L::dimD> frontBoundary;
-    BackBoundary<T, BoundaryType::Periodic, AlgorithmType::Pull, partitionningT,
-                 CommunicationType::MPI, L::dimD> backBoundary;
+    BottomBoundary<T, BoundaryType::Periodic_OUT, AlgorithmType::Pull, L::dimD> bottomBoundary;
+    TopBoundary<T,BoundaryType::Periodic_OUT, AlgorithmType::Pull,  L::dimD> topBoundary;
+    FrontBoundary<T, BoundaryType::Periodic_OUT, AlgorithmType::Pull,  L::dimD> frontBoundary;
+    BackBoundary<T, BoundaryType::Periodic_OUT, AlgorithmType::Pull, L::dimD> backBoundary;
 
   public:
     Algorithm(FieldList<T, architecture>& fieldList_in,
@@ -347,8 +343,8 @@ namespace lbm {
     Algorithm(FieldList<T, architecture>& fieldList_in,
               Distribution<T, architecture>& distribution_in,
               Communication<T, L::Type, AlgorithmType::Pull, memoryLayout,
-              PartitionningType::OneD, CommunicationType::MPI,
-              L::dimD>& communication_in)
+                            PartitionningType::OneD, CommunicationType::MPI,
+                            L::dimD>& communication_in)
       : Base(fieldList_in, distribution_in)
       , communication(communication_in)
     {}
@@ -417,8 +413,8 @@ namespace lbm {
     Algorithm(FieldList<T, architecture>& fieldList_in,
               Distribution<T, architecture>& distribution_in,
               Communication<T, L::Type, AlgorithmType::Pull, memoryLayout,
-              PartitionningType::OneD, CommunicationType::MPI,
-              L::dimD>& communication_in)
+                            PartitionningType::OneD, CommunicationType::MPI,
+                            L::dimD>& communication_in)
       : Base(fieldList_in, distribution_in)
       , communication(communication_in)
     {}
@@ -507,8 +503,8 @@ namespace lbm {
     Algorithm(FieldList<T, architecture>& fieldList_in,
               Distribution<T, architecture>& distribution_in,
               Communication<T, L::Type, AlgorithmType::Pull, memoryLayout,
-              PartitionningType::OneD, CommunicationType::NVSHMEM_OUT,
-              L::dimD>& communication_in)
+                            PartitionningType::OneD, CommunicationType::NVSHMEM_OUT,
+                            L::dimD>& communication_in)
       : Base(fieldList_in, distribution_in)
       , communication(communication_in)
     {}
@@ -573,8 +569,8 @@ namespace lbm {
     Algorithm(FieldList<T, architecture>& fieldList_in,
               Distribution<T, architecture>& distribution_in,
               Communication<T, L::Type, AlgorithmType::Pull, memoryLayout,
-              PartitionningType::OneD, CommunicationType::NVSHMEM_OUT,
-              L::dimD>& communication_in)
+                            PartitionningType::OneD, CommunicationType::NVSHMEM_OUT,
+                            L::dimD>& communication_in)
       : Base(fieldList_in, distribution_in)
       , communication(communication_in)
     {}
@@ -657,124 +653,53 @@ namespace lbm {
     Communication<T, L::Type, AlgorithmType::Pull, memoryLayout, PartitionningType::OneD,
                   CommunicationType::NVSHMEM_IN, L::dimD> communication;
 
+    T * haloDistributionPreviousLeftPtr;
+    T * haloDistributionPreviousRightPtr;
+
+    LeftBoundary<T, BoundaryType::Periodic_IN, AlgorithmType::Pull, L::dimD> leftBoundary;
+    RightBoundary<T,BoundaryType::Periodic_IN, AlgorithmType::Pull,  L::dimD> rightBoundary;
+    BottomBoundary<T, BoundaryType::Periodic_IN, AlgorithmType::Pull, L::dimD> bottomBoundary;
+    TopBoundary<T,BoundaryType::Periodic_IN, AlgorithmType::Pull,  L::dimD> topBoundary;
+    FrontBoundary<T, BoundaryType::Periodic_IN, AlgorithmType::Pull, L::dimD> frontBoundary;
+    BackBoundary<T, BoundaryType::Periodic_IN, AlgorithmType::Pull, L::dimD> backBoundary;
+
   public:
     Algorithm(FieldList<T, architecture>& fieldList_in,
               Distribution<T, architecture>& distribution_in,
               Communication<T, L::Type, AlgorithmType::Pull, memoryLayout,
-              PartitionningType::OneD, CommunicationType::NVSHMEM_IN,
-              L::dimD>& communication_in)
+                            PartitionningType::OneD, CommunicationType::NVSHMEM_IN,
+                            L::dimD>& communication_in)
       : Base(fieldList_in, distribution_in)
       , communication(communication_in)
     {}
 
     LBM_DEVICE
     void operator()(const Position& iP, const unsigned int numberElements,
-                    const MathVector<int, 3> rank, const int rankLeft, const int rankRight) {
-      if(iP[d::X] < L::dimH) {
-        Position iP_Destination, iP_Source;
+                    const MathVector<int, 3> rank) {
 
-        #pragma unroll
-        for(auto iQ = L::faceQ + 1; iQ < L::faceQ + 1 + L::level()[0]; ++iQ) {
-          iP_Destination = iP - uiL::celerity()[iQ];
-
-          iP_Source =
-            Position{{iP_Destination[d::X] < L::halo()[d::X]
-                      ? iP_Destination[d::X] + lSD::sLength()[d::X]
-                      : iP_Destination[d::X],
-                      iP_Destination[d::Y] < L::halo()[d::Y]
-                      ? iP_Destination[d::Y] + lSD::sLength()[d::Y]
-                      : iP_Destination[d::Y],
-                      iP_Destination[d::Z] < L::halo()[d::Z]
-                      ? iP_Destination[d::Z] + lSD::sLength()[d::Z]
-                      : iP_Destination[d::Z]}};
-
-          Base::haloDistributionPtr[hSD::getIndex(iP_Destination, iQ)] =
-            shmem_double_g(Base::haloDistributionPtr[hSD::getIndex(iP_Source, iQ)], rankLeft);
-        }
-
-        for(auto iH = 1; iH < L::dimH - iP[d::X]; ++iH) {
-          #pragma unroll
-          for(auto iQ = L::faceQ + 1 + L::level()[iH-1]; iQ < L::faceQ + 1 + L::level()[iH]; ++iQ) {
-            iP_Destination = iP - uiL::celerity()[iQ];
-
-            iP_Source =
-              Position{{iP_Destination[d::X] < L::halo()[d::X]
-                        ? iP_Destination[d::X] + lSD::sLength()[d::X]
-                        : iP_Destination[d::X],
-                        iP_Destination[d::Y] < L::halo()[d::Y]
-                        ? iP_Destination[d::Y] + lSD::sLength()[d::Y]
-                        : iP_Destination[d::Y],
-                        iP_Destination[d::Z] < L::halo()[d::Z]
-                        ? iP_Destination[d::Z] + lSD::sLength()[d::Z]
-                        : iP_Destination[d::Z]}};
-
-            Base::haloDistributionPtr[hSD::getIndex(iP_Destination, iQ)] =
-              shmem_double_g(Base::haloDistributionPtr[hSD::getIndex(iP_Source, iQ)], rankLeft);
-          }
-        }
+      if((iP[d::Z] < 2 * L::halo()[d::Z])) {
+        frontBoundary(iP, Base::haloDistributionPreviousPtr);
       }
-      else if(iP[d::X] >  lSD::sLength()[d::X] - 1 - L::dimH) {
-        Position iP_Destination, iP_Source;
-
-        #pragma unroll
-        for(auto iQ = 1; iQ < 1 + L::level()[0]; ++iQ) {
-          iP_Destination = iP - uiL::celerity()[L::iQ_Top()[iQ]];
-
-          iP_Source =
-            Position{{iP_Destination[d::X] > lSD::sLength()[d::X] - 1
-                      ? iP_Destination[d::X] - lSD::sLength()[d::X]
-                      : iP_Destination[d::X],
-                      iP_Destination[d::Y] > lSD::sLength()[d::Y] - 1
-                      ? iP_Destination[d::Y] - lSD::sLength()[d::Y]
-                      : iP_Destination[d::Y],
-                      iP_Destination[d::Z] > lSD::sLength()[d::Z] - 1
-                      ? iP_Destination[d::Z] - lSD::sLength()[d::Z]
-                      : iP_Destination[d::Z]}};
-
-          Base::haloDistributionPtr[hSD::getIndex(iP_Destination, iQ)] =
-            shmem_double_g(Base::haloDistributionPtr[hSD::getIndex(iP_Source, iQ)], rankRight);
-        }
-
-        for(auto iH = 1; iH < lSD::sLength()[d::X] - 1 - L::dimH - iP[d::X]; ++iH) {
-
-          #pragma unroll
-          for(auto iQ = 1 + L::level()[iH-1]; iQ < 1 + L::level()[iH]; ++iQ) {
-            iP_Destination = iP - uiL::celerity()[L::iQ_Top()[iQ]];
-
-            iP_Source =
-              Position{{iP_Destination[d::X] > lSD::sLength()[d::X] - 1
-                        ? iP_Destination[d::X] - lSD::sLength()[d::X]
-                        : iP_Destination[d::X],
-                        iP_Destination[d::Y] > lSD::sLength()[d::Y] - 1
-                        ? iP_Destination[d::Y] - lSD::sLength()[d::Y]
-                        : iP_Destination[d::Y],
-                        iP_Destination[d::Z] > lSD::sLength()[d::Z] - 1
-                        ? iP_Destination[d::Z] - lSD::sLength()[d::Z]
-                        : iP_Destination[d::Z]}};
-
-            Base::haloDistributionPtr[hSD::getIndex(iP_Destination, iQ)] =
-              shmem_double_g(Base::haloDistributionPtr[hSD::getIndex(iP_Source, iQ)], rankRight);
-          }
-        }
-      }
-      else {
-        if(iP[d::X] < L::halo()[d::Y]) {
-          Base::bottomBoundary(iP, Base::haloDistributionPtr);
-        }
-        else if(iP[d::X] >  lSD::sLength()[d::Y] - 1 - L::halo()[d::Y]) {
-          Base::topBoundary(iP, Base::haloDistributionPtr);
-        }
-        else {
-          if((iP[d::X] < L::halo()[d::Z])) {
-            Base::frontBoundary(iP, Base::haloDistributionPtr);
-          }
-          else if(iP[d::X] >  lSD::sLength()[d::Z] - 1 - L::halo()[d::Z]) {
-            Base::backBoundary(iP, Base::haloDistributionPtr);
-          }
-        }
+      else if(iP[d::Z] > lSD::sLength()[d::Z] - 1) {
+        backBoundary(iP, Base::haloDistributionPreviousPtr);
       }
 
-      Base(iP, numberElements, rank);
+      if(iP[d::Y] < 2 * L::halo()[d::Y]) {
+        bottomBoundary(iP, Base::haloDistributionPreviousPtr);
+      }
+      else if(iP[d::Y] > lSD::sLength()[d::Y] - 1) {
+        topBoundary(iP, Base::haloDistributionPreviousPtr);
+      }
+
+      if(iP[d::X] < 2 * L::halo()[d::X]) {
+        leftBoundary(iP, Base::haloDistributionPreviousPtr, haloDistributionPreviousLeftPtr);
+
+      }
+      else if(iP[d::X] > lSD::sLength()[d::X] - 1) {
+        rightBoundary(iP, Base::haloDistributionPreviousPtr, haloDistributionPreviousRightPtr);
+      }
+
+      Base::operator()(iP, numberElements, rank);
     }
 
     LBM_HOST
@@ -787,16 +712,19 @@ namespace lbm {
                  Event<Architecture::GPU>& rightEvent) {
       LBM_INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate", 2)
 
-        std::swap(Base::haloDistributionPreviousPtr,
-                  Base::haloDistributionNextPtr);
+      std::swap(Base::haloDistributionPreviousPtr,
+		Base::haloDistributionNextPtr);
+
+      haloDistributionPreviousLeftPtr = (T*) shmem_ptr(Base::haloDistributionPreviousPtr, MPIInit::rankLeft);
+      haloDistributionPreviousRightPtr = (T*) shmem_ptr(Base::haloDistributionPreviousPtr, MPIInit::rankRight);
 
       Base::collision.update(iteration, FFTWInit::numberElements);
 
       auto t1 = Clock::now();
 
       Base::computationLocal.Do(defaultStream, *this, FFTWInit::numberElements,
-                                MPIInit::rank, MPIInit::rankLeft, MPIInit::rankRight);
-      Base::computationLocal::synchronize();
+                                MPIInit::rank);
+      Base::computationLocal.synchronize();
 
       auto t0 = Clock::now();
       Base::dtComputation = (t0 - t1);
