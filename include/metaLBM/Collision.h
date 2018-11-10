@@ -266,7 +266,7 @@ protected:
         - Equilibrium_::calculate(Base::density, Base::velocity, Base::velocity2, iQ);
     }
 
-    calculateRegularizedDistribution(haloDistributionNextPtr, iP);
+    calculateRegularizedDistribution(haloDistributionNextPtr, haloDistributionPreviousPtr, iP);
 
     Base::alpha = 2.0;
     calculateAlpha(haloDistributionNextPtr, haloDistributionPreviousPtr, iP);
@@ -274,8 +274,8 @@ protected:
   }
 
   LBM_DEVICE LBM_HOST inline
-  void calculateRegularizedDistribution(T* haloDistributionNextPtr,
-                                        const Position& iP) {
+    void calculateRegularizedDistribution(T* haloDistributionNextPtr, T* haloDistributionPreviousPtr,
+                                          const Position& iP) {
     LBM_INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::CalculateRegDist", 5)
 
     Moment_::calculatePiNeqDiagonal(haloDistributionNextPtr, iP, piNeqDiagonal);
@@ -283,6 +283,10 @@ protected:
 
     for (auto iQ = 0; iQ < L::dimQ; ++iQ) {
       auto index_iQ = hSD::getIndex(iP, iQ);
+
+      T equilibrium_iQ = haloDistributionPreviousPtr[hSD::getIndex(iP - uiL::celerity()[iQ], iQ)]
+        - haloDistributionNextPtr[index_iQ];
+
       haloDistributionNextPtr[index_iQ] = 0;
 
       for (auto iD = 0; iD < L::dimD; ++iD) {
@@ -294,6 +298,8 @@ protected:
       }
 
       haloDistributionNextPtr[index_iQ] *= L::weight()[iQ] / (2. * L::cs2 * L::cs2);
+      haloDistributionPreviousPtr[hSD::getIndex(iP - uiL::celerity()[iQ], iQ)]
+        = haloDistributionNextPtr[index_iQ] + equilibrium_iQ;
     }
   }
 
@@ -432,8 +438,8 @@ protected:
   }
 
   LBM_DEVICE LBM_HOST inline
-  void calculateRegularizedDistribution(T* haloDistributionNextPtr,
-                                        const Position& iP) {
+    void calculateRegularizedDistribution(T* haloDistributionNextPtr, T* haloDistributionPreviousPtr,
+                                          const Position& iP) {
     LBM_INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::CalculateRegDist", 5)
 
     Moment_::calculatePiNeqDiagonal(haloDistributionNextPtr, iP, piNeqDiagonal);
@@ -441,6 +447,10 @@ protected:
 
     for (auto iQ = 0; iQ < L::dimQ; ++iQ) {
       auto index_iQ = hSD::getIndex(iP, iQ);
+
+      T equilibrium_iQ = haloDistributionPreviousPtr[hSD::getIndex(iP - uiL::celerity()[iQ], iQ)]
+        - haloDistributionNextPtr[index_iQ];
+
       haloDistributionNextPtr[index_iQ] = 0;
 
       for (auto iD = 0; iD < L::dimD; ++iD) {
@@ -452,6 +462,8 @@ protected:
       }
 
       haloDistributionNextPtr[index_iQ] *= L::weight()[iQ] / (2. * L::cs2 * L::cs2);
+      haloDistributionPreviousPtr[hSD::getIndex(iP - uiL::celerity()[iQ], iQ)]
+        = haloDistributionNextPtr[index_iQ] + equilibrium_iQ;
     }
   }
 
@@ -582,8 +594,11 @@ protected:
                       const Position& iP) {
     LBM_INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::calculateAlpha", 5)
 
-    if(isDeviationSmall(haloDistributionNextPtr, haloDistributionPreviousPtr,
-                         iP, (T)1.0e-3)) {
+    Moment_::calculateT2(haloDistributionPreviousPtr, haloDistributionNextPtr, iP, T2);
+
+    /* if(isDeviationSmall(haloDistributionNextPtr, haloDistributionPreviousPtr, */
+    /*                      iP, (T)1.0e-3)) { */
+    if(T2 < (T)1.0e-11) {
       Base::alpha = 2.0;
       Base::numberIterations = - (T) 1;
     }
@@ -629,8 +644,8 @@ protected:
       Base::tau = (T)1.0 / (Base::alpha * Base::beta);
     }
 
-    LBM_DEVICE LBM_HOST inline
-    void calculateRegularizedDistribution(T* haloDistributionNextPtr,
+  LBM_DEVICE LBM_HOST inline
+    void calculateRegularizedDistribution(T* haloDistributionNextPtr, T* haloDistributionPreviousPtr,
                                           const Position& iP) {
     LBM_INSTRUMENT_OFF("Collision<T, CollisionType::ELBM>::CalculateRegDist", 5)
 
@@ -639,6 +654,10 @@ protected:
 
     for (auto iQ = 0; iQ < L::dimQ; ++iQ) {
       auto index_iQ = hSD::getIndex(iP, iQ);
+
+      T equilibrium_iQ = haloDistributionPreviousPtr[hSD::getIndex(iP - uiL::celerity()[iQ], iQ)]
+        - haloDistributionNextPtr[index_iQ];
+
       haloDistributionNextPtr[index_iQ] = 0;
 
       for (auto iD = 0; iD < L::dimD; ++iD) {
@@ -650,6 +669,8 @@ protected:
       }
 
       haloDistributionNextPtr[index_iQ] *= L::weight()[iQ] / (2. * L::cs2 * L::cs2);
+      haloDistributionPreviousPtr[hSD::getIndex(iP - uiL::celerity()[iQ], iQ)]
+        = haloDistributionNextPtr[index_iQ] + equilibrium_iQ;
     }
   }
 
@@ -778,7 +799,7 @@ protected:
           - Equilibrium_::calculate(Base::density, Base::velocity, Base::velocity2, iQ);
       }
 
-      Base::calculateRegularizedDistribution(haloDistributionNextPtr, iP);
+      Base::calculateRegularizedDistribution(haloDistributionNextPtr, haloDistributionPreviousPtr, iP);
 
       Base::alpha = alphaGuess;
       calculateAlpha(haloDistributionNextPtr, haloDistributionPreviousPtr, iP);
