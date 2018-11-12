@@ -210,6 +210,8 @@ namespace lbm {
       Position iP_Destination, iP_Source;
       unsigned int cumulativeLevel = 0;
 
+      //printf("Top iP: %d %d\n", iP[d::X], iP[d::Y]);
+
       for(auto iH = 0; iH < iP[d::Y] - lSD::sLength()[d::Y] + 1; ++iH) {
         cumulativeLevel += L::level()[L::dimH-1-iH];
 

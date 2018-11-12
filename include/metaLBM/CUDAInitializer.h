@@ -32,12 +32,8 @@ struct CUDAInitializer {
 
   /// Removes all device allocations
   ~CUDAInitializer() {
-    #ifdef USE_NVSHMEM
-      shmem_finalize();
-    #endif
-
     LBM_CUDA_CALL(cudaDeviceReset());
   }
-};  // end struct CUDAInitializer
+};
 
 }  // end namespace lbm

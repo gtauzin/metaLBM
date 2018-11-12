@@ -56,7 +56,7 @@ namespace lbm {
     SpectralAnalysisList<T, architecture> spectralAnalysisList;
 
     Algorithm_ algorithm;
-    PerformanceAnalysisList_ performanceAnalysisList;
+    PerformanceAnalysisList performanceAnalysisList;
 
   public:
     Routine()
@@ -132,7 +132,8 @@ namespace lbm {
       for (int iteration = startIteration + 1; iteration <= endIteration; ++iteration) {
         algorithm.isStored = (fieldWriter.getIsWritten(iteration)
                               || scalarAnalysisList.getIsAnalyzed(iteration)
-                              || spectralAnalysisList.getIsAnalyzed(iteration));
+                              || spectralAnalysisList.getIsAnalyzed(iteration)
+                              || iteration == endIteration);
 
         algorithm.iterate(iteration, defaultStream, bulkStream, leftStream, rightStream,
                           leftEvent, rightEvent);
@@ -199,13 +200,15 @@ namespace lbm {
                   << "Write time               : "
                   << performanceAnalysisList.getWriteFieldTime() << " s\n";
 
-        std::cout << "MLUPS                   : "
-                  << performanceAnalysisList.getMLUPS() << "\n"
-                  << "Initial mass            : "
+        std::cout << "Comm + Comp MLUPS        : "
+                  << performanceAnalysisList.getMLUPS_comm_comp() << "\n"
+                  << "Total MLUPS              : "
+                  << performanceAnalysisList.getMLUPS_total() << "\n"
+                  << "Initial mass             : "
                   << performanceAnalysisList.getInitialMass() << "\n"
-                  << "Final mass              : "
+                  << "Final mass               : "
                   << performanceAnalysisList.getFinalMass() << "\n"
-                  << "% mass diff.            : "
+                  << "% mass diff.             : "
                   << performanceAnalysisList.getDifferenceMass() << "\n"
                   << "----------------------------------------------\n";
       }

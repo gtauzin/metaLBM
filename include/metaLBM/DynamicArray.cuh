@@ -21,6 +21,7 @@ namespace lbm {
   private:
     using Base = DynamicArray<U, Architecture::Generic>;
 
+  protected:
     using Base::numberElements;
     using Base::dArrayPtr;
 
@@ -32,32 +33,20 @@ namespace lbm {
     DynamicArray(const unsigned int numberElements_in)
       : Base(numberElements_in)
     {
-    #ifdef USE_NVSHMEM
-      dArrayPtr = (double *) shmem_malloc(numberElements*sizeof(U));
-    #else
       LBM_CUDA_CALL(cudaMalloc((void**)&dArrayPtr, numberElements*sizeof(U)));
-    #endif
-	}
+    }
 
     DynamicArray(const DynamicArray& dArray_in)
       : Base(dArray_in.size())
     {
-    #ifdef USE_NVSHMEM
-      dArrayPtr = (double *) shmem_malloc(numberElements*sizeof(U));
-    #else
       LBM_CUDA_CALL(cudaMalloc((void**)&dArrayPtr, numberElements*sizeof(U)));
-    #endif
 
-	copyFrom(dArray_in);
+      copyFrom(dArray_in);
     }
 
     ~DynamicArray(){
       if(dArrayPtr) {
-        #ifdef USE_NVSHMEM
-          shmem_free(dArrayPtr);
-        #else
-          LBM_CUDA_CALL(cudaFree(dArrayPtr));
-        #endif
+        LBM_CUDA_CALL(cudaFree(dArrayPtr));
 
 	dArrayPtr = NULL;
       }
@@ -85,8 +74,52 @@ namespace lbm {
 
   };
 
+#ifdef USE_NVSHMEM
+
   template<class U>
-  class DynamicArray<U, Architecture::CPUPinned>
+  class DynamicArray<U, Architecture::GPU_SHMEM>
+    : public DynamicArray<U, Architecture::GPU> {
+  private:
+    using Base = DynamicArray<U, Architecture::GPU>;
+
+    using Base::numberElements;
+    using Base::dArrayPtr;
+
+  public:
+    using Base::operator[];
+    using Base::data;
+    using Base::size;
+
+    DynamicArray(const unsigned int numberElements_in)
+      : Base(numberElements_in)
+    {
+      dArrayPtr = (double *) shmem_malloc(numberElements*sizeof(U));
+    }
+
+    DynamicArray(const DynamicArray& dArray_in)
+      : Base(dArray_in.size())
+    {
+      dArrayPtr = (double *) shmem_malloc(numberElements*sizeof(U));
+
+      copyFrom(dArray_in);
+    }
+
+    ~DynamicArray(){
+      if(dArrayPtr) {
+        shmem_free(dArrayPtr);
+
+	dArrayPtr = NULL;
+      }
+    }
+
+    using Base::copyFrom;
+    using Base::copyTo;
+  };
+
+#endif // USE_NVSHMEM
+
+  template<class U>
+  class DynamicArray<U, Architecture::CPU_Pinned>
     : public DynamicArray<U, Architecture::CPU> {
   protected:
     using Base = DynamicArray<U, Architecture::CPU>;
@@ -124,6 +157,6 @@ namespace lbm {
     using Base::copyFrom;
     using Base::copyTo;
 
-  }; // end class DynamicArray<U, Architecture::CPUPinned>
+  }; // end class DynamicArray<U, Architecture::CPU_Pinned>
 
 } // end namespace lbm

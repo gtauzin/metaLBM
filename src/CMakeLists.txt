@@ -26,6 +26,36 @@ function(gpu_target_nvtx NPROCS NTHREADS X_SIZE Y_SIZE Z_SIZE LBM_POSTFIX)
   target_compile_definitions(${TARGET_STR} PRIVATE USE_NVTX)
 endfunction()
 
+
+add_custom_target(shmemlbm COMMENT "Builds GPU SHMEM targets.")
+function(shmem_target_helper TARGET_STR NPROCS NTHREADS X_SIZE Y_SIZE Z_SIZE LBM_POSTFIX)
+  add_executable(${TARGET_STR} main_shmem.cu)
+  target_link_libraries(${TARGET_STR} PRIVATE metalbm)
+  target_compile_options(${TARGET_STR} PRIVATE --expt-extended-lambda)
+  target_compile_definitions(${TARGET_STR} PRIVATE
+    NPROCS=${NPROCS}
+    NTHREADS=${NTHREADS}
+    GLOBAL_LENGTH_X=${X_SIZE}
+    GLOBAL_LENGTH_Y=${Y_SIZE}
+    GLOBAL_LENGTH_Z=${Z_SIZE}
+    LBM_POSTFIX="${LBM_POSTFIX}")
+  set_target_properties(${TARGET_STR} PROPERTIES CUDA_SEPARABLE_COMPILATION OFF)
+  add_dependencies(shmemlbm ${TARGET_STR})
+endfunction()
+
+function(shmem_target NPROCS NTHREADS X_SIZE Y_SIZE Z_SIZE LBM_POSTFIX)
+  set(TARGET_STR shmemlbm_${NPROCS}_${NTHREADS}_${X_SIZE}_${Y_SIZE}_${Z_SIZE}_${LBM_POSTFIX})
+  shmem_target_helper(${TARGET_STR} ${NPROCS} ${NTHREADS} ${X_SIZE} ${Y_SIZE} ${Z_SIZE} ${LBM_POSTFIX})
+endfunction()
+
+function(shmem_target_nvtx NPROCS NTHREADS X_SIZE Y_SIZE Z_SIZE LBM_POSTFIX)
+  set(TARGET_STR shmemlbm_${NPROCS}_${NTHREADS}_${X_SIZE}_${Y_SIZE}_${Z_SIZE}_${LBM_POSTFIX}_nvtx)
+  shmem_target_helper(${TARGET_STR} ${NPROCS} ${NTHREADS} ${X_SIZE} ${Y_SIZE} ${Z_SIZE} ${LBM_POSTFIX})
+  target_link_libraries(${TARGET_STR} PRIVATE -lnvToolsExt)
+  target_compile_definitions(${TARGET_STR} PRIVATE USE_NVTX)
+endfunction()
+
+
 add_custom_target(cpulbm COMMENT "Builds CPU targets.")
 function(cpu_target NPROCS NTHREADS X_SIZE Y_SIZE Z_SIZE LBM_POSTFIX)
   set(target_name cpulbm_${NPROCS}_${NTHREADS}_${X_SIZE}_${Y_SIZE}_${Z_SIZE}_${LBM_POSTFIX})
@@ -54,6 +84,12 @@ foreach(params_list ${PARAMS})
     gpu_target(${NPROCS} ${NTHREADS} ${X_SIZE} ${Y_SIZE} ${Z_SIZE} ${LBM_POSTFIX})
     if(USE_NVTX)
       gpu_target_nvtx(${NPROCS} ${NTHREADS} ${X_SIZE} ${Y_SIZE} ${Z_SIZE} ${LBM_POSTFIX})
+    endif()
+    if(USE_NVSHMEM)
+      shmem_target(${NPROCS} ${NTHREADS} ${X_SIZE} ${Y_SIZE} ${Z_SIZE} ${LBM_POSTFIX})
+      if(USE_NVTX)
+        shmem_target_nvtx(${NPROCS} ${NTHREADS} ${X_SIZE} ${Y_SIZE} ${Z_SIZE} ${LBM_POSTFIX})
+      endif()
     endif()
   endif()
   cpu_target(${NPROCS} ${NTHREADS} ${X_SIZE} ${Y_SIZE} ${Z_SIZE} ${LBM_POSTFIX})

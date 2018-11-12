@@ -483,15 +483,15 @@ namespace lbm {
 
 #ifdef USE_NVSHMEM
 
-  template <class T, Architecture architecture, MemoryLayout memoryLayout>
-  class Algorithm<T, AlgorithmType::Pull, architecture, memoryLayout,
+  template <class T, MemoryLayout memoryLayout>
+  class Algorithm<T, AlgorithmType::Pull, Architecture::GPU_SHMEM, memoryLayout,
                   PartitionningType::OneD, CommunicationType::NVSHMEM_OUT, Overlapping::Off>
-    : public Algorithm<T, AlgorithmType::Pull, architecture, memoryLayout,
+    : public Algorithm<T, AlgorithmType::Pull, Architecture::GPU_SHMEM, memoryLayout,
                        PartitionningType::OneD, CommunicationType::Generic,
                        Overlapping::Off> {
   private:
     using Base =
-      Algorithm<T, AlgorithmType::Pull, architecture, memoryLayout,
+      Algorithm<T, AlgorithmType::Pull, Architecture::GPU_SHMEM, memoryLayout,
                 PartitionningType::OneD, CommunicationType::Generic, Overlapping::Off>;
     using Clock = std::chrono::high_resolution_clock;
 
@@ -500,8 +500,8 @@ namespace lbm {
                   CommunicationType::NVSHMEM_OUT, L::dimD> communication;
 
   public:
-    Algorithm(FieldList<T, architecture>& fieldList_in,
-              Distribution<T, architecture>& distribution_in,
+    Algorithm(FieldList<T, Architecture::GPU_SHMEM>& fieldList_in,
+              Distribution<T, Architecture::GPU_SHMEM>& distribution_in,
               Communication<T, L::Type, AlgorithmType::Pull, memoryLayout,
                             PartitionningType::OneD, CommunicationType::NVSHMEM_OUT,
                             L::dimD>& communication_in)
@@ -511,15 +511,15 @@ namespace lbm {
 
     LBM_HOST
     void iterate(const unsigned int iteration,
-                 Stream<architecture>& defaultStream,
-                 Stream<architecture>& bulkStream,
-                 Stream<architecture>& leftStream,
-                 Stream<architecture>& rightStream,
-                 Event<architecture>& leftEvent,
-                 Event<architecture>& rightEvent) {
+                 Stream<Architecture::GPU_SHMEM>& defaultStream,
+                 Stream<Architecture::GPU_SHMEM>& bulkStream,
+                 Stream<Architecture::GPU_SHMEM>& leftStream,
+                 Stream<Architecture::GPU_SHMEM>& rightStream,
+                 Event<Architecture::GPU_SHMEM>& leftEvent,
+                 Event<Architecture::GPU_SHMEM>& rightEvent) {
       LBM_INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate", 2)
 
-        std::swap(Base::haloDistributionPreviousPtr, Base::haloDistributionNextPtr);
+      std::swap(Base::haloDistributionPreviousPtr, Base::haloDistributionNextPtr);
 
       Base::collision.update(iteration, FFTWInit::numberElements);
 
@@ -549,16 +549,16 @@ namespace lbm {
   };
 
 
-  template <class T, Architecture architecture, MemoryLayout memoryLayout>
-  class Algorithm<T, AlgorithmType::Pull, architecture, memoryLayout,
+  template <class T, MemoryLayout memoryLayout>
+  class Algorithm<T, AlgorithmType::Pull, Architecture::GPU_SHMEM, memoryLayout,
                   PartitionningType::OneD, CommunicationType::NVSHMEM_OUT, Overlapping::On>
-    : public Algorithm<T, AlgorithmType::Pull, architecture, memoryLayout,
+    : public Algorithm<T, AlgorithmType::Pull, Architecture::GPU_SHMEM, memoryLayout,
                        PartitionningType::OneD, CommunicationType::Generic,
                        Overlapping::On> {
   private:
     using Base =
-      Algorithm<T, AlgorithmType::Pull, architecture, memoryLayout,
-                PartitionningType::OneD, CommunicationType::Generic, Overlapping::Off>;
+      Algorithm<T, AlgorithmType::Pull, Architecture::GPU_SHMEM, memoryLayout,
+                PartitionningType::OneD, CommunicationType::Generic, Overlapping::On>;
     using Clock = std::chrono::high_resolution_clock;
 
   protected:
@@ -566,8 +566,8 @@ namespace lbm {
                   CommunicationType::NVSHMEM_OUT, L::dimD> communication;
 
   public:
-    Algorithm(FieldList<T, architecture>& fieldList_in,
-              Distribution<T, architecture>& distribution_in,
+    Algorithm(FieldList<T, Architecture::GPU_SHMEM>& fieldList_in,
+              Distribution<T, Architecture::GPU_SHMEM>& distribution_in,
               Communication<T, L::Type, AlgorithmType::Pull, memoryLayout,
                             PartitionningType::OneD, CommunicationType::NVSHMEM_OUT,
                             L::dimD>& communication_in)
@@ -577,12 +577,12 @@ namespace lbm {
 
     LBM_HOST
     void iterate(const unsigned int iteration,
-                 Stream<architecture>& defaultStream,
-                 Stream<architecture>& bulkStream,
-                 Stream<architecture>& leftStream,
-                 Stream<architecture>& rightStream,
-                 Event<architecture>& leftEvent,
-                 Event<architecture>& rightEvent) {
+                 Stream<Architecture::GPU_SHMEM>& defaultStream,
+                 Stream<Architecture::GPU_SHMEM>& bulkStream,
+                 Stream<Architecture::GPU_SHMEM>& leftStream,
+                 Stream<Architecture::GPU_SHMEM>& rightStream,
+                 Event<Architecture::GPU_SHMEM>& leftEvent,
+                 Event<Architecture::GPU_SHMEM>& rightEvent) {
       LBM_INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate", 2)
 
         std::swap(Base::haloDistributionPreviousPtr,
@@ -601,8 +601,6 @@ namespace lbm {
                                Base::haloDistributionPreviousPtr);
 
       bulkStream.synchronize();
-      //leftEvent.record(bulkStream);
-      //rightEvent.record(bulkStream);
 
       auto t1 = Clock::now();
       Base::dtCommunication = (t1 - t0);
@@ -613,9 +611,6 @@ namespace lbm {
 
       // TODO: if only 1 GPU, use leftBoundary and rightBoundary instead of MPI
       communication.communicateHalos(Base::haloDistributionPreviousPtr);
-
-      //leftEvent.wait(leftStream);
-      //rightEvent.wait(rightStream);
 
       t1 = Clock::now();
       Base::dtCommunication += (t1 - t0);
@@ -637,24 +632,23 @@ namespace lbm {
   };
 
 
-  template <class T, Architecture architecture, MemoryLayout memoryLayout>
-  class Algorithm<T, AlgorithmType::Pull, architecture, memoryLayout,
+  template <class T, MemoryLayout memoryLayout>
+  class Algorithm<T, AlgorithmType::Pull, Architecture::GPU_SHMEM, memoryLayout,
                   PartitionningType::OneD, CommunicationType::NVSHMEM_IN, Overlapping::Off>
-    : public Algorithm<T, AlgorithmType::Pull, architecture, memoryLayout,
+    : public Algorithm<T, AlgorithmType::Pull, Architecture::GPU_SHMEM, memoryLayout,
                        PartitionningType::OneD, CommunicationType::Generic,
                        Overlapping::Off> {
   private:
     using Base =
-      Algorithm<T, AlgorithmType::Pull, architecture, memoryLayout,
+      Algorithm<T, AlgorithmType::Pull, Architecture::GPU_SHMEM, memoryLayout,
                 PartitionningType::OneD, CommunicationType::Generic, Overlapping::Off>;
     using Clock = std::chrono::high_resolution_clock;
 
   protected:
-    Communication<T, L::Type, AlgorithmType::Pull, memoryLayout, PartitionningType::OneD,
-                  CommunicationType::NVSHMEM_IN, L::dimD> communication;
-
     T * haloDistributionPreviousLeftPtr;
     T * haloDistributionPreviousRightPtr;
+    T * haloDistributionNextLeftPtr;
+    T * haloDistributionNextRightPtr;
 
     LeftBoundary<T, BoundaryType::Periodic_IN, AlgorithmType::Pull, L::dimD> leftBoundary;
     RightBoundary<T,BoundaryType::Periodic_IN, AlgorithmType::Pull,  L::dimD> rightBoundary;
@@ -664,13 +658,16 @@ namespace lbm {
     BackBoundary<T, BoundaryType::Periodic_IN, AlgorithmType::Pull, L::dimD> backBoundary;
 
   public:
-    Algorithm(FieldList<T, architecture>& fieldList_in,
-              Distribution<T, architecture>& distribution_in,
+    Algorithm(FieldList<T, Architecture::GPU_SHMEM>& fieldList_in,
+              Distribution<T, Architecture::GPU_SHMEM>& distribution_in,
               Communication<T, L::Type, AlgorithmType::Pull, memoryLayout,
                             PartitionningType::OneD, CommunicationType::NVSHMEM_IN,
                             L::dimD>& communication_in)
       : Base(fieldList_in, distribution_in)
-      , communication(communication_in)
+      , haloDistributionPreviousLeftPtr((T*) shmem_ptr(Base::haloDistributionPreviousPtr, MPIInit::rankLeft))
+      , haloDistributionPreviousRightPtr((T*) shmem_ptr(Base::haloDistributionPreviousPtr, MPIInit::rankRight))
+      , haloDistributionNextLeftPtr((T*) shmem_ptr(Base::haloDistributionNextPtr, MPIInit::rankLeft))
+      , haloDistributionNextRightPtr((T*) shmem_ptr(Base::haloDistributionNextPtr, MPIInit::rankRight))
     {}
 
     LBM_DEVICE
@@ -704,19 +701,17 @@ namespace lbm {
 
     LBM_HOST
     void iterate(const unsigned int iteration,
-                 Stream<Architecture::GPU>& defaultStream,
-                 Stream<Architecture::GPU>& bulkStream,
-                 Stream<Architecture::GPU>& leftStream,
-                 Stream<Architecture::GPU>& rightStream,
-                 Event<Architecture::GPU>& leftEvent,
-                 Event<Architecture::GPU>& rightEvent) {
+                 Stream<Architecture::GPU_SHMEM>& defaultStream,
+                 Stream<Architecture::GPU_SHMEM>& bulkStream,
+                 Stream<Architecture::GPU_SHMEM>& leftStream,
+                 Stream<Architecture::GPU_SHMEM>& rightStream,
+                 Event<Architecture::GPU_SHMEM>& leftEvent,
+                 Event<Architecture::GPU_SHMEM>& rightEvent) {
       LBM_INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate", 2)
 
-      std::swap(Base::haloDistributionPreviousPtr,
-		Base::haloDistributionNextPtr);
-
-      haloDistributionPreviousLeftPtr = (T*) shmem_ptr(Base::haloDistributionPreviousPtr, MPIInit::rankLeft);
-      haloDistributionPreviousRightPtr = (T*) shmem_ptr(Base::haloDistributionPreviousPtr, MPIInit::rankRight);
+      std::swap(Base::haloDistributionPreviousPtr, Base::haloDistributionNextPtr);
+      std::swap(haloDistributionPreviousLeftPtr, haloDistributionNextLeftPtr);
+      std::swap(haloDistributionPreviousRightPtr, haloDistributionNextRightPtr);
 
       Base::collision.update(iteration, FFTWInit::numberElements);
 
@@ -730,7 +725,193 @@ namespace lbm {
       Base::dtComputation = (t0 - t1);
     }
 
+    using Base::pack;
+    using Base::unpack;
+
   };
+
+
+  template <class T, MemoryLayout memoryLayout>
+  class Algorithm<T, AlgorithmType::Pull, Architecture::GPU_SHMEM, memoryLayout,
+                  PartitionningType::OneD, CommunicationType::NVSHMEM_IN, Overlapping::On>
+    : public Algorithm<T, AlgorithmType::Pull, Architecture::GPU_SHMEM, memoryLayout,
+                       PartitionningType::OneD, CommunicationType::Generic,
+                       Overlapping::On> {
+  private:
+    using Base =
+      Algorithm<T, AlgorithmType::Pull, Architecture::GPU_SHMEM, memoryLayout,
+                PartitionningType::OneD, CommunicationType::Generic, Overlapping::On>;
+    using Clock = std::chrono::high_resolution_clock;
+
+  protected:
+    T * haloDistributionPreviousLeftPtr;
+    T * haloDistributionPreviousRightPtr;
+    T * haloDistributionNextLeftPtr;
+    T * haloDistributionNextRightPtr;
+
+    Computation<Architecture::GPU_SHMEM, L::dimD> computationBulk;
+    Computation<Architecture::GPU_SHMEM, L::dimD> computationRight;
+    Computation<Architecture::GPU_SHMEM, L::dimD> computationLeft;
+    Computation<Architecture::GPU_SHMEM, L::dimD> computationBottom;
+    Computation<Architecture::GPU_SHMEM, L::dimD> computationTop;
+    Computation<Architecture::GPU_SHMEM, L::dimD> computationFront;
+    Computation<Architecture::GPU_SHMEM, L::dimD> computationBack;
+
+    LeftBoundary<T, BoundaryType::Periodic_IN, AlgorithmType::Pull, L::dimD> leftBoundary;
+    RightBoundary<T,BoundaryType::Periodic_IN, AlgorithmType::Pull,  L::dimD> rightBoundary;
+    BottomBoundary<T, BoundaryType::Periodic_IN, AlgorithmType::Pull, L::dimD> bottomBoundary;
+    TopBoundary<T,BoundaryType::Periodic_IN, AlgorithmType::Pull,  L::dimD> topBoundary;
+    FrontBoundary<T, BoundaryType::Periodic_IN, AlgorithmType::Pull, L::dimD> frontBoundary;
+    BackBoundary<T, BoundaryType::Periodic_IN, AlgorithmType::Pull, L::dimD> backBoundary;
+
+  public:
+  Algorithm(FieldList<T, Architecture::GPU_SHMEM>& fieldList_in,
+            Distribution<T, Architecture::GPU_SHMEM>& distribution_in,
+                         Communication<T, L::Type, AlgorithmType::Pull, memoryLayout,
+                         PartitionningType::OneD, CommunicationType::NVSHMEM_IN,
+                         L::dimD>& communication_in)
+      : Base(fieldList_in, distribution_in)
+      , haloDistributionPreviousLeftPtr((T*) shmem_ptr(Base::haloDistributionPreviousPtr, MPIInit::rankLeft))
+      , haloDistributionPreviousRightPtr((T*) shmem_ptr(Base::haloDistributionPreviousPtr, MPIInit::rankRight))
+      , haloDistributionNextLeftPtr((T*) shmem_ptr(Base::haloDistributionNextPtr, MPIInit::rankLeft))
+      , haloDistributionNextRightPtr((T*) shmem_ptr(Base::haloDistributionNextPtr, MPIInit::rankRight))
+      , computationBulk(Position(2*L::halo()), lSD::sLength(), Position({d::X, d::Y, d::Z}))
+      , computationLeft(Position(L::halo()),
+                        Position({2*L::halo()[d::X], lSD::sEnd()[d::Y]+L::halo()[d::Y],
+                              lSD::sEnd()[d::Z]+L::halo()[d::Z]}),
+                        Position({d::X, d::Y, d::Z}))
+      , computationRight(Position({lSD::sEnd()[d::X], L::halo()[d::Y], L::halo()[d::Z]}),
+                         Position(lSD::sEnd()+L::halo()),
+                         Position({d::X, d::Y, d::Z}))
+      , computationBottom(Position(L::halo()),
+                          Position({lSD::sEnd()[d::X]+L::halo()[d::X], 2*L::halo()[d::Y],
+                                lSD::sEnd()[d::Z]+L::halo()[d::X]}),
+                          Position({d::X, d::Y, d::Z}))
+      , computationTop(Position({L::halo()[d::X], lSD::sEnd()[d::Y], L::halo()[d::Z]}),
+                       Position(lSD::sEnd()+L::halo()),
+                       Position({d::X, d::Y, d::Z}))
+      , computationFront(Position(L::halo()),
+                         Position({lSD::sEnd()[d::X]+L::halo()[d::X], lSD::sEnd()[d::Y]+L::halo()[d::Y],
+                               2*L::halo()[d::Z]}),
+                         Position({d::X, d::Y, d::Z}))
+      , computationBack(Position({L::halo()[d::X], L::halo()[d::Y], lSD::sLength()[d::Z]}),
+                        Position(lSD::sEnd()+L::halo()),
+                        Position({d::X, d::Y, d::Z}))
+    {}
+
+    LBM_HOST
+    void iterate(const unsigned int iteration,
+                 Stream<Architecture::GPU_SHMEM>& defaultStream,
+                 Stream<Architecture::GPU_SHMEM>& bulkStream,
+                 Stream<Architecture::GPU_SHMEM>& leftStream,
+                 Stream<Architecture::GPU_SHMEM>& rightStream,
+                 Event<Architecture::GPU_SHMEM>& leftEvent,
+                 Event<Architecture::GPU_SHMEM>& rightEvent) {
+      LBM_INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate", 2)
+
+      std::swap(Base::haloDistributionPreviousPtr, Base::haloDistributionNextPtr);
+      std::swap(haloDistributionPreviousLeftPtr, haloDistributionNextLeftPtr);
+      std::swap(haloDistributionPreviousRightPtr, haloDistributionNextRightPtr);
+
+      Base::collision.update(iteration, FFTWInit::numberElements);
+
+      auto t0 = Clock::now();
+      computationFront.Do(leftStream, frontBoundary, Base::haloDistributionPreviousPtr);
+      computationFront.Do(leftStream, *this, FFTWInit::numberElements, MPIInit::rank);
+      computationBack.Do(rightStream, backBoundary, Base::haloDistributionPreviousPtr);
+      computationBack.Do(rightStream, *this, FFTWInit::numberElements, MPIInit::rank);
+      leftStream.synchronize();
+      rightStream.synchronize();
+
+      computationBottom.Do(leftStream, bottomBoundary, Base::haloDistributionPreviousPtr);
+      computationBottom.Do(leftStream, *this, FFTWInit::numberElements, MPIInit::rank);
+      computationTop.Do(rightStream, topBoundary, Base::haloDistributionPreviousPtr);
+      computationTop.Do(rightStream, *this, FFTWInit::numberElements, MPIInit::rank);
+      leftStream.synchronize();
+      rightStream.synchronize();
+
+      computationLeft.Do(leftStream, leftBoundary, Base::haloDistributionPreviousPtr,
+                         haloDistributionPreviousLeftPtr);
+      computationLeft.Do(leftStream, *this, FFTWInit::numberElements, MPIInit::rank);
+      computationRight.Do(rightStream, rightBoundary, Base::haloDistributionPreviousPtr,
+                          haloDistributionPreviousRightPtr);
+      computationRight.Do(rightStream, *this, FFTWInit::numberElements, MPIInit::rank);
+
+      auto t1 = Clock::now();
+      Base::dtCommunication = (t1 - t0);
+
+      computationBulk.Do(bulkStream, *this, FFTWInit::numberElements, MPIInit::rank);
+      t0 = Clock::now();
+      Base::dtComputation = (t0 - t1);
+
+
+      t1 = Clock::now();
+      Base::dtCommunication += (t1 - t0);
+
+
+      bulkStream.synchronize();
+      leftStream.synchronize();
+      rightStream.synchronize();
+
+      t0 = Clock::now();
+      Base::dtComputation += (t0 - t1);
+    }
+
+    using Base::pack;
+    using Base::unpack;
+
+  };
+
+
+
+  template <class T, MemoryLayout memoryLayout>
+    class Algorithm<T, AlgorithmType::Pull, Architecture::GPU_SHMEM, memoryLayout,
+                  PartitionningType::OneD, CommunicationType::Persistent_NVSHMEM_IN, Overlapping::Off>
+    : public Algorithm<T, AlgorithmType::Pull, Architecture::GPU_SHMEM, memoryLayout,
+                       PartitionningType::OneD, CommunicationType::NVSHMEM_IN,
+                       Overlapping::Off> {
+  private:
+    using Base =
+      Algorithm<T, AlgorithmType::Pull, Architecture::GPU_SHMEM, memoryLayout,
+                PartitionningType::OneD, CommunicationType::NVSHMEM_IN, Overlapping::Off>;
+    using Clock = std::chrono::high_resolution_clock;
+
+  public:
+    using Base::Algorithm;
+
+    LBM_HOST
+    void iterate(const unsigned int iteration,
+                 Stream<Architecture::GPU_SHMEM>& defaultStream,
+                 Stream<Architecture::GPU_SHMEM>& bulkStream,
+                 Stream<Architecture::GPU_SHMEM>& leftStream,
+                 Stream<Architecture::GPU_SHMEM>& rightStream,
+                 Event<Architecture::GPU_SHMEM>& leftEvent,
+                 Event<Architecture::GPU_SHMEM>& rightEvent) {
+      LBM_INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate", 2)
+
+      std::swap(Base::haloDistributionPreviousPtr,
+		Base::haloDistributionNextPtr);
+
+      Base::haloDistributionPreviousLeftPtr = (T*) shmem_ptr(Base::haloDistributionPreviousPtr, MPIInit::rankLeft);
+      Base::haloDistributionPreviousRightPtr = (T*) shmem_ptr(Base::haloDistributionPreviousPtr, MPIInit::rankRight);
+
+
+      auto t1 = Clock::now();
+
+      Base::computationLocal.Do(defaultStream, *this, FFTWInit::numberElements,
+                                MPIInit::rank);
+      Base::computationLocal.synchronize();
+
+      auto t0 = Clock::now();
+      Base::dtComputation = (t0 - t1);
+    }
+
+    using Base::pack;
+    using Base::unpack;
+
+  };
+
+
 #endif  // USE_NVSHMEM
 
 }  // namespace lbm

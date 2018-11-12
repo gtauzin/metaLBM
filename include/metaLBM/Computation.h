@@ -19,8 +19,8 @@ template <unsigned int Dimension>
   const Position dir;
 
  Computation(const Position& start_in,
-              const Position& end_in,
-              const Position& dir_in = {{d::X, d::Y, d::Z}})
+             const Position& end_in,
+             const Position& dir_in = {{d::X, d::Y, d::Z}})
       : start(start_in), end(end_in), length(end_in - start_in), dir(dir_in) {}
 
   LBM_INLINE static void synchronize() {}

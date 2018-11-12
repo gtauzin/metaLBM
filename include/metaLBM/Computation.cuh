@@ -7,6 +7,11 @@
 #include "Options.h"
 #include "Stream.cuh"
 
+#ifdef USE_NVSHMEM
+  #include<shmem.h>
+  #include<shmemx.h>
+#endif
+
 namespace lbm {
 
   template<typename Callback, typename... Arguments>
@@ -139,5 +144,83 @@ template <unsigned int Dimension>
      LBM_CUDA_CALL(cudaGetLastError());
    }
  };
+
+
+#ifdef USE_NVSHMEM
+
+ template<>
+  class Computation<Architecture::GPU_SHMEM, 1>
+    : public Computation<Architecture::GPU, 0> {
+  private:
+   using Base = Computation<Architecture::GPU, 0>;
+
+  public:
+   using Base::Computation;
+
+    template<typename Callback, typename... Arguments>
+    void Do(const Stream<Architecture::GPU_SHMEM>& stream,
+	    Callback function, const Arguments... arguments) {
+      LBM_INSTRUMENT_OFF("Computation<Architecture::GPU_SHMEM, 1>::Do<Callback>",3)
+
+      dim3 dimBlock(128, 1, 1);
+      dim3 dimGrid((127+Base::length[dir[0]])/128, 1, 1);
+
+      kernel_1D<<<dimGrid, dimBlock, 0, stream.get()>>>(Base::start, Base::end, Base::dir,
+							function, arguments...);
+      LBM_CUDA_CALL(cudaGetLastError());
+    }
+  };
+
+ template<>
+  class Computation<Architecture::GPU_SHMEM, 2>
+    : public Computation<Architecture::GPU, 0> {
+  private:
+   using Base = Computation<Architecture::GPU, 0>;
+
+  public:
+   using Base::Computation;
+
+    template<typename Callback, typename... Arguments>
+    void Do(const Stream<Architecture::GPU_SHMEM>& stream,
+            Callback function, const Arguments... arguments) {
+      LBM_INSTRUMENT_OFF("Computation<Architecture::GPU_SHMEM, 2>::Do<Callback>",3)
+
+      dim3 dimBlock(128, 1, 1);
+      dim3 dimGrid((127+Base::length[dir[1]])/128, Base::length[dir[0]], 1);
+
+      // void *argumentArray[] = {&Base::start, &Base::end, &Base::dir, &function, (&arguments)...};
+
+      LBM_SHMEM_CALL( shmemx_collective_launch((const void *) kernel_2D<function, arguments...>, dimGrid, dimBlock,
+                                               {(void *) &arguments...}, 0, stream.get()) );
+      // kernel_2D<<<dimGrid, dimBlock, 0, stream.get()>>>(Base::start, Base::end, Base::dir,
+      //   						function, arguments...);
+      LBM_CUDA_CALL ( cudaGetLastError() );
+    }
+ };
+
+ template<>
+  class Computation<Architecture::GPU_SHMEM, 3>
+    : public Computation<Architecture::GPU, 0> {
+  private:
+   using Base = Computation<Architecture::GPU, 0>;
+
+  public:
+   using Base::Computation;
+
+   template<typename Callback, typename... Arguments>
+    void Do(const Stream<Architecture::GPU_SHMEM>& stream,
+	    Callback function, const Arguments... arguments) {
+     LBM_INSTRUMENT_OFF("Computation<Architecture::GPU_SHMEM, 3>::Do<Callback>",3)
+
+     dim3 dimBlock(128, 1, 1);
+     dim3 dimGrid((127+Base::length[dir[2]])/128, Base::length[dir[1]], Base::length[dir[0]]);
+
+     kernel_3D<<<dimGrid, dimBlock, 0, stream.get()>>>(Base::start, Base::end, Base::dir,
+						       function, arguments...);
+     LBM_CUDA_CALL(cudaGetLastError());
+   }
+ };
+
+#endif // USE_NVSHMEM
 
 }

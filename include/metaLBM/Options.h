@@ -13,9 +13,9 @@ namespace lbm {
                            D3Q15, D3Q19, D3Q27, D3Q33 };
 
   enum class MemoryLayout { Generic, Default, SoA, AoS };
-  enum class CommunicationType { Generic, MPI, NVSHMEM_OUT, NVSHMEM_IN };
+  enum class CommunicationType { Generic, MPI, NVSHMEM_OUT, NVSHMEM_IN, Persistent_NVSHMEM_IN };
   enum class PartitionningType { Generic, OneD, TwoD, ThreeD };
-  enum class Architecture { Generic, CPU, GPU, CPUPinned };
+  enum class Architecture { Generic, CPU, GPU, GPU_SHMEM, CPU_Pinned };
   enum class Overlapping { Off, On };
 
  enum class DomainType { Generic, GlobalSpace, LocalSpace, HaloSpace, BufferXSpace,

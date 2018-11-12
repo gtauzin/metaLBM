@@ -1,5 +1,4 @@
-#ifndef ANALYSISLIST_H
-#define ANALYSISLIST_H
+#pragma once
 
 #include <fstream>
 #include <ostream>
@@ -201,7 +200,6 @@ class SpectralAnalysisList {
   }
 };
 
- template <class T>
  class PerformanceAnalysisList {
  private:
     double initialMass;
@@ -213,7 +211,8 @@ class SpectralAnalysisList {
     double writeFieldTime;
     double writeAnalysisTime;
     double totalTime;
-    double mLUPS;
+    double mLUPS_comm_comp;
+    double mLUPS_total;
     ScalarAnalysisWriter_ scalarAnalysisWriter;
 
  public:
@@ -227,7 +226,8 @@ class SpectralAnalysisList {
      , writeFieldTime(0.0)
      , writeAnalysisTime(0.0)
      , totalTime(0.0)
-     , mLUPS(0.0)
+     , mLUPS_comm_comp(0.0)
+     , mLUPS_total(0.0)
      , scalarAnalysisWriter(prefix, "performances", startIteration_in,
                              performanceAnalysisStep_in)
    {
@@ -266,7 +266,8 @@ class SpectralAnalysisList {
     }
 
     inline void updateMLUPS(const double numberIteration) {
-      mLUPS = gSD::sVolume() * numberIteration / totalTime /(1e6);
+      mLUPS_comm_comp = gSD::sVolume() * numberIteration / (computationTime + communicationTime) /(1e6);
+      mLUPS_total = gSD::sVolume() * numberIteration / totalTime /(1e6);
     }
 
     inline bool getIsAnalyzed(const unsigned int iteration) {
@@ -274,16 +275,17 @@ class SpectralAnalysisList {
     }
 
     inline void writeAnalysesHeader() {
-      std::string header = "iteration computation_time communication_time write_field_time analysis_time total_time MLUPS mass_difference";
+      std::string header = "lengthX lengthY lengthZ iteration computation_time communication_time write_field_time analysis_time total_time MLUPS_total MLUPS_comm_comp mass_difference";
       scalarAnalysisWriter.writeHeader(header);
     }
 
     inline void writeAnalyses(const unsigned int iteration) {
       if (MPIInit::rank[d::X] == 0) {
-        double scalarList[] = {computationTime, communicationTime, writeFieldTime,
-                               writeAnalysisTime, totalTime, mLUPS, differenceMass};
+        double scalarList[] = {(double) gSD::sLength()[d::X], (double) gSD::sLength()[d::Y], (double) gSD::sLength()[d::Z],
+                               computationTime, communicationTime, writeFieldTime,
+                               writeAnalysisTime, totalTime, mLUPS_comm_comp, mLUPS_total, differenceMass};
         scalarAnalysisWriter.openFile(iteration);
-        scalarAnalysisWriter.writeAnalysis<T, 7>(iteration, scalarList);
+        scalarAnalysisWriter.writeAnalysis<double, 11>(iteration, scalarList);
         scalarAnalysisWriter.closeFile();
       }
     }
@@ -308,8 +310,12 @@ class SpectralAnalysisList {
       return totalTime;
     }
 
-    inline double getMLUPS() {
-      return mLUPS;
+    inline double getMLUPS_comm_comp() {
+      return mLUPS_comm_comp;
+    }
+
+    inline double getMLUPS_total() {
+      return mLUPS_total;
     }
 
     inline double getInitialMass() {
@@ -326,8 +332,4 @@ class SpectralAnalysisList {
 
  };
 
-typedef PerformanceAnalysisList<dataT> PerformanceAnalysisList_;
-
 }  // namespace lbm
-
-#endif  // ANALYSISLIST_H

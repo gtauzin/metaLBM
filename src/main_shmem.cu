@@ -1,6 +1,6 @@
 #include "Input.in"
 
-constexpr ::lbm::Architecture architectureT = ::lbm::Architecture::GPU;
+constexpr ::lbm::Architecture architectureT = ::lbm::Architecture::GPU_SHMEM;
 
 #include "metaLBM/Computation.cuh"
 #include "metaLBM/Event.cuh"

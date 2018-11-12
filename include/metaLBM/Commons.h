@@ -2,6 +2,10 @@
 
 #include <iostream>
 
+#ifdef USE_NVSHMEM
+  #include<shmem.h>
+  #include<shmemx.h>
+#endif
 
 #define LBM_MPI_CALL(call)                                              \
   do {                                                                  \
@@ -27,6 +31,7 @@
     }                                                                   \
   } while (0)
 
+#ifdef USE_NVSHMEM
 #define LBM_SHMEM_CALL(call)                                            \
   do {                                                                  \
     int error = (call);                                                 \
@@ -36,6 +41,10 @@
       exit(-1);                                                         \
     }                                                                   \
   } while (0)
+
+#else
+#define LBM_SHMEM_CALL(call)
+#endif // USE_NVSHMEM
 
 #define LBM_HOST __host__
 #define LBM_DEVICE __device__
