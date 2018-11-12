@@ -190,10 +190,10 @@ template <unsigned int Dimension>
 
       // void *argumentArray[] = {&Base::start, &Base::end, &Base::dir, &function, (&arguments)...};
 
-      LBM_SHMEM_CALL( shmemx_collective_launch((const void *) kernel_2D<function, arguments...>, dimGrid, dimBlock,
-                                               {(void *) &arguments...}, 0, stream.get()) );
-      // kernel_2D<<<dimGrid, dimBlock, 0, stream.get()>>>(Base::start, Base::end, Base::dir,
-      //   						function, arguments...);
+      // LBM_SHMEM_CALL( shmemx_collective_launch((const void *) kernel_2D<function, arguments...>, dimGrid, dimBlock,
+      //                                          {(void *) &arguments...}, 0, stream.get()) );
+      kernel_2D<<<dimGrid, dimBlock, 0, stream.get()>>>(Base::start, Base::end, Base::dir,
+        						function, arguments...);
       LBM_CUDA_CALL ( cudaGetLastError() );
     }
  };

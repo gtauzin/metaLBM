@@ -66,7 +66,7 @@ namespace lbm {
     using Base = FieldAllocator<T, NumberComponents, Architecture::Generic, true>;
 
   protected:
-    DynamicArray<T, Architecture::CPUPinned> array;
+    DynamicArray<T, Architecture::CPU_Pinned> array;
 
   public:
     using Base::IsWritten;
@@ -77,6 +77,22 @@ namespace lbm {
       , array(FFTWInit::numberElements * NumberComponents)
     {}
   };
+
+  template <class T, unsigned int NumberComponents>
+  class FieldAllocator<T, NumberComponents, Architecture::GPU_SHMEM, true>
+    : public FieldAllocator<T, NumberComponents, Architecture::GPU, true> {
+  private:
+    using Base = FieldAllocator<T, NumberComponents, Architecture::GPU, true>;
+
+  protected:
+    using Base::array;
+
+  public:
+    using Base::IsWritten;
+    using Base::fieldName;
+    using Base::FieldAllocator;
+  };
+
 
   template <class T, unsigned int NumberComponents, Architecture architecture,
             bool isWritten>
