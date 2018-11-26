@@ -87,7 +87,7 @@ namespace lbm {
                            startIteration)
       , spectralAnalysisList(fieldList, communication, spectralAnalysisStep,
                              startIteration)
-      , algorithm(fieldList, distribution, communication)
+      , algorithm(fieldList, distribution)
       , performanceAnalysisList(performanceAnalysisStep, startIteration)
     {
       printInputs();
@@ -129,14 +129,24 @@ namespace lbm {
       performanceAnalysisList.setInitialMass(communication.reduce(fieldList.density.getData(FFTWInit::numberElements)));
 
       // Execute LBM algorithm
-      for (int iteration = startIteration + 1; iteration <= endIteration; ++iteration) {
+      unsigned int iteration = startIteration + 1;
+      unsigned int iterationStep = 1;
+      while(iteration <= endIteration) {
         algorithm.isStored = (fieldWriter.getIsWritten(iteration)
                               || scalarAnalysisList.getIsAnalyzed(iteration)
                               || spectralAnalysisList.getIsAnalyzed(iteration)
                               || iteration == endIteration);
 
-        algorithm.iterate(iteration, defaultStream, bulkStream, leftStream, rightStream,
+
+        iterationStep = getIterationStep(iteration);
+
+        if(iterationStep % 2 == 1) {
+          std::cout << "Swapping" << std::endl;
+          algorithm.swapDistributions();
+        }
+        algorithm.iterate(iteration, iterationStep, defaultStream, bulkStream, leftStream, rightStream,
                           leftEvent, rightEvent);
+        iteration += iterationStep;
 
         if (algorithm.isStored) {
           curlVelocity.executeSpace();
@@ -157,7 +167,6 @@ namespace lbm {
 
         performanceAnalysisList.updateCommunicationTime(algorithm.getCommunicationTime());
         performanceAnalysisList.updateComputationTime(algorithm.getComputationTime());
-
       }
 
       performanceAnalysisList.updateMass(communication.reduce(fieldList.density.getData(FFTWInit::numberElements)));
@@ -214,6 +223,22 @@ namespace lbm {
       }
     }
 
+    unsigned int getIterationStep(unsigned int& iteration) {
+      if(!algorithm.isPersistent) return 1;
+
+      unsigned int iterationStep = endIteration - iteration + 1;
+
+      for (auto iStep = 0; iStep < successiveWriteStep; ++iStep) {
+        iterationStep = std::min(iterationStep, writeStep - ((iteration + iStep) % writeStep));
+      }
+
+      iterationStep = std::min(iterationStep, scalarAnalysisStep - (iteration % scalarAnalysisStep));
+      iterationStep = std::min(iterationStep, spectralAnalysisStep - (iteration % spectralAnalysisStep));
+      iterationStep = std::min(iterationStep, performanceAnalysisStep - (iteration % performanceAnalysisStep));
+
+      return iterationStep;
+    }
+
     void writeFields(const unsigned int iteration) {
       LBM_INSTRUMENT_ON("Routine<T>::writeFields", 2)
 
@@ -244,8 +269,7 @@ namespace lbm {
       }
 
       if (performanceAnalysisList.getIsAnalyzed(iteration)) {
-        performanceAnalysisList.updateMass(communication.reduce(
-                                                                fieldList.density.getData(FFTWInit::numberElements)));
+        performanceAnalysisList.updateMass(communication.reduce(fieldList.density.getData(FFTWInit::numberElements)));
 
         performanceAnalysisList.updateMLUPS(iteration - startIteration);
 

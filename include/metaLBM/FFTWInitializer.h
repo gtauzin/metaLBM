@@ -1,7 +1,10 @@
 #pragma once
 
+#ifdef USE_FFTW
 #include <fftw3-mpi.h>
+#endif
 #include <mpi.h>
+
 #include "Lattice.h"
 #include "MathVector.h"
 #include "Domain.h"
@@ -38,6 +41,6 @@ namespace lbm {
 
   using FFTWInit = FFTWInitializer<numThreads>;
 
-  template<> unsigned int FFTWInit::numberElements = lSD::pVolume();
+  template<> unsigned int FFTWInit::numberElements = lSD::sVolume();
 
 }  // end namespace lbm

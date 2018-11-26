@@ -472,7 +472,34 @@ namespace lbm {
     LBM_HOST void sendAndReceiveHaloXLeft(T* haloDistributionPtr) {
     }
   };
+
+
+  template <class T, LatticeType latticeType, MemoryLayout memoryLayout>
+  class Communication<T, latticeType, AlgorithmType::Pull, memoryLayout,
+                      PartitionningType::Generic, CommunicationType::Persistent_NVSHMEM_IN, 0>
+    : public Communication<T, latticeType, AlgorithmType::Pull, memoryLayout,
+                           PartitionningType::Generic, CommunicationType::NVSHMEM_IN, 0> {
+  private:
+    using Base = Communication<T, latticeType, AlgorithmType::Pull, memoryLayout,
+                               PartitionningType::Generic, CommunicationType::NVSHMEM_IN, 0>;
+
+  public:
+    using Base::Communication;
+
+    using Base::reduce;
+    using Base::sendGlobalToLocal;
+    using Base::sendLocalToGlobal;
+
+  protected:
+    LBM_HOST void sendAndReceiveHaloXRight(T* haloDistributionPtr) {
+    }
+
+    LBM_HOST void sendAndReceiveHaloXLeft(T* haloDistributionPtr) {
+    }
+  };
+
   #endif  // USE_NVSHMEM
+
 
   template <class T, LatticeType latticeType, MemoryLayout memoryLayout,
             CommunicationType communicationType, unsigned int Dimension>

@@ -4,6 +4,11 @@
 #include <cstdio>
 #include <utility>
 
+#ifdef USE_NVSHMEM
+  #include<shmem.h>
+  #include<shmemx.h>
+#endif
+
 #include "Boundary.h"
 #include "Collision.h"
 #include "Commons.h"
@@ -23,10 +28,10 @@ namespace lbm {
   template <class T, AlgorithmType algorithmType, Architecture architecture,
             MemoryLayout memoryLayout, PartitionningType partitionningType,
             CommunicationType communicationType, Overlapping overlapping>
-  class Algorithm {
-  public:
-    LBM_HOST LBM_DEVICE void operator()(const Position iP);
-  };
+    class Algorithm {};
+  /* public: */
+  /*   LBM_HOST LBM_DEVICE void operator()(const Position iP); */
+  /* }; */
 
   template <class T, Architecture architecture, Overlapping overlapping,
             MemoryLayout memoryLayout>
@@ -55,6 +60,8 @@ namespace lbm {
     T* squaredQContractedPi1Ptr;
     T* cubedQContractedPi1Ptr;
     T* distributionPtr;
+
+    static const bool isPersistent = false;
 
   protected:
     T* haloDistributionPreviousPtr;
@@ -108,28 +115,30 @@ namespace lbm {
 
     LBM_DEVICE
     void operator()(const Position& iP, const unsigned int numberElements,
+                    T* hDistributionNextPtr, T* hDistributionPreviousPtr,
                     const MathVector<int, 3> rank) {
-      collision.calculateMoments(haloDistributionPreviousPtr, iP);
+      collision.calculateMoments(hDistributionPreviousPtr, iP);
 
       collision.setForce(forcePtr, iP, gSD::sOffset(rank), numberElements);
-      collision.calculateRelaxationTime(haloDistributionNextPtr,
-                                        haloDistributionPreviousPtr, iP,
+      collision.calculateRelaxationTime(hDistributionNextPtr,
+                                        hDistributionPreviousPtr, iP,
                                         alphaPtr[hSD::getIndexLocal(iP)]);
       alphaPtr[hSD::getIndexLocal(iP)] = collision.getAlpha();
 
       if (isStored) {
-        collision.calculateObservables(haloDistributionPreviousPtr,
-                                       haloDistributionNextPtr, iP);
+        collision.calculateObservables(hDistributionPreviousPtr,
+                                       hDistributionNextPtr, iP);
       }
 
 #pragma unroll
       for (auto iQ = 0; iQ < L::dimQ; ++iQ) {
-        collision.collideAndStream(haloDistributionNextPtr,
-                                   haloDistributionPreviousPtr, iP,
+        collision.collideAndStream(hDistributionNextPtr,
+                                   hDistributionPreviousPtr, iP,
                                    iQ);
       }
 
       if (isStored) {
+        if(rank[d::X] == 0 && iP[d::X] == 1 && iP[d::Y] == 1) printf("Storing\n");
         storeFields(iP, numberElements);
       }
     }
@@ -137,6 +146,11 @@ namespace lbm {
     double getCommunicationTime() { return dtCommunication.count(); }
 
     double getComputationTime() { return dtComputation.count(); }
+
+    LBM_HOST
+    void swapDistributions() {
+      std::swap(haloDistributionPreviousPtr, haloDistributionNextPtr);
+    }
 
     LBM_HOST
     void pack(const Stream<architecture>& stream) {
@@ -150,6 +164,8 @@ namespace lbm {
     LBM_HOST
     void unpack(const Stream<architecture>& stream) {
       LBM_INSTRUMENT_OFF("Algorithm<T, AlgorithmType::Pull>::unpack", 4)
+        //computationLocal.Do(stream, unpacker, haloDistributionPreviousPtr,
+        //                    distributionPtr, FFTWInit::numberElements);
         computationLocal.Do(stream, unpacker, haloDistributionNextPtr,
                             distributionPtr, FFTWInit::numberElements);
       computationLocal.synchronize();
@@ -215,6 +231,7 @@ namespace lbm {
         }
       }
     }
+
   };
 
   template <class T, Architecture architecture, MemoryLayout memoryLayout>
@@ -341,17 +358,14 @@ namespace lbm {
 
   public:
     Algorithm(FieldList<T, architecture>& fieldList_in,
-              Distribution<T, architecture>& distribution_in,
-              Communication<T, L::Type, AlgorithmType::Pull, memoryLayout,
-                            PartitionningType::OneD, CommunicationType::MPI,
-                            L::dimD>& communication_in)
+              Distribution<T, architecture>& distribution_in)
       : Base(fieldList_in, distribution_in)
-      , communication(communication_in)
+      , communication()
     {}
 
 
     LBM_HOST
-    void iterate(const unsigned int iteration,
+    void iterate(const unsigned int iteration, const unsigned int iterationStep,
                  Stream<architecture>& defaultStream,
                  Stream<architecture>& bulkStream,
                  Stream<architecture>& leftStream,
@@ -359,8 +373,6 @@ namespace lbm {
                  Event<architecture>& leftEvent,
                  Event<architecture>& rightEvent) {
       LBM_INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate", 2)
-
-      std::swap(Base::haloDistributionPreviousPtr, Base::haloDistributionNextPtr);
 
       Base::collision.update(iteration, FFTWInit::numberElements);
 
@@ -379,7 +391,10 @@ namespace lbm {
 
       auto t1 = Clock::now();
       Base::dtCommunication = (t1 - t0);
-      Base::computationLocal.Do(defaultStream, *this, FFTWInit::numberElements, MPIInit::rank);
+      Base::computationLocal.Do(defaultStream, *this, FFTWInit::numberElements,
+                                Base::haloDistributionNextPtr, Base::haloDistributionPreviousPtr,
+                                MPIInit::rank);
+
       Base::computationLocal.synchronize();
 
       t0 = Clock::now();
@@ -411,16 +426,13 @@ namespace lbm {
 
   public:
     Algorithm(FieldList<T, architecture>& fieldList_in,
-              Distribution<T, architecture>& distribution_in,
-              Communication<T, L::Type, AlgorithmType::Pull, memoryLayout,
-                            PartitionningType::OneD, CommunicationType::MPI,
-                            L::dimD>& communication_in)
+              Distribution<T, architecture>& distribution_in)
       : Base(fieldList_in, distribution_in)
-      , communication(communication_in)
+      , communication()
     {}
 
     LBM_HOST
-    void iterate(const unsigned int iteration,
+    void iterate(const unsigned int iteration, const unsigned int iterationStep,
                  Stream<architecture>& defaultStream,
                  Stream<architecture>& bulkStream,
                  Stream<architecture>& leftStream,
@@ -428,9 +440,6 @@ namespace lbm {
                  Event<architecture>& leftEvent,
                  Event<architecture>& rightEvent) {
       LBM_INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate", 2)
-
-        std::swap(Base::haloDistributionPreviousPtr,
-                  Base::haloDistributionNextPtr);
 
       Base::collision.update(iteration, FFTWInit::numberElements);
 
@@ -451,7 +460,10 @@ namespace lbm {
       auto t1 = Clock::now();
       Base::dtCommunication = (t1 - t0);
 
-      Base::computationBulk.Do(bulkStream, *this, FFTWInit::numberElements, MPIInit::rank);
+      Base::computationBulk.Do(bulkStream, *this, FFTWInit::numberElements,
+                               Base::haloDistributionNextPtr, Base::haloDistributionPreviousPtr,
+                               MPIInit::rank);
+
       t0 = Clock::now();
       Base::dtComputation = (t0 - t1);
 
@@ -464,8 +476,14 @@ namespace lbm {
       t1 = Clock::now();
       Base::dtCommunication += (t1 - t0);
 
-      Base::computationLeft.Do(leftStream, *this, FFTWInit::numberElements, MPIInit::rank);
-      Base::computationRight.Do(rightStream, *this, FFTWInit::numberElements, MPIInit::rank);
+      Base::computationLeft.Do(leftStream, *this, FFTWInit::numberElements,
+                               Base::haloDistributionNextPtr, Base::haloDistributionPreviousPtr,
+                               MPIInit::rank);
+
+      Base::computationRight.Do(rightStream, *this, FFTWInit::numberElements,
+                                Base::haloDistributionNextPtr, Base::haloDistributionPreviousPtr,
+                                MPIInit::rank);
+
 
       bulkStream.synchronize();
       leftStream.synchronize();
@@ -501,16 +519,13 @@ namespace lbm {
 
   public:
     Algorithm(FieldList<T, Architecture::GPU_SHMEM>& fieldList_in,
-              Distribution<T, Architecture::GPU_SHMEM>& distribution_in,
-              Communication<T, L::Type, AlgorithmType::Pull, memoryLayout,
-                            PartitionningType::OneD, CommunicationType::NVSHMEM_OUT,
-                            L::dimD>& communication_in)
+              Distribution<T, Architecture::GPU_SHMEM>& distribution_in)
       : Base(fieldList_in, distribution_in)
-      , communication(communication_in)
+      , communication()
     {}
 
     LBM_HOST
-    void iterate(const unsigned int iteration,
+    void iterate(const unsigned int iteration, const unsigned int iterationStep,
                  Stream<Architecture::GPU_SHMEM>& defaultStream,
                  Stream<Architecture::GPU_SHMEM>& bulkStream,
                  Stream<Architecture::GPU_SHMEM>& leftStream,
@@ -518,8 +533,6 @@ namespace lbm {
                  Event<Architecture::GPU_SHMEM>& leftEvent,
                  Event<Architecture::GPU_SHMEM>& rightEvent) {
       LBM_INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate", 2)
-
-      std::swap(Base::haloDistributionPreviousPtr, Base::haloDistributionNextPtr);
 
       Base::collision.update(iteration, FFTWInit::numberElements);
 
@@ -537,7 +550,10 @@ namespace lbm {
       auto t1 = Clock::now();
       Base::dtCommunication = (t1 - t0);
 
-      Base::computationLocal.Do(defaultStream, *this, FFTWInit::numberElements, MPIInit::rank);
+      Base::computationLocal.Do(defaultStream, *this, FFTWInit::numberElements,
+                                Base::haloDistributionNextPtr, Base::haloDistributionPreviousPtr,
+                                MPIInit::rank);
+
       Base::computationLocal.synchronize();
       t0 = Clock::now();
       Base::dtComputation = (t0 - t1);
@@ -567,16 +583,13 @@ namespace lbm {
 
   public:
     Algorithm(FieldList<T, Architecture::GPU_SHMEM>& fieldList_in,
-              Distribution<T, Architecture::GPU_SHMEM>& distribution_in,
-              Communication<T, L::Type, AlgorithmType::Pull, memoryLayout,
-                            PartitionningType::OneD, CommunicationType::NVSHMEM_OUT,
-                            L::dimD>& communication_in)
+              Distribution<T, Architecture::GPU_SHMEM>& distribution_in)
       : Base(fieldList_in, distribution_in)
-      , communication(communication_in)
+      , communication()
     {}
 
     LBM_HOST
-    void iterate(const unsigned int iteration,
+    void iterate(const unsigned int iteration, const unsigned int iterationStep,
                  Stream<Architecture::GPU_SHMEM>& defaultStream,
                  Stream<Architecture::GPU_SHMEM>& bulkStream,
                  Stream<Architecture::GPU_SHMEM>& leftStream,
@@ -584,9 +597,6 @@ namespace lbm {
                  Event<Architecture::GPU_SHMEM>& leftEvent,
                  Event<Architecture::GPU_SHMEM>& rightEvent) {
       LBM_INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate", 2)
-
-        std::swap(Base::haloDistributionPreviousPtr,
-                  Base::haloDistributionNextPtr);
 
       Base::collision.update(iteration, FFTWInit::numberElements);
 
@@ -605,7 +615,10 @@ namespace lbm {
       auto t1 = Clock::now();
       Base::dtCommunication = (t1 - t0);
 
-      Base::computationBulk.Do(bulkStream, *this, FFTWInit::numberElements, MPIInit::rank);
+      Base::computationBulk.Do(bulkStream, *this, FFTWInit::numberElements,
+                               Base::haloDistributionNextPtr, Base::haloDistributionPreviousPtr,
+                               MPIInit::rank);
+
       t0 = Clock::now();
       Base::dtComputation = (t0 - t1);
 
@@ -615,8 +628,14 @@ namespace lbm {
       t1 = Clock::now();
       Base::dtCommunication += (t1 - t0);
 
-      Base::computationLeft.Do(leftStream, *this, FFTWInit::numberElements, MPIInit::rank);
-      Base::computationRight.Do(rightStream, *this, FFTWInit::numberElements, MPIInit::rank);
+      Base::computationLeft.Do(leftStream, *this, FFTWInit::numberElements,
+                               Base::haloDistributionNextPtr, Base::haloDistributionPreviousPtr,
+                               MPIInit::rank);
+
+      Base::computationRight.Do(rightStream, *this, FFTWInit::numberElements,
+                                Base::haloDistributionNextPtr, Base::haloDistributionPreviousPtr,
+                                MPIInit::rank);
+
 
       bulkStream.synchronize();
       leftStream.synchronize();
@@ -659,10 +678,7 @@ namespace lbm {
 
   public:
     Algorithm(FieldList<T, Architecture::GPU_SHMEM>& fieldList_in,
-              Distribution<T, Architecture::GPU_SHMEM>& distribution_in,
-              Communication<T, L::Type, AlgorithmType::Pull, memoryLayout,
-                            PartitionningType::OneD, CommunicationType::NVSHMEM_IN,
-                            L::dimD>& communication_in)
+              Distribution<T, Architecture::GPU_SHMEM>& distribution_in)
       : Base(fieldList_in, distribution_in)
       , haloDistributionPreviousLeftPtr((T*) shmem_ptr(Base::haloDistributionPreviousPtr, MPIInit::rankLeft))
       , haloDistributionPreviousRightPtr((T*) shmem_ptr(Base::haloDistributionPreviousPtr, MPIInit::rankRight))
@@ -672,35 +688,37 @@ namespace lbm {
 
     LBM_DEVICE
     void operator()(const Position& iP, const unsigned int numberElements,
+                    T* hDistributionNextPtr, T* hDistributionPreviousPtr,
+                    T* hDistributionPreviousLeftPtr, T* hDistributionPreviousRightPtr,
                     const MathVector<int, 3> rank) {
 
       if((iP[d::Z] < 2 * L::halo()[d::Z])) {
-        frontBoundary(iP, Base::haloDistributionPreviousPtr);
+        frontBoundary(iP, hDistributionPreviousPtr, hDistributionPreviousPtr);
       }
       else if(iP[d::Z] > lSD::sLength()[d::Z] - 1) {
-        backBoundary(iP, Base::haloDistributionPreviousPtr);
+        backBoundary(iP, hDistributionPreviousPtr, hDistributionPreviousPtr);
       }
 
       if(iP[d::Y] < 2 * L::halo()[d::Y]) {
-        bottomBoundary(iP, Base::haloDistributionPreviousPtr);
+        bottomBoundary(iP, hDistributionPreviousPtr, hDistributionPreviousPtr);
       }
       else if(iP[d::Y] > lSD::sLength()[d::Y] - 1) {
-        topBoundary(iP, Base::haloDistributionPreviousPtr);
+        topBoundary(iP, hDistributionPreviousPtr, hDistributionPreviousPtr);
       }
 
       if(iP[d::X] < 2 * L::halo()[d::X]) {
-        leftBoundary(iP, Base::haloDistributionPreviousPtr, haloDistributionPreviousLeftPtr);
+        leftBoundary(iP, hDistributionPreviousPtr, hDistributionPreviousLeftPtr);
 
       }
       else if(iP[d::X] > lSD::sLength()[d::X] - 1) {
-        rightBoundary(iP, Base::haloDistributionPreviousPtr, haloDistributionPreviousRightPtr);
+        rightBoundary(iP, hDistributionPreviousPtr, hDistributionPreviousRightPtr);
       }
 
-      Base::operator()(iP, numberElements, rank);
+      Base::operator()(iP, numberElements, hDistributionNextPtr, hDistributionPreviousPtr, rank);
     }
 
     LBM_HOST
-    void iterate(const unsigned int iteration,
+    void iterate(const unsigned int iteration, const unsigned int iterationStep,
                  Stream<Architecture::GPU_SHMEM>& defaultStream,
                  Stream<Architecture::GPU_SHMEM>& bulkStream,
                  Stream<Architecture::GPU_SHMEM>& leftStream,
@@ -709,20 +727,25 @@ namespace lbm {
                  Event<Architecture::GPU_SHMEM>& rightEvent) {
       LBM_INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate", 2)
 
-      std::swap(Base::haloDistributionPreviousPtr, Base::haloDistributionNextPtr);
-      std::swap(haloDistributionPreviousLeftPtr, haloDistributionNextLeftPtr);
-      std::swap(haloDistributionPreviousRightPtr, haloDistributionNextRightPtr);
-
       Base::collision.update(iteration, FFTWInit::numberElements);
 
       auto t1 = Clock::now();
 
       Base::computationLocal.Do(defaultStream, *this, FFTWInit::numberElements,
+                                Base::haloDistributionNextPtr, Base::haloDistributionPreviousPtr,
+                                haloDistributionPreviousLeftPtr, haloDistributionPreviousRightPtr,
                                 MPIInit::rank);
       Base::computationLocal.synchronize();
 
       auto t0 = Clock::now();
       Base::dtComputation = (t0 - t1);
+    }
+
+    LBM_HOST
+    void swapDistributions() {
+      Base::swapDistributions();
+      std::swap(haloDistributionPreviousLeftPtr, haloDistributionNextLeftPtr);
+      std::swap(haloDistributionPreviousRightPtr, haloDistributionNextRightPtr);
     }
 
     using Base::pack;
@@ -766,10 +789,7 @@ namespace lbm {
 
   public:
   Algorithm(FieldList<T, Architecture::GPU_SHMEM>& fieldList_in,
-            Distribution<T, Architecture::GPU_SHMEM>& distribution_in,
-                         Communication<T, L::Type, AlgorithmType::Pull, memoryLayout,
-                         PartitionningType::OneD, CommunicationType::NVSHMEM_IN,
-                         L::dimD>& communication_in)
+            Distribution<T, Architecture::GPU_SHMEM>& distribution_in)
       : Base(fieldList_in, distribution_in)
       , haloDistributionPreviousLeftPtr((T*) shmem_ptr(Base::haloDistributionPreviousPtr, MPIInit::rankLeft))
       , haloDistributionPreviousRightPtr((T*) shmem_ptr(Base::haloDistributionPreviousPtr, MPIInit::rankRight))
@@ -800,7 +820,7 @@ namespace lbm {
     {}
 
     LBM_HOST
-    void iterate(const unsigned int iteration,
+    void iterate(const unsigned int iteration, const unsigned int iterationStep,
                  Stream<Architecture::GPU_SHMEM>& defaultStream,
                  Stream<Architecture::GPU_SHMEM>& bulkStream,
                  Stream<Architecture::GPU_SHMEM>& leftStream,
@@ -809,38 +829,58 @@ namespace lbm {
                  Event<Architecture::GPU_SHMEM>& rightEvent) {
       LBM_INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate", 2)
 
-      std::swap(Base::haloDistributionPreviousPtr, Base::haloDistributionNextPtr);
-      std::swap(haloDistributionPreviousLeftPtr, haloDistributionNextLeftPtr);
-      std::swap(haloDistributionPreviousRightPtr, haloDistributionNextRightPtr);
-
       Base::collision.update(iteration, FFTWInit::numberElements);
 
       auto t0 = Clock::now();
-      computationFront.Do(leftStream, frontBoundary, Base::haloDistributionPreviousPtr);
-      computationFront.Do(leftStream, *this, FFTWInit::numberElements, MPIInit::rank);
-      computationBack.Do(rightStream, backBoundary, Base::haloDistributionPreviousPtr);
-      computationBack.Do(rightStream, *this, FFTWInit::numberElements, MPIInit::rank);
+      computationFront.Do(leftStream, frontBoundary, Base::haloDistributionPreviousPtr,
+                          Base::haloDistributionPreviousPtr);
+      computationFront.Do(leftStream, *this, FFTWInit::numberElements,
+                          Base::haloDistributionNextPtr, Base::haloDistributionPreviousPtr,
+                          MPIInit::rank);
+
+      computationBack.Do(rightStream, backBoundary, Base::haloDistributionPreviousPtr,
+                         Base::haloDistributionPreviousPtr);
+      computationBack.Do(rightStream, *this, FFTWInit::numberElements,
+                         Base::haloDistributionNextPtr, Base::haloDistributionPreviousPtr,
+                         MPIInit::rank);
+
       leftStream.synchronize();
       rightStream.synchronize();
 
-      computationBottom.Do(leftStream, bottomBoundary, Base::haloDistributionPreviousPtr);
-      computationBottom.Do(leftStream, *this, FFTWInit::numberElements, MPIInit::rank);
-      computationTop.Do(rightStream, topBoundary, Base::haloDistributionPreviousPtr);
-      computationTop.Do(rightStream, *this, FFTWInit::numberElements, MPIInit::rank);
+      computationBottom.Do(leftStream, bottomBoundary, Base::haloDistributionPreviousPtr,
+                          Base::haloDistributionPreviousPtr);
+      computationBottom.Do(leftStream, *this, FFTWInit::numberElements,
+                           Base::haloDistributionNextPtr, Base::haloDistributionPreviousPtr,
+                           MPIInit::rank);
+
+      computationTop.Do(rightStream, topBoundary, Base::haloDistributionPreviousPtr,
+                        Base::haloDistributionPreviousPtr);
+      computationTop.Do(rightStream, *this, FFTWInit::numberElements,
+                        Base::haloDistributionNextPtr, Base::haloDistributionPreviousPtr,
+                        MPIInit::rank);
+
       leftStream.synchronize();
       rightStream.synchronize();
 
       computationLeft.Do(leftStream, leftBoundary, Base::haloDistributionPreviousPtr,
                          haloDistributionPreviousLeftPtr);
-      computationLeft.Do(leftStream, *this, FFTWInit::numberElements, MPIInit::rank);
+      computationLeft.Do(leftStream, *this, FFTWInit::numberElements,
+                         Base::haloDistributionNextPtr, Base::haloDistributionPreviousPtr,
+                         MPIInit::rank);
+
       computationRight.Do(rightStream, rightBoundary, Base::haloDistributionPreviousPtr,
                           haloDistributionPreviousRightPtr);
-      computationRight.Do(rightStream, *this, FFTWInit::numberElements, MPIInit::rank);
+      computationRight.Do(rightStream, *this, FFTWInit::numberElements,
+                          Base::haloDistributionNextPtr, Base::haloDistributionPreviousPtr,
+                          MPIInit::rank);
 
       auto t1 = Clock::now();
       Base::dtCommunication = (t1 - t0);
 
-      computationBulk.Do(bulkStream, *this, FFTWInit::numberElements, MPIInit::rank);
+      computationBulk.Do(bulkStream, *this, FFTWInit::numberElements,
+                         Base::haloDistributionNextPtr, Base::haloDistributionPreviousPtr,
+                         MPIInit::rank);
+
       t0 = Clock::now();
       Base::dtComputation = (t0 - t1);
 
@@ -855,6 +895,14 @@ namespace lbm {
 
       t0 = Clock::now();
       Base::dtComputation += (t0 - t1);
+    }
+
+    LBM_HOST
+    void swapDistributions() {
+      Base::swapDistributions();
+      std::swap(haloDistributionPreviousLeftPtr, haloDistributionNextLeftPtr);
+      std::swap(haloDistributionPreviousRightPtr, haloDistributionNextRightPtr);
+
     }
 
     using Base::pack;
@@ -878,9 +926,43 @@ namespace lbm {
 
   public:
     using Base::Algorithm;
+    static const bool isPersistent = true;
+
+    LBM_DEVICE
+    void operator()(const Position& iP, const unsigned int numberElements,
+                    T* hDistributionNextPtr, T* hDistributionPreviousPtr,
+                    T* hDistributionPreviousLeftPtr, T* hDistributionPreviousRightPtr,
+                    T* hDistributionNextLeftPtr, T* hDistributionNextRightPtr,
+                    const MathVector<int, 3> rank, const unsigned int iteration,
+                    const unsigned int iterationStep) {
+      if(rank[d::X] == 0 && iP[d::X] == 1 && iP[d::Y] == 1) printf("iteration: %d, iterationStep: %d\n", iteration, iterationStep);
+
+      Base::isStored = false;
+      for(auto persistentIteration = iteration; persistentIteration < iteration + iterationStep;
+          persistentIteration += 2) {
+        if(rank[d::X] == 0 && iP[d::X] == 1 && iP[d::Y] == 1) printf("1 - persistentIteration: %d\n", persistentIteration);
+
+        if(persistentIteration == iteration + iterationStep - 1) Base::isStored = true;
+        Base::operator()(iP, numberElements, hDistributionPreviousPtr, hDistributionNextPtr,
+                         hDistributionNextLeftPtr, hDistributionNextRightPtr, rank);
+        //Base::operator()(iP, numberElements, hDistributionNextPtr, hDistributionPreviousPtr,
+        //                 hDistributionPreviousLeftPtr, hDistributionPreviousRightPtr, rank);
+        shmem_barrier_all();
+        if(persistentIteration == iteration + iterationStep -1) break;
+
+        if(rank[d::X] == 0 && iP[d::X] == 1 && iP[d::Y] == 1) printf("2 - persistentIteration: %d\n", persistentIteration+1);
+
+        if(persistentIteration + 1 == iteration + iterationStep - 1) Base::isStored = true;
+        Base::operator()(iP, numberElements, hDistributionNextPtr, hDistributionPreviousPtr,
+                         hDistributionPreviousLeftPtr, hDistributionPreviousRightPtr, rank);
+        //Base::operator()(iP, numberElements, hDistributionPreviousPtr, hDistributionNextPtr,
+        //                 hDistributionNextLeftPtr, hDistributionNextRightPtr, rank);
+        shmem_barrier_all();
+      }
+    }
 
     LBM_HOST
-    void iterate(const unsigned int iteration,
+    void iterate(const unsigned int iteration, const unsigned int iterationStep,
                  Stream<Architecture::GPU_SHMEM>& defaultStream,
                  Stream<Architecture::GPU_SHMEM>& bulkStream,
                  Stream<Architecture::GPU_SHMEM>& leftStream,
@@ -889,17 +971,13 @@ namespace lbm {
                  Event<Architecture::GPU_SHMEM>& rightEvent) {
       LBM_INSTRUMENT_ON("Algorithm<T, AlgorithmType::Pull>::iterate", 2)
 
-      std::swap(Base::haloDistributionPreviousPtr,
-		Base::haloDistributionNextPtr);
-
-      Base::haloDistributionPreviousLeftPtr = (T*) shmem_ptr(Base::haloDistributionPreviousPtr, MPIInit::rankLeft);
-      Base::haloDistributionPreviousRightPtr = (T*) shmem_ptr(Base::haloDistributionPreviousPtr, MPIInit::rankRight);
-
-
       auto t1 = Clock::now();
 
       Base::computationLocal.Do(defaultStream, *this, FFTWInit::numberElements,
-                                MPIInit::rank);
+                                Base::haloDistributionNextPtr, Base::haloDistributionPreviousPtr,
+                                Base::haloDistributionPreviousLeftPtr, Base::haloDistributionPreviousRightPtr,
+                                Base::haloDistributionNextLeftPtr, Base::haloDistributionNextRightPtr,
+                                MPIInit::rank, iteration, iterationStep);
       Base::computationLocal.synchronize();
 
       auto t0 = Clock::now();

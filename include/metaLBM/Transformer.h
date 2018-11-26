@@ -1,7 +1,6 @@
 #pragma once
 
 #include <mpi.h>
-
 #include <fftw3-mpi.h>
 
 #include "Commons.h"

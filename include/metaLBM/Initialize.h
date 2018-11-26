@@ -33,11 +33,11 @@ namespace lbm {
         Position center;
 
         center[d::X] =
-          static_cast<unsigned int>((lSD::sLength()[d::X] - 1) * (T)0.4);
+          static_cast<unsigned int>((lSD::sLength()[d::X] - 1) * (T)0.2);
         center[d::Y] =
-          static_cast<unsigned int>((lSD::sLength()[d::Y] - 1) * (T)0.3);
+          static_cast<unsigned int>((lSD::sLength()[d::Y] - 1) * (T)0.5);
         center[d::Z] =
-          static_cast<unsigned int>((lSD::sLength()[d::Z] - 1) * (T)0.2);
+          static_cast<unsigned int>((lSD::sLength()[d::Z] - 1) * (T)0.5);
 
         densityFieldR.setValue(center, densityPeakValue, FFTWInit::numberElements);
       }

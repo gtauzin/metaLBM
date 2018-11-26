@@ -15,7 +15,7 @@ cmake .. \
    -DUSE_NVTX=OFF \
    -DNPROCS=1 \
    -DNTHREADS=1 \
-   -DCMAKE_CUDA_FLAGS="-O3 -arch=sm_60" \
+   -DCMAKE_CUDA_FLAGS="-O3 -arch=sm_60 -dc" \
 
 # Debug flags gpu : -O0 -lineinfo -G                                                                                  
 # Debug flags cpu : -O2 -g -pg     

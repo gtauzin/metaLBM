@@ -172,7 +172,8 @@ namespace lbm {
 
 
     LBM_DEVICE LBM_HOST LBM_INLINE
-    static void applyYBottom(const Position& iP, T* haloDistributionPtr) {
+    static void applyYBottom(const Position& iP, T* haloDistributionDestinationPtr,
+                             T* haloDistributionSourcePtr) {
       LBM_INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyYBottom", 5)
 
       Position iP_Destination, iP_Source;
@@ -197,14 +198,15 @@ namespace lbm {
                          ? iP_Destination[d::Z] - lSD::sLength()[d::Z]
                          : iP_Destination[d::Z])}};
 
-          haloDistributionPtr[hSD::getIndex(iP_Destination, L::iQ_Top()[iQ])] =
-            haloDistributionPtr[hSD::getIndex(iP_Source, L::iQ_Top()[iQ])];
+          haloDistributionDestinationPtr[hSD::getIndex(iP_Destination, L::iQ_Top()[iQ])] =
+            haloDistributionSourcePtr[hSD::getIndex(iP_Source, L::iQ_Top()[iQ])];
         }
       }
     }
 
     LBM_DEVICE LBM_HOST LBM_INLINE
-    static void applyYTop(const Position& iP, T* haloDistributionPtr) {
+    static void applyYTop(const Position& iP, T* haloDistributionDestinationPtr,
+                          T* haloDistributionSourcePtr) {
       LBM_INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyYTop", 5)
 
       Position iP_Destination, iP_Source;
@@ -231,14 +233,15 @@ namespace lbm {
                          ? iP_Destination[d::Z] - lSD::sLength()[d::Z]
                          : iP_Destination[d::Z])}};
 
-          haloDistributionPtr[hSD::getIndex(iP_Destination, L::iQ_Bottom()[iQ])] =
-            haloDistributionPtr[hSD::getIndex(iP_Source, L::iQ_Bottom()[iQ])];
+          haloDistributionDestinationPtr[hSD::getIndex(iP_Destination, L::iQ_Bottom()[iQ])] =
+            haloDistributionSourcePtr[hSD::getIndex(iP_Source, L::iQ_Bottom()[iQ])];
         }
       }
     }
 
     LBM_DEVICE LBM_HOST LBM_INLINE
-    static void applyZFront(const Position& iP, T* haloDistributionPtr) {
+    static void applyZFront(const Position& iP, T* haloDistributionDestinationPtr,
+                            T* haloDistributionSourcePtr) {
       LBM_INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyZBack", 5)
 
       Position iP_Destination, iP_Source;
@@ -260,14 +263,15 @@ namespace lbm {
                          ? iP_Destination[d::Z] - lSD::sLength()[d::Z]
                          : iP_Destination[d::Z])}};
 
-          haloDistributionPtr[hSD::getIndex(iP_Destination, L::iQ_Back()[iQ])] =
-            haloDistributionPtr[hSD::getIndex(iP_Source, L::iQ_Back()[iQ])];
+          haloDistributionDestinationPtr[hSD::getIndex(iP_Destination, L::iQ_Back()[iQ])] =
+            haloDistributionSourcePtr[hSD::getIndex(iP_Source, L::iQ_Back()[iQ])];
         }
       }
     }
 
     LBM_DEVICE LBM_HOST LBM_INLINE
-    static void applyZBack(const Position& iP, T* haloDistributionPtr) {
+    static void applyZBack(const Position& iP, T* haloDistributionDestinationPtr,
+                           T* haloDistributionSourcePtr) {
       LBM_INSTRUMENT_OFF("Boundary<T, boundaryType, algorithmType>::applyZFront", 5)
 
       Position iP_Destination, iP_Source;
@@ -289,8 +293,8 @@ namespace lbm {
                          ? iP_Destination[d::Z] - lSD::sLength()[d::Z]
                          : iP_Destination[d::Z])}};
 
-          haloDistributionPtr[hSD::getIndex(iP_Destination, L::iQ_Front()[iQ])] =
-            haloDistributionPtr[hSD::getIndex(iP_Source, L::iQ_Front()[iQ])];
+          haloDistributionDestinationPtr[hSD::getIndex(iP_Destination, L::iQ_Front()[iQ])] =
+            haloDistributionSourcePtr[hSD::getIndex(iP_Source, L::iQ_Front()[iQ])];
         }
       }
     }
@@ -327,9 +331,9 @@ template <class T, BoundaryType boundaryType, AlgorithmType algorithmType, unsig
     using Base = Boundary<T, boundaryType, algorithmType, Dimension>;
 
   public:
-    LBM_HOST LBM_DEVICE void operator()(const Position& iP,
-                                        T* haloDistributionPtr) {
-      Base::applyYBottom(iP, haloDistributionPtr);
+    LBM_HOST LBM_DEVICE void operator()(const Position& iP, T* haloDistributionDestinationPtr,
+                                        T* haloDistributionSourcePtr) {
+      Base::applyYBottom(iP, haloDistributionDestinationPtr, haloDistributionSourcePtr);
     }
   };
 
@@ -339,24 +343,24 @@ template <class T, BoundaryType boundaryType, AlgorithmType algorithmType, unsig
     using Base = Boundary<T, boundaryType, algorithmType, Dimension>;
 
   public:
-    LBM_HOST LBM_DEVICE void operator()(const Position& iP,
-                                        T* haloDistributionPtr) {
-      Base::applyYTop(iP, haloDistributionPtr);
+    LBM_HOST LBM_DEVICE void operator()(const Position& iP, T* haloDistributionDestinationPtr,
+                                        T* haloDistributionSourcePtr) {
+      Base::applyYTop(iP, haloDistributionDestinationPtr, haloDistributionSourcePtr);
     }
   };
 
 template <class T, BoundaryType boundaryType, AlgorithmType algorithmType>
   class BottomBoundary<T, boundaryType, algorithmType, 1> {
   public:
-    LBM_HOST LBM_DEVICE
-    void operator()(const Position& iP, T* haloDistributionPtr) {}
+    LBM_HOST LBM_DEVICE void operator()(const Position& iP, T* haloDistributionDestinationPtr,
+                                        T* haloDistributionSourcePtr) {}
   };
 
   template <class T, BoundaryType boundaryType, AlgorithmType algorithmType>
   class TopBoundary<T, boundaryType, algorithmType, 1> {
   public:
-    LBM_HOST LBM_DEVICE
-    void operator()(const Position& iP, T* haloDistributionPtr) {}
+    LBM_HOST LBM_DEVICE void operator()(const Position& iP, T* haloDistributionDestinationPtr,
+                                        T* haloDistributionSourcePtr) {}
   };
 
 
@@ -366,9 +370,9 @@ template <class T, BoundaryType boundaryType, AlgorithmType algorithmType>
     using Base = Boundary<T, boundaryType, algorithmType, Dimension>;
 
   public:
-    LBM_HOST LBM_DEVICE void operator()(const Position& iP,
-                                        T* haloDistributionPtr) {
-      Base::applyZFront(iP, haloDistributionPtr);
+    LBM_HOST LBM_DEVICE void operator()(const Position& iP, T* haloDistributionDestinationPtr,
+                                        T* haloDistributionSourcePtr) {
+      Base::applyZFront(iP, haloDistributionDestinationPtr, haloDistributionSourcePtr);
     }
   };
 
@@ -378,38 +382,38 @@ template <class T, BoundaryType boundaryType, AlgorithmType algorithmType>
     using Base = Boundary<T, boundaryType, algorithmType, Dimension>;
 
   public:
-    LBM_HOST LBM_DEVICE void operator()(const Position& iP,
-                                        T* haloDistributionPtr) {
-      Base::applyZBack(iP, haloDistributionPtr);
+    LBM_HOST LBM_DEVICE void operator()(const Position& iP, T* haloDistributionDestinationPtr,
+                                        T* haloDistributionSourcePtr) {
+      Base::applyZBack(iP, haloDistributionDestinationPtr, haloDistributionSourcePtr);
     }
   };
 
 template <class T, BoundaryType boundaryType, AlgorithmType algorithmType>
   class FrontBoundary<T, boundaryType, algorithmType, 1> {
   public:
-    LBM_HOST LBM_DEVICE
-    void operator()(const Position& iP, T* haloDistributionPtr) {}
+    LBM_HOST LBM_DEVICE void operator()(const Position& iP, T* haloDistributionDestinationPtr,
+                                        T* haloDistributionSourcePtr) {}
   };
 
   template <class T, BoundaryType boundaryType, AlgorithmType algorithmType>
   class BackBoundary<T, boundaryType, algorithmType, 1> {
   public:
-    LBM_HOST LBM_DEVICE
-    void operator()(const Position& iP, T* haloDistributionPtr) {}
+    LBM_HOST LBM_DEVICE void operator()(const Position& iP, T* haloDistributionDestinationPtr,
+                                        T* haloDistributionSourcePtr) {}
   };
 
   template <class T, BoundaryType boundaryType, AlgorithmType algorithmType>
   class FrontBoundary<T, boundaryType, algorithmType, 2> {
   public:
-    LBM_HOST LBM_DEVICE
-    void operator()(const Position& iP, T* haloDistributionPtr) {}
+    LBM_HOST LBM_DEVICE void operator()(const Position& iP, T* haloDistributionDestinationPtr,
+                                        T* haloDistributionSourcePtr) {}
   };
 
   template <class T, BoundaryType boundaryType, AlgorithmType algorithmType>
   class BackBoundary<T, boundaryType, algorithmType, 2> {
   public:
-    LBM_HOST LBM_DEVICE
-    void operator()(const Position& iP, T* haloDistributionPtr) {}
+    LBM_HOST LBM_DEVICE void operator()(const Position& iP, T* haloDistributionDestinationPtr,
+                                        T* haloDistributionSourcePtr) {}
   };
 
 

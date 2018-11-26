@@ -12,7 +12,7 @@
     int error = (call);                                                 \
     if (MPI_SUCCESS != error) {                                         \
       fprintf(stderr, "[%s:%d] MPI failed with %s \n",                  \
-              __FILE__, __LINE__, error);             \
+              __FILE__, __LINE__, error);                               \
       exit(-1);                                                         \
     }                                                                   \
   } while (0)
@@ -26,7 +26,7 @@
     cudaError_t error = (call);                                         \
     if (cudaSuccess != error) {                                         \
       fprintf(stderr, "[%s:%d] CUDA failed with %s \n",                 \
-              __FILE__, __LINE__, cudaGetErrorString(error));          \
+              __FILE__, __LINE__, cudaGetErrorString(error));           \
       exit(-1);                                                         \
     }                                                                   \
   } while (0)

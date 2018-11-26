@@ -16,12 +16,12 @@ template <unsigned int Dimension>
   const Position start;
   const Position end;
   const Position length;
-  const Position dir;
+  const Position order;
 
  Computation(const Position& start_in,
              const Position& end_in,
-             const Position& dir_in = {{d::X, d::Y, d::Z}})
-      : start(start_in), end(end_in), length(end_in - start_in), dir(dir_in) {}
+             const Position& order_in = {{d::X, d::Y, d::Z}})
+      : start(start_in), end(end_in), length(end_in - start_in), order(order_in) {}
 
   LBM_INLINE static void synchronize() {}
 };
@@ -41,9 +41,9 @@ class Computation<Architecture::CPU, 1>
     LBM_INSTRUMENT_OFF("Computation<Architecture::CPU, 2>::Do<Callback>", 1)
 
     Position iP = start;
-    for (auto i0 = Base::start[Base::dir[0]]; i0 < Base::end[Base::dir[0]];
+    for (auto i0 = Base::start[Base::order[0]]; i0 < Base::end[Base::order[0]];
          ++i0) {
-      iP[Base::dir[0]] = i0;
+      iP[Base::order[0]] = i0;
       function(iP, arguments...);
     }
   }
@@ -70,12 +70,12 @@ class Computation<Architecture::CPU, 2>
     LBM_INSTRUMENT_OFF("Computation<Architecture::CPU, 2>::Do<Callback>", 2)
 
     Position iP = start;
-    for (auto i0 = Base::start[Base::dir[0]]; i0 < Base::end[Base::dir[0]];
+    for (auto i0 = Base::start[Base::order[0]]; i0 < Base::end[Base::order[0]];
          ++i0) {
-      iP[Base::dir[0]] = i0;
-      for (auto i1 = Base::start[Base::dir[1]]; i1 < Base::end[Base::dir[1]];
+      iP[Base::order[0]] = i0;
+      for (auto i1 = Base::start[Base::order[1]]; i1 < Base::end[Base::order[1]];
            ++i1) {
-        iP[Base::dir[1]] = i1;
+        iP[Base::order[1]] = i1;
         function(iP, arguments...);
       }
     }
@@ -103,15 +103,15 @@ class Computation<Architecture::CPU, 3>
     LBM_INSTRUMENT_OFF("Computation<Architecture::CPU, 2>::Do<Callback>", 3)
 
     Position iP = start;
-    for (auto i0 = Base::start[Base::dir[0]]; i0 < Base::end[Base::dir[0]];
+    for (auto i0 = Base::start[Base::order[0]]; i0 < Base::end[Base::order[0]];
          ++i0) {
-      iP[Base::dir[0]] = i0;
-      for (auto i1 = Base::start[Base::dir[1]]; i1 < Base::end[Base::dir[1]];
+      iP[Base::order[0]] = i0;
+      for (auto i1 = Base::start[Base::order[1]]; i1 < Base::end[Base::order[1]];
            ++i1) {
-        iP[Base::dir[1]] = i1;
-        for (auto i2 = Base::start[Base::dir[2]]; i2 < Base::end[Base::dir[2]];
+        iP[Base::order[1]] = i1;
+        for (auto i2 = Base::start[Base::order[2]]; i2 < Base::end[Base::order[2]];
              ++i2) {
-          iP[Base::dir[2]] = i2;
+          iP[Base::order[2]] = i2;
           function(iP, arguments...);
         }
       }
