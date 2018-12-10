@@ -138,7 +138,7 @@ namespace lbm {
                               || iteration == endIteration);
 
 
-        iterationStep = getIterationStep(iteration);
+        iterationStep = getIterationStep(iteration, endIteration);
 
         if(iterationStep % 2 == 1) {
           std::cout << "Swapping" << std::endl;
@@ -223,7 +223,7 @@ namespace lbm {
       }
     }
 
-    unsigned int getIterationStep(unsigned int& iteration) {
+    unsigned int getIterationStep(unsigned int iteration, unsigned int endIteration) {
       if(!algorithm.isPersistent) return 1;
 
       unsigned int iterationStep = endIteration - iteration + 1;
@@ -244,7 +244,7 @@ namespace lbm {
 
         if (fieldWriter.getIsWritten(iteration)) {
           fieldWriter.openFile(iteration);
-
+          std::cout << "Writing fields!" << std::endl;
           fieldList.writeFields();
           fieldWriter.closeFile();
         }

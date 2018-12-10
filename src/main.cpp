@@ -4,6 +4,7 @@ constexpr ::lbm::Architecture architectureT = ::lbm::Architecture::CPU;
 
 #include "metaLBM/Commons.h"
 #include "metaLBM/MPIInitializer.h"
+
 #include "metaLBM/FFTWInitializer.h"
 #include "metaLBM/MathVector.h"
 #include "metaLBM/Routine.h"

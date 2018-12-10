@@ -164,10 +164,10 @@ namespace lbm {
     LBM_HOST
     void unpack(const Stream<architecture>& stream) {
       LBM_INSTRUMENT_OFF("Algorithm<T, AlgorithmType::Pull>::unpack", 4)
-        //computationLocal.Do(stream, unpacker, haloDistributionPreviousPtr,
-        //                    distributionPtr, FFTWInit::numberElements);
         computationLocal.Do(stream, unpacker, haloDistributionNextPtr,
-                            distributionPtr, FFTWInit::numberElements);
+                           distributionPtr, FFTWInit::numberElements);
+        computationLocal.Do(stream, unpacker, haloDistributionPreviousPtr,
+                           distributionPtr, FFTWInit::numberElements);
       computationLocal.synchronize();
     }
 
@@ -380,12 +380,16 @@ namespace lbm {
       communication.communicateHalos(Base::haloDistributionPreviousPtr);
 
       Base::computationBottom.Do(defaultStream, Base::bottomBoundary,
+                                 Base::haloDistributionPreviousPtr,
                                  Base::haloDistributionPreviousPtr);
       Base::computationTop.Do(defaultStream, Base::topBoundary,
+                              Base::haloDistributionPreviousPtr,
                               Base::haloDistributionPreviousPtr);
       Base::computationFront.Do(defaultStream, Base::frontBoundary,
+                                Base::haloDistributionPreviousPtr,
                                 Base::haloDistributionPreviousPtr);
       Base::computationBack.Do(defaultStream, Base::backBoundary,
+                               Base::haloDistributionPreviousPtr,
                                Base::haloDistributionPreviousPtr);
 
 
@@ -445,12 +449,16 @@ namespace lbm {
 
       auto t0 = Clock::now();
       Base::computationBottom.Do(bulkStream, Base::bottomBoundary,
+                                 Base::haloDistributionPreviousPtr,
                                  Base::haloDistributionPreviousPtr);
       Base::computationTop.Do(bulkStream, Base::topBoundary,
+                              Base::haloDistributionPreviousPtr,
                               Base::haloDistributionPreviousPtr);
       Base::computationFront.Do(bulkStream, Base::frontBoundary,
+                                Base::haloDistributionPreviousPtr,
                                 Base::haloDistributionPreviousPtr);
       Base::computationBack.Do(bulkStream, Base::backBoundary,
+                               Base::haloDistributionPreviousPtr,
                                Base::haloDistributionPreviousPtr);
 
       bulkStream.synchronize();
@@ -540,12 +548,16 @@ namespace lbm {
       communication.communicateHalos(Base::haloDistributionPreviousPtr);
 
       Base::computationBottom.Do(defaultStream, Base::bottomBoundary,
+                                 Base::haloDistributionPreviousPtr,
                                  Base::haloDistributionPreviousPtr);
       Base::computationTop.Do(defaultStream, Base::topBoundary,
+                              Base::haloDistributionPreviousPtr,
                               Base::haloDistributionPreviousPtr);
       Base::computationFront.Do(defaultStream, Base::frontBoundary,
+                                Base::haloDistributionPreviousPtr,
                                 Base::haloDistributionPreviousPtr);
       Base::computationBack.Do(defaultStream, Base::backBoundary,
+                               Base::haloDistributionPreviousPtr,
                                Base::haloDistributionPreviousPtr);
       auto t1 = Clock::now();
       Base::dtCommunication = (t1 - t0);
@@ -943,20 +955,16 @@ namespace lbm {
         if(rank[d::X] == 0 && iP[d::X] == 1 && iP[d::Y] == 1) printf("1 - persistentIteration: %d\n", persistentIteration);
 
         if(persistentIteration == iteration + iterationStep - 1) Base::isStored = true;
-        Base::operator()(iP, numberElements, hDistributionPreviousPtr, hDistributionNextPtr,
-                         hDistributionNextLeftPtr, hDistributionNextRightPtr, rank);
-        //Base::operator()(iP, numberElements, hDistributionNextPtr, hDistributionPreviousPtr,
-        //                 hDistributionPreviousLeftPtr, hDistributionPreviousRightPtr, rank);
+        Base::operator()(iP, numberElements, hDistributionNextPtr, hDistributionPreviousPtr,
+                        hDistributionPreviousLeftPtr, hDistributionPreviousRightPtr, rank);
         shmem_barrier_all();
         if(persistentIteration == iteration + iterationStep -1) break;
 
         if(rank[d::X] == 0 && iP[d::X] == 1 && iP[d::Y] == 1) printf("2 - persistentIteration: %d\n", persistentIteration+1);
 
         if(persistentIteration + 1 == iteration + iterationStep - 1) Base::isStored = true;
-        Base::operator()(iP, numberElements, hDistributionNextPtr, hDistributionPreviousPtr,
-                         hDistributionPreviousLeftPtr, hDistributionPreviousRightPtr, rank);
-        //Base::operator()(iP, numberElements, hDistributionPreviousPtr, hDistributionNextPtr,
-        //                 hDistributionNextLeftPtr, hDistributionNextRightPtr, rank);
+        Base::operator()(iP, numberElements, hDistributionPreviousPtr, hDistributionNextPtr,
+                        hDistributionNextLeftPtr, hDistributionNextRightPtr, rank);
         shmem_barrier_all();
       }
     }

@@ -24,6 +24,8 @@ class Moment {
       density +=
           haloDistributionPtr[hSD::getIndex(iP - uiL::celerity()[iQ], iQ)];
     }
+    if(iP[d::X] == 1 && iP[d::Y] == 1) printf("density: %d\n", density);
+
   }
 
   LBM_DEVICE LBM_HOST LBM_INLINE
